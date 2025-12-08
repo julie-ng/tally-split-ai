@@ -1,0 +1,22 @@
+{
+  "name": "ai-receipts-poc",
+  "version": "1.0.0",
+  "description": "POC for analyzing receipt scans with handwritten expense splitting",
+  "type": "module",
+  "main": "upload-scans.js",
+  "scripts": {
+    "upload": "node upload-scans.js"
+  },
+  "keywords": [
+    "azure",
+    "document-intelligence",
+    "receipts",
+    "ocr"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@azure/storage-blob": "^12.25.0",
+    "dotenv": "^16.4.5"
+  }
+}
