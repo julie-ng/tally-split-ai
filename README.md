@@ -143,6 +143,14 @@ Example of `boudingRegions` Array
 
 ---
 
+## Azure CLI Commands
+
+List containers in `jngaiexpenses` storage account.
+
+```
+az storage container list --auth-mode login --account-name jngaiexpenses -o table
+```
+
 ## References
 
 - Azure Document Intelligence Service
