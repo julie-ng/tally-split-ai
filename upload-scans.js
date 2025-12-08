@@ -24,6 +24,24 @@ function extractReceiptTotal(filename) {
 }
 
 /**
+ * Extract hashtags from filename
+ * Looks for patterns like "#special #initials" and returns comma-separated values
+ * @param {string} filename - The filename to parse
+ * @returns {string|null} - Comma-separated hashtag values or null
+ */
+function extractHashtags(filename) {
+  const hashtagPattern = /#([a-zA-Z0-9_-]+)/g;
+  const matches = [...filename.matchAll(hashtagPattern)];
+  
+  if (matches.length === 0) {
+    return null;
+  }
+  
+  const tags = matches.map(match => match[1]);
+  return tags.join(':');
+}
+
+/**
  * Upload all images from scans directory to Azure Blob Storage
  */
 async function uploadScans() {
@@ -79,13 +97,17 @@ async function uploadScans() {
     const blobClient = containerClient.getBlockBlobClient(filename);
 
     try {
-      // Extract receipt total from filename
+      // Extract receipt total and hashtags from filename
       const receiptTotal = extractReceiptTotal(filename);
+      const hashtags = extractHashtags(filename);
 
       // Prepare blob index tags
       const tags = {};
       if (receiptTotal) {
         tags['receipt-total'] = receiptTotal;
+      }
+      if (hashtags) {
+        tags['receipt-tags'] = hashtags;
       }
 
       // Upload file with tags
@@ -95,7 +117,10 @@ async function uploadScans() {
 
       await blobClient.uploadFile(filePath, uploadOptions);
 
-      const tagsInfo = receiptTotal ? ` [receipt-total: ${receiptTotal}]` : '';
+      const tagsList = [];
+      if (receiptTotal) tagsList.push(`receipt-total: ${receiptTotal}`);
+      if (hashtags) tagsList.push(`receipt-tags: ${hashtags}`);
+      const tagsInfo = tagsList.length > 0 ? ` [${tagsList.join(', ')}]` : '';
       console.log(` Uploaded: ${filename}${tagsInfo}`);
       successCount++;
 
