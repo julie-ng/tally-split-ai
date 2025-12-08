@@ -46,7 +46,7 @@ async function uploadScans() {
 
   try {
     await containerClient.createIfNotExists({
-      access: 'private'
+      access: 'blob'
     });
     console.log(`Container "${CONTAINER_NAME}" ready`);
   } catch (error) {
