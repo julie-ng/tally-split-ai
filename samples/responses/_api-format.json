@@ -1,0 +1,396 @@
+{
+  "status": "succeeded",
+  "createdDateTime": "2025-12-08T09:40:11Z",
+  "lastUpdatedDateTime": "2025-12-08T09:40:11Z",
+  "analyzeResult": {
+    "apiVersion": "2024-11-30",
+    "modelId": "prebuilt-receipt",
+    "stringIndexType": "utf16CodeUnit",
+    "content": "All OCR'd text in the receipt with newlines '\\n'",
+    "pages": [
+      {
+        "pageNumber": 1,
+        "angle": 0.07274342328310013,
+        "width": 872,
+        "height": 2867,
+        "unit": "pixel",
+        "words": [
+          {
+            "content": "Text One",
+            "polygon": [x, y, z, etc.],
+            "confidence": 0.989,
+            "span": {
+              "offset": 0,
+              "length": 4
+            }
+          },
+          {
+            "content": "Text Two",
+            //…
+          }
+        ],
+        "lines": [
+          {
+            "content": "Text One",
+            "polygon": […],
+            "spans": [
+              {
+                "offset": 0,
+                "length": 4
+              }
+            ]
+          }
+          // …
+        ],
+        "spans": [
+          {
+            "offset": 0,
+            "length": 1074
+          }
+        ]
+      }
+    ],
+    "styles": [],
+    "documents": [
+      {
+        "docType": "receipt.retailMeal",
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [1, 2, 3, 4, 5, 6]
+          }
+        ],
+        "fields": {
+          "CountryRegion": {
+            "type": "countryRegion",
+            "valueCountryRegion": "DEU",
+            "confidence": 0.995
+          },
+          "Items": {
+            "type": "array",
+            "valueArray": [
+              {
+                "type": "object",
+                "valueObject": {
+                  "Description": {
+                    "type": "string",
+                    "valueString": "Scanned Text",
+                    "content": "Scanned Text",
+                    "boundingRegions": [
+                      {
+                        "pageNumber": 1,
+                        "polygon": [69, 548, 305, 552, 304, 591, 68, 587]
+                      }
+                    ],
+                    "confidence": 0.978,
+                    "spans": [
+                      {
+                        "offset": 60,
+                        "length": 14
+                      }
+                    ]
+                  },
+                  "TotalPrice": {
+                    "type": "currency",
+                    "valueCurrency": {
+                      "amount": 5.47,
+                      "currencyCode": "EUR"
+                    },
+                    "content": "5,47",
+                    "boundingRegions": [
+                      {
+                        "pageNumber": 1,
+                        "polygon": [667, 554, 739, 554, 739, 593, 668, 593]
+                      }
+                    ],
+                    "confidence": 0.986,
+                    "spans": [
+                      {
+                        "offset": 79,
+                        "length": 4
+                      }
+                    ]
+                  }
+                },
+                "content": "HAEHN. FLUEGEL\n5,47 B\nHandeingabe E-Bon\n0, 710 kg",
+                "boundingRegions": [
+                  {
+                    "pageNumber": 1,
+                    "polygon": [69, 547, 777, 554, 777, 632, 68, 625]
+                  }
+                ],
+                "confidence": 0.972,
+                "spans": [
+                  {
+                    "offset": 60,
+                    "length": 14
+                  },
+                  {
+                    "offset": 79,
+                    "length": 34
+                  }
+                ]
+              }
+            ]
+          },
+          "MerchantAddress": {
+            "type": "address",
+            "content": "PETUELRING 92\n80807 MÜNCHEN",
+            "boundingRegions": [
+              {
+                "pageNumber": 1,
+                "polygon": [287, 392, 527, 398, 525, 473, 285, 467]
+              }
+            ],
+            "confidence": 0.968,
+            "spans": [
+              {
+                "offset": 10,
+                "length": 27
+              }
+            ],
+            "MerchantAddress": {
+              "houseNumber": "92",
+              "road": "PETUELRING",
+              "postalCode": "80807",
+              "city": "MÜNCHEN",
+              "streetAddress": "92 PETUELRING"
+            }
+          },
+          "MerchantName": {
+            "type": "string",
+            "valueString": "REWE",
+            "content": "REWE",
+            "boundingRegions": [
+              {
+                "pageNumber": 1,
+                "polygon": [342, 360, 470, 362, 470, 399, 342, 395]
+              }
+            ],
+            "confidence": 0.973,
+            "spans": [
+              {
+                "offset": 5,
+                "length": 4
+              }
+            ]
+          },
+          "ReceiptType": {
+            "type": "string",
+            "valueString": "Supplies",
+            "confidence": 0.984
+          },
+          "Subtotal": {
+            "type": "currency",
+            "valueCurrency": {
+              "amount": 5.11,
+              "currencyCode": "EUR"
+            },
+            "content": "5,11",
+            "boundingRegions": [
+              {
+                "pageNumber": 1,
+                "polygon": [341, 1424, 396, 1424, 396, 1454, 341, 1455]
+              }
+            ],
+            "confidence": 0.982,
+            "spans": [
+              {
+                "offset": 465,
+                "length": 4
+              }
+            ]
+          },
+          "TaxDetails": {
+            "type": "array",
+            "valueArray": [
+              {
+                "type": "object",
+                "valueObject": {
+                  "Amount": {
+                    "type": "currency",
+                    "valueCurrency": {
+                      "amount": 0.36,
+                      "currencyCode": "EUR"
+                    },
+                    "content": "0,36",
+                    "boundingRegions": [
+                      {
+                        "pageNumber": 1,
+                        "polygon": [530, 1388, 586, 1388, 586, 1419, 530, 1419]
+                      }
+                    ],
+                    "confidence": 0.965,
+                    "spans": [
+                      {
+                        "offset": 442,
+                        "length": 4
+                      }
+                    ]
+                  },
+                  "Description": {
+                    "type": "string",
+                    "valueString": "B=",
+                    "content": "B=",
+                    "boundingRegions": [
+                      {
+                        "pageNumber": 1,
+                        "polygon": [62, 1384, 90, 1385, 90, 1414, 62, 1414]
+                      }
+                    ],
+                    "confidence": 0.964,
+                    "spans": [
+                      {
+                        "offset": 429,
+                        "length": 2
+                      }
+                    ]
+                  },
+                  "NetAmount": {
+                    "type": "currency",
+                    "valueCurrency": {
+                      "amount": 5.11,
+                      "currencyCode": "EUR"
+                    },
+                    "content": "5,11",
+                    "boundingRegions": [
+                      {
+                        "pageNumber": 1,
+                        "polygon": [341, 1385, 395, 1385, 395, 1417, 341, 1417]
+                      }
+                    ],
+                    "confidence": 0.965,
+                    "spans": [
+                      {
+                        "offset": 437,
+                        "length": 4
+                      }
+                    ]
+                  },
+                  "Rate": {
+                    "type": "number",
+                    "valueNumber": 0.07,
+                    "content": "7,0%",
+                    "boundingRegions": [
+                      {
+                        "pageNumber": 1,
+                        "polygon": [134, 1384, 192, 1385, 192, 1415, 134, 1414]
+                      }
+                    ],
+                    "confidence": 0.965,
+                    "spans": [
+                      {
+                        "offset": 432,
+                        "length": 4
+                      }
+                    ]
+                  }
+                },
+                "content": "B= 7,0%\n5,11\n0,36\n5,47",
+                "boundingRegions": [
+                  {
+                    "pageNumber": 1,
+                    "polygon": [62, 1380, 773, 1387, 773, 1421, 62, 1415]
+                  }
+                ],
+                "confidence": 0.982,
+                "spans": [
+                  {
+                    "offset": 429,
+                    "length": 22
+                  }
+                ]
+              }
+            ]
+          },
+          "Total": {
+            "type": "currency",
+            "valueCurrency": {
+              "currencySymbol": "EUR",
+              "amount": 5.47,
+              "currencyCode": "EUR"
+            },
+            "content": "EUR\n5,47",
+            "boundingRegions": [
+              {
+                "pageNumber": 1,
+                "polygon": [505, 659, 742, 660, 742, 699, 505, 698]
+              }
+            ],
+            "confidence": 0.982,
+            "spans": [
+              {
+                "offset": 120,
+                "length": 8
+              }
+            ]
+          },
+          "TotalTax": {
+            "type": "currency",
+            "valueCurrency": {
+              "amount": 0.36,
+              "currencyCode": "EUR"
+            },
+            "content": "0,36",
+            "boundingRegions": [
+              {
+                "pageNumber": 1,
+                "polygon": [531, 1427, 586, 1426, 586, 1457, 531, 1457]
+              }
+            ],
+            "confidence": 0.987,
+            "spans": [
+              {
+                "offset": 470,
+                "length": 4
+              }
+            ]
+          },
+          "TransactionDate": {
+            "type": "date",
+            "valueDate": "2025-11-07",
+            "content": "07.11.2025",
+            "boundingRegions": [
+              {
+                "pageNumber": 1,
+                "polygon": [613, 842, 794, 844, 794, 883, 613, 881]
+              }
+            ],
+            "confidence": 0.985,
+            "spans": [
+              {
+                "offset": 183,
+                "length": 10
+              }
+            ]
+          },
+          "TransactionTime": {
+            "type": "time",
+            "valueTime": "12:53:25",
+            "content": "12:53:25 Uhr",
+            "boundingRegions": [
+              {
+                "pageNumber": 1,
+                "polygon": [579, 878, 793, 882, 792, 921, 578, 917]
+              }
+            ],
+            "confidence": 0.985,
+            "spans": [
+              {
+                "offset": 204,
+                "length": 12
+              }
+            ]
+          }
+        },
+        "confidence": 0.984,
+        "spans": [
+          {
+            "offset": 0,
+            "length": 1074
+          }
+        ]
+      }
+    ]
+  }
+}
