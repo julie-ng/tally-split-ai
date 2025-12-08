@@ -82,8 +82,7 @@ Missing information that may need a custom trained model:
         "offset": 0,
         "length": 4
       }
-    },
-    // …    
+    },    
   ],
   "lines": [
     {
@@ -95,8 +94,7 @@ Missing information that may need a custom trained model:
           "length": 4
         }
       ]
-    }
-    // …
+    }    
   ],
   "spans": [
     {
@@ -114,7 +112,7 @@ Examples are empty arrays `[]` so far.
 #### `document` Object
 
 | Property | Type | Description |
-|: ---|:---|:---|
+|:---|:---|:---|
 | `docType` | String | e.g. `receipt.retailMeal` |
 | `confidence` | Number | e.g. 0.984 |
 | `spans` | Object | |
