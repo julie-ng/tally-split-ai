@@ -5,7 +5,8 @@
   "type": "module",
   "main": "upload-scans.js",
   "scripts": {
-    "upload": "node upload-scans.js"
+    "upload": "node upload-scans.js",
+    "test": "vitest"
   },
   "keywords": [
     "azure",
@@ -18,5 +19,8 @@
   "dependencies": {
     "@azure/storage-blob": "^12.25.0",
     "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.15"
   }
 }
