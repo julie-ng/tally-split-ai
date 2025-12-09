@@ -13,6 +13,16 @@ const CONTAINER_NAME = 'receipts'; // Container name for receipt uploads
 const SCANS_DIR = './scans';
 
 /**
+ * Extract date from filename in YYYY-MM-DD format
+ * @param {string} filename - The filename to parse
+ * @returns {string|null} - The extracted date or null
+ */
+function extractReceiptDate(filename) {
+  const match = filename.match(/^(\d{4}-\d{2}-\d{2})/);
+  return match ? match[1] : null;
+}
+
+/**
  * Extract receipt total from filename if present
  * Looks for pattern: (amount) e.g., "(21.82)" or "(115)"
  * @param {string} filename - The filename to parse
@@ -32,11 +42,11 @@ function extractReceiptTotal(filename) {
 function extractHashtags(filename) {
   const hashtagPattern = /#([a-zA-Z0-9_-]+)/g;
   const matches = [...filename.matchAll(hashtagPattern)];
-  
+
   if (matches.length === 0) {
     return null;
   }
-  
+
   const tags = matches.map(match => match[1]);
   return tags.join(':');
 }
@@ -97,12 +107,16 @@ async function uploadScans() {
     const blobClient = containerClient.getBlockBlobClient(filename);
 
     try {
-      // Extract receipt total and hashtags from filename
+      // Extract receipt date, total, and hashtags from filename
+      const receiptDate = extractReceiptDate(filename);
       const receiptTotal = extractReceiptTotal(filename);
       const hashtags = extractHashtags(filename);
 
       // Prepare blob index tags
       const tags = {};
+      if (receiptDate) {
+        tags['receipt-date'] = receiptDate;
+      }
       if (receiptTotal) {
         tags['receipt-total'] = receiptTotal;
       }
@@ -118,14 +132,15 @@ async function uploadScans() {
       await blobClient.uploadFile(filePath, uploadOptions);
 
       const tagsList = [];
+      if (receiptDate) tagsList.push(`receipt-date: ${receiptDate}`);
       if (receiptTotal) tagsList.push(`receipt-total: ${receiptTotal}`);
       if (hashtags) tagsList.push(`receipt-tags: ${hashtags}`);
       const tagsInfo = tagsList.length > 0 ? ` [${tagsList.join(', ')}]` : '';
-      console.log(` Uploaded: ${filename}${tagsInfo}`);
+      console.log(` Uploaded: ${filename}${tagsInfo}`);
       successCount++;
 
     } catch (error) {
-      console.error(` Failed to upload ${filename}: ${error.message}`);
+      console.error(` Failed to upload ${filename}: ${error.message}`);
       errorCount++;
     }
   }
