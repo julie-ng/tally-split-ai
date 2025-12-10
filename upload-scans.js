@@ -3,6 +3,7 @@ import { config } from 'dotenv';
 import { readdir } from 'fs/promises';
 // import { createReadStream } from 'fs';
 import { join } from 'path';
+import { execSync } from 'child_process';
 import chalk from 'chalk';
 import { extractReceiptDate, extractReceiptTotal, extractHashtags } from './filename-utils.js';
 
@@ -99,7 +100,8 @@ async function uploadScans() {
       if (receiptTotal) tagsList.push(`receipt-total: ${receiptTotal}`);
       if (hashtags) tagsList.push(`receipt-tags: ${hashtags}`);
       const tagsInfo = tagsList.length > 0 ? ` ${chalk.gray(`[${tagsList.join(', ')}]`)}` : '';
-      console.log(` ${chalk.bgGreen.white('Uploaded:')} ${chalk.white(filename)}${tagsInfo}`);
+      console.log(` ${chalk.bgGreen.black(' Uploaded: ')} ${chalk.white(filename)}${tagsInfo}`);
+      console.log(`   ${chalk.cyan(`URL: ${blobClient.url}`)}`);
       successCount++;
 
     } catch (error) {
@@ -117,6 +119,26 @@ async function uploadScans() {
     console.log(`${chalk.white(`Failed: ${errorCount}`)}`);
   }
   console.log(`Total: ${imageFiles.length}`);
+
+  // Generate SAS token for container (valid for 24 hours)
+  if (successCount > 0) {
+    try {
+      console.log(`\n${chalk.blue('=== SAS Token ===')}`);
+      console.log('Generating SAS token (valid for 24 hours)...');
+
+      const sasToken = execSync(
+        `az storage container generate-sas --account-name ${ACCOUNT_NAME} --name ${CONTAINER_NAME} --permissions rl --expiry $(date -u -v+24H '+%Y-%m-%dT%H:%MZ') --auth-mode login --as-user -o tsv`,
+        { encoding: 'utf-8' }
+      ).trim();
+
+      console.log(`${chalk.green('Token:')} ${sasToken}`);
+      console.log(`\n${chalk.yellow('Example usage:')}`);
+      console.log(`curl "https://${ACCOUNT_NAME}.blob.core.windows.net/${CONTAINER_NAME}/[blob-name]?${sasToken}"`);
+    } catch (error) {
+      console.error(`${chalk.red('Failed to generate SAS token:')} ${error.message}`);
+      console.error('Make sure you are logged in with: az login');
+    }
+  }
 }
 
 // Run upload
