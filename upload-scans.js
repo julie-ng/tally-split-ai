@@ -1,11 +1,12 @@
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
 import { config } from 'dotenv';
-import { readdir, writeFile } from 'fs/promises';
+import { readdir } from 'fs/promises';
 // import { createReadStream } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
 import chalk from 'chalk';
 import { extractReceiptDate, extractReceiptTotal, extractHashtags } from './filename-utils.js';
+import { saveUploadResults } from './save-results-helper.js';
 
 // Load environment variables
 config();
@@ -152,30 +153,15 @@ async function uploadScans() {
 
   // Save upload results to JSON file
   if (successCount > 0) {
-    const results = {
+    await saveUploadResults({
       accountName: ACCOUNT_NAME,
       containerName: CONTAINER_NAME,
-      sasToken: sasToken,
-      uploadedAt: new Date().toISOString(),
-      summary: {
-        successful: successCount,
-        failed: errorCount,
-        total: imageFiles.length
-      },
-      blobs: uploadedBlobs.map(blob => ({
-        filename: blob.filename,
-        tags: blob.tags,
-        url: blob.url,
-        urlWithSas: sasToken ? `${blob.url}?${sasToken}` : null
-      }))
-    };
-
-    try {
-      await writeFile('upload-results.json', JSON.stringify(results, null, 2));
-      console.log(`\n${chalk.green('✓')} Upload results saved to upload-results.json`);
-    } catch (error) {
-      console.error(`${chalk.red('Failed to save upload results:')} ${error.message}`);
-    }
+      sasToken,
+      successCount,
+      errorCount,
+      totalCount: imageFiles.length,
+      uploadedBlobs
+    });
   }
 }
 
