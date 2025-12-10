@@ -1,8 +1,9 @@
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
 import { config } from 'dotenv';
 import { readdir } from 'fs/promises';
-import { createReadStream } from 'fs';
+// import { createReadStream } from 'fs';
 import { join } from 'path';
+import chalk from 'chalk';
 import { extractReceiptDate, extractReceiptTotal, extractHashtags } from './filename-utils.js';
 
 // Load environment variables
@@ -11,7 +12,7 @@ config();
 const ACCOUNT_NAME = process.env.AZ_STORAGE_ACCOUNT;
 const ACCOUNT_KEY = process.env.AZ_STORAGE_ACCOUNT_KEY;
 const CONTAINER_NAME = 'receipts'; // Container name for receipt uploads
-const SCANS_DIR = './scans';
+const SCANS_DIR = './scans/excerpt';
 
 /**
  * Upload all images from scans directory to Azure Blob Storage
@@ -97,8 +98,8 @@ async function uploadScans() {
       if (receiptDate) tagsList.push(`receipt-date: ${receiptDate}`);
       if (receiptTotal) tagsList.push(`receipt-total: ${receiptTotal}`);
       if (hashtags) tagsList.push(`receipt-tags: ${hashtags}`);
-      const tagsInfo = tagsList.length > 0 ? ` [${tagsList.join(', ')}]` : '';
-      console.log(` Uploaded: ${filename}${tagsInfo}`);
+      const tagsInfo = tagsList.length > 0 ? ` ${chalk.gray(`[${tagsList.join(', ')}]`)}` : '';
+      console.log(` ${chalk.bgGreen.white('Uploaded:')} ${chalk.white(filename)}${tagsInfo}`);
       successCount++;
 
     } catch (error) {
@@ -108,9 +109,13 @@ async function uploadScans() {
   }
 
   // Summary
-  console.log(`\n=== Upload Summary ===`);
-  console.log(`Successful: ${successCount}`);
-  console.log(`Failed: ${errorCount}`);
+  console.log(`\n${chalk.blue('=== Upload Summary ===')}`);
+  console.log(`${chalk.green(`Successful: ${successCount}`)}`);
+  if (errorCount > 0) {
+    console.log(`${chalk.red(`Failed: ${errorCount}`)}`);
+  } else {
+    console.log(`${chalk.white(`Failed: ${errorCount}`)}`);
+  }
   console.log(`Total: ${imageFiles.length}`);
 }
 
