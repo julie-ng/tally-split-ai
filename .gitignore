@@ -6,3 +6,4 @@ scans/
 **/*.private.md
 test.html
 upload-results.json
+analysis-results.json
