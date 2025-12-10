@@ -4,3 +4,4 @@ node_modules
 scans/
 **/*.private.json
 **/*.private.md
+test.html
