@@ -5,3 +5,4 @@ scans/
 **/*.private.json
 **/*.private.md
 test.html
+upload-results.json

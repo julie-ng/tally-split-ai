@@ -1,6 +1,6 @@
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
 import { config } from 'dotenv';
-import { readdir } from 'fs/promises';
+import { readdir, writeFile } from 'fs/promises';
 // import { createReadStream } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
@@ -65,6 +65,7 @@ async function uploadScans() {
   // Upload each file
   let successCount = 0;
   let errorCount = 0;
+  const uploadedBlobs = [];
 
   for (const filename of imageFiles) {
     const filePath = join(SCANS_DIR, filename);
@@ -102,6 +103,14 @@ async function uploadScans() {
       const tagsInfo = tagsList.length > 0 ? ` ${chalk.gray(`[${tagsList.join(', ')}]`)}` : '';
       console.log(` ${chalk.bgGreen.black(' Uploaded: ')} ${chalk.white(filename)}${tagsInfo}`);
       console.log(`   ${chalk.cyan(`URL: ${blobClient.url}`)}`);
+
+      // Store blob info for JSON output
+      uploadedBlobs.push({
+        filename,
+        url: blobClient.url,
+        tags
+      });
+
       successCount++;
 
     } catch (error) {
@@ -121,12 +130,13 @@ async function uploadScans() {
   console.log(`Total: ${imageFiles.length}`);
 
   // Generate SAS token for container (valid for 24 hours)
+  let sasToken = null;
   if (successCount > 0) {
     try {
       console.log(`\n${chalk.blue('=== SAS Token ===')}`);
       console.log('Generating SAS token (valid for 24 hours)...');
 
-      const sasToken = execSync(
+      sasToken = execSync(
         `az storage container generate-sas --account-name ${ACCOUNT_NAME} --name ${CONTAINER_NAME} --permissions rl --expiry $(date -u -v+24H '+%Y-%m-%dT%H:%MZ') --auth-mode login --as-user -o tsv`,
         { encoding: 'utf-8' }
       ).trim();
@@ -137,6 +147,34 @@ async function uploadScans() {
     } catch (error) {
       console.error(`${chalk.red('Failed to generate SAS token:')} ${error.message}`);
       console.error('Make sure you are logged in with: az login');
+    }
+  }
+
+  // Save upload results to JSON file
+  if (successCount > 0) {
+    const results = {
+      accountName: ACCOUNT_NAME,
+      containerName: CONTAINER_NAME,
+      sasToken: sasToken,
+      uploadedAt: new Date().toISOString(),
+      summary: {
+        successful: successCount,
+        failed: errorCount,
+        total: imageFiles.length
+      },
+      blobs: uploadedBlobs.map(blob => ({
+        filename: blob.filename,
+        tags: blob.tags,
+        url: blob.url,
+        urlWithSas: sasToken ? `${blob.url}?${sasToken}` : null
+      }))
+    };
+
+    try {
+      await writeFile('upload-results.json', JSON.stringify(results, null, 2));
+      console.log(`\n${chalk.green('✓')} Upload results saved to upload-results.json`);
+    } catch (error) {
+      console.error(`${chalk.red('Failed to save upload results:')} ${error.message}`);
     }
   }
 }
