@@ -5,8 +5,8 @@ import { readdir } from 'fs/promises';
 import { join } from 'path';
 import { execSync } from 'child_process';
 import chalk from 'chalk';
-import { extractReceiptDate, extractReceiptTotal, extractHashtags } from './filename-utils.js';
-import { saveUploadResults } from './save-results-helper.js';
+import { extractReceiptDate, extractReceiptTotal, extractHashtags } from './helpers/filename.helper.js';
+import { saveUploadResults } from './helpers/save-results.helper.js';
 
 // Load environment variables
 config();

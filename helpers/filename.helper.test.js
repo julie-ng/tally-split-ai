@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { extractReceiptDate, extractReceiptTotal, extractHashtags } from './filename-utils.js';
+import { extractReceiptDate, extractReceiptTotal, extractHashtags } from './filename.helper.js';
 
 describe('extractReceiptDate', () => {
   it('should extract date in YYYY-MM-DD format from the beginning of filename', () => {
