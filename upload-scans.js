@@ -13,7 +13,7 @@ config();
 
 const ACCOUNT_NAME = process.env.AZ_STORAGE_ACCOUNT;
 const ACCOUNT_KEY = process.env.AZ_STORAGE_ACCOUNT_KEY;
-const CONTAINER_NAME = 'receipts'; // Container name for receipt uploads
+const CONTAINER_NAME = process.env.AZ_STORAGE_CONTAINER_NAME; // Container name for receipt uploads
 const SCANS_DIR = './scans/excerpt';
 
 /**
