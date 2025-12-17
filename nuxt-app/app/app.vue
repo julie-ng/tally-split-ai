@@ -1,6 +1,10 @@
 <template>
   <div>
     <NuxtRouteAnnouncer />
-    <NuxtWelcome />
+    <h1>Hello World</h1>
   </div>
 </template>
+
+<style>
+@import url("~/assets/scss/main.scss");
+</style>

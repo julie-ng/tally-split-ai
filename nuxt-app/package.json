@@ -10,8 +10,13 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "bulma": "^1.0.4",
     "nuxt": "^4.2.2",
+    "sass": "^1.97.0",
     "vue": "^3.5.25",
     "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "vite-tsconfig-paths": "^6.0.2"
   }
 }
