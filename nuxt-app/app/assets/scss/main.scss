@@ -1,6 +1,9 @@
 /* Import Bulma SCSS */
- @import 'bulma/bulma';
+ /* @import 'bulma/bulma'; */
+
+@use "bulma.scss";
 
 body {
-  background: white;
+  font-family: "Inter", sans-serif;
+  font-optical-sizing: auto;
 }

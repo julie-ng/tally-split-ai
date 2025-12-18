@@ -1,0 +1,111 @@
+/**
+ * Configure
+ * =========
+ */
+
+/* $red: #FF407D;
+$teal: #1AACAC; */
+
+@use "bulma/sass/utilities" with (
+  $family-primary: '"Inter", Verdana, sans-serif',
+  /* $primary: #38419D, //2B3499,
+  $link: #2229d2, //$teal
+  $info: #22b7f6,
+  $success: #65B741, // 1AACAC, */
+    // $pre-background: #404654, // doesn't work??
+  $size-1: 2.5rem,
+  $size-2: 2rem,
+  $size-3: 1.5rem,
+  $size-4: 1.25rem,
+  $size-5: 1rem,
+  $size-6: 0.9rem,
+  $size-7: 0.8rem
+);
+
+/**
+ * Bulma Sass
+ * ==========
+ */
+
+// Base
+/* @forward "./../../../node_modules/bulma/sass/base"; */
+@forward "bulma/sass/base";
+
+// Components
+@forward "bulma/sass/components/breadcrumb";
+@forward "bulma/sass/components/card";
+// @forward "bulma/sass/components/dropdown";
+// @forward "bulma/sass/components/menu";
+@forward "bulma/sass/components/message";
+// @forward "bulma/sass/components/modal";
+@forward "bulma/sass/components/navbar";
+// @forward "bulma/sass/components/pagination";
+// @forward "bulma/sass/components/panel";
+@forward "bulma/sass/components/tabs";
+
+// Elements
+@forward "bulma/sass/elements/block";
+@forward "bulma/sass/elements/box";
+@forward "bulma/sass/elements/button";
+@forward "bulma/sass/elements/content";
+@forward "bulma/sass/elements/delete";
+@forward "bulma/sass/elements/icon";
+@forward "bulma/sass/elements/image";
+@forward "bulma/sass/elements/loader";
+@forward "bulma/sass/elements/notification";
+// @forward "bulma/sass/elements/progress";
+@forward "bulma/sass/elements/table";
+@forward "bulma/sass/elements/tag";
+@forward "bulma/sass/elements/title";
+
+// Form
+// @forward "bulma/sass/form/checkbox-radio";
+// @forward "bulma/sass/form/file";
+// @forward "bulma/sass/form/input-textarea";
+// @forward "bulma/sass/form/select";
+// @forward "bulma/sass/form/shared";
+// @forward "bulma/sass/form/tools";
+
+// Grid
+// @forward "bulma/sass/grid/columns-v2";
+@forward "bulma/sass/grid/columns";
+@forward "bulma/sass/grid/grid";
+
+// All helpers, layout
+@forward "bulma/sass/helpers";
+@forward "bulma/sass/layout";
+
+// Import the themes so that all CSS variables have a value
+@forward "bulma/sass/themes";
+
+/**
+  * Bulma customizations
+  * ====================
+  */
+
+:root {
+  // --bulma-pre-background: #1f293b; //#292D3E;
+  --bulma-pre-font-size: 1em;
+  // --bulma-body-font-size: 14px;
+  // --teal: #1AACAC;
+  // --bulma-link-text: #00a4ba;
+
+  --bulma-code-size: 0.95em; // bit larger
+  --bulma-pre-background: #213041;
+  --bulma-pre: #ccc;
+
+  --bulma-hr-height: 1px;
+}
+
+/* html {
+   background-color: var(--bulma-scheme-main-ter-l);
+
+ } */
+
+.tag {
+  &.is-warning {
+    &.is-light {
+      background: #fff6c0 !important;
+    }
+  }
+}
