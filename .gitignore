@@ -1,9 +1,33 @@
+# Local env files
 .env
-.DS_Store
-node_modules
+.env.*
+!.env.example
+!.env.sample
+
+# AI Receipts POC
 scans/
 **/*.private.json
 **/*.private.md
 test.html
 upload-results.json
 analysis-results.json
+
+# Nuxt dev/build outputs
+.output
+.data
+.nuxt
+.nitro
+.cache
+dist
+
+# Node dependencies
+node_modules
+
+# Logs
+logs
+*.log
+
+# Misc
+.DS_Store
+.fleet
+.idea

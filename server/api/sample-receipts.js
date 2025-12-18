@@ -2,7 +2,7 @@ import { readdir } from 'fs/promises'
 import { join } from 'path'
 
 export default defineEventHandler(async (event) => {
-  const scansPath = join(process.cwd(), '..', 'scans', 'excerpt')
+  const scansPath = join(process.cwd(), 'scans', 'excerpt')
 
   try {
     const files = await readdir(scansPath)
@@ -12,9 +12,17 @@ export default defineEventHandler(async (event) => {
       /\.(jpg|jpeg|png|gif|bmp|tiff)$/i.test(file)
     )
 
+    // Extract metadata from filenames
+    const receipts = imageFiles.map(filename => ({
+      filename,
+      date: extractReceiptDate(filename),
+      total: extractReceiptTotal(filename),
+      tags: extractHashtags(filename)
+    }))
+
     return {
-      count: imageFiles.length,
-      files: imageFiles
+      count: receipts.length,
+      receipts
     }
   } catch (error) {
     throw createError({
