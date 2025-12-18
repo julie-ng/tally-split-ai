@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { extractReceiptDate, extractReceiptTotal, extractHashtags } from './filename.helper.js';
+import { extractReceiptDate, extractReceiptTotal, extractHashtags, extractHashtagsForAzureBlobs } from './filename.helper.js';
 
-describe('extractReceiptDate', () => {
+describe('extractReceiptDate()', () => {
   it('should extract date in YYYY-MM-DD format from the beginning of filename', () => {
     expect(extractReceiptDate('2025-12-08-grocery-store.jpg')).toBe('2025-12-08');
     expect(extractReceiptDate('2024-01-15-restaurant.png')).toBe('2024-01-15');
@@ -23,7 +23,7 @@ describe('extractReceiptDate', () => {
   });
 });
 
-describe('extractReceiptTotal', () => {
+describe('extractReceiptTotal()', () => {
   it('should extract receipt total in parentheses', () => {
     expect(extractReceiptTotal('2025-12-08-store-(21.82).jpg')).toBe('21.82');
     expect(extractReceiptTotal('receipt-(115).png')).toBe('115');
@@ -49,34 +49,66 @@ describe('extractReceiptTotal', () => {
   });
 });
 
-describe('extractHashtags', () => {
+describe('extractHashtags()', () => {
   it('should extract single hashtag', () => {
-    expect(extractHashtags('receipt#special.jpg')).toBe('special');
-    expect(extractHashtags('2025-12-08-store#initials.png')).toBe('initials');
+    expect(extractHashtags('receipt#special.jpg')).toEqual(['special']);
+    expect(extractHashtags('2025-12-08-store#initials.png')).toEqual(['initials']);
   });
 
   it('should extract multiple hashtags and join with plus sign', () => {
-    expect(extractHashtags('receipt#special#initials.jpg')).toBe('special+initials');
-    expect(extractHashtags('store#tag1#tag2#tag3.png')).toBe('tag1+tag2+tag3');
+    expect(extractHashtags('receipt#special#initials.jpg')).toEqual(['special', 'initials']);
+    expect(extractHashtags('store#tag1#tag2#tag3.png')).toEqual(['tag1', 'tag2', 'tag3']);
   });
 
   it('should return null if no hashtags are found', () => {
-    expect(extractHashtags('2025-12-08-store.jpg')).toBeNull();
-    expect(extractHashtags('receipt-(21.82).png')).toBeNull();
+    expect(extractHashtags('2025-12-08-store.jpg')).toEqual([]);
+    expect(extractHashtags('receipt-(21.82).png')).toEqual([]);
   });
 
   it('should handle hashtags with numbers', () => {
-    expect(extractHashtags('receipt#tag123.jpg')).toBe('tag123');
-    expect(extractHashtags('store#item1#item2.png')).toBe('item1+item2');
+    expect(extractHashtags('receipt#tag123.jpg')).toEqual(['tag123']);
+    expect(extractHashtags('store#item1#item2.png')).toEqual(['item1', 'item2']);
   });
 
   it('should handle hashtags with hyphens and underscores', () => {
-    expect(extractHashtags('receipt#multi-word.jpg')).toBe('multi-word');
-    expect(extractHashtags('store#with_underscore.png')).toBe('with_underscore');
-    expect(extractHashtags('file#tag-1#tag_2.jpg')).toBe('tag-1+tag_2');
+    expect(extractHashtags('receipt#multi-word.jpg')).toEqual(['multi-word']);
+    expect(extractHashtags('store#with_underscore.png')).toEqual(['with_underscore']);
+    expect(extractHashtags('file#tag-1#tag_2.jpg')).toEqual(['tag-1', 'tag_2']);
   });
 
   it('should extract hashtags combined with date and total', () => {
-    expect(extractHashtags('2025-12-08-store-(21.82)#special#initials.jpg')).toBe('special+initials');
+    expect(extractHashtags('2025-12-08-store-(21.82)#special#initials.jpg')).toEqual(['special', 'initials']);
+  });
+});
+
+describe('extractHashtagsForAzureBlobs()', () => {
+  it('should extract single hashtag', () => {
+    expect(extractHashtagsForAzureBlobs('receipt#special.jpg')).toBe('special');
+    expect(extractHashtagsForAzureBlobs('2025-12-08-store#initials.png')).toBe('initials');
+  });
+
+  it('should extract multiple hashtags and join with plus sign', () => {
+    expect(extractHashtagsForAzureBlobs('receipt#special#initials.jpg')).toBe('special+initials');
+    expect(extractHashtagsForAzureBlobs('store#tag1#tag2#tag3.png')).toBe('tag1+tag2+tag3');
+  });
+
+  it('should return null if no hashtags are found', () => {
+    expect(extractHashtagsForAzureBlobs('2025-12-08-store.jpg')).toBeNull();
+    expect(extractHashtagsForAzureBlobs('receipt-(21.82).png')).toBeNull();
+  });
+
+  it('should handle hashtags with numbers', () => {
+    expect(extractHashtagsForAzureBlobs('receipt#tag123.jpg')).toBe('tag123');
+    expect(extractHashtagsForAzureBlobs('store#item1#item2.png')).toBe('item1+item2');
+  });
+
+  it('should handle hashtags with hyphens and underscores', () => {
+    expect(extractHashtagsForAzureBlobs('receipt#multi-word.jpg')).toBe('multi-word');
+    expect(extractHashtagsForAzureBlobs('store#with_underscore.png')).toBe('with_underscore');
+    expect(extractHashtagsForAzureBlobs('file#tag-1#tag_2.jpg')).toBe('tag-1+tag_2');
+  });
+
+  it('should extract hashtags combined with date and total', () => {
+    expect(extractHashtagsForAzureBlobs('2025-12-08-store-(21.82)#special#initials.jpg')).toBe('special+initials');
   });
 });
