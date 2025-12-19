@@ -1,3 +1,9 @@
+<script setup>
+useHead({
+  title: 'Homepage'
+})
+</script>
+
 <template>
 <div class="container my-5 content">
   <h1 class="has-text-weight-bold">Homepage</h1>
