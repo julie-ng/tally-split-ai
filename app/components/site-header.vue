@@ -1,6 +1,6 @@
 <template>
 <div>
-  <nav class="navbar is-link py-1" role="navigation" aria-label="main navigation">
+  <nav class="navbar is-primary py-1" role="navigation" aria-label="main navigation">
     <div class="container">
       <div class="navbar-brand has-text-weight-bold">
         <NuxtLink class="navbar-item" to="/">
@@ -18,6 +18,9 @@
 
       <div id="navbarBasicExample" class="navbar-menu">
         <div class="navbar-start">
+          <NuxtLink to="/blobs" class="navbar-item">
+            Blobs
+          </NuxtLink>
           <NuxtLink to="/samples" class="navbar-item">
             Samples (local)
           </NuxtLink>
