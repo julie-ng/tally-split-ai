@@ -5,8 +5,8 @@ import { readdir } from 'fs/promises';
 import { join } from 'path';
 import { execSync } from 'child_process';
 import chalk from 'chalk';
-import { extractReceiptDate, extractReceiptTotal, extractHashtags } from './helpers/filename.helper.js';
-import { saveUploadResults } from './helpers/save-results.helper.js';
+import { extractReceiptDate, extractReceiptTotal, extractHashtagsForAzureBlobs } from './shared/utils/filename.helper.js';
+import { saveUploadResults } from './shared/utils/save-results.helper.js';
 
 // Load environment variables
 config();
@@ -76,7 +76,7 @@ async function uploadScans() {
       // Extract receipt date, total, and hashtags from filename
       const receiptDate = extractReceiptDate(filename);
       const receiptTotal = extractReceiptTotal(filename);
-      const hashtags = extractHashtags(filename);
+      const hashtags = extractHashtagsForAzureBlobs(filename);
 
       // Prepare blob index tags
       const tags = {};
