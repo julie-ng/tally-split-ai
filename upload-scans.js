@@ -90,9 +90,30 @@ async function uploadScans() {
         tags['receipt-tags'] = hashtags;
       }
 
-      // Upload file with tags
+      // Determine content type based on file extension
+      const getContentType = (filename) => {
+        const ext = filename.toLowerCase().split('.').pop();
+        const mimeTypes = {
+          'jpg': 'image/jpeg',
+          'jpeg': 'image/jpeg',
+          'png': 'image/png',
+          'gif': 'image/gif',
+          'bmp': 'image/bmp',
+          'tiff': 'image/tiff',
+          'tif': 'image/tiff',
+          'webp': 'image/webp',
+          'pdf': 'application/pdf'
+        };
+        return mimeTypes[ext] || 'application/octet-stream';
+      };
+
+      // Upload file with tags and proper content disposition for inline display
       const uploadOptions = {
-        tags: Object.keys(tags).length > 0 ? tags : undefined
+        tags: Object.keys(tags).length > 0 ? tags : undefined,
+        blobHTTPHeaders: {
+          blobContentType: getContentType(filename),
+          blobContentDisposition: 'inline' // Display in browser instead of download
+        }
       };
 
       await blobClient.uploadFile(filePath, uploadOptions);
