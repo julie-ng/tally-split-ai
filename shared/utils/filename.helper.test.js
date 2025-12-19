@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { extractReceiptDate, extractReceiptTotal, extractHashtags, extractHashtagsForAzureBlobs } from './filename.helper.js';
+import { extractReceiptDate, extractReceiptTotal, extractHashtags, extractHashtagsForAzureBlobs, extractReceiptTitle, filenameToComponentKey } from './filename.helper.js';
 
 describe('extractReceiptDate()', () => {
   it('should extract date in YYYY-MM-DD format from the beginning of filename', () => {
@@ -110,5 +110,112 @@ describe('extractHashtagsForAzureBlobs()', () => {
 
   it('should extract hashtags combined with date and total', () => {
     expect(extractHashtagsForAzureBlobs('2025-12-08-store-(21.82)#special#initials.jpg')).toBe('special+initials');
+  });
+});
+
+describe('extractReceiptTitle()', () => {
+  it('should extract title from filename with all metadata', () => {
+    expect(extractReceiptTitle('2025-12-08 Grocery Store (45.99) #food #mm.jpg')).toBe('Grocery Store');
+    expect(extractReceiptTitle('2024-01-15 Restaurant Bill (125.50) #dining #special.png')).toBe('Restaurant Bill');
+  });
+
+  it('should handle filename with only date', () => {
+    expect(extractReceiptTitle('2025-12-08 Coffee Shop.jpg')).toBe('Coffee Shop');
+    expect(extractReceiptTitle('2024-01-15 Store.png')).toBe('Store');
+  });
+
+  it('should handle filename with date and price', () => {
+    expect(extractReceiptTitle('2025-12-08 Market (50.00).jpg')).toBe('Market');
+    expect(extractReceiptTitle('2024-01-15 Shop (10.50).png')).toBe('Shop');
+  });
+
+  it('should handle filename with date and hashtags', () => {
+    expect(extractReceiptTitle('2025-12-08 Store #special #initials.jpg')).toBe('Store');
+    expect(extractReceiptTitle('2024-01-15 Restaurant #food.png')).toBe('Restaurant');
+  });
+
+  it('should remove file extension', () => {
+    expect(extractReceiptTitle('Store.jpg')).toBe('Store');
+    expect(extractReceiptTitle('Restaurant.png')).toBe('Restaurant');
+    expect(extractReceiptTitle('Receipt.jpeg')).toBe('Receipt');
+  });
+
+  it('should handle filename without date', () => {
+    expect(extractReceiptTitle('Grocery Store (45.99) #food.jpg')).toBe('Grocery Store');
+    expect(extractReceiptTitle('Coffee Shop #special.png')).toBe('Coffee Shop');
+  });
+
+  it('should normalize whitespace', () => {
+    expect(extractReceiptTitle('2025-12-08   Multiple   Spaces  .jpg')).toBe('Multiple Spaces');
+    expect(extractReceiptTitle('2024-01-15 Store   (10.50)   #tag.png')).toBe('Store');
+  });
+
+  it('should handle filename with only title and extension', () => {
+    expect(extractReceiptTitle('Simple Receipt.jpg')).toBe('Simple Receipt');
+    expect(extractReceiptTitle('Store.png')).toBe('Store');
+  });
+
+  it('should handle empty result gracefully', () => {
+    expect(extractReceiptTitle('2025-12-08 (45.99) #tag.jpg')).toBe('');
+  });
+
+  it('should handle multiple hashtags', () => {
+    expect(extractReceiptTitle('2025-12-08 Store #tag1 #tag2 #tag3.jpg')).toBe('Store');
+  });
+
+  it('should handle price without decimals', () => {
+    expect(extractReceiptTitle('2025-12-08 Store (100).jpg')).toBe('Store');
+  });
+});
+
+describe('filenameToComponentKey()', () => {
+  it('should convert filename with all metadata to component key', () => {
+    expect(filenameToComponentKey('2025-12-08 Store (11.50) #special #initials.jpg')).toBe('2025-12-08-store-11-50-special-initials-jpg');
+    expect(filenameToComponentKey('2024-01-15 Restaurant (125.50) #food.png')).toBe('2024-01-15-restaurant-125-50-food-png');
+  });
+
+  it('should convert to lowercase', () => {
+    expect(filenameToComponentKey('UPPERCASE.JPG')).toBe('uppercase-jpg');
+    expect(filenameToComponentKey('MixedCase.PNG')).toBe('mixedcase-png');
+  });
+
+  it('should replace spaces with dashes', () => {
+    expect(filenameToComponentKey('Grocery Store Receipt.jpg')).toBe('grocery-store-receipt-jpg');
+    expect(filenameToComponentKey('Multiple   Spaces.png')).toBe('multiple-spaces-png');
+  });
+
+  it('should replace special characters with dashes', () => {
+    expect(filenameToComponentKey('file@name!.jpg')).toBe('file-name-jpg');
+    expect(filenameToComponentKey('receipt$123%.png')).toBe('receipt-123-png');
+  });
+
+  it('should handle parentheses and dots', () => {
+    expect(filenameToComponentKey('receipt (100).jpg')).toBe('receipt-100-jpg');
+    expect(filenameToComponentKey('file.name.with.dots.jpg')).toBe('file-name-with-dots-jpg');
+  });
+
+  it('should handle hashtags', () => {
+    expect(filenameToComponentKey('receipt#special#initials.jpg')).toBe('receipt-special-initials-jpg');
+    expect(filenameToComponentKey('file #tag1 #tag2.png')).toBe('file-tag1-tag2-png');
+  });
+
+  it('should collapse multiple dashes into one', () => {
+    expect(filenameToComponentKey('file---name.jpg')).toBe('file-name-jpg');
+    expect(filenameToComponentKey('receipt  (100)  #tag.png')).toBe('receipt-100-tag-png');
+  });
+
+  it('should remove leading and trailing dashes', () => {
+    expect(filenameToComponentKey('-file-name-.jpg')).toBe('file-name-jpg');
+    expect(filenameToComponentKey('---receipt---.png')).toBe('receipt-png');
+  });
+
+  it('should handle simple filenames', () => {
+    expect(filenameToComponentKey('receipt.jpg')).toBe('receipt-jpg');
+    expect(filenameToComponentKey('store.png')).toBe('store-png');
+  });
+
+  it('should handle filenames with only numbers', () => {
+    expect(filenameToComponentKey('12345.jpg')).toBe('12345-jpg');
+    expect(filenameToComponentKey('2025-12-08.png')).toBe('2025-12-08-png');
   });
 });

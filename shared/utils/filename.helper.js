@@ -55,3 +55,45 @@ export function extractHashtagsForAzureBlobs(filename) {
   const tags = matches.map(match => match[1]);
   return tags.join('+');
 }
+
+/**
+ * Extract receipt title from filename by removing date, price, tags, and extension
+ * @param {string} filename - The filename to parse
+ * @returns {string} - The extracted title, trimmed
+ */
+export function extractReceiptTitle(filename) {
+  let title = filename;
+
+  // Remove file extension
+  title = title.replace(/\.[^.]+$/, '');
+
+  // Remove YYYY-MM-DD date prefix
+  title = title.replace(/^\d{4}-\d{2}-\d{2}\s*/, '');
+
+  // Remove price in parentheses
+  title = title.replace(/\([0-9.]+\)/, '');
+
+  // Remove hashtags
+  title = title.replace(/#[a-zA-Z0-9_-]+/g, '');
+
+  // Clean up extra whitespace
+  title = title.trim().replace(/\s+/g, ' ');
+
+  return title;
+}
+
+/**
+ * Convert filename to a component-friendly key
+ * Removes extra spaces, replaces spaces and special characters with dashes, and converts to lowercase
+ * @param {string} filename - The filename to convert
+ * @returns {string} - The component key in kebab-case
+ */
+export function filenameToComponentKey(filename) {
+  return filename
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')                    // Replace spaces with dashes
+    .replace(/[^a-z0-9-]/g, '-')             // Replace special characters with dashes
+    .replace(/-+/g, '-')                      // Replace multiple consecutive dashes with single dash
+    .replace(/^-|-$/g, '');                   // Remove leading/trailing dashes
+}
