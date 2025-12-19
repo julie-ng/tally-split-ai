@@ -15,6 +15,8 @@ export default defineEventHandler(async (event) => {
     // Extract metadata from filenames
     const receipts = imageFiles.map(filename => ({
       filename,
+      key: filenameToComponentKey(filename),
+      title: extractReceiptTitle(filename),
       date: extractReceiptDate(filename),
       total: extractReceiptTotal(filename),
       tags: extractHashtags(filename)

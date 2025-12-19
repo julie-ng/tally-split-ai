@@ -5,21 +5,23 @@
 
 /* $red: #FF407D;
 $teal: #1AACAC; */
-
-@use "bulma/sass/utilities" with (
+$code: #293cc4;
+@use "bulma/sass" with (
   $family-primary: '"Inter", Verdana, sans-serif',
   /* $primary: #38419D, //2B3499,
   $link: #2229d2, //$teal
   $info: #22b7f6,
   $success: #65B741, // 1AACAC, */
     // $pre-background: #404654, // doesn't work??
+  $code: $code,
   $size-1: 2.5rem,
   $size-2: 2rem,
   $size-3: 1.5rem,
   $size-4: 1.25rem,
   $size-5: 1rem,
   $size-6: 0.9rem,
-  $size-7: 0.8rem
+  $size-7: 0.8rem,
+  $card-radius: 0.35rem
 );
 
 /**
@@ -89,12 +91,13 @@ $teal: #1AACAC; */
   // --bulma-body-font-size: 14px;
   // --teal: #1AACAC;
   // --bulma-link-text: #00a4ba;
-
+  /* --bulma-card-radius: 0.35rem; */
   --bulma-code-size: 0.95em; // bit larger
   --bulma-pre-background: #213041;
   --bulma-pre: #ccc;
 
   --bulma-hr-height: 1px;
+  --bulma-code: #293cc4;
 }
 
 /* html {

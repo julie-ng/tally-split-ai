@@ -3,10 +3,10 @@
   <nav class="navbar is-link py-1" role="navigation" aria-label="main navigation">
     <div class="container">
       <div class="navbar-brand has-text-weight-bold">
-        <a class="navbar-item" href="/">
+        <NuxtLink class="navbar-item" to="/">
           <img src="/images/logo-dark.svg" alt="Logo">
           AI Receipts POC
-        </a>
+        </NuxtLink>
 
         <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
           <span aria-hidden="true"></span>
@@ -18,12 +18,9 @@
 
       <div id="navbarBasicExample" class="navbar-menu">
         <div class="navbar-start">
-          <a class="navbar-item">
-            Home
-          </a>
-          <!-- <a class="navbar-item">
-            Documentation
-          </a> -->
+          <NuxtLink to="/samples" class="navbar-item">
+            Samples (local)
+          </NuxtLink>
         </div>
         <div class="navbar-end">
         </div>
