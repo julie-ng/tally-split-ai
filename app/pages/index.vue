@@ -5,7 +5,7 @@ useHead({
 </script>
 
 <template>
-<div class="container my-5 content">
-  <h1 class="has-text-weight-bold">Homepage</h1>
-</div>
+<UContainer class="my-5 content">
+  <h1 class="font-bold text-3xl">Homepage</h1>
+</UContainer>
 </template>

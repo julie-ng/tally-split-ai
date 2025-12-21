@@ -1,12 +1,14 @@
+<script setup>
+useHead({
+  title: 'Homepage'
+})
+</script>
+
 <template>
-<div>
-  <site-header />
-  <NuxtRouteAnnouncer />
-  <NuxtPage />
-
-</div>
+<UApp>
+  <AppHeader />
+  <UMain>
+    <NuxtPage />
+  </UMain>
+</UApp>
 </template>
-
-<style>
-@import url("~/assets/scss/main.scss");
-</style>
