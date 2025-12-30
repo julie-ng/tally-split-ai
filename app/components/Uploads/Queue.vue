@@ -5,11 +5,20 @@ const queueStore = useUploadQueueStore()
 const queuedUploads = queueStore.uploads
 </script>
 <template>
-  <section class="my-6 p-3">
-    <h1 class="font-bold text-md text-slate-600">Scan View Preview</h1>
+  <section class="my-3">
+    <!-- <h1 class="font-bold text-md text-slate-600">Scan View Preview</h1> -->
     <!-- <pre class="my-3 p-3 bg-slate-700 text-slate-300"><code>{{ queuedUploads }}</code></pre> -->
     <div v-if="queueStore.hasItems">
-      <UButton color="neutral" variant="soft" class="cursor-pointer" @click="queueStore.removeAll()">Empty Queue</UButton>
+      <UButton
+        color="neutral"
+        variant="subtle"
+        active-variant="solid"
+        class="cursor-pointer"
+        icon="i-lucide-brush-cleaning"
+        @click="queueStore.removeAll()"
+      >
+        Empty Queue
+      </UButton>
     </div>
     <UploadsQueueItem v-for="(queued, hashId) in queuedUploads"
       :key="hashId"
