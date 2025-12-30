@@ -20,9 +20,9 @@ const queuedUploads = queueStore.uploads
         Empty Queue
       </UButton>
     </div>
-    <UploadsQueueItem v-for="(queued, hashId) in queuedUploads"
-      :key="hashId"
-      :hashId="hashId"
+    <UploadsQueueItem v-for="queued in queuedUploads"
+      :key="`queued-${queued.hashId}`"
+      :hashId="queued.hashId"
       :name="queued.file.name"
       :size="queued.file.size"
       :type="queued.file.type"

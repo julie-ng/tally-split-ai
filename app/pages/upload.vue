@@ -13,7 +13,7 @@ const queueStore = useUploadQueueStore()
 
 function onFilesUpdate(files) {
   files.forEach(async function (file) {
-    const id = simpleHash(file.name)
+    const hashId = simpleHash(file.name)
 
     // Generate Blob Url & SAS token for each file
     let result
@@ -33,8 +33,8 @@ function onFilesUpdate(files) {
     // DEBUG: remove later
     console.table(result)
 
-    const fileObject = {
-      id,
+    const uploadObject = {
+      hashId,
       originalFilename: file.name,
       azureFilename: result.filename,
       blobUrl: result.blob.url,
@@ -46,7 +46,7 @@ function onFilesUpdate(files) {
       queuedAt: new Date(),
       file
     }
-    queueStore.add(id, fileObject)
+    queueStore.add(uploadObject)
   })
 }
 </script>
