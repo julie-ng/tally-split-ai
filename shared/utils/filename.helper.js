@@ -1,3 +1,5 @@
+import crypto from 'node:crypto'
+
 /**
  * Extract date from filename in YYYY-MM-DD format
  * @param {string} filename - The filename to parse
@@ -96,4 +98,63 @@ export function filenameToComponentKey(filename) {
     .replace(/[^a-z0-9-]/g, '-')             // Replace special characters with dashes
     .replace(/-+/g, '-')                      // Replace multiple consecutive dashes with single dash
     .replace(/^-|-$/g, '');                   // Remove leading/trailing dashes
+}
+
+/**
+ * Generate an 8-character hex hash from a string
+ * @param {string} str - The string to hash
+ * @returns {string} - An 8-character hexadecimal hash
+ */
+export function simpleHash(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
+/**
+ * Create an Azure-friendly filename by replacing special characters with dashes
+ * and appending a random suffix. Only accepts image files with .jpg, .jpeg, or .png extensions.
+ * Keeps price and hashtag values, just removes parentheses and hash symbols.
+ * @param {string} filename - The original filename to process
+ * @returns {string} - The processed filename with random suffix
+ * @throws {Error} - If filename doesn't have a valid image extension
+ */
+export function createAzureFilename(filename) {
+  // Extract file extension first
+  const extensionMatch = filename.match(/(\.[^.]+)$/);
+  const extension = extensionMatch ? extensionMatch[1].toLowerCase() : '';
+
+  // Validate that file has a proper image extension
+  const validExtensions = ['.jpg', '.jpeg', '.png'];
+  if (!validExtensions.includes(extension)) {
+    throw new Error(`Invalid file extension. Only ${validExtensions.join(', ')} are allowed.`);
+  }
+
+  // Remove extension for processing
+  let processedName = filename.slice(0, -extension.length);
+
+  // Remove parentheses but keep the price value
+  processedName = processedName.replace(/[()]/g, '-');
+
+  // Remove hash symbols but keep the tag values
+  processedName = processedName.replace(/#/g, '-');
+
+  // Replace whitespace with dashes
+  processedName = processedName.replace(/\s+/g, '-');
+
+  // Clean up multiple consecutive dashes
+  processedName = processedName.replace(/-+/g, '-');
+
+  // Remove leading/trailing dashes
+  processedName = processedName.replace(/^-+|-+$/g, '');
+
+  // Generate random 6-character suffix using crypto.randomBytes
+  const randomSuffix = crypto.randomBytes(3).toString('hex');
+
+  // Combine processed name with random suffix and extension
+  return `${processedName}-${randomSuffix}${extension}`;
 }

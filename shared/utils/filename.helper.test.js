@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { extractReceiptDate, extractReceiptTotal, extractHashtags, extractHashtagsForAzureBlobs, extractReceiptTitle, filenameToComponentKey } from './filename.helper.js';
+import { extractReceiptDate, extractReceiptTotal, extractHashtags, extractHashtagsForAzureBlobs, extractReceiptTitle, filenameToComponentKey, simpleHash, createAzureFilename } from './filename.helper.js';
 
 describe('extractReceiptDate()', () => {
   it('should extract date in YYYY-MM-DD format from the beginning of filename', () => {
@@ -217,5 +217,136 @@ describe('filenameToComponentKey()', () => {
   it('should handle filenames with only numbers', () => {
     expect(filenameToComponentKey('12345.jpg')).toBe('12345-jpg');
     expect(filenameToComponentKey('2025-12-08.png')).toBe('2025-12-08-png');
+  });
+});
+
+describe('simpleHash()', () => {
+  it('should generate an 8-character hex hash', () => {
+    const hash = simpleHash('test-filename.jpg');
+    expect(hash).toHaveLength(8);
+    expect(hash).toMatch(/^[0-9a-f]{8}$/);
+  });
+
+  it('should generate consistent hash for same input', () => {
+    const input = '2025-12-08-store.jpg';
+    const hash1 = simpleHash(input);
+    const hash2 = simpleHash(input);
+    expect(hash1).toBe(hash2);
+  });
+
+  it('should generate different hashes for different inputs', () => {
+    const hash1 = simpleHash('file1.jpg');
+    const hash2 = simpleHash('file2.jpg');
+    expect(hash1).not.toBe(hash2);
+  });
+
+  it('should handle empty string', () => {
+    const hash = simpleHash('');
+    expect(hash).toHaveLength(8);
+    expect(hash).toBe('00000000');
+  });
+
+  it('should handle long filenames', () => {
+    const longFilename = '2025-12-08-very-long-receipt-name-with-lots-of-metadata-(125.50)-#special-#initials-#food.jpg';
+    const hash = simpleHash(longFilename);
+    expect(hash).toHaveLength(8);
+    expect(hash).toMatch(/^[0-9a-f]{8}$/);
+  });
+
+  it('should handle special characters', () => {
+    const hash = simpleHash('file@#$%^&*().jpg');
+    expect(hash).toHaveLength(8);
+    expect(hash).toMatch(/^[0-9a-f]{8}$/);
+  });
+});
+
+describe('createAzureFilename()', () => {
+  it('should keep price and hashtag values, replace special characters with dashes, and add random suffix', () => {
+    const filename = '2024-12-29 Grocery Store (45.99) #food #mm.jpg';
+    const result = createAzureFilename(filename);
+
+    expect(result).toMatch(/^2024-12-29-Grocery-Store-45\.99-food-mm-[a-f0-9]{6}\.jpg$/);
+  });
+
+  it('should preserve file extension', () => {
+    const filename1 = 'Receipt.jpg';
+    const filename2 = 'Receipt.png';
+    const filename3 = 'Receipt.jpeg';
+
+    expect(createAzureFilename(filename1)).toMatch(/\.jpg$/);
+    expect(createAzureFilename(filename2)).toMatch(/\.png$/);
+    expect(createAzureFilename(filename3)).toMatch(/\.jpeg$/);
+  });
+
+  it('should remove parentheses but keep price value', () => {
+    const filename = 'Store (100.50).jpg';
+    const result = createAzureFilename(filename);
+
+    expect(result).not.toContain('(');
+    expect(result).not.toContain(')');
+    expect(result).toContain('100.50');
+  });
+
+  it('should remove hash symbols but keep tag values', () => {
+    const filename = 'Receipt #special #initials.jpg';
+    const result = createAzureFilename(filename);
+
+    expect(result).not.toContain('#');
+    expect(result).toContain('-special-');
+    expect(result).toContain('-initials-');
+  });
+
+  it('should replace whitespace with dashes', () => {
+    const filename = 'My Store Receipt.jpg';
+    const result = createAzureFilename(filename);
+
+    expect(result).toContain('-');
+    expect(result).not.toContain(' ');
+  });
+
+  it('should clean up multiple consecutive dashes', () => {
+    const filename = 'Store   Receipt.jpg';
+    const result = createAzureFilename(filename);
+
+    expect(result).not.toContain('--');
+  });
+
+  it('should remove leading and trailing dashes', () => {
+    const filename = ' Receipt .jpg';
+    const result = createAzureFilename(filename);
+
+    expect(result).not.toMatch(/^-/);
+    expect(result).not.toMatch(/-\./);
+  });
+
+  it('should append 6-character random suffix', () => {
+    const filename = 'Receipt.jpg';
+    const result = createAzureFilename(filename);
+
+    // Check format: Receipt-[6 hex chars].jpg
+    expect(result).toMatch(/^Receipt-[a-f0-9]{6}\.jpg$/);
+  });
+
+  it('should generate unique names for same filename', () => {
+    const filename = 'Receipt.jpg';
+
+    const result1 = createAzureFilename(filename);
+    const result2 = createAzureFilename(filename);
+
+    // Same input should produce different outputs due to random suffix
+    expect(result1).not.toBe(result2);
+  });
+
+  it('should handle complex filenames with all metadata', () => {
+    const filename = '2025-12-08 Coffee Shop (5.50) #breakfast #special.png';
+    const result = createAzureFilename(filename);
+
+    expect(result).toMatch(/^2025-12-08-Coffee-Shop-5\.50-breakfast-special-[a-f0-9]{6}\.png$/);
+  });
+
+  it('should throw error for filenames without proper image extension', () => {
+    expect(() => createAzureFilename('Receipt (10.00) #test')).toThrow();
+    expect(() => createAzureFilename('receipt.txt')).toThrow();
+    expect(() => createAzureFilename('receipt.pdf')).toThrow();
   });
 });

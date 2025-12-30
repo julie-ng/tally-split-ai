@@ -3,8 +3,11 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   // css: ['~/assets/scss/main.scss'],
-  modules: ['@nuxt/ui'],
+  modules: ['@nuxt/ui', '@pinia/nuxt'],
   css: ['~/assets/css/main.css'],
+  pinia: {
+    storesDirs: ['~/stores/**']
+  },
   app: {
     head: {
       title: 'AI Receipts POC',
@@ -16,7 +19,8 @@ export default defineNuxtConfig({
       },
       link: [
         {
-          rel: 'icon', href: '/favicon.ico' }
+          rel: 'icon', href: '/favicon.ico'
+        }
         ,
         {
           rel: 'preconnect',
@@ -32,6 +36,16 @@ export default defineNuxtConfig({
           href: 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap'
         }
       ]
+    }
+  },
+  runtimeConfig: {
+    public: {
+      environment: 'development',
+      demoUserFirstName: '',
+      demoUserLastName: '',
+      demoUserUsername: '',
+      demoUserEmail: '',
+      demoUserId: '',
     }
   }
 })
