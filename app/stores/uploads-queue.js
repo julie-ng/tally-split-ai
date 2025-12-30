@@ -2,8 +2,16 @@ import { defineStore } from 'pinia'
 
 export const useUploadQueueStore = defineStore('uploadQueue', () => {
   const uploads = ref([])
-  const total = computed(() => uploads.value.length)
+  const totalItems = computed(() => uploads.value.length)
   const hasItems = computed(() => uploads.value.length > 0)
+
+  const queued = computed(() => uploads.value.filter((u) => u.status === 'queued'))
+  const hasQueued = computed(() => uploads.value.filter((u) => u.status === 'queued').length > 0)
+  const totalQueued = computed(() => uploads.value.filter((u) => u.status=== 'queued').length)
+
+  const hasInProgress = computed(() => uploads.value.filter((u) => u.status === 'in-progress').length > 0)
+  const inProgress = computed(() => uploads.value.filter((u) => u.status === 'in-progress'))
+  const totalInProgress = computed(() => uploads.value.filter((u) => u.status === 'in-progress').length)
 
   function getName(hashId) {
     console.log(`🍍 getName(${hashId})`)
@@ -29,6 +37,24 @@ export const useUploadQueueStore = defineStore('uploadQueue', () => {
     }
   }
 
+  function nextUpload(hashId) {
+    const index = uploads.value.findIndex((u) => u.hashId === hashId)
+    if (index !== -1) {
+      uploads.value[index].status = 'in-progress'
+    } else {
+      console.error(`Cannot find ${hashId}.`)
+    }
+  }
+
+  function returnToQueue(hashId) {
+    const index = uploads.value.findIndex((u) => u.hashId === hashId)
+    if (index !== -1) {
+      uploads.value[index].status = 'queued'
+    } else {
+      console.error(`Cannot find ${hashId}.`)
+    }
+  }
+
   async function removeAll() {
     console.log('🍍‼️ [Remove All]')
     // uploads.value = [] // breaks reactivity
@@ -40,9 +66,17 @@ export const useUploadQueueStore = defineStore('uploadQueue', () => {
     add,
     getName,
     hasItems,
+    hasInProgress,
+    hasQueued,
+    inProgress,
+    nextUpload,
+    queued,
     remove,
     removeAll,
-    total,
+    returnToQueue,
+    totalItems,
+    totalInProgress,
+    totalQueued,
     uploads
   }
 })

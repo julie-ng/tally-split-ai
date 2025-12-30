@@ -2,7 +2,7 @@
 import { useUploadQueueStore } from '~/stores/uploads-queue'
 
 const queueStore = useUploadQueueStore()
-const queuedUploads = queueStore.uploads
+// const queuedUploads = queueStore.queued
 </script>
 <template>
   <section class="my-3">
@@ -20,7 +20,7 @@ const queuedUploads = queueStore.uploads
         Empty Queue
       </UButton>
     </div>
-    <UploadsQueueItem v-for="queued in queuedUploads"
+    <UploadsQueueItem v-for="queued in queueStore.queued"
       :key="`queued-${queued.hashId}`"
       :hashId="queued.hashId"
       :name="queued.file.name"

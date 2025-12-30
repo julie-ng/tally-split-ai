@@ -37,6 +37,7 @@ function onFilesUpdate(files) {
       hashId,
       originalFilename: file.name,
       azureFilename: result.filename,
+      size: file.size,
       blobUrl: result.blob.url,
       upload: {
         url: result.blob.uploadUrl,
@@ -62,19 +63,29 @@ function onFilesUpdate(files) {
         <div>
           <h1 class="text-lg font-bold">
             Queued
-            <span v-if="queueStore.hasItems" class="bg-slate-300 font-normal text-slate-500 inline-block ml-1 w-6 h-6 align-middle text-center text-base/6 rounded-full">
-              {{ queueStore.total }}
+            <span v-if="queueStore.hasQueued" class="bg-slate-300 font-normal text-slate-500 inline-block ml-1 w-6 h-6 align-middle text-center text-base/6 rounded-full">
+              {{ queueStore.totalQueued }}
             </span>
           </h1>
           <UploadsQueue />
         </div>
         <div>
-          <h1 class="text-lg font-bold">In Progress</h1>
+          <h1 class="text-lg font-bold">
+            In Progress
+            <span v-if="queueStore.hasInProgress" class="bg-slate-300 font-normal text-slate-500 inline-block ml-1 w-6 h-6 align-middle text-center text-base/6 rounded-full">
+              {{ queueStore.totalInProgress }}
+            </span>
+          </h1>
+          <UploadsInProgressList />
         </div>
         <div>
           <h1 class="text-lg font-bold">Complete</h1>
         </div>
       </div>
+      <!--
+      <hr>
+      <pre class="p-6 bg-slate-600 text-slate-100"><code>{{ queueStore.queued }}</code></pre>
+      -->
     </div>
   </UContainer>
 </template>

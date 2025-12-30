@@ -13,7 +13,13 @@ const props = defineProps({
 // const lastModified = new Date(props.lastModified)
 const sizeInBytes = formatBytes(props.size)
 
+function startUpload (evt){
+  evt.preventDefault()
+  uploadQueueStore.nextUpload(props.hashId)
+}
+
 function removeFromQueue(evt) {
+  evt.preventDefault()
   uploadQueueStore.remove(props.hashId)
 }
 </script>
@@ -22,8 +28,8 @@ function removeFromQueue(evt) {
   <article class="my-4 p-5 bg-white border-slate-200 border-solid border rounded-md">
     <UButton color="neutral" variant="ghost"
       class="float-right text-slate-500 hover:bg-orange-100 hover:text-orange-500 cursor-pointer"
-      @click="removeFromQueue">
-      <UIcon name="i-lucide-x" class="size-5" />
+      @click="removeFromQueue"
+      icon="i-lucide-x">
     </UButton>
 
     <p class="mb-1 text-slate-400 text-xs">
@@ -41,5 +47,12 @@ function removeFromQueue(evt) {
     <StackedListItem name="Date" :value="extractReceiptDate(props.name)" />
     <StackedListItem name="Total" :value="extractReceiptTotal(props.name)" />
     <StackedListItem name="Tags" :value="extractHashtags(props.name)" />
+    <div class="mt-6">
+      <UButton color="neutral" variant="soft"
+        class="cursor-pointer bg-blue-100 text-blue-500 hover:bg-blue-500 hover:text-white"
+        @click="startUpload"
+        icon="i-lucide-upload">Upload
+      </UButton>
+    </div>
   </article>
 </template>
