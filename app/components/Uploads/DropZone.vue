@@ -4,7 +4,7 @@ const emit = defineEmits(['on-update'])
 const activeClasses = ref('')
 
 function setActive(e) {
-  activeClasses.value = 'bg-slate-100'
+  activeClasses.value = 'bg-slate-200'
 }
 
 function unsetActive(e) {
@@ -40,14 +40,11 @@ function _showFiles(files) {
   //   console.log(file)
   // })
 }
-
-
-
 </script>
 <template>
   <div>
     <label id="js-dropzone"
-      class="my-5 p-5 flex flex-col items-center justify-center cursor-pointer w-full min-h-20 rounded-sm border border-slate-300 border-dashed text-center"
+      class="my-5 p-5 flex flex-col items-center justify-center cursor-pointer w-full min-h-20 rounded-sm border border-slate-400 border-dashed text-center"
       :class="activeClasses" @drop.prevent="onDrop" @dragover.prevent="setActive" @dragenter.prevent="setActive"
       @dragend.prevent="unsetActive" @dragleave.prevent="unsetActive">
       <input type="file" id="js-files" class="hidden" multiple accept="image/*" @change="onFilesSelected" />

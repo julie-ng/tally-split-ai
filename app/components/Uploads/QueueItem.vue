@@ -19,7 +19,7 @@ function removeFromQueue(evt) {
 </script>
 
 <template>
-  <article class="my-4 p-5  border-slate-200 border-solid border rounded-sm">
+  <article class="my-4 p-5 bg-white border-slate-200 border-solid border rounded-md">
     <UButton color="neutral" variant="ghost"
       class="float-right text-slate-500 hover:bg-orange-100 hover:text-orange-500 cursor-pointer"
       @click="removeFromQueue">
