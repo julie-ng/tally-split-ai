@@ -1,5 +1,5 @@
 <script setup>
-import { useUploadQueueStore } from '~/stores/uploads-queue'
+import { useUploadQueueStore } from '~/stores/uploads.store'
 const queueStore = useUploadQueueStore()
 
 const MAX_IN_PROGRESS = 1 // TODO

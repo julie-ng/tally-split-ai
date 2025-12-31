@@ -5,7 +5,7 @@ useHead({
 
 import { createAzureFilename, simpleHash } from '~~/shared/utils/filename.helper'
 import { useUserStore } from '~/stores/user.store'
-import { useUploadQueueStore } from '~/stores/uploads-queue'
+import { useUploadQueueStore } from '~/stores/uploads.store'
 
 const userStore = useUserStore()
 const userId = userStore.userId
