@@ -1,6 +1,6 @@
 <script setup>
-import { useUploadQueueStore } from '~/stores/uploads.store'
-const uploadQueueStore = useUploadQueueStore()
+import { useUploadsStore } from '~/stores/uploads.store'
+const uploadsStore = useUploadsStore()
 
 const props = defineProps({
   hashId: String,
@@ -16,7 +16,7 @@ const sizeInBytes = formatBytes(props.size)
 
 function returnToQueue(evt) {
   evt.preventDefault()
-  uploadQueueStore.returnToQueue(props.hashId)
+  uploadsStore.returnToQueue(props.hashId)
 }
 </script>
 

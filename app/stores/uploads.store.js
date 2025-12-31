@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 
-export const useUploadQueueStore = defineStore('uploadQueue', () => {
+export const useUploadsStore = defineStore('uploads', () => {
 
   // -------- STATE --------
 

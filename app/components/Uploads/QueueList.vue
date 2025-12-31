@@ -1,8 +1,7 @@
 <script setup>
-import { useUploadQueueStore } from '~/stores/uploads.store'
+import { useUploadsStore } from '~/stores/uploads.store'
 
-const queueStore = useUploadQueueStore()
-// const queuedUploads = queueStore.queued
+const queueStore = useUploadsStore()
 </script>
 <template>
   <section class="my-3">

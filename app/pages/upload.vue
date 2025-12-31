@@ -5,11 +5,11 @@ useHead({
 
 import { createAzureFilename, simpleHash } from '~~/shared/utils/filename.helper'
 import { useUserStore } from '~/stores/user.store'
-import { useUploadQueueStore } from '~/stores/uploads.store'
+import { useUploadsStore } from '~/stores/uploads.store'
 
 const userStore = useUserStore()
 const userId = userStore.userId
-const queueStore = useUploadQueueStore()
+const queueStore = useUploadsStore()
 
 function onFilesUpdate(files) {
   files.forEach(async function (file) {
