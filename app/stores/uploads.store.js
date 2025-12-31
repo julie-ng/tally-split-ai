@@ -4,6 +4,7 @@ export const useUploadsStore = defineStore('uploads', () => {
 
   // -------- STATE --------
 
+  const MAX_CONCURRENT_UPLOADS = 3
   const uploads = ref([])
 
   // -------- GETTERS --------
@@ -50,6 +51,15 @@ export const useUploadsStore = defineStore('uploads', () => {
   const failed = computed(() => byStatus.value.failed)
   const hasFailed = computed(() => byStatus.value.failed.length > 0)
   const totalFailed = computed(() => byStatus.value.failed.length)
+
+  /**
+   * Concurrent Upload Limits
+   */
+  const availableSlots = computed(() => 
+    MAX_CONCURRENT_UPLOADS - totalInProgress.value
+  )
+
+  const canStartUpload = computed(() => availableSlots.value > 0)
 
   // -------- ACTIONS --------
 
@@ -98,16 +108,24 @@ export const useUploadsStore = defineStore('uploads', () => {
   }
 
   /**
-   * Mark an upload as in-progress
+   * Mark an upload as in-progress (respects max concurrent limit)
    *
    * @param {string} hashId - The unique hash identifier for the upload
+   * @returns {boolean} True if upload was started, false if limit reached
    */
   function nextUpload(hashId) {
+    if (!canStartUpload.value) {
+      console.warn(`⚠️ Max concurrent uploads (${MAX_CONCURRENT_UPLOADS}) reached`)
+      return false
+    }
+
     const index = uploads.value.findIndex((u) => u.hashId === hashId)
     if (index !== -1) {
       uploads.value[index].status = 'in-progress'
+      return true
     } else {
       console.error(`Cannot find ${hashId}.`)
+      return false
     }
   }
 
@@ -145,6 +163,8 @@ export const useUploadsStore = defineStore('uploads', () => {
 
   return {
     add,
+    availableSlots,
+    canStartUpload,
     completed,
     emptyQueue,
     failed,
@@ -155,6 +175,7 @@ export const useUploadsStore = defineStore('uploads', () => {
     hasItems,
     hasQueued,
     inProgress,
+    maxConcurrentUploads: MAX_CONCURRENT_UPLOADS,
     nextUpload,
     queued,
     remove,

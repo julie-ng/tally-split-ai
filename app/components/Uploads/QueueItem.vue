@@ -47,12 +47,17 @@ function removeFromQueue(evt) {
     <StackedListItem name="Date" :value="extractReceiptDate(props.name)" />
     <StackedListItem name="Total" :value="extractReceiptTotal(props.name)" />
     <StackedListItem name="Tags" :value="extractHashtags(props.name)" />
-    <div class="mt-6">
-      <UButton color="neutral" variant="soft"
-        class="cursor-pointer bg-blue-100 text-blue-500 hover:bg-blue-500 hover:text-white"
+    <div class="mt-6 flex items-center gap-3">
+      <UButton color="neutral"
+        :variant="uploadsStore.canStartUpload ? 'soft' : 'outline'"
+        class="cursor-pointer"
+        :disabled="!uploadsStore.canStartUpload"
         @click="startUpload"
         icon="i-lucide-upload">Upload
       </UButton>
+      <p v-if="!uploadsStore.canStartUpload" class="text-slate-500 text-xs">
+        Max concurrent uploads reached.
+      </p>
     </div>
   </article>
 </template>
