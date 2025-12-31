@@ -3,51 +3,36 @@ useHead({
   title: 'Upload'
 })
 
-import { createAzureFilename, simpleHash } from '~~/shared/utils/filename.helper'
 import { useUserStore } from '~/stores/user.store'
 import { useUploadsStore } from '~/stores/uploads.store'
+import { useUploadObject } from '~/composables/useUploadObject'
 
 const userStore = useUserStore()
 const userId = userStore.userId
 const queueStore = useUploadsStore()
+const { createUploadObject } = useUploadObject()
 
 function onFilesUpdate(files) {
   files.forEach(async function (file) {
-    const hashId = simpleHash(file.name)
-
     // Generate Blob Url & SAS token for each file
-    let result
     try {
-      result = await $fetch('/api/blobs/new', {
+      const result = await $fetch('/api/blobs/new', {
         method: 'POST',
         body: {
           userId,
           filename: file.name
         }
       })
+
+      // DEBUG: remove later
+      console.table(result)
+
+      const uploadObject = createUploadObject(file, result)
+      queueStore.add(uploadObject)
     } catch (error) {
       console.error('❗️ Unable to initialize new blob request')
       console.error(error)
     }
-
-    // DEBUG: remove later
-    console.table(result)
-
-    const uploadObject = {
-      hashId,
-      originalFilename: file.name,
-      azureFilename: result.filename,
-      size: file.size,
-      blobUrl: result.blob.url,
-      upload: {
-        url: result.blob.uploadUrl,
-        expiresAt: result.blob.uploadExpiresAt
-      },
-      status: 'queued',
-      queuedAt: new Date(),
-      file
-    }
-    queueStore.add(uploadObject)
   })
 }
 </script>

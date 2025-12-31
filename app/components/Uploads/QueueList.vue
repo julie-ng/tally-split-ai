@@ -17,13 +17,13 @@ const queueStore = useUploadsStore()
         Empty Queue
       </UButton>
     </div>
-    <UploadsQueueItem v-for="queued in queueStore.queued"
-      :key="`queued-${queued.hashId}`"
-      :hashId="queued.hashId"
-      :name="queued.file.name"
-      :size="queued.file.size"
-      :type="queued.file.type"
-      :lastModified="queued.file.lastModified">
+    <UploadsQueueItem v-for="upload in queueStore.queued"
+      :key="`queued-${upload.hashId}`"
+      :hashId="upload.hashId"
+      :name="upload.file.name"
+      :size="upload.file.size"
+      :type="upload.file.type"
+      :lastModified="upload.file.lastModified">
     </UploadsQueueItem>
   </section>
 </template>
