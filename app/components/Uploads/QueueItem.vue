@@ -3,32 +3,24 @@ import { useUploadsStore } from '~/stores/uploads.store'
 const uploadsStore = useUploadsStore()
 
 const props = defineProps({
-  hashId: String,
-  name: String,           // "example.jpg"
-  size: Number,           // 1024000 (bytes)
-  type: String,           // "image/jpeg"
-  lastModified: Number,   // 1703847600000 (timestamp)
-});
+  hashId: String
+})
 
-// const lastModified = new Date(props.lastModified)
-const sizeInBytes = formatBytes(props.size)
+// Get the upload from the store
+const upload = computed(() =>
+  uploadsStore.queued.find(u => u.hashId === props.hashId)
+)
 
-function startUpload (evt){
-  evt.preventDefault()
-  uploadsStore.nextUpload(props.hashId)
-}
-
-function removeFromQueue(evt) {
-  evt.preventDefault()
-  uploadsStore.remove(props.hashId)
-}
+const sizeInBytes = computed(() =>
+  upload.value ? formatBytes(upload.value.size) : ''
+)
 </script>
 
 <template>
-  <article class="my-4 p-5 bg-white border-slate-200 border-solid border rounded-md">
+  <article v-if="upload" class="my-4 p-5 bg-white border-slate-200 border-solid border rounded-md">
     <UButton color="neutral" variant="ghost"
       class="float-right text-slate-500 hover:bg-orange-100 hover:text-orange-500 cursor-pointer"
-      @click="removeFromQueue"
+      @click="uploadsStore.remove(props.hashId)"
       icon="i-lucide-x">
     </UButton>
 
@@ -36,23 +28,23 @@ function removeFromQueue(evt) {
       {{ sizeInBytes }}
     </p>
     <h1 class="text-slate mb-1" :data-hash-id="props.hashId">
-      {{ props.name }}
+      {{ upload.originalFilename }}
     </h1>
 
     <hr class="text-slate-200 my-3">
 
     <p class="text-slate-600 text-sm mb-3">Extracted from file name</p>
 
-    <StackedListItem name="Title" :value="extractReceiptTitle(props.name)" />
-    <StackedListItem name="Date" :value="extractReceiptDate(props.name)" />
-    <StackedListItem name="Total" :value="extractReceiptTotal(props.name)" />
-    <StackedListItem name="Tags" :value="extractHashtags(props.name)" />
+    <StackedListItem name="Title" :value="extractReceiptTitle(upload.originalFilename)" />
+    <StackedListItem name="Date" :value="extractReceiptDate(upload.originalFilename)" />
+    <StackedListItem name="Total" :value="extractReceiptTotal(upload.originalFilename)" />
+    <StackedListItem name="Tags" :value="extractHashtags(upload.originalFilename)" />
     <div class="mt-6 flex items-center gap-3">
       <UButton color="neutral"
         :variant="uploadsStore.canStartUpload ? 'soft' : 'outline'"
         class="cursor-pointer"
         :disabled="!uploadsStore.canStartUpload"
-        @click="startUpload"
+        @click="uploadsStore.startUpload(props.hashId)"
         icon="i-lucide-upload">Upload
       </UButton>
       <p v-if="!uploadsStore.canStartUpload" class="text-slate-500 text-xs">

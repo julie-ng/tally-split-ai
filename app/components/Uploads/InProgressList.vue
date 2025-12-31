@@ -1,24 +1,22 @@
 <script setup>
 import { useUploadsStore } from '~/stores/uploads.store'
-const queueStore = useUploadsStore()
+const uploadsStore = useUploadsStore()
 
-const MAX_IN_PROGRESS = 1 // TODO
-
+// Combine in-progress and failed uploads
+const activeUploads = computed(() => [
+  ...uploadsStore.inProgress,
+  ...uploadsStore.failed
+])
 </script>
+
 <template>
 <div>
   <section>
     <UploadsInProgressItem
-      v-for="item in queueStore.inProgress"
-      :key="`in-progress-${item.hashId}`"
+      v-for="item in activeUploads"
+      :key="`active-${item.hashId}`"
       :hashId="item.hashId"
-      :size="item.size"
-      :azureName="item.azureFilename"
-      :originalName="item.originalFilename"
-      :uploadUrl="item.upload.url"
-      :uploadExpiresAt="item.upload.expiresAt"
-    >
-    </UploadsInProgressItem>
+    />
   </section>
 </div>
 </template>

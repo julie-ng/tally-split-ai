@@ -60,6 +60,7 @@ export function generateBlobSasToken(blobName, { permissions = 'read', expiresIn
 		case 'write':
 			sasPermissions.create = true
 			sasPermissions.write = true
+			sasPermissions.tag = true // Add tags permission for write
 			break
 		default:
 			throw new Error(`Invalid permission: ${permissions}. Must be 'read', 'create', or 'write'`)

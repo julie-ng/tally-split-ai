@@ -137,7 +137,6 @@ Per [request headers docs](https://learn.microsoft.com/en-us/rest/api/storageser
 | `Content-Type` | ?? Insomnia used `image/png`. Default is `application/octet-stream` |
 | `Date` | [ISO-8601 Format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), e.g. `YYYY-MM-DD` | 
 | `Content-MD5` | Optional. But we should send it too. |
-| `x-ms-version` | Azure Storage API version e.g. `2025-11-05` |
 | `x-blob-type` | `BlockBlob` |
 | `x-ms-tags` | query-string encoded tags on blob. |
 
@@ -145,6 +144,7 @@ Not required (for our scenario):
 
 - `Authorization` - because token already in URLs
 - `Content-Length` - not required for block blobs
+- `x-ms-version` - not required, because we are not doing authorized request.
 
 ---
 

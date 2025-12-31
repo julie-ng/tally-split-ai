@@ -55,7 +55,7 @@ export const useUploadsStore = defineStore('uploads', () => {
   /**
    * Concurrent Upload Limits
    */
-  const availableSlots = computed(() => 
+  const availableSlots = computed(() =>
     MAX_CONCURRENT_UPLOADS - totalInProgress.value
   )
 
@@ -107,27 +107,7 @@ export const useUploadsStore = defineStore('uploads', () => {
     }
   }
 
-  /**
-   * Mark an upload as in-progress (respects max concurrent limit)
-   *
-   * @param {string} hashId - The unique hash identifier for the upload
-   * @returns {boolean} True if upload was started, false if limit reached
-   */
-  function nextUpload(hashId) {
-    if (!canStartUpload.value) {
-      console.warn(`⚠️ Max concurrent uploads (${MAX_CONCURRENT_UPLOADS}) reached`)
-      return false
-    }
 
-    const index = uploads.value.findIndex((u) => u.hashId === hashId)
-    if (index !== -1) {
-      uploads.value[index].status = 'in-progress'
-      return true
-    } else {
-      console.error(`Cannot find ${hashId}.`)
-      return false
-    }
-  }
 
   /**
    * Return an upload back to the queued status
@@ -161,6 +141,149 @@ export const useUploadsStore = defineStore('uploads', () => {
     uploads.value.splice(0, total)
   }
 
+  /**
+   * Upload a file to Azure Blob Storage with progress tracking
+   *
+   * @param {string} hashId - The unique hash identifier for the upload
+   * @returns {Promise<boolean>} True if upload succeeded, false otherwise
+   */
+  function uploadToAzure(hashId) {
+    return new Promise((resolve, reject) => {
+      const index = uploads.value.findIndex((u) => u.hashId === hashId)
+
+      if (index === -1) {
+        console.error(`Cannot find upload ${hashId}`)
+        reject(new Error(`Upload ${hashId} not found`))
+        return
+      }
+
+      const upload = uploads.value[index]
+      const xhr = new XMLHttpRequest()
+
+      // Track upload progress
+      xhr.upload.addEventListener('progress', (evt) => {
+        if (evt.lengthComputable) {
+          const percentComplete = Math.round((evt.loaded / evt.total) * 100)
+          uploads.value[index].upload.progress = percentComplete
+          console.log(`📊 Upload progress (${hashId}): ${percentComplete}%`)
+        }
+      })
+
+      // Handle successful upload
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          console.log(`✅ Upload complete (${hashId})`)
+          uploads.value[index].status = 'completed'
+          uploads.value[index].upload.progress = 100
+          resolve(true)
+        } else {
+          const errorMsg = `Upload failed: ${xhr.status} ${xhr.statusText}`
+          console.error(`❌ ${errorMsg} (${hashId})`)
+          uploads.value[index].status = 'failed'
+          uploads.value[index].errors.push(errorMsg)
+          reject(new Error(errorMsg))
+        }
+      })
+
+      // Handle upload errors
+      xhr.addEventListener('error', () => {
+        const errorMsg = 'Upload failed due to network error'
+        console.error(`❌ ${errorMsg} (${hashId})`)
+        uploads.value[index].status = 'failed'
+        uploads.value[index].errors.push(errorMsg)
+        reject(new Error(errorMsg))
+      })
+
+      // Handle upload abort
+      xhr.addEventListener('abort', () => {
+        console.warn(`⚠️ Upload aborted (${hashId})`)
+        uploads.value[index].status = 'queued'
+        uploads.value[index].upload.progress = 0
+        uploads.value[index].errors = []
+        reject(new Error('Upload aborted'))
+      })
+
+      // Configure and send the request
+      xhr.open('PUT', upload.upload.url)
+      xhr.setRequestHeader('x-ms-blob-type', 'BlockBlob')
+      xhr.setRequestHeader('Content-Type', upload.file.type || 'application/octet-stream')
+
+      // Set Azure blob index tags if available
+      if (upload.azureTags && Object.keys(upload.azureTags).length > 0) {
+        // Encode tag values to preserve special characters (+ becomes %2B, space becomes +)
+        const tagPairs = Object.entries(upload.azureTags).map(([key, value]) => {
+          const encodedValue = encodeURIComponent(value).replace(/%20/g, '+')
+          return `${key}=${encodedValue}`
+        })
+        const tagsHeader = tagPairs.join('&')
+        xhr.setRequestHeader('x-ms-tags', tagsHeader)
+        console.log(`🏷️  Setting tags for (${hashId}): ${tagsHeader}`)
+      }
+
+      console.log(`🚀 Starting upload (${hashId}): ${upload.originalFilename}`)
+      xhr.send(upload.file)
+    })
+  }
+
+  /**
+   * Start uploading a file to Azure (checks concurrency limit, updates status, and uploads)
+   *
+   * @param {string} hashId - The unique hash identifier for the upload
+   * @returns {Promise<boolean>} True if upload started and succeeded, false if limit reached or failed
+   */
+  async function startUpload(hashId) {
+    // Check concurrent upload limit
+    if (!canStartUpload.value) {
+      console.warn(`⚠️ Max concurrent uploads (${MAX_CONCURRENT_UPLOADS}) reached`)
+      return false
+    }
+
+    // Find the upload
+    const index = uploads.value.findIndex((u) => u.hashId === hashId)
+    if (index === -1) {
+      console.error(`Cannot find ${hashId}.`)
+      return false
+    }
+
+    // Mark as in-progress
+    uploads.value[index].status = 'in-progress'
+
+    // Upload to Azure
+    try {
+      await uploadToAzure(hashId)
+      return true
+    } catch (error) {
+      console.error(`Upload failed for ${hashId}:`, error)
+      return false
+    }
+  }
+
+  /**
+   * Retry a failed upload (increments retry counter and restarts upload)
+   *
+   * @param {string} hashId - The unique hash identifier for the upload to retry
+   * @returns {Promise<boolean>} True if retry succeeded, false otherwise
+   */
+  async function retryUpload(hashId) {
+    const index = uploads.value.findIndex((u) => u.hashId === hashId)
+
+    if (index === -1) {
+      console.error(`Cannot find upload ${hashId}`)
+      return false
+    }
+
+    // Increment retry counter
+    uploads.value[index].upload.retries += 1
+
+    // Reset progress
+    uploads.value[index].upload.progress = 0
+
+    console.log(`🔄 Retrying upload (${hashId}), attempt #${uploads.value[index].upload.retries}`)
+
+    // Start the upload
+    return await startUpload(hashId)
+  }
+
   return {
     add,
     availableSlots,
@@ -176,11 +299,12 @@ export const useUploadsStore = defineStore('uploads', () => {
     hasQueued,
     inProgress,
     maxConcurrentUploads: MAX_CONCURRENT_UPLOADS,
-    nextUpload,
     queued,
     remove,
     removeAll,
+    retryUpload,
     returnToQueue,
+    startUpload,
     totalCompleted,
     totalFailed,
     totalInProgress,

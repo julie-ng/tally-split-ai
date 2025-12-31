@@ -9,11 +9,11 @@ import { useUploadObject } from '~/composables/useUploadObject'
 
 const userStore = useUserStore()
 const userId = userStore.userId
-const queueStore = useUploadsStore()
+const uploadsStore = useUploadsStore()
 const { createUploadObject } = useUploadObject()
 
-function onFilesUpdate(files) {
-  files.forEach(async function (file) {
+async function onFilesUpdate(files) {
+  for (const file of files) {
     // Generate Blob Url & SAS token for each file
     try {
       const result = await $fetch('/api/blobs/new', {
@@ -25,15 +25,15 @@ function onFilesUpdate(files) {
       })
 
       // DEBUG: remove later
-      console.table(result)
+      // console.table(result)
 
-      const uploadObject = createUploadObject(file, result)
-      queueStore.add(uploadObject)
+      const uploadObject = await createUploadObject(file, result)
+      uploadsStore.add(uploadObject)
     } catch (error) {
       console.error('❗️ Unable to initialize new blob request')
       console.error(error)
     }
-  })
+  }
 }
 </script>
 
@@ -48,8 +48,8 @@ function onFilesUpdate(files) {
         <div>
           <h1 class="text-lg font-bold">
             Queued
-            <span v-if="queueStore.hasQueued" class="bg-slate-300 font-normal text-slate-500 inline-block ml-1 w-6 h-6 align-middle text-center text-base/6 rounded-full">
-              {{ queueStore.totalQueued }}
+            <span v-if="uploadsStore.hasQueued" class="bg-slate-300 font-normal text-slate-500 inline-block ml-1 w-6 h-6 align-middle text-center text-base/6 rounded-full">
+              {{ uploadsStore.totalQueued }}
             </span>
           </h1>
           <UploadsQueueList />
@@ -57,19 +57,20 @@ function onFilesUpdate(files) {
         <div>
           <h1 class="text-lg font-bold">
             In Progress
-            <span v-if="queueStore.hasInProgress" class="bg-slate-300 font-normal text-slate-500 inline-block ml-1 w-6 h-6 align-middle text-center text-base/6 rounded-full">
-              {{ queueStore.totalInProgress }}
+            <span v-if="uploadsStore.hasInProgress" class="bg-slate-300 font-normal text-slate-500 inline-block ml-1 w-6 h-6 align-middle text-center text-base/6 rounded-full">
+              {{ uploadsStore.totalInProgress }}
             </span>
           </h1>
           <UploadsInProgressList />
         </div>
         <div>
           <h1 class="text-lg font-bold">Complete</h1>
+          <UploadsCompletedList />
         </div>
       </div>
       <!--
       <hr>
-      <pre class="p-6 bg-slate-600 text-slate-100"><code>{{ queueStore.queued }}</code></pre>
+      <pre class="p-6 bg-slate-600 text-slate-100"><code>{{ uploadsStore.queued }}</code></pre>
       -->
     </div>
   </UContainer>
