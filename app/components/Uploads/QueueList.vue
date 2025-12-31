@@ -6,8 +6,6 @@ const queueStore = useUploadQueueStore()
 </script>
 <template>
   <section class="my-3">
-    <!-- <h1 class="font-bold text-md text-slate-600">Scan View Preview</h1> -->
-    <!-- <pre class="my-3 p-3 bg-slate-700 text-slate-300"><code>{{ queuedUploads }}</code></pre> -->
     <div v-if="queueStore.hasItems">
       <UButton
         color="neutral"
@@ -15,7 +13,7 @@ const queueStore = useUploadQueueStore()
         active-variant="solid"
         class="cursor-pointer"
         icon="i-lucide-brush-cleaning"
-        @click="queueStore.removeAll()"
+        @click="queueStore.emptyQueue()"
       >
         Empty Queue
       </UButton>

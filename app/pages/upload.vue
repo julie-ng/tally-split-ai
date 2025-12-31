@@ -67,7 +67,7 @@ function onFilesUpdate(files) {
               {{ queueStore.totalQueued }}
             </span>
           </h1>
-          <UploadsQueue />
+          <UploadsQueueList />
         </div>
         <div>
           <h1 class="text-lg font-bold">
