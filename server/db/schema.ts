@@ -28,6 +28,7 @@ export const uploads = sqliteTable('uploads', {
   originalFilename: text('original_filename').notNull(),
   contentType: text('content_type'),
   size: integer('size'),
+  azureTags: text('azure_tags'), // JSON string of Azure blob tags
 
   // Receipt metadata (extracted from filename or OCR)
   // receiptDate: text('receipt_date'), // ISO date string

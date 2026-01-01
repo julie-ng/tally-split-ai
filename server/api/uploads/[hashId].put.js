@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
 		})
 	}
 
-	const { contentType, size, status, uploadedAt } = body
+	const { contentType, size, status, uploadedAt, azureTags } = body
 
 	// Build update object with only provided fields
 	const updates = {}
@@ -40,6 +40,16 @@ export default defineEventHandler(async (event) => {
 			})
 		}
 		updates.size = size
+	}
+
+	if (azureTags !== undefined) {
+		if (typeof azureTags !== 'object' || azureTags === null) {
+			throw createError({
+				statusCode: 400,
+				message: 'Invalid azureTags. Must be an object'
+			})
+		}
+		updates.azureTags = JSON.stringify(azureTags)
 	}
 
 	if (status !== undefined) {
