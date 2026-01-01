@@ -1,4 +1,4 @@
-import { simpleHash, extractReceiptDate, extractReceiptTotal, extractHashtagsForAzureBlobs } from '~~/shared/utils/filename.helper'
+import { extractReceiptDate, extractReceiptTotal, extractHashtagsForAzureBlobs } from '~~/shared/utils/filename.helper'
 import { useUserStore } from '~/stores/user.store'
 
 /**
@@ -67,14 +67,14 @@ export function useUploadObject() {
    * @param {string} blobResult.blob.url - Blob URL
    * @param {string} blobResult.blob.uploadUrl - Upload URL with SAS token
    * @param {string} blobResult.blob.uploadExpiresAt - SAS token expiration
+   * @param {string} blobResult.hashId - Unique hash identifier from server
    * @returns {Promise<UploadObject>} Standardized upload object with 'queued' status
    */
   async function createUploadObject(file, blobResult) {
-    const hashId = simpleHash(file.name)
     const azureTags = extractAzureBlobTags(file.name)
 
     return {
-      hashId,
+      hashId: blobResult.hashId,
       originalFilename: file.name,
       azureFilename: blobResult.filename,
       size: file.size,

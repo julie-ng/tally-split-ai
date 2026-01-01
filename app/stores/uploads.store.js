@@ -168,11 +168,29 @@ export const useUploadsStore = defineStore('uploads', () => {
       })
 
       // Handle successful upload
-      xhr.addEventListener('load', () => {
+      xhr.addEventListener('load', async () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           console.log(`✅ Upload complete (${hashId})`)
           uploads.value[index].status = 'completed'
           uploads.value[index].upload.progress = 100
+
+          // Update database record
+          try {
+            await $fetch(`/api/uploads/${hashId}`, {
+              method: 'PUT',
+              body: {
+                contentType: upload.file.type || 'application/octet-stream',
+                size: upload.file.size,
+                status: 'completed',
+                uploadedAt: true
+              }
+            })
+            console.log(`💾 Database updated for (${hashId})`)
+          } catch (error) {
+            console.error(`❌ Failed to update database for (${hashId}):`, error)
+            // Don't fail the upload if database update fails
+          }
+
           resolve(true)
         } else {
           const errorMsg = `Upload failed: ${xhr.status} ${xhr.statusText}`

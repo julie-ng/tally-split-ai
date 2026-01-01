@@ -77,6 +77,7 @@ export default defineEventHandler(async (event) => {
 	return {
 		originalFilename: filename,
 		filename: azureFilename,
+		hashId,
 		blob: {
 			path: blobPath,
 			url: blobUrl,
