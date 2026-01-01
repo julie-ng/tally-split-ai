@@ -2,6 +2,7 @@
 import { useUserStore } from '~/stores/user.store'
 const store = useUserStore()
 const userFullName = store.fullName
+const userId = store.userId
 
 const links = [
   {
@@ -37,7 +38,7 @@ const links = [
         </ul>
       </div>
       <div class="text-white text-right">
-        Hello {{ userFullName }}
+        Hello {{ userFullName }} ({{ userId }})
       </div>
     </header>
   </UContainer>

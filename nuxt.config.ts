@@ -44,11 +44,13 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       environment: 'development',
+      // TODO: remove after auth implementation
       demoUserFirstName: '',
       demoUserLastName: '',
       demoUserUsername: '',
       demoUserEmail: '',
       demoUserId: '',
+      // usernameHashSalt: '',
     }
   }
 })

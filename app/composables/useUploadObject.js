@@ -1,28 +1,35 @@
 import { simpleHash, extractReceiptDate, extractReceiptTotal, extractHashtagsForAzureBlobs } from '~~/shared/utils/filename.helper'
+import { useUserStore } from '~/stores/user.store'
 
 /**
- * Extract Azure blob tags from filename
+ * Extract Azure blob tags from filename and user context
  * @param {string} filename - The filename to extract tags from
  * @returns {Object} Object with tag keys and values for Azure
  */
 function extractAzureBlobTags(filename) {
+  const userStore = useUserStore()
   const tags = {}
-  
+
+  // Add user ID tag
+  if (userStore.userId) {
+    tags['user-id'] = userStore.userId
+  }
+
   const receiptDate = extractReceiptDate(filename)
   if (receiptDate) {
     tags['receipt-date'] = receiptDate
   }
-  
+
   const receiptTotal = extractReceiptTotal(filename)
   if (receiptTotal) {
     tags['receipt-total'] = receiptTotal
   }
-  
+
   const hashtags = extractHashtagsForAzureBlobs(filename)
   if (hashtags) {
     tags['receipt-tags'] = hashtags
   }
-  
+
   return tags
 }
 
