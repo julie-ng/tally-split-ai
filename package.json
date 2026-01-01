@@ -13,7 +13,8 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "db:generate": "nuxt db generate",
-    "db:migrate": "nuxt db migrate"
+    "db:migrate": "nuxt db migrate",
+    "db:drop-uploads": "nuxt db drop uploads"
   },
   "keywords": [
     "azure",

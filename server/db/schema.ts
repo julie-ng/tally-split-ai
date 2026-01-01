@@ -40,8 +40,9 @@ export const uploads = sqliteTable('uploads', {
   // analyzedAt: integer('analyzed_at', { mode: 'timestamp' }),
 
   // Timestamps
-  uploadedAt: integer('uploaded_at', { mode: 'timestamp' }),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  uploadedAt: integer('uploaded_at', { mode: 'timestamp' })
 })
 
 /**
