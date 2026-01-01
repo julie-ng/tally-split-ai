@@ -3,7 +3,10 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   // css: ['~/assets/scss/main.scss'],
-  modules: ['@nuxt/ui', '@pinia/nuxt'],
+  modules: ['@nuxt/ui', '@pinia/nuxt', '@nuxthub/core'],
+  hub: {
+    db: 'sqlite'
+  },
   css: ['~/assets/css/main.css'],
   pinia: {
     storesDirs: ['~/stores/**']

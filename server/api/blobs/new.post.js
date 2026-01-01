@@ -1,3 +1,6 @@
+import { db, schema } from 'hub:db'
+// import { hashUploadName } from '~/server/utils/hash-upload-name'
+
 export default defineEventHandler(async (event) => {
 	// Validate environment variables
 	try {
@@ -57,6 +60,20 @@ export default defineEventHandler(async (event) => {
 		expiresInMinutes: 3
 	})
 
+	// Generate deterministic hash ID
+	const timestamp = Math.floor(Date.now() / 1000) // Unix timestamp in seconds
+	const hashId = hashUploadName(userId, filename, timestamp)
+
+	// Insert record into uploads table
+	const result = await db.insert(schema.uploads).values({
+		hashId,
+		userId,
+		status: 'initialized',
+		blobName: blobPath,
+		blobUrl,
+		originalFilename: filename
+	}).returning()
+
 	return {
 		originalFilename: filename,
 		filename: azureFilename,
@@ -65,6 +82,7 @@ export default defineEventHandler(async (event) => {
 			url: blobUrl,
 			uploadUrl,
 			uploadExpiresAt: expiresAt
-		}
+		},
+		uploadRecord: result[0]
 	}
 })

@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1767282017472,
+      "tag": "0000_yummy_chameleon",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1767284205305,
+      "tag": "0001_broad_stryfe",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1767284884316,
+      "tag": "0002_equal_war_machine",
+      "breakpoints": true
+    }
+  ]
+}

@@ -12,6 +12,12 @@ test.html
 upload-results.json
 analysis-results.json
 
+# Database
+data/
+*.db
+*.db-shm
+*.db-wal
+
 # Nuxt dev/build outputs
 .output
 .data
