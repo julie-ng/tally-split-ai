@@ -1,0 +1,99 @@
+import { simpleHash, extractReceiptDate, extractReceiptTotal, extractHashtagsForAzureBlobs } from '~~/shared/utils/filename.helper'
+import { useUserStore } from '~/stores/user.store'
+
+/**
+ * Extract Azure blob tags from filename and user context
+ * @param {string} filename - The filename to extract tags from
+ * @returns {Object} Object with tag keys and values for Azure
+ */
+function extractAzureBlobTags(filename) {
+  const userStore = useUserStore()
+  const tags = {}
+
+  // Add user ID tag
+  if (userStore.userId) {
+    tags['user-id'] = userStore.userId
+  }
+
+  const receiptDate = extractReceiptDate(filename)
+  if (receiptDate) {
+    tags['receipt-date'] = receiptDate
+  }
+
+  const receiptTotal = extractReceiptTotal(filename)
+  if (receiptTotal) {
+    tags['receipt-total'] = receiptTotal
+  }
+
+  const hashtags = extractHashtagsForAzureBlobs(filename)
+  if (hashtags) {
+    tags['receipt-tags'] = hashtags
+  }
+
+  return tags
+}
+
+/**
+ * @typedef {Object} UploadObject
+ * @property {string} hashId - Unique hash identifier
+ * @property {string} originalFilename - Original file name
+ * @property {string} azureFilename - Azure blob filename
+ * @property {number} size - File size in bytes
+ * @property {string} blobUrl - Azure blob URL
+ * @property {Object} azureTags - Azure blob index tags extracted from filename
+ * @property {UploadDetails} upload - Upload details
+ * @property {'queued'|'in-progress'|'completed'|'failed'} status - Upload status
+ * @property {Date} queuedAt - When upload was queued
+ * @property {Array<string>} errors - Array of error messages
+ * @property {File} file - The actual file object
+ */
+
+/**
+ * @typedef {Object} UploadDetails
+ * @property {string} url - Upload URL with SAS token
+ * @property {string} expiresAt - SAS token expiration timestamp
+ * @property {number} progress - Upload progress percentage (0-100)
+ * @property {number} retries - Number of retry attempts
+ */
+
+export function useUploadObject() {
+  /**
+   * Create a standardized upload object with 'queued' status
+   *
+   * @param {File} file - The file to upload
+   * @param {Object} blobResult - Result from /api/blobs/new endpoint
+   * @param {string} blobResult.filename - Azure filename
+   * @param {Object} blobResult.blob - Blob details
+   * @param {string} blobResult.blob.url - Blob URL
+   * @param {string} blobResult.blob.uploadUrl - Upload URL with SAS token
+   * @param {string} blobResult.blob.uploadExpiresAt - SAS token expiration
+   * @returns {Promise<UploadObject>} Standardized upload object with 'queued' status
+   */
+  async function createUploadObject(file, blobResult) {
+    const hashId = simpleHash(file.name)
+    const azureTags = extractAzureBlobTags(file.name)
+
+    return {
+      hashId,
+      originalFilename: file.name,
+      azureFilename: blobResult.filename,
+      size: file.size,
+      blobUrl: blobResult.blob.url,
+      azureTags,
+      upload: {
+        url: blobResult.blob.uploadUrl,
+        expiresAt: blobResult.blob.uploadExpiresAt,
+        progress: 0,
+        retries: 0
+      },
+      status: 'queued',
+      queuedAt: new Date(),
+      errors: [],
+      file
+    }
+  }
+
+  return {
+    createUploadObject
+  }
+}

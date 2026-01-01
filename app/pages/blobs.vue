@@ -8,16 +8,20 @@ const { data: blobsData, error } = await useFetch('/api/blobs')
 const receipts = computed(() => {
   if (!blobsData.value?.blobs) return []
 
-  return blobsData.value.blobs.map(blob => ({
-    filename: blob.filename,
-    title: extractReceiptTitle(blob.filename),
-    date: extractReceiptDate(blob.filename),
-    total: extractReceiptTotal(blob.filename),
-    tags: extractHashtags(blob.filename), // TODO: should be Azure Tags
-    sasUrl: blob.sasUrl,
-    uploadedAt: blob.uploadedAt,
-    lastModified: blob.lastModified
-  }))
+  return blobsData.value.blobs.map((blob) => {
+    let blobObj = {
+      filename: blob.filename,
+      title: extractReceiptTitle(blob.filename),
+      date: extractReceiptDate(blob.filename),
+      total: extractReceiptTotal(blob.filename),
+      tags: extractHashtags(blob.filename), // TODO: should be Azure Tags
+      sasUrl: blob.sasUrl,
+      uploadedAt: blob.uploadedAt,
+      lastModified: blob.lastModified
+    }
+    console.log(blobObj)
+    return blobObj
+  })
 })
 </script>
 
