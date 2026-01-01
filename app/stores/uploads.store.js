@@ -107,8 +107,6 @@ export const useUploadsStore = defineStore('uploads', () => {
     }
   }
 
-
-
   /**
    * Return an upload back to the queued status
    *
