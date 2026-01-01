@@ -15,6 +15,29 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
+    // Get userId - in development use demo user, otherwise require authentication
+    const config = useRuntimeConfig();
+    const isDevelopment = config.public.environment === 'development';
+    
+    let userId;
+    if (isDevelopment) {
+      userId = config.public.demoUserId;
+      if (!userId) {
+        throw createError({
+          statusCode: 500,
+          statusMessage: 'Development configuration error',
+          message: 'NUXT_PUBLIC_DEMO_USER_ID environment variable is required in development'
+        });
+      }
+    } else {
+      // ⚠️ TODO: replace with actual authentication
+      throw createError({
+        statusCode: 401,
+        statusMessage: 'Authentication required',
+        message: 'User authentication is required'
+      });
+    }
+
     // Create blob service client
     const sharedKeyCredential = new StorageSharedKeyCredential(ACCOUNT_NAME, ACCOUNT_KEY);
     const blobServiceClient = new BlobServiceClient(
@@ -35,9 +58,14 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // List all blobs with metadata
+    // List blobs for specific user using virtual directory prefix
     const blobs = [];
-    for await (const blob of containerClient.listBlobsFlat({ includeTags: true, includeMetadata: true })) {
+    const prefix = `${userId}/`;
+    for await (const blob of containerClient.listBlobsFlat({
+      prefix,
+      includeTags: true,
+      includeMetadata: true
+    })) {
       const blobClient = containerClient.getBlobClient(blob.name);
 
       // Generate SAS token for read access valid for 5 minutes
@@ -56,6 +84,8 @@ export default defineEventHandler(async (event) => {
         sasUrl: `${blobClient.url}?${sasToken}`,
         uploadedAt: blob.properties.createdOn,
         lastModified: blob.properties.lastModified,
+        size: blob.properties.contentLength,
+        contentType: blob.properties.contentType,
         tags: blob.tags || {}
       });
     }

@@ -10,12 +10,8 @@ const links = [
     href: '/blobs'
   },
   {
-    text: 'Samples (local)',
-    href: '/samples'
-  },
-  {
-    text: 'Upload',
-    href: '/upload'
+    text: 'Uploads',
+    href: '/uploads'
   }
 ]
 </script>
@@ -34,6 +30,18 @@ const links = [
             <NuxtLink :to="link.href" class="text-slate-200 hover:text-emerald-300">
               {{ link.text }}
             </NuxtLink>
+          </li>
+          <li class="inline-block">
+            <UButton
+              icon="i-lucide-upload"
+              size="sm"
+              color="primary"
+              variant="solid"
+              class="cursor-pointer bg-blue-500"
+              to="/uploads/new"
+            >
+              Upload
+            </UButton>
           </li>
         </ul>
       </div>
