@@ -1,5 +1,5 @@
 import { db, schema } from 'hub:db'
-import { eq, desc } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 
 const delay = (durationMs) => {
   console.log('delay', durationMs)
