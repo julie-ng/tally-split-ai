@@ -2,105 +2,139 @@
 import { useUserStore } from '~/stores/user.store'
 
 useHead({
-  title: 'My Uploads'
+  title: 'Uploads'
 })
 
 const userStore = useUserStore()
 
-const { data, pending, error } = await useFetch('/api/blobs', {
-  query: { userId: userStore.userId }
+// TODO: handle errors, pending, and refresh
+const { data: uploads, pending, error, refresh } = await useFetch('/api/uploads', {
+  query: { userId: userStore.userId },
 })
+
+const columns = [
+  {
+    accessorKey: 'id',
+    header: '#',
+    cell: ({row}) => `${row.getValue('id')}`
+  },
+  {
+    accessorKey: 'hashId',
+    header: 'Hash ID',
+    cell: ({row}) => `${row.getValue('hashId')}`
+  },
+  {
+    accessorKey: 'status',
+    header: 'Status',
+    cell: ({row}) => `${row.getValue('status')}`
+  },
+  {
+    accessorKey: 'blobName',
+    header: 'Blob Name',
+  },
+  {
+    accessorKey: 'size',
+    header: 'Size',
+    cell: ({row}) => `${formatBytes(row.getValue('size'))}`
+  },
+  {
+    accessorKey: 'uploadedAt',
+    header: 'Uploaded',
+  },
+  {
+    accessorKey: 'azureTags',
+    header: 'Blob Tags',
+  }
+]
+
+const tableStyles = {
+  // wrapper: 'border border-gray-200 rounded-lg overflow-hidden',
+  base: 'min-w-full',
+  thead: 'bg-slate-50',
+  th: 'text-slate-700'
+  // th: {
+  //   base: 'text-left',
+  //   padding: 'px-4 py-3',
+  //   color: 'text-gray-500',
+  //   font: 'font-semibold text-xs uppercase tracking-wider',
+  //   size: 'text-xs'
+  // }
+}
+
+
+// Format timestamp for display
+const formatDate = (timestamp) => {
+  return new Date(timestamp).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    })
+}
+
+const azureTags = function(str) {
+  const data = JSON.parse(str)
+  const result = []
+  for (const [key, value] of Object.entries(data)) {
+    result.push({
+      key: key,
+      value: value
+    })
+  }
+  // console.log(typeof str, result)
+  return result
+}
+
+
 </script>
 
 <template>
   <UContainer>
     <div class="my-5">
-      <h1 class="font-bold text-3xl">My Uploads</h1>
-      <p class="mt-1 text-slate-400">{{ userStore.fullName }}'s uploaded receipts</p>
-
-      <!-- Loading state -->
-      <div v-if="pending" class="mt-10">
-        <p class="text-slate-500">Loading your uploads...</p>
-      </div>
-
-      <!-- Error state -->
-      <div v-else-if="error" class="mt-10 p-5 bg-red-50 border border-red-200 rounded">
-        <p class="text-red-600 font-medium">Error loading uploads</p>
-        <p class="text-red-700 text-sm">{{ error.message }}</p>
-      </div>
-
-      <!-- Empty state -->
-      <div v-else-if="!data?.blobs || data.blobs.length === 0" class="mt-10 text-center py-20">
-        <p class="text-slate-400 text-lg mb-4">No uploads yet</p>
-        <NuxtLink to="/uploads/new" class="text-blue-600 hover:text-blue-800 underline">
-          Upload your first receipt
-        </NuxtLink>
-      </div>
-
-      <!-- Blobs list -->
-      <div v-else class="mt-10">
-        <p class="text-slate-600 mb-5">
-          Found {{ data.count }} upload{{ data.count !== 1 ? 's' : '' }}
-        </p>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <article
-            v-for="blob in data.blobs"
-            :key="blob.filename"
-            class="p-5 bg-white border border-slate-200 rounded-lg hover:shadow-md transition-shadow"
-          >
-            <!-- Image thumbnail -->
-            <div class="mb-4 bg-slate-100 rounded overflow-hidden">
-              <img
-                :src="blob.sasUrl"
-                :alt="blob.filename"
-                class="w-full h-48 object-cover"
-                loading="lazy"
-              />
-            </div>
-
-            <!-- Blob info -->
-            <h2 class="font-semibold text-slate-700 mb-2">
-              {{ blob.filename.split('/').pop() }}
-            </h2>
-
-            <!-- Tags -->
-            <section v-if="blob.tags && Object.keys(blob.tags).length > 0" class="mb-3 text-slate-400">
-              <header>
-                <h1 class="my-2 text-sm text-slate-600 font-medium">Azure Tags</h1>
-              </header>
-              <article v-if="blob.tags['receipt-date']" class="text-sm text-slate-500 mb-1">
-                <div class="inline-block w-24">receipt-date</div>
-                <div class="inline-block mb-1">{{ blob.tags['receipt-date'] }}</div>
-              </article>
-              <article v-if="blob.tags['receipt-total']" class="text-sm text-slate-500 mb-1">
-                <div class="inline-block w-24">receipt-total</div>
-                <div class="inline-block mb-1">${{ blob.tags['receipt-total'] }}</div>
-              </article>
-              <article v-if="blob.tags['receipt-tags']" class="text-sm text-slate-500 mb-1">
-                <div class="inline-block w-24">receipt-tags</div>
-                <div class="inline-block mb-1">{{ blob.tags['receipt-tags'] }}</div>
-              </article>
-            </section>
-
-            <!-- Upload date -->
-            <p class="text-xs text-slate-400 mb-3">
-              Uploaded {{ new Date(blob.uploadedAt).toLocaleDateString() }}
-            </p>
-
-            <!-- Actions -->
-            <div class="flex gap-2">
-              <a
-                :href="blob.sasUrl"
-                target="_blank"
-                class="text-sm text-blue-600 hover:text-blue-800 underline"
-              >
-                View Full Size
-              </a>
-            </div>
-          </article>
+      <div class="flex justify-between items-center mb-5">
+        <div>
+          <h1 class="font-bold text-3xl">Upload Records</h1>
+          <p class="mt-1 text-slate-400">Database records for {{ userStore.fullName }}</p>
         </div>
+        <button @click="refresh()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors cursor-pointer">
+          Refresh
+        </button>
       </div>
+
+      <ClientOnly>
+        <div class="border bg-white border-slate-200 rounded-lg overflow-hidden">
+        <UTable :data="uploads" :columns="columns" :ui="tableStyles">
+          <template #blobName-cell="{ row }">
+            <a
+              :href="row.original.blobUrl"
+              class="text-slate-800 font-medium hover:underline"
+              target="_blank">
+                {{ row.original.originalFilename }}
+            </a>
+          </template>
+          <template #uploadedAt-cell="{ row }">
+            <time :datetime="row.original.uploadedAt" :title="row.original.uploadedAt">
+              {{ formatDate(row.original.uploadedAt) }}
+            </time>
+          </template>
+          <template #azureTags-cell="{ row }">
+            <div v-if="row.original.azureTags != null" v-for="tag, i in azureTags(row.original.azureTags)">
+              <UBadge :key="`${row.original.hashId}-tag-${tag.key}-${i}`"
+                color="info"
+                variant="soft"
+                class="my-1 mr-1 text-slate-400">
+                {{ tag.key }}: {{ tag.value }}
+              </UBadge>
+          </div>
+          </template>
+        </UTable>
+        </div>
+      </ClientOnly>
+
+      <details>
+        <summary class="font-bold text-xl">Raw Data</summary>
+        <pre v-if="uploads" class="bg-slate-700  text-slate-100 p-6"><code>{{ uploads }}</code></pre>
+      </details>
+
     </div>
   </UContainer>
 </template>
