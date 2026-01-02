@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
     .where(eq(schema.uploads.userId, userId))
 
   // Artificial delay for testing loading states
-  await delay(1500)
+  // await delay(1500)
 
   return uploads
 })

@@ -54,6 +54,10 @@ const columns = [
   {
     accessorKey: 'azureTags',
     header: 'Blob Tags',
+  },
+  {
+    accessorKey: 'actions',
+    header: 'Actions',
   }
 ]
 
@@ -87,6 +91,24 @@ const azureTags = function(str) {
   }
   // console.log(typeof str, result)
   return result
+}
+
+const deleteUpload = async (hashId, title, blobName) => {
+  if (!confirm(`Are you sure you want to delete '${title}' (${blobName})?`)) {
+    return
+  }
+
+  try {
+    await $fetch(`/api/uploads/${hashId}`, {
+      method: 'DELETE'
+    })
+
+    // Refresh the table data
+    refresh()
+  } catch (error) {
+    console.error('Failed to delete upload:', error)
+    alert('Failed to delete upload. Please try again.')
+  }
 }
 </script>
 
@@ -138,6 +160,16 @@ const azureTags = function(str) {
                 {{ tag.key }}: {{ tag.value }}
               </UBadge>
           </div>
+          </template>
+          <template #actions-cell="{ row }">
+            <UButton
+              color="error"
+              variant="soft"
+              class="transition-colors cursor-pointer"
+              @click="deleteUpload(row.original.hashId, row.original.title, row.original.blobName)"
+            >
+              Delete
+            </UButton>
           </template>
         </UTable>
         </div>
