@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'
 import { sql } from 'drizzle-orm'
 
 /**
@@ -19,7 +19,7 @@ export const uploads = sqliteTable('uploads', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   hashId: text('hash_id').notNull().unique(),
   userId: text('user_id').notNull().default('local-dev-user'),
-  // userId: text('user_id').notNull().references(() => users.id),
+  title: text('title').notNull().default('Untitled'),
 
   // Azure Blob Storage info
   status: text('status').notNull().default('initialized'),
@@ -31,14 +31,19 @@ export const uploads = sqliteTable('uploads', {
   azureTags: text('azure_tags'), // JSON string of Azure blob tags
 
   // Receipt metadata (extracted from filename or OCR)
-  // receiptDate: text('receipt_date'), // ISO date string
-  // receiptTotal: real('receipt_total'),
-  // receiptTags: text('receipt_tags'), // Comma-separated tags
-  // merchantName: text('merchant_name'),
+  receiptTags: text('receipt_tags'), // Comma-separated tags
+  receiptDate: text('receipt_date'), // ISO date string
+  receiptSubtotal: real('receipt_subtotal'),
+  receiptTax: real('receipt_tax'),
+  receiptTotal: real('receipt_total'),
+  receiptCurrency: text('receipt_currency'),
+  merchantName: text('merchant_name'),
+  merchantAddress: text('merchant_address'),
 
   // OCR/Analysis status
-  // analysisStatus: text('analysis_status').default('pending'), // pending, processing, completed, failed
-  // analyzedAt: integer('analyzed_at', { mode: 'timestamp' }),
+  analysisStatus: text('analysis_status').default('pending'), // pending, processing, completed, failed
+  analyzedAt: integer('analyzed_at', { mode: 'timestamp' }),
+  analysisOcrResult: text('analysis_ocr_result'),
 
   // Timestamps
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
