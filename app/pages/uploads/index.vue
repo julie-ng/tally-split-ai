@@ -8,8 +8,10 @@ useHead({
 const userStore = useUserStore()
 
 // TODO: handle errors, pending, and refresh
-const { data: uploads, pending, error, refresh } = await useFetch('/api/uploads', {
-  query: { userId: userStore.userId },
+const { data: uploads, pending, error, refresh } = await useFetch('/api/uploads',
+  {
+    query: { userId: userStore.userId },
+    lazy: true
 })
 
 const columns = [
@@ -48,17 +50,9 @@ const columns = [
 ]
 
 const tableStyles = {
-  // wrapper: 'border border-gray-200 rounded-lg overflow-hidden',
   base: 'min-w-full',
   thead: 'bg-slate-50',
   th: 'text-slate-700'
-  // th: {
-  //   base: 'text-left',
-  //   padding: 'px-4 py-3',
-  //   color: 'text-gray-500',
-  //   font: 'font-semibold text-xs uppercase tracking-wider',
-  //   size: 'text-xs'
-  // }
 }
 
 
@@ -102,7 +96,7 @@ const azureTags = function(str) {
 
       <ClientOnly>
         <div class="border bg-white border-slate-200 rounded-lg overflow-hidden">
-        <UTable :data="uploads" :columns="columns" :ui="tableStyles">
+        <UTable :data="uploads" :columns="columns" :ui="tableStyles" :loading="pending" loading-color="primary" loading-animation="carousel">
           <template #blobName-cell="{ row }">
             <a
               :href="row.original.blobUrl"

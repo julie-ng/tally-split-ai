@@ -1,33 +1,27 @@
 import { db, schema } from 'hub:db'
 import { eq, desc } from 'drizzle-orm'
 
+const delay = (durationMs) => {
+  console.log('delay', durationMs)
+  return new Promise(resolve => setTimeout(resolve, durationMs))
+}
+
 export default defineEventHandler(async (event) => {
-	const query = getQuery(event)
-	const { userId } = query
+  // Disable caching for this endpoint
+  // setResponseHeader(event, 'Cache-Control', 'no-cache, no-store, must-revalidate')
 
-	// Validate userId
-	if (!userId || typeof userId !== 'string') {
-		throw createError({
-			statusCode: 400,
-			message: 'Invalid userId parameter'
-		})
-	}
+  // console.log('API called at:', new Date().toISOString())
 
-	// Fetch uploads for the user, ordered by most recent first
-	const uploads = await db
-		.select()
-		.from(schema.uploads)
-		.where(eq(schema.uploads.userId, userId))
-		.orderBy(desc(schema.uploads.createdAt))
+  // ⚠️ TODO
+  const userId = process.env.NUXT_PUBLIC_DEMO_USER_ID
 
-	// Parse azureTags JSON strings back to objects
-	const uploadsWithParsedTags = uploads.map(upload => ({
-		...upload,
-		azureTags: upload.azureTags ? JSON.parse(upload.azureTags) : null
-	}))
 
-	return {
-		count: uploadsWithParsedTags.length,
-		uploads: uploadsWithParsedTags
-	}
+  const uploads = await db.select()
+    .from(schema.uploads)
+    .where(eq(schema.uploads.userId, userId))
+
+  // Artificial delay for testing loading states
+  await delay(1500)
+
+  return uploads
 })

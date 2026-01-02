@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
     // Get userId - in development use demo user, otherwise require authentication
     const config = useRuntimeConfig();
     const isDevelopment = config.public.environment === 'development';
-    
+
     let userId;
     if (isDevelopment) {
       userId = config.public.demoUserId;
