@@ -44,6 +44,10 @@ const columns = [
     cell: ({row}) => `${formatBytes(row.getValue('size'))}`
   },
   {
+    accessorKey: 'receiptDate',
+    header: 'Receipt Date',
+  },
+  {
     accessorKey: 'uploadedAt',
     header: 'Uploaded',
   },
@@ -62,6 +66,9 @@ const tableStyles = {
 
 // Format timestamp for display
 const formatDate = (timestamp) => {
+  if (timestamp === null) {
+    return '-'
+  }
   return new Date(timestamp).toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'short',
@@ -81,8 +88,6 @@ const azureTags = function(str) {
   // console.log(typeof str, result)
   return result
 }
-
-
 </script>
 
 <template>
@@ -101,13 +106,23 @@ const azureTags = function(str) {
       <ClientOnly>
         <div class="border bg-white border-slate-200 rounded-lg overflow-hidden">
         <UTable :data="uploads" :columns="columns" :ui="tableStyles" :loading="pending" loading-color="primary" loading-animation="carousel">
+          <template #title-cell="{ row }">
+          <span class="text-slate-800 font-medium">
+            {{ row.original.title }}
+          </span>
+          </template>
           <template #blobName-cell="{ row }">
             <a
               :href="row.original.blobUrl"
-              class="text-slate-800 font-medium hover:underline"
+              class="text-slate-700 hover:underline"
               target="_blank">
                 {{ row.original.originalFilename }}
             </a>
+          </template>
+          <template #receiptDate-cell="{ row }">
+            <time :datetime="row.original.receiptDate" :title="row.original.receiptDate">
+              {{ formatDate(row.original.receiptDate) }}
+            </time>
           </template>
           <template #uploadedAt-cell="{ row }">
             <time :datetime="row.original.uploadedAt" :title="row.original.uploadedAt">
