@@ -29,6 +29,8 @@ Missing information that may need a custom trained model:
 
 ### Receipt Model
 
+Model ID is `prebuilt-receipt`.
+
 - Documentation - [Receipt Model (MS Learn)](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/prebuilt/receipt?view=doc-intel-4.0.0)
 - Schema - [Receipt Model (GitHub)](https://github.com/Azure-Samples/document-intelligence-code-samples/blob/main/schema/2024-11-30-ga/receipt.md)
 
