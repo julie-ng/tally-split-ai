@@ -30,8 +30,6 @@ async function onFilesUpdate(files) {
       const uploadObject = await createUploadObject(file, result)
       uploadsStore.add(uploadObject)
 
-      // Automatically start upload
-      await uploadsStore.startUpload(uploadObject.hashId)
     } catch (error) {
       console.error('❗️ Unable to initialize new blob request')
       console.error(error)

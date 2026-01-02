@@ -90,6 +90,10 @@ export const useUploadsStore = defineStore('uploads', () => {
       throw new Error('Upload must have `file` attribute of type `File`')
     }
     uploads.value.push(uploadObj)
+
+    if (canStartUpload) {
+      startUpload(uploadObj.hashId)
+    }
   }
 
   /**
