@@ -6,6 +6,8 @@ export const useUploadsStore = defineStore('uploads', () => {
 
   const MAX_CONCURRENT_UPLOADS = 3
   const uploads = ref([])
+  const autoUploadTimer = ref(null)
+  const AUTO_UPLOAD_INTERVAL = 1000 // 10 seconds
 
   // -------- GETTERS --------
 
@@ -306,6 +308,66 @@ export const useUploadsStore = defineStore('uploads', () => {
     return await startUpload(hashId)
   }
 
+  /**
+   * Process the upload queue - starts uploads for queued items if slots are available
+   * Called automatically by the timer every 30 seconds
+   */
+  async function processQueue() {
+    console.log('⏰ [Auto-upload] Checking queue...')
+
+    if (!hasQueued.value) {
+      console.log('⏰ [Auto-upload] Queue is empty')
+      return
+    }
+
+    if (!canStartUpload.value) {
+      console.log('⏰ [Auto-upload] No available slots')
+      return
+    }
+
+    // Start uploads for available slots
+    const slotsToFill = availableSlots.value
+    const itemsToUpload = queued.value.slice(0, slotsToFill)
+
+    console.log(`⏰ [Auto-upload] Starting ${itemsToUpload.length} upload(s)`)
+
+    for (const upload of itemsToUpload) {
+      await startUpload(upload.hashId)
+    }
+  }
+
+  /**
+   * Start the auto-upload timer
+   * Automatically processes the queue every 30 seconds
+   */
+  function startAutoUpload() {
+    if (autoUploadTimer.value) {
+      console.warn('⏰ [Auto-upload] Timer already running')
+      return
+    }
+
+    console.log('⏰ [Auto-upload] Starting timer (30s interval)')
+    autoUploadTimer.value = setInterval(processQueue, AUTO_UPLOAD_INTERVAL)
+  }
+
+  /**
+   * Stop the auto-upload timer
+   */
+  function stopAutoUpload() {
+    if (autoUploadTimer.value) {
+      console.log('⏰ [Auto-upload] Stopping timer')
+      clearInterval(autoUploadTimer.value)
+      autoUploadTimer.value = null
+    }
+  }
+
+  // Cleanup timer when store is disposed
+  if (import.meta.client) {
+    onUnmounted(() => {
+      stopAutoUpload()
+    })
+  }
+
   return {
     add,
     availableSlots,
@@ -321,12 +383,15 @@ export const useUploadsStore = defineStore('uploads', () => {
     hasQueued,
     inProgress,
     maxConcurrentUploads: MAX_CONCURRENT_UPLOADS,
+    processQueue,
     queued,
     remove,
     removeAll,
     retryUpload,
     returnToQueue,
+    startAutoUpload,
     startUpload,
+    stopAutoUpload,
     totalCompleted,
     totalFailed,
     totalInProgress,

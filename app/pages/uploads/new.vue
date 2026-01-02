@@ -12,6 +12,8 @@ const userId = userStore.userId
 const uploadsStore = useUploadsStore()
 const { createUploadObject } = useUploadObject()
 
+uploadsStore.startAutoUpload()
+
 async function onFilesUpdate(files) {
   for (const file of files) {
     // Generate Blob Url & SAS token for each file
