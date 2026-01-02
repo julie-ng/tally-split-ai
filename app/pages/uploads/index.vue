@@ -137,6 +137,29 @@ const statusBadgeVariant = function (status) {
   }
   return 'soft'
 }
+
+const analyzeReceipt = async (hashId) => {
+  try {
+    await $fetch(`/api/analyze/${hashId}`, {
+      method: 'POST'
+    })
+
+    // Refresh table to show updated status
+    refresh()
+  } catch (error) {
+    console.error('Failed to analyze receipt:', error)
+    alert('Failed to analyze receipt. Please try again.')
+  }
+}
+
+const getAnalyzeButtonText = (status) => {
+  switch(status) {
+    case 'processing': return 'Analyzing...'
+    case 'completed': return 'Analyzed'
+    case 'failed': return 'Retry'
+    default: return 'Analyze'
+  }
+}
 </script>
 
 <template>
@@ -207,10 +230,19 @@ const statusBadgeVariant = function (status) {
           </template>
           <template #actions-cell="{ row }">
             <UButton
+              @click="analyzeReceipt(row.original.hashId)"
+              :disabled="row.original.analysisStatus === 'processing' || row.original.analysisStatus === 'completed'"
+              color="info"
+              variant="soft"
+              class="px-3 py-1 text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed mr-2 cursor-pointer"
+            >
+              {{ getAnalyzeButtonText(row.original.analysisStatus) }}
+            </UButton>
+            <UButton
+              @click="deleteUpload(row.original.hashId, row.original.title, row.original.blobName)"
               color="error"
               variant="soft"
-              class="transition-colors cursor-pointer"
-              @click="deleteUpload(row.original.hashId, row.original.title, row.original.blobName)"
+              class="px-3 py-1 rounded transition-colors cursor-pointer"
             >
               Delete
             </UButton>

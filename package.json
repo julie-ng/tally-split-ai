@@ -25,6 +25,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@azure-rest/ai-document-intelligence": "^1.0.0",
     "@azure/storage-blob": "^12.25.0",
     "@libsql/client": "^0.15.15",
     "@nuxt/ui": "^4.3.0",
