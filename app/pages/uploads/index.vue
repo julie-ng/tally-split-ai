@@ -21,6 +21,24 @@ const columns = [
   //   cell: ({row}) => `${row.getValue('id')}`
   // },
   {
+     id: 'expand',
+     cell: ({ row }) =>
+       h(UButton, {
+         color: 'neutral',
+         variant: 'ghost',
+         icon: 'i-lucide-chevron-down',
+         square: true,
+         'aria-label': 'Expand',
+         ui: {
+           leadingIcon: [
+             'transition-transform',
+             row.getIsExpanded() ? 'duration-200 rotate-180' : ''
+           ]
+         },
+         onClick: () => row.toggleExpanded()
+       })
+   },//
+  {
     accessorKey: 'hashId',
     header: 'Hash ID',
     cell: ({row}) => `${row.getValue('hashId')}`
@@ -61,11 +79,14 @@ const columns = [
   }
 ]
 
+// const expanded = ref({ 1: true })
+
 const tableStyles = {
   base: 'min-w-full',
   thead: 'bg-slate-50',
   th: 'text-slate-700',
-  td: 'align-top'
+  td: 'align-top',
+  tr: 'data-[expanded=true]:bg-elevated/50'
 }
 
 
@@ -170,14 +191,28 @@ const getAnalyzeButtonText = (status) => {
           <h1 class="font-bold text-3xl">Upload Records</h1>
           <p class="mt-1 text-slate-400">Database records for {{ userStore.fullName }}</p>
         </div>
-        <button @click="refresh()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors cursor-pointer">
+        <UButton @click="refresh()"
+        class="px-4 py-2 cursor-pointer"
+        >
           Refresh
-        </button>
+        </UButton>
       </div>
 
       <ClientOnly>
         <div class="border bg-white border-slate-200 rounded-lg overflow-hidden">
-        <UTable :data="uploads" :columns="columns" :ui="tableStyles" :loading="pending" loading-color="primary" loading-animation="carousel">
+        <UTable
+          :data="uploads"
+          :columns="columns"
+          :ui="tableStyles"
+          :loading="pending"
+          loading-color="primary"
+          loading-animation="carousel"
+          v-model:expanded="expanded"
+          class="flex-1"
+          >
+          <template #expanded="{ row }">
+            <Shiki v-if="uploads" lang="json" :code="JSON.stringify(row.original, null, 2)" class="bg-white text-sm" />
+          </template>
           <template #status-cell="{ row }">
             <UBadge
               :color="statusBadgeColor(row.original.status)"
