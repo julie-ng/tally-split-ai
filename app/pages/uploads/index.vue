@@ -15,11 +15,11 @@ const { data: uploads, pending, error, refresh } = await useFetch('/api/uploads'
 })
 
 const columns = [
-  {
-    accessorKey: 'id',
-    header: '#',
-    cell: ({row}) => `${row.getValue('id')}`
-  },
+  // {
+  //   accessorKey: 'id',
+  //   header: '#',
+  //   cell: ({row}) => `${row.getValue('id')}`
+  // },
   {
     accessorKey: 'hashId',
     header: 'Hash ID',
@@ -31,26 +31,26 @@ const columns = [
     cell: ({row}) => `${row.getValue('status')}`
   },
   {
+    accessorKey: 'receiptDate',
+    header: 'Receipt Date',
+  },
+  {
     accessorKey: 'title',
     header: 'Title',
   },
-  {
-    accessorKey: 'blobName',
-    header: 'Blob Name',
-  },
+  // {
+  //   accessorKey: 'blobName',
+  //   header: 'Blob Name',
+  // },
   {
     accessorKey: 'size',
     header: 'Size',
     cell: ({row}) => `${formatBytes(row.getValue('size'))}`
   },
-  {
-    accessorKey: 'receiptDate',
-    header: 'Receipt Date',
-  },
-  {
-    accessorKey: 'uploadedAt',
-    header: 'Uploaded',
-  },
+  // {
+  //   accessorKey: 'uploadedAt',
+  //   header: 'Uploaded',
+  // },
   {
     accessorKey: 'azureTags',
     header: 'Blob Tags',
@@ -64,7 +64,8 @@ const columns = [
 const tableStyles = {
   base: 'min-w-full',
   thead: 'bg-slate-50',
-  th: 'text-slate-700'
+  th: 'text-slate-700',
+  td: 'align-top'
 }
 
 
@@ -110,6 +111,32 @@ const deleteUpload = async (hashId, title, blobName) => {
     alert('Failed to delete upload. Please try again.')
   }
 }
+
+const statusBadgeColor = function (status) {
+  if (status === 'uploaded') {
+    return 'info'
+  }
+  if (status === 'failed') {
+    return 'error'
+  }
+  if (status === 'initialized') {
+    return 'neutral'
+  }
+  return 'neutral'
+}
+
+const statusBadgeVariant = function (status) {
+  if (status === 'uploaded') {
+    return 'soft'
+  }
+  if (status === 'failed') {
+    return 'soft'
+  }
+  if (status === 'initialized') {
+    return 'outline'
+  }
+  return 'soft'
+}
 </script>
 
 <template>
@@ -128,11 +155,25 @@ const deleteUpload = async (hashId, title, blobName) => {
       <ClientOnly>
         <div class="border bg-white border-slate-200 rounded-lg overflow-hidden">
         <UTable :data="uploads" :columns="columns" :ui="tableStyles" :loading="pending" loading-color="primary" loading-animation="carousel">
-          <template #title-cell="{ row }">
-          <span class="text-slate-800 font-medium">
-            {{ row.original.title }}
-          </span>
+          <template #status-cell="{ row }">
+            <UBadge
+              :color="statusBadgeColor(row.original.status)"
+              :variant="statusBadgeVariant(row.original.status)">
+              {{ row.original.status }}
+            </UBadge>
           </template>
+          <template #title-cell="{ row }">
+            <div class="mb-1 text-slate-800 font-medium">
+              {{ row.original.title }}
+            </div>
+            <a
+              :href="row.original.blobUrl"
+              class="font-xs text-slate-400 hover:underline"
+              target="_blank">
+                {{ row.original.originalFilename }}
+            </a>
+          </template>
+          <!--
           <template #blobName-cell="{ row }">
             <a
               :href="row.original.blobUrl"
@@ -141,16 +182,19 @@ const deleteUpload = async (hashId, title, blobName) => {
                 {{ row.original.originalFilename }}
             </a>
           </template>
+          -->
           <template #receiptDate-cell="{ row }">
             <time :datetime="row.original.receiptDate" :title="row.original.receiptDate">
               {{ formatDate(row.original.receiptDate) }}
             </time>
           </template>
+          <!--
           <template #uploadedAt-cell="{ row }">
             <time :datetime="row.original.uploadedAt" :title="row.original.uploadedAt">
               {{ formatDate(row.original.uploadedAt) }}
             </time>
           </template>
+          -->
           <template #azureTags-cell="{ row }">
             <div v-if="row.original.azureTags != null" v-for="tag, i in azureTags(row.original.azureTags)">
               <UBadge :key="`${row.original.hashId}-tag-${tag.key}-${i}`"
