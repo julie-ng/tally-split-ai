@@ -3,13 +3,21 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   // css: ['~/assets/scss/main.scss'],
-  modules: ['@nuxt/ui', '@pinia/nuxt', '@nuxthub/core'],
+  modules: ['@nuxt/ui', '@pinia/nuxt', '@nuxthub/core', 'nuxt-shiki'],
   hub: {
     db: 'sqlite'
   },
   css: ['~/assets/css/main.css'],
   pinia: {
     storesDirs: ['~/stores/**']
+  },
+  shiki: {
+    bundledLangs: ['json'],
+    bundledThemes: ['min-light', 'material-theme-palenight'],
+    defaultTheme: {
+      light: 'min-light',
+      dark: 'material-theme-palenight'
+    }
   },
   app: {
     head: {

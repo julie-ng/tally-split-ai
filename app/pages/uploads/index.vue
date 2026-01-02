@@ -251,11 +251,22 @@ const getAnalyzeButtonText = (status) => {
         </div>
       </ClientOnly>
 
+      <!--
       <details>
         <summary class="font-bold text-xl">Raw Data</summary>
-        <pre v-if="uploads" class="bg-slate-700  text-slate-100 p-6"><code>{{ uploads }}</code></pre>
+        <Shiki v-if="uploads" lang="json" :code="JSON.stringify(uploads, null, 2)" class="bg-white p-6" />
       </details>
+      -->
 
     </div>
   </UContainer>
 </template>
+
+<style scoped>
+pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-x: auto;
+  max-width: 100%;
+}
+</style>
