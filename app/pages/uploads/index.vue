@@ -31,6 +31,10 @@ const columns = [
     cell: ({row}) => `${row.getValue('status')}`
   },
   {
+    accessorKey: 'title',
+    header: 'Title',
+  },
+  {
     accessorKey: 'blobName',
     header: 'Blob Name',
   },

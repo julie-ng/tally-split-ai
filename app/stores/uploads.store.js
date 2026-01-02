@@ -181,9 +181,10 @@ export const useUploadsStore = defineStore('uploads', () => {
               body: {
                 contentType: upload.file.type || 'application/octet-stream',
                 size: upload.file.size,
-                status: 'completed',
+                status: 'uploaded',
                 uploadedAt: true,
-                azureTags: upload.azureTags
+                azureTags: upload.azureTags,
+                title: extractReceiptTitle(upload.originalFilename)
               }
             })
             console.log(`💾 Database updated for (${hashId})`)
