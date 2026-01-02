@@ -265,6 +265,8 @@ const getAnalyzeButtonText = (status) => {
           </template>
           <template #actions-cell="{ row }">
             <UButton
+              loading-icon="i-lucide-loader"
+              loading-auto
               @click="analyzeReceipt(row.original.hashId)"
               :disabled="row.original.analysisStatus === 'processing' || row.original.analysisStatus === 'completed'"
               color="info"
