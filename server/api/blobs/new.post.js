@@ -1,6 +1,9 @@
 import { db, schema } from 'hub:db'
 
 export default defineEventHandler(async (event) => {
+  requireUserId(event)
+  const userId = event.context.userId
+
   // Validate environment variables
   try {
     azureStorageUtils.getAzureStorageConfig()
@@ -21,15 +24,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { userId, filename } = body
-
-  // Validate userId
-  if (!userId || typeof userId !== 'string') {
-    throw createError({
-      statusCode: 400,
-      message: 'Invalid userId. Must be a non-empty string'
-    })
-  }
+  const { filename } = body
 
   // Validate filename
   if (!filename || typeof filename !== 'string') {

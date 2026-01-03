@@ -2,6 +2,9 @@ import { db, schema } from 'hub:db'
 import { eq, and } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
+  // ⚠️ TODO - implement security.
+  requireUserId(event)
+  const userId = event.context.userId
   const hashId = getRouterParam(event, 'hashId')
 
   if (!hashId) {
@@ -10,9 +13,6 @@ export default defineEventHandler(async (event) => {
       message: 'Hash ID is required'
     })
   }
-
-  // ⚠️ TODO: Get userId from authenticated session instead of env
-  const userId = process.env.NUXT_PUBLIC_DEMO_USER_ID
 
   // Query for the specific upload
   const uploads = await db.select()

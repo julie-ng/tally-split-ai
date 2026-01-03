@@ -1,4 +1,8 @@
 export default defineEventHandler(async (event) => {
+  // ⚠️ TODO - implement security.
+  requireUserId(event)
+  const userId = event.context.userId
+
   // Validate environment variables
   try {
     azureStorageUtils.getAzureStorageConfig()

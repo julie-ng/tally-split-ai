@@ -6,6 +6,7 @@ import { join } from 'node:path'
 // import { azureStorageUtils } from '~/server/utils/azure-storage-utils.helper.js'
 
 export default defineEventHandler(async (event) => {
+  requireUserId(event)
   const hashId = getRouterParam(event, 'hashId')
 
   // Validate hashId parameter

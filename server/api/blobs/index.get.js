@@ -1,4 +1,7 @@
 export default defineEventHandler(async (event) => {
+  requireUserId(event)
+  const userId = event.context.userId
+
   // Validate environment variables and get container client
   let containerClient;
   let storageConfig;
@@ -14,29 +17,6 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // Get userId - in development use demo user, otherwise require authentication
-    const config = useRuntimeConfig();
-    const isDevelopment = config.public.environment === 'development';
-
-    let userId;
-    if (isDevelopment) {
-      userId = config.public.demoUserId;
-      if (!userId) {
-        throw createError({
-          statusCode: 500,
-          statusMessage: 'Development configuration error',
-          message: 'NUXT_PUBLIC_DEMO_USER_ID environment variable is required in development'
-        });
-      }
-    } else {
-      // ⚠️ TODO: replace with actual authentication
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Authentication required',
-        message: 'User authentication is required'
-      });
-    }
-
     // List blobs for specific user using virtual directory prefix
     const blobs = [];
     const prefix = `${userId}/`;

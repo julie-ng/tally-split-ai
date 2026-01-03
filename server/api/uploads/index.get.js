@@ -7,14 +7,11 @@ const delay = (durationMs) => {
 }
 
 export default defineEventHandler(async (event) => {
+  requireUserId(event)
+  const userId = event.context.userId
+
   // Disable caching for this endpoint
   // setResponseHeader(event, 'Cache-Control', 'no-cache, no-store, must-revalidate')
-
-  // console.log('API called at:', new Date().toISOString())
-
-  // ⚠️ TODO
-  const userId = process.env.NUXT_PUBLIC_DEMO_USER_ID
-
 
   const uploads = await db.select()
     .from(schema.uploads)

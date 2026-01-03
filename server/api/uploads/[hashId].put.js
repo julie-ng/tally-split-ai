@@ -3,6 +3,10 @@ import { eq } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
+  // ⚠️ TODO - implement security - note: userId not mentioned anywhere below 🤔
+  requireUserId(event)
+  const userId = event.context.userId
+
   const hashId = getRouterParam(event, 'hashId')
 
   // Validate hashId parameter

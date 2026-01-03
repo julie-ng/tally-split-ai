@@ -1,4 +1,8 @@
 export default defineEventHandler(async (event) => {
+  // ⚠️ TODO - implement security.
+  requireUserId(event)
+  const userId = event.context.userId
+
   // Validate environment variables
   try {
     azureStorageUtils.getAzureStorageConfig()
@@ -36,14 +40,6 @@ export default defineEventHandler(async (event) => {
       message: 'Invalid blobName. Must be a non-empty string'
     })
   }
-
-  /**
-   * ⚠️ No security implemented. For local DEMO only.
-   * In production scenario, need some authentication
-   * and authorization before generating a token, that
-   * should also be user-specific (e.g. via URL, and
-   * own database check).
-   */
 
   // Generate SAS token with read-only permissions (5 minutes validity)
   const { blobUrl, sasToken, uploadUrl, expiresAt } = azureStorageUtils.generateBlobSasToken(blobName, {
