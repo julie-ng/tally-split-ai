@@ -1,55 +1,37 @@
+import { z } from 'zod'
+
+const requestSchema = (userId) => {
+  return z.object({
+    action: z.string().refine((value) => value === 'create', { error: 'Invalid action' }),
+    blobName: z.string().includes(userId, { error: 'Blob name must include user Id' })
+  })
+}
+
 export default defineEventHandler(async (event) => {
   // ⚠️ TODO - implement security.
   requireUserId(event)
   const userId = event.context.userId
 
-  // Validate environment variables
-  try {
-    azureStorageUtils.getAzureStorageConfig()
-  } catch (error) {
-    throw createError({
-      statusCode: 500,
-      message: error.message
-    })
-  }
-
-  const body = await readBody(event)
-
-  // Validate request body
-  if (!body || typeof body !== 'object') {
-    throw createError({
-      statusCode: 400,
-      message: 'Invalid request body.'
-    })
-  }
-
-  const { action, blobName } = body
-
-  // Validate action
-  if (action !== 'create') {
-    throw createError({
-      statusCode: 400,
-      message: 'Invalid action.'
-    })
-  }
-
-  // Validate blobName
-  if (!blobName || typeof blobName !== 'string') {
-    throw createError({
-      statusCode: 400,
-      message: 'Invalid blobName. Must be a non-empty string'
-    })
-  }
+  azureStorageUtils.useAzureStorageConfig()
 
   /**
-   * ⚠️ No security implemented. For local DEMO only.
-   * In production scenario, need some authentication
-   * and authorization before generating a token, that
-   * should also be user-specific (e.g. via URL, and
-   * own database check).
+   * Validate Request
    */
+  const result = await readValidatedBody(event, body => requestSchema(userId).safeParse(body))
+  if (!result.success) {
+    setResponseStatus(event, 400)
+    return {
+      success: false,
+      message: "Invalid request body",
+      errors: z.flattenError(result.error).fieldErrors
+    }
+  }
+  const { action, blobName } = result.data
 
-  // Generate SAS token with create-only permissions (1 minute validity)
+  /**
+   * Generate SAS token
+   * Valid: 1 minute
+   */
   const { blobUrl, sasToken, uploadUrl, expiresAt } = azureStorageUtils.generateBlobSasToken(blobName, {
     permissions: 'create',
     expiresInMinutes: 1

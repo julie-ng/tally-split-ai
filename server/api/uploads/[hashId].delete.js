@@ -1,10 +1,5 @@
 import { db, schema } from 'hub:db'
 import { eq } from 'drizzle-orm'
-// import { z } from 'zod'
-
-// const requestSchema = z.object({
-//   hashId: z.string()
-// })
 
 export default defineEventHandler(async (event) => {
   // ⚠️ TODO - implement security.

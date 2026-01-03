@@ -1,49 +1,29 @@
 import { db, schema } from 'hub:db'
+import { z } from 'zod'
+
+const requestSchema = z.object({
+  filename: z.string()
+})
 
 export default defineEventHandler(async (event) => {
   requireUserId(event)
   const userId = event.context.userId
 
-  // Validate environment variables
-  try {
-    azureStorageUtils.getAzureStorageConfig()
-  } catch (error) {
-    throw createError({
-      statusCode: 500,
-      message: error.message
-    })
+  azureStorageUtils.useAzureStorageConfig()
+
+  const result = await readValidatedBody(event, body => requestSchema.safeParse(body))
+  if (!result.success) {
+    setResponseStatus(event, 400)
+    return {
+      success: false,
+      message: "Invalid request body",
+      errors: z.flattenError(result.error).fieldErrors
+    }
   }
-
-  const body = await readBody(event)
-
-  // Validate request body
-  if (!body || typeof body !== 'object') {
-    throw createError({
-      statusCode: 400,
-      message: 'Invalid request body'
-    })
-  }
-
-  const { filename } = body
-
-  // Validate filename
-  if (!filename || typeof filename !== 'string') {
-    throw createError({
-      statusCode: 400,
-      message: 'Invalid filename. Must be a non-empty string'
-    })
-  }
+  const { filename } = result.data
 
   // Generate Azure-friendly filename
-  let azureFilename
-  try {
-    azureFilename = createAzureFilename(filename)
-  } catch (error) {
-    throw createError({
-      statusCode: 400,
-      message: error.message
-    })
-  }
+  const azureFilename = createAzureFilename(filename)
 
   // Construct blob path with userId as virtual directory
   const blobPath = `${userId}/${azureFilename}`
@@ -64,7 +44,7 @@ export default defineEventHandler(async (event) => {
   const receiptTotal = extractReceiptTotal(filename)
 
   // Insert record into uploads table
-  const result = await db.insert(schema.uploads).values({
+  const dbResult = await db.insert(schema.uploads).values({
     hashId,
     userId,
     title: receiptTitle || 'Untitled',
@@ -86,6 +66,6 @@ export default defineEventHandler(async (event) => {
       uploadUrl,
       uploadExpiresAt: expiresAt
     },
-    uploadRecord: result[0]
+    uploadRecord: dbResult[0]
   }
 })

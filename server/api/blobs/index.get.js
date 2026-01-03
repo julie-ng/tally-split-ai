@@ -2,19 +2,8 @@ export default defineEventHandler(async (event) => {
   requireUserId(event)
   const userId = event.context.userId
 
-  // Validate environment variables and get container client
-  let containerClient;
-  let storageConfig;
-  try {
-    storageConfig = azureStorageUtils.getAzureStorageConfig();
-    containerClient = await azureStorageUtils.getContainerClient();
-  } catch (error) {
-    throw createError({
-      statusCode: error.message.includes('does not exist') ? 404 : 500,
-      statusMessage: error.message.includes('does not exist') ? 'Container not found' : 'Azure Storage configuration error',
-      message: error.message
-    });
-  }
+  const storageConfig = azureStorageUtils.useAzureStorageConfig()
+  const containerClient = azureStorageUtils.getContainerClient()
 
   try {
     // List blobs for specific user using virtual directory prefix
