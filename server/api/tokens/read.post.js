@@ -1,7 +1,14 @@
+import { z } from 'zod'
+
 export default defineEventHandler(async (event) => {
   // ⚠️ TODO - implement security.
   requireUserId(event)
   const userId = event.context.userId
+
+  const requestSchema = z.object({
+    action: z.string().refine((value) => value === 'read', { error: 'Invalid action' }),
+    blobName: z.string().includes(userId, { error: 'Blob name must include user Id' })
+  })
 
   // Validate environment variables
   try {
@@ -13,47 +20,37 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const body = await readBody(event)
+  const result = await readValidatedBody(event, body => requestSchema.safeParse(body))
 
-  // Validate request body
-  if (!body || typeof body !== 'object') {
-    throw createError({
-      statusCode: 400,
-      message: 'Invalid request body.'
-    })
-  }
-
-  const { action, blobName } = body
-
-  // Validate action
-  if (action !== 'read') {
-    throw createError({
-      statusCode: 400,
-      message: 'Invalid action.'
-    })
-  }
-
-  // Validate blobName
-  if (!blobName || typeof blobName !== 'string') {
-    throw createError({
-      statusCode: 400,
-      message: 'Invalid blobName. Must be a non-empty string'
-    })
+  if (!result.success) {
+    setResponseStatus(event, 400)
+    return {
+      success: false,
+      message: "Invalid request body",
+      errors: z.flattenError(result.error).fieldErrors
+    }
   }
 
   // Generate SAS token with read-only permissions (5 minutes validity)
-  const { blobUrl, sasToken, uploadUrl, expiresAt } = azureStorageUtils.generateBlobSasToken(blobName, {
-    permissions: 'read',
-    expiresInMinutes: 5
-  })
+  const {
+    blobUrl,
+    sasToken,
+    uploadUrl,
+    expiresAt
+  } = azureStorageUtils.generateBlobSasToken(result.data.blobName,
+    {
+      permissions: 'read',
+      expiresInMinutes: 5
+    })
 
   return {
     success: true,
-    action,
-    blobName,
+    action: result.data.action,
+    blobName: result.data.blobName,
     blobUrl,
     sasToken,
     blobUrlWithSas: uploadUrl,
     expiresAt
   }
+
 })
