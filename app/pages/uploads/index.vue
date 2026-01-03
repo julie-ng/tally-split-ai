@@ -41,7 +41,6 @@ const columns = [
   {
     accessorKey: 'hashId',
     header: 'Hash ID',
-    cell: ({row}) => `${row.getValue('hashId')}`
   },
   {
     accessorKey: 'status',
@@ -212,6 +211,14 @@ const getAnalyzeButtonText = (status) => {
           >
           <template #expanded="{ row }">
             <Shiki v-if="uploads" lang="json" :code="JSON.stringify(row.original, null, 2)" class="bg-white text-sm" />
+          </template>
+          <template #hashId-cell="{ row }">
+            <NuxtLink
+              :to="`/uploads/${row.original.hashId}`"
+              class="text-blue-600 hover:text-blue-800 hover:underline font-mono"
+            >
+              {{ row.original.hashId }}
+            </NuxtLink>
           </template>
           <template #status-cell="{ row }">
             <UBadge
