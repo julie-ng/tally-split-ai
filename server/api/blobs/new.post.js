@@ -1,10 +1,9 @@
 import { db, schema } from 'hub:db'
-// import { hashUploadName } from '~/server/utils/hash-upload-name'
 
 export default defineEventHandler(async (event) => {
   // Validate environment variables
   try {
-    getAzureStorageConfig()
+    azureStorageUtils.getAzureStorageConfig()
   } catch (error) {
     throw createError({
       statusCode: 500,
@@ -55,7 +54,7 @@ export default defineEventHandler(async (event) => {
   const blobPath = `${userId}/${azureFilename}`
 
   // Generate SAS token for upload (3 minutes validity)
-  const { blobUrl, uploadUrl, expiresAt } = generateBlobSasToken(blobPath, {
+  const { blobUrl, uploadUrl, expiresAt } = azureStorageUtils.generateBlobSasToken(blobPath, {
     permissions: 'write',
     expiresInMinutes: 3
   })

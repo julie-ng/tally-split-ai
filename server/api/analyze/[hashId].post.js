@@ -3,6 +3,7 @@ import { eq, sql } from 'drizzle-orm'
 import DocumentIntelligence, { getLongRunningPoller, isUnexpected } from '@azure-rest/ai-document-intelligence'
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+// import { azureStorageUtils } from '~/server/utils/azure-storage-utils.helper.js'
 
 export default defineEventHandler(async (event) => {
   const hashId = getRouterParam(event, 'hashId')
@@ -46,7 +47,7 @@ export default defineEventHandler(async (event) => {
       .where(eq(schema.uploads.hashId, hashId))
 
     // 4. Generate read-only SAS token (5 minutes)
-    const { uploadUrl: blobUrlWithSas } = generateBlobSasToken(upload.blobName, {
+    const { uploadUrl: blobUrlWithSas } = azureStorageUtils.generateBlobSasToken(upload.blobName, {
       permissions: 'read',
       expiresInMinutes: 5
     })

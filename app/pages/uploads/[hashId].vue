@@ -13,18 +13,6 @@ const userStore = useUserStore()
 // Fetch upload details
 const { data: upload, pending, error } = await useFetch(`/api/uploads/${hashId}`)
 
-// Format timestamp for display
-const formatDate = (timestamp) => {
-  if (!timestamp) return '-'
-  return new Date(timestamp).toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
 const statusBadgeColor = function (status) {
   if (status === 'uploaded') return 'info'
   if (status === 'failed') return 'error'
@@ -40,9 +28,9 @@ const statusBadgeVariant = function (status) {
 }
 
 const azureTags = computed(() => {
-  if (!upload.value?.azureTags) return []
-  const data = JSON.parse(upload.value.azureTags)
-  return Object.entries(data).map(([key, value]) => ({ key, value }))
+  return (upload.value?.azureTags)
+    ? azureUtils.blobTagsJsonToObject(upload.value.azureTags)
+    : []
 })
 </script>
 
@@ -108,11 +96,11 @@ const azureTags = computed(() => {
                 </div>
                 <div>
                   <dt class="text-sm font-medium text-slate-500">Receipt Date</dt>
-                  <dd class="mt-1 text-slate-900">{{ formatDate(upload.receiptDate) }}</dd>
+                  <dd class="mt-1 text-slate-900">{{ timestampUtils.toShortDate(upload.receiptDate) }}</dd>
                 </div>
                 <div>
                   <dt class="text-sm font-medium text-slate-500">Uploaded At</dt>
-                  <dd class="mt-1 text-slate-900">{{ formatDate(upload.uploadedAt) }}</dd>
+                  <dd class="mt-1 text-slate-900">{{ timestampUtils.toShortDate(upload.uploadedAt) }}</dd>
                 </div>
               </dl>
             </div>
@@ -146,7 +134,7 @@ const azureTags = computed(() => {
                 </div>
                 <div v-if="upload.analyzedAt">
                   <dt class="text-sm font-medium text-slate-500">Analyzed At</dt>
-                  <dd class="mt-1 text-slate-900">{{ formatDate(upload.analyzedAt) }}</dd>
+                  <dd class="mt-1 text-slate-900">{{ timestampUtils.toShortDate(upload.analyzedAt) }}</dd>
                 </div>
               </dl>
             </div>

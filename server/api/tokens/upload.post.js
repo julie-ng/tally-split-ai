@@ -1,7 +1,7 @@
 export default defineEventHandler(async (event) => {
   // Validate environment variables
   try {
-    getAzureStorageConfig()
+    azureStorageUtils.getAzureStorageConfig()
   } catch (error) {
     throw createError({
       statusCode: 500,
@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
    */
 
   // Generate SAS token with create-only permissions (1 minute validity)
-  const { blobUrl, sasToken, uploadUrl, expiresAt } = generateBlobSasToken(blobName, {
+  const { blobUrl, sasToken, uploadUrl, expiresAt } = azureStorageUtils.generateBlobSasToken(blobName, {
     permissions: 'create',
     expiresInMinutes: 1
   })

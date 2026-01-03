@@ -88,19 +88,6 @@ const tableStyles = {
   tr: 'data-[expanded=true]:bg-elevated/50'
 }
 
-
-// Format timestamp for display
-const formatDate = (timestamp) => {
-  if (timestamp === null) {
-    return '-'
-  }
-  return new Date(timestamp).toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    })
-}
-
 const azureTags = function(str) {
   const data = JSON.parse(str)
   const result = []
@@ -250,16 +237,9 @@ const getAnalyzeButtonText = (status) => {
           -->
           <template #receiptDate-cell="{ row }">
             <time :datetime="row.original.receiptDate" :title="row.original.receiptDate">
-              {{ formatDate(row.original.receiptDate) }}
+              {{ timestampUtils.toShortDatetime(row.original.receiptDate) }}
             </time>
           </template>
-          <!--
-          <template #uploadedAt-cell="{ row }">
-            <time :datetime="row.original.uploadedAt" :title="row.original.uploadedAt">
-              {{ formatDate(row.original.uploadedAt) }}
-            </time>
-          </template>
-          -->
           <template #azureTags-cell="{ row }">
             <div v-if="row.original.azureTags != null" v-for="tag, i in azureTags(row.original.azureTags)">
               <UBadge :key="`${row.original.hashId}-tag-${tag.key}-${i}`"

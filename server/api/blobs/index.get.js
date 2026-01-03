@@ -1,16 +1,15 @@
-import { BlobServiceClient, StorageSharedKeyCredential, BlobSASPermissions, generateBlobSASQueryParameters } from '@azure/storage-blob';
-
 export default defineEventHandler(async (event) => {
-  const ACCOUNT_NAME = process.env.AZ_STORAGE_ACCOUNT;
-  const ACCOUNT_KEY = process.env.AZ_STORAGE_ACCOUNT_KEY;
-  const CONTAINER_NAME = process.env.AZ_STORAGE_CONTAINER_NAME;
-
-  // Validate environment variables
-  if (!ACCOUNT_NAME || !ACCOUNT_KEY || !CONTAINER_NAME) {
+  // Validate environment variables and get container client
+  let containerClient;
+  let storageConfig;
+  try {
+    storageConfig = azureStorageUtils.getAzureStorageConfig();
+    containerClient = await azureStorageUtils.getContainerClient();
+  } catch (error) {
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Missing required Azure Storage configuration',
-      message: 'Required environment variables: AZ_STORAGE_ACCOUNT, AZ_STORAGE_ACCOUNT_KEY, AZ_STORAGE_CONTAINER_NAME'
+      statusCode: error.message.includes('does not exist') ? 404 : 500,
+      statusMessage: error.message.includes('does not exist') ? 'Container not found' : 'Azure Storage configuration error',
+      message: error.message
     });
   }
 
@@ -38,26 +37,6 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Create blob service client
-    const sharedKeyCredential = new StorageSharedKeyCredential(ACCOUNT_NAME, ACCOUNT_KEY);
-    const blobServiceClient = new BlobServiceClient(
-      `https://${ACCOUNT_NAME}.blob.core.windows.net`,
-      sharedKeyCredential
-    );
-
-    // Get container client
-    const containerClient = blobServiceClient.getContainerClient(CONTAINER_NAME);
-
-    // Check if container exists
-    const exists = await containerClient.exists();
-    if (!exists) {
-      throw createError({
-        statusCode: 404,
-        statusMessage: 'Container not found',
-        message: `Container "${CONTAINER_NAME}" does not exist`
-      });
-    }
-
     // List blobs for specific user using virtual directory prefix
     const blobs = [];
     const prefix = `${userId}/`;
@@ -66,22 +45,16 @@ export default defineEventHandler(async (event) => {
       includeTags: true,
       includeMetadata: true
     })) {
-      const blobClient = containerClient.getBlobClient(blob.name);
-
       // Generate SAS token for read access valid for 5 minutes
-      const sasToken = generateBlobSASQueryParameters({
-        containerName: CONTAINER_NAME,
-        blobName: blob.name,
-        permissions: BlobSASPermissions.parse('r'), // Read permission only
-        startsOn: new Date(),
-        expiresOn: new Date(new Date().valueOf() + 5 * 60 * 1000), // 5 minutes from now
-        contentDisposition: 'inline' // Display in browser instead of download
-      }, sharedKeyCredential).toString();
+      const { blobUrl, uploadUrl: sasUrl } = azureStorageUtils.generateBlobSasToken(blob.name, {
+        permissions: 'read',
+        expiresInMinutes: 5
+      });
 
       blobs.push({
         filename: blob.name,
-        url: blobClient.url,
-        sasUrl: `${blobClient.url}?${sasToken}`,
+        url: blobUrl,
+        sasUrl,
         uploadedAt: blob.properties.createdOn,
         lastModified: blob.properties.lastModified,
         size: blob.properties.contentLength,
@@ -91,8 +64,8 @@ export default defineEventHandler(async (event) => {
     }
 
     return {
-      accountName: ACCOUNT_NAME,
-      containerName: CONTAINER_NAME,
+      accountName: storageConfig.account,
+      containerName: storageConfig.container,
       count: blobs.length,
       blobs
     };

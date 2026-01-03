@@ -3,7 +3,7 @@
  * @param {Date} date - The date to format
  * @returns {string} - Formatted date string (e.g., "07 Dec 2025 11:39 CEST")
  */
-export function formatDate(date) {
+function formatDate(date) {
   const day = date.getDate().toString().padStart(2, '0');
   const month = date.toLocaleDateString('en-US', { month: 'short' });
   const year = date.getFullYear();
@@ -17,4 +17,8 @@ export function formatDate(date) {
   const timezone = timeString.split(' ').pop();
 
   return `${day} ${month} ${year} ${hours}:${minutes} ${timezone}`;
+}
+
+export const dateUtils = {
+  formatDate,
 }
