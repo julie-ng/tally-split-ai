@@ -5,10 +5,7 @@ useHead({
 </script>
 
 <template>
-<UApp>
-  <AppHeader />
-  <UMain>
+  <NuxtLayout>
     <NuxtPage />
-  </UMain>
-</UApp>
+  </NuxtLayout>
 </template>

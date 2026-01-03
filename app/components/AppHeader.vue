@@ -17,12 +17,12 @@ const links = [
 </script>
 
 <template>
-<div style="background:var(--jng-primary-color);">
+<div class="fixed top-0 left-0 right-0 z-50 w-full" style="background:var(--jng-primary-color);">
   <UContainer class="py-3">
     <header class="flex items-center">
       <div class="flex-1">
         <NuxtLink to="/" class="font-bold text-l text-white hover:text-emerald-300">
-          <img src="/images/logo-dark.svg" alt="Logo" class="mr-2">
+          <img src="/images/logo-dark.svg" alt="Logo" class="mr-2 inline-block align-middle">
           AI Receipts POC
         </NuxtLink>
         <ul class="inline-block ml-5">
@@ -46,7 +46,7 @@ const links = [
         </ul>
       </div>
       <div class="text-white text-right">
-        Hello {{ userFullName }} ({{ userId }})
+        Hello {{ userId }}
       </div>
     </header>
   </UContainer>
@@ -55,8 +55,6 @@ const links = [
 
 <style scoped>
 img {
-  display: inline-block;
-  vertical-align: middle;
-  max-width: 30px;
+  max-width: 24px;
 }
 </style>
