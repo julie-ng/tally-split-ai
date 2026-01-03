@@ -13,36 +13,6 @@ const userStore = useUserStore()
 // Fetch upload details
 const { data: upload, pending, error } = await useFetch(`/api/uploads/${hashId}`)
 
-// Fetch SAS token for blob access - only when we have the blobName
-const { data: tokenData, pending: tokenPending } = await useFetch('/api/tokens/read', {
-  method: 'POST',
-  body: computed(() => ({
-    action: 'read',
-    blobName: upload.value?.blobName || ''
-  })),
-  immediate: false,
-  watch: false
-})
-
-// Manually trigger token fetch when upload is loaded
-watch(upload, async (newUpload) => {
-  if (newUpload?.blobName && !tokenData.value) {
-    const result = await $fetch('/api/tokens/read', {
-      method: 'POST',
-      body: {
-        action: 'read',
-        blobName: newUpload.blobName
-      }
-    })
-    tokenData.value = result
-  }
-}, { immediate: true })
-
-// Compute blob URL with SAS token
-const blobUrlWithSas = computed(() => {
-  return tokenData.value?.blobUrlWithSas || null
-})
-
 // Format timestamp for display
 const formatDate = (timestamp) => {
   if (!timestamp) return '-'
@@ -193,43 +163,13 @@ const azureTags = computed(() => {
           <!-- Right column - Preview & Actions -->
           <div class="space-y-6">
             <!-- Image Preview -->
-            <ClientOnly>
-            <div v-if="upload.blobUrl" class="bg-white border border-slate-200 rounded-lg p-6">
-              Has a Blob URL! {{ upload.blobUrl }}
+            <div v-if="upload.blobName" class="bg-white border border-slate-200 rounded-lg p-6">
               <h2 class="font-bold text-xl mb-4">Preview</h2>
-
-              <!-- Loading state while fetching SAS token -->
-              <div v-if="tokenPending" class="flex items-center justify-center py-10">
-                <UIcon name="i-lucide-loader" class="animate-spin text-2xl text-slate-400" />
-              </div>
-
-              <!-- Show image when SAS token is available -->
-              <template v-if="blobUrlWithSas">
-                <a :href="blobUrlWithSas" target="_blank" class="block">
-                  <img
-                    :src="blobUrlWithSas"
-                    :alt="upload.title"
-                    class="w-full rounded border border-slate-200 hover:border-slate-400 transition-colors"
-                  />
-                </a>
-                <UButton
-                  :to="blobUrlWithSas"
-                  target="_blank"
-                  color="neutral"
-                  variant="soft"
-                  class="w-full mt-4"
-                  icon="i-lucide-external-link"
-                >
-                  Open in New Tab
-                </UButton>
-              </template>
-
-              <!-- Error state if SAS token unavailable -->
-              <div v-else class="text-center py-10 text-slate-500">
-                Unable to load preview (SAS token unavailable)
-              </div>
+              <AzureBlobImage
+                :blob-name="upload.blobName"
+                :alt="upload.title"
+              />
             </div>
-            </ClientOnly>
 
             <!-- Actions -->
             <div class="bg-white border border-slate-200 rounded-lg p-6">
