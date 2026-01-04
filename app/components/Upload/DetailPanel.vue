@@ -38,6 +38,7 @@ const azureTags = computed(() => {
     <h1 class="font-bold text-3xl mb-2">{{ props.upload.title }}</h1>
   </div>
 
+
   <UTabs :items="tabItems" size="xl" variant="link" class="w-full" :ui="{ indicator: 'border-b-3 border-primary', trigger: 'cursor-pointer' }">
     <template #overview="{ item }">
       <UploadInvalidSchemaAlert v-if="!schemaCheck.success" />

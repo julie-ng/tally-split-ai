@@ -19,27 +19,30 @@ const azureTags = computed(() => {
   <h2 class="mt-6 mb-3 font-semibold text-lg">Azure Info</h2>
   <UIFileProperty label="Blob Name" :text="upload.blobName" />
   <UIFileProperty label="Blob Url" :text="upload.blobUrl" />
-  <UIFileProperty label="Azure Blob Index Tags">
-    <div class="flex flex-wrap gap-2 pt-2">
-      <UBadge
-        v-for="tag in azureTags"
-        :key="tag.key"
-        class="text-slate-500"
-        color="neutral"
-        variant="soft"
-      >
-        {{ tag.key }}: {{ tag.value }}
-      </UBadge>
-    </div>
-  </UIFileProperty>
-
+  <ClientOnly>
+    <UIFileProperty label="Azure Blob Index Tags">
+      <div class="flex flex-wrap gap-2 pt-2">
+        <UBadge
+          v-for="tag in azureTags"
+          :key="tag.key"
+          class="text-slate-500"
+          color="neutral"
+          variant="soft"
+        >
+          {{ tag.key }}: {{ tag.value }}
+        </UBadge>
+      </div>
+    </UIFileProperty>
+  </ClientOnly>
   <h2 class="mt-6 mb-3 font-semibold text-lg">OCR Analysis</h2>
   <UIFileProperty label="Status" :text="upload.analysisStatus" />
   <UIFileProperty v-if="upload.analyzedAt" label="Analyzed At" :text="timestampUtils.toShortDate(upload.analyzedAt)" />
   <UIFileProperty v-if="upload.analyzedAt" label="OCR Result">
-    <pre class="w-fit mt-1 p-5 bg-slate-100 rounded-lg font-mono text-xs">
-      {{ upload.analysisOcrResult }}
-    </pre>
+    <ClientOnly>
+      <pre class="w-fit mt-1 p-5 bg-slate-100 rounded-lg font-mono text-xs">
+        {{ upload.analysisOcrResult }}
+      </pre>
+    </ClientOnly>
   </UIFileProperty>
 
 </div>
