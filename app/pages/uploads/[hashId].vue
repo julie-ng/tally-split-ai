@@ -4,14 +4,19 @@ import { useUserStore } from '~/stores/user.store'
 const route = useRoute()
 const hashId = route.params.hashId
 
-useHead({
-  title: `Upload ${hashId}`
+definePageMeta({
+  layout: 'dashboard',
 })
 
 const userStore = useUserStore()
 
 // Fetch upload details
 const { data: upload, pending, error } = await useFetch(`/api/uploads/${hashId}`)
+
+// Set page title reactively after upload is fetched
+useHead({
+  title: () => `${upload.value?.title} | Upload` || `Upload ${hashId}`
+})
 
 const azureTags = computed(() => {
   return (upload.value?.azureTags)

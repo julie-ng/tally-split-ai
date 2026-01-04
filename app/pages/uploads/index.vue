@@ -1,6 +1,10 @@
 <script setup>
 import { useUserStore } from '~/stores/user.store'
 
+definePageMeta({
+  layout: 'dashboard',
+})
+
 useHead({
   title: 'Uploads'
 })
@@ -78,7 +82,7 @@ const columns = [
   }
 ]
 
-// const expanded = ref({ 1: true })
+const expanded = ref({ 1: true })
 
 const tableStyles = {
   base: 'min-w-full',
@@ -148,8 +152,8 @@ const getAnalyzeButtonText = (status) => {
     <div class="my-5">
       <div class="flex justify-between items-center mb-5">
         <div>
-          <h1 class="font-bold text-3xl">Upload Records</h1>
-          <p class="mt-1 text-slate-400">Database records for {{ userStore.fullName }}</p>
+          <h1 class="font-bold text-2xl">Uploads</h1>
+          <p class="mt-1 text-sm text-slate-400">Database records for {{ userStore.userId }}</p>
         </div>
         <UButton @click="refresh()"
         class="px-4 py-2 cursor-pointer"
