@@ -2,17 +2,48 @@
 const props = defineProps({
   upload: Object // should inherit valid schema.
 })
+
+// Fetch analysis results
+const { data: analysisData, pending, error } = await useFetch(`/api/analysis/results/${props.upload.hashId}`)
 </script>
 
 <template>
 <div class="pt-6 px-4">
 
-  Analysis Status:  {{ upload.analysisStatus }}
-  <div v-if="upload.analyzedAt">
-  Analyzed At: {{ timestampUtils.toShortDate(upload.analyzedAt) }}
+  <div class="mb-4">
+    <p>Analysis Status: {{ upload.analysisStatus }}</p>
+    <p v-if="upload.analyzedAt">
+      Analyzed At: {{ timestampUtils.toShortDate(upload.analyzedAt) }}
+    </p>
   </div>
 
-  TODO: Show Azure Document Intelligence Analysis
+  <!-- Loading state -->
+  <LoadingPlaceholder v-if="pending" title="Loading Analysis" />
+
+  <!-- Error state -->
+  <UAlert v-else-if="error"
+    title="Unable to Load Analysis"
+    :description="error.message"
+    class="my-5"
+    color="error"
+    variant="subtle"
+    icon="i-lucide-triangle-alert"
+  />
+
+  <!-- Analysis data -->
+  <div v-else-if="analysisData?.success">
+    <pre class="p-5 bg-slate-100 rounded-lg overflow-x-auto">{{ JSON.stringify(analysisData.data, null, 2) }}</pre>
+  </div>
+
+  <!-- Not found -->
+  <UAlert v-else
+    title="No Analysis Data"
+    description="Analysis results file not found"
+    class="my-5"
+    color="warning"
+    variant="subtle"
+    icon="i-lucide-info"
+  />
 
 </div>
 </template>
