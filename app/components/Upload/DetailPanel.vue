@@ -3,6 +3,10 @@ const props = defineProps({
   upload: Object
 })
 
+const schemaCheck = zodSchemas.uploadObject.safeParse(props.upload)
+if (!schemaCheck.success) {
+  console.error(schemaCheck.error)
+}
 
 const tabItems = [
   {
@@ -36,17 +40,22 @@ const azureTags = computed(() => {
 
   <UTabs :items="tabItems" size="xl" variant="link" class="w-full" :ui="{ indicator: 'border-b-3 border-primary', trigger: 'cursor-pointer' }">
     <template #overview="{ item }">
-      <p>This is the {{ item.label }} tab.</p>
+      <UploadInvalidSchemaAlert v-if="!schemaCheck.success" />
+      <UploadOverviewTabContent :upload="upload" />
     </template>
+
     <template #analysis="{ item }">
-      <p>This is the {{ item.label }} tab.</p>
+      <UploadInvalidSchemaAlert v-if="!schemaCheck.success" />
+      <UploadAnalysisTabContent :upload="upload" />
     </template>
+
     <template #rawJson="{ item }">
       <p>This is the {{ item.label }} tab.</p>
+      <pre><code>{{ props.upload }}</code></pre> <!-- Temp -->
     </template>
   </UTabs>
 
-   <!-- <pre><code>{{ props.upload }}</code></pre> -->
+
 
 </div>
 </template>

@@ -21,3 +21,9 @@
   --jng-primary-color: #4259FF;
   --ui-primary: var(--color-blue-700);
 }
+
+
+html {
+  /* reset 16px to 14px */
+  /*font-size: 14px;*/
+}
