@@ -6,6 +6,7 @@ const props = defineProps({
   },
   hashId: {
     type: String,
+    required: false,
     default: ''
   }
 })

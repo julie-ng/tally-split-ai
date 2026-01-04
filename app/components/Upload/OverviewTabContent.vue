@@ -11,7 +11,8 @@ const azureTags = computed(() => {
 </script>
 
 <template>
-<div class="pt-6 px-4">
+<div class="pt-6 px-4 flex flex-row">
+  <div>
   <h2 class="mb-3 font-semibold text-lg">File Info</h2>
   <UIFileProperty label="Original Filename" :text="upload.originalFilename" />
   <UIFileProperty label="Blob Size" :text="formatBytes(upload.size)" />
@@ -44,6 +45,10 @@ const azureTags = computed(() => {
       </pre>
     </ClientOnly>
   </UIFileProperty>
+  </div>
+  <div>
+    <UploadImagePreview :blobName="upload.blobName" :alt="upload.blobName" />
+  </div>
 
 </div>
 </template>
