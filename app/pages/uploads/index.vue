@@ -1,10 +1,6 @@
 <script setup>
 import { useUserStore } from '~/stores/user.store'
 
-definePageMeta({
-  layout: 'dashboard',
-})
-
 useHead({
   title: 'Uploads'
 })

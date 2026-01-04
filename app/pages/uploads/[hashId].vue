@@ -3,11 +3,6 @@ import { useUserStore } from '~/stores/user.store'
 
 const route = useRoute()
 const hashId = route.params.hashId
-
-definePageMeta({
-  layout: 'dashboard',
-})
-
 const userStore = useUserStore()
 
 // Fetch upload details
