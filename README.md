@@ -159,3 +159,8 @@ az storage container list --auth-mode login --account-name jngaiexpenses -o tabl
   - [Documentation: Receipt Model](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/prebuilt/receipt?view=doc-intel-4.0.0)
     - [Receipt Model Schema](https://github.com/Azure-Samples/document-intelligence-code-samples/blob/main/schema/2024-11-30-ga/receipt.md)
   - [API Reference: Document Models - Analyze Document](https://learn.microsoft.com/en-us/rest/api/aiservices/document-models/analyze-document?view=rest-aiservices-v4.0%20(2024-11-30)&tabs=HTTP)
+
+NuxtJS Misc.
+
+- [unjs > H3 > Runtime type checking](https://unjs.io/blog/2023-08-15-h3-towards-the-edge-of-the-web#runtime-type-safe-request-utils)
+- [Mastering Nuxt: Server Middleware is an Anti-Pattern in Nuxt](https://masteringnuxt.com/blog/server-middleware-is-an-anti-pattern-in-nuxt)
