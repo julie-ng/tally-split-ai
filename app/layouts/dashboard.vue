@@ -31,21 +31,47 @@ const links = [
     label: 'Uploads',
     icon: 'i-lucide-upload-cloud',
     to: '/uploads',
+    defaultOpen: true,
     onSelect: () => {
       open.value = false
     },
+    children: [
+      {
+        label: 'List',
+        to: '/uploads',
+        icon: 'i-lucide-list',
+        onSelect: () => {
+          open.value = false
+        },
+      },
+      {
+        label: 'New Upload',
+        icon: 'i-lucide-upload',
+        to: '/uploads/new',
+        onSelect: () => {
+          open.value = false
+        },
+      }
+    ],
   }
 ]
 </script>
 
 <template>
-  <UDashboardGroup unit="rem">
-    <UDashboardSidebar id="default" v-model:open="open" collapsible resizable class="bg-elevated/25"
+  <UDashboardGroup>
+    <UDashboardSidebar id="default"
+      v-model:open="open"
+      :default-size="12"
+      :min-size="12"
+      :max-size="15"
+      collapsible
+      resizable
+      class="bg-elevated/25"
       :ui="{ header: 'lg:border-b lg:border-default', footer: 'lg:border-t lg:border-default' }">
 
       <!-- Header -->
       <template #header="{ collapsed }">
-        <NuxtLink class="flex items-center px-2.5 text-base" to="/">
+        <NuxtLink class="flex items-center px-2.5" to="/">
           <UIcon name="i-lucide-scan-barcode" class="size-6  bg-blue-600" />
           <div class="px-2 font-semibold text-slate-800">
             Receipts AI
@@ -55,7 +81,7 @@ const links = [
 
       <!-- Navigation Menu -->
       <template #default="{ collapsed }">
-        <UNavigationMenu :collapsed="collapsed" :items="links" orientation="vertical" tooltip popover />
+        <UNavigationMenu :collapsed="collapsed" :items="links" orientation="vertical" />
       </template>
 
       <!-- User Icon -->
@@ -71,7 +97,9 @@ const links = [
       </template>
     </UDashboardSidebar>
 
-    <slot />
+    <UDashboardPanel id="main" class="overflow-scroll">
+      <slot />
+    </UDashboardPanel>
 
     <!-- <NotificationsSlideover /> -->
   </UDashboardGroup>
