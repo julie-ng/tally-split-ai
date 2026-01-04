@@ -3,7 +3,7 @@ export default defineEventHandler(async (event) => {
   const userId = event.context.userId
 
   const storageConfig = azureStorageUtils.useAzureStorageConfig()
-  const containerClient = azureStorageUtils.getContainerClient()
+  const containerClient = await azureStorageUtils.getContainerClient()
 
   try {
     // List blobs for specific user using virtual directory prefix
