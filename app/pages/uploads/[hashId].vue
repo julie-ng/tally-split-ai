@@ -13,20 +13,6 @@ const userStore = useUserStore()
 // Fetch upload details
 const { data: upload, pending, error } = await useFetch(`/api/uploads/${hashId}`)
 
-const statusBadgeColor = function (status) {
-  if (status === 'uploaded') return 'info'
-  if (status === 'failed') return 'error'
-  if (status === 'initialized') return 'neutral'
-  return 'neutral'
-}
-
-const statusBadgeVariant = function (status) {
-  if (status === 'uploaded') return 'soft'
-  if (status === 'failed') return 'soft'
-  if (status === 'initialized') return 'outline'
-  return 'soft'
-}
-
 const azureTags = computed(() => {
   return (upload.value?.azureTags)
     ? azureUtils.blobTagsJsonToObject(upload.value.azureTags)
@@ -61,8 +47,8 @@ const azureTags = computed(() => {
           <h1 class="font-bold text-3xl mb-2">{{ upload.title }}</h1>
           <div class="flex items-center gap-3 text-slate-500">
             <UBadge
-              :color="statusBadgeColor(upload.status)"
-              :variant="statusBadgeVariant(upload.status)">
+              :color="badgeStyleHelpers.statusBadgeColor(upload.status)"
+              :variant="badgeStyleHelpers.statusBadgeVariant(upload.status)">
               {{ upload.status }}
             </UBadge>
             <span>•</span>

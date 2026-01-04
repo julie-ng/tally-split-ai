@@ -119,32 +119,6 @@ const deleteUpload = async (hashId, title, blobName) => {
   }
 }
 
-const statusBadgeColor = function (status) {
-  if (status === 'uploaded') {
-    return 'info'
-  }
-  if (status === 'failed') {
-    return 'error'
-  }
-  if (status === 'initialized') {
-    return 'neutral'
-  }
-  return 'neutral'
-}
-
-const statusBadgeVariant = function (status) {
-  if (status === 'uploaded') {
-    return 'soft'
-  }
-  if (status === 'failed') {
-    return 'soft'
-  }
-  if (status === 'initialized') {
-    return 'outline'
-  }
-  return 'soft'
-}
-
 const analyzeReceipt = async (hashId) => {
   try {
     await $fetch(`/api/analyze/${hashId}`, {
@@ -209,8 +183,8 @@ const getAnalyzeButtonText = (status) => {
           </template>
           <template #status-cell="{ row }">
             <UBadge
-              :color="statusBadgeColor(row.original.status)"
-              :variant="statusBadgeVariant(row.original.status)">
+              :color="badgeStyleHelpers.statusBadgeColor(row.original.status)"
+              :variant="badgeStyleHelpers.statusBadgeVariant(row.original.status)">
               {{ row.original.status }}
             </UBadge>
           </template>
