@@ -48,7 +48,7 @@ export default defineNuxtConfig({
         }
       ],
       bodyAttrs: {
-        class: 'bg-slate-100'
+        class: ''
       }
     }
   },

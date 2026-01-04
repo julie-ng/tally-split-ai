@@ -1,11 +1,11 @@
 <script>
 definePageMeta({
-  layout: 'v2',
+  layout: 'dashboard',
 })
 </script>
 
 <template>
-<div>
-  <h1>Hello World</h1>
-</div>
+  <div>
+    <h1>Hello World</h1>
+  </div>
 </template>
