@@ -5,7 +5,12 @@ const props = defineProps({
 
 // Fetch analysis results
 const { data: analysisData, pending, error } = await useFetch(`/api/analysis/results/${props.upload.hashId}`)
+console.log('analysisData', typeof analysisData.value)
+
 </script>
+
+
+
 
 <template>
 <div class="pt-6 px-4">
@@ -32,8 +37,16 @@ const { data: analysisData, pending, error } = await useFetch(`/api/analysis/res
 
   <!-- Analysis data -->
   <div v-else-if="analysisData?.success">
-    <pre class="p-5 bg-slate-100 rounded-lg overflow-x-auto">{{ JSON.stringify(analysisData.data, null, 2) }}</pre>
+    {{ analysisData.data.analyzeResult.documents.length }}
+    <vue-json-pretty :data="analysisData.data"
+      :indent="2"
+      :deep="4"
+      :collapsedNodeLength="3"
+      :showIcon="true"
+      :showLength="true"
+    />
   </div>
+  <!-- <pre class="p-5 bg-slate-100 rounded-lg overflow-x-auto">{{ JSON.stringify(analysisData.data, null, 2) }}</pre> -->
 
   <!-- Not found -->
   <UAlert v-else

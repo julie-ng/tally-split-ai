@@ -4,10 +4,14 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   // css: ['~/assets/scss/main.scss'],
   modules: ['@nuxt/ui', '@pinia/nuxt', '@nuxthub/core', 'nuxt-shiki'],
+  plugins: ['@/plugins/vue-json-pretty'],
   hub: {
     db: 'sqlite'
   },
-  css: ['~/assets/css/main.css'],
+  css: [
+    '~/assets/css/main.css',
+    'vue-json-pretty/lib/styles.css'
+  ],
   pinia: {
     storesDirs: ['~/stores/**']
   },
