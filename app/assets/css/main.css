@@ -19,4 +19,5 @@
 
 :root {
   --jng-primary-color: #4259FF;
+  --ui-primary: var(--color-blue-700);
 }
