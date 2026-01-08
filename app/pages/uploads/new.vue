@@ -51,24 +51,34 @@ async function onFilesUpdate(files) {
         <div>
           <h1 class="text-lg font-bold">
             Queued
-            <span v-if="uploadsStore.hasQueued" class="bg-slate-300 font-normal text-slate-500 inline-block ml-1 w-6 h-6 align-middle text-center text-base/6 rounded-full">
+            <ClientOnly>
+              <span v-if="uploadsStore.hasQueued" class="bg-slate-300 font-normal text-slate-500 inline-block ml-1 w-6 h-6 align-middle text-center text-base/6 rounded-full">
               {{ uploadsStore.totalQueued }}
-            </span>
+              </span>
+            </ClientOnly>
           </h1>
-          <UploadsQueueList />
+          <ClientOnly>
+            <UploadsQueueList />
+          </ClientOnly>
         </div>
         <div>
           <h1 class="text-lg font-bold">
             In Progress
-            <span v-if="uploadsStore.hasInProgress" class="bg-slate-300 font-normal text-slate-500 inline-block ml-1 w-6 h-6 align-middle text-center text-base/6 rounded-full">
-              {{ uploadsStore.totalInProgress }}
-            </span>
+            <ClientOnly>
+              <span v-if="uploadsStore.hasInProgress" class="bg-slate-300 font-normal text-slate-500 inline-block ml-1 w-6 h-6 align-middle text-center text-base/6 rounded-full">
+                {{ uploadsStore.totalInProgress }}
+              </span>
+            </ClientOnly>
           </h1>
-          <UploadsInProgressList />
+          <ClientOnly>
+            <UploadsInProgressList />
+          </ClientOnly>
         </div>
         <div>
           <h1 class="text-lg font-bold">Complete</h1>
-          <UploadsCompletedList />
+          <ClientOnly>
+            <UploadsCompletedList />
+          </ClientOnly>
         </div>
       </div>
       <!--

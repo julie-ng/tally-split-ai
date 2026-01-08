@@ -1,14 +1,61 @@
-import { defineStore } from 'pinia'
+import { defineStore, skipHydrate } from 'pinia'
+import { useLocalStorage } from '@vueuse/core'
 
 export const useUploadsStore = defineStore('uploads', () => {
 
   // -------- STATE --------
 
   const MAX_CONCURRENT_UPLOADS = 3
-  const uploads = ref([])
+
+  /**
+   * Persist uploads to localStorage
+   *
+   * Note: Custom serializer required because File objects cannot be serialized to JSON.
+   * On save: File objects are stripped before storing
+   * On load: File property is set to null (can't restore files after page refresh)
+   */
+  const uploads = useLocalStorage('ai-receipts:uploads', [], {
+    serializer: {
+      read: (v) => {
+        try {
+          const parsed = JSON.parse(v)
+          // Remove File objects on deserialization (can't be restored)
+          return parsed.map(upload => ({
+            ...upload,
+            file: null
+          }))
+        } catch {
+          return []
+        }
+      },
+      write: (v) => {
+        // Remove File objects before serialization (can't be stored)
+        const serializable = v.map(upload => {
+          const { file, ...rest } = upload
+          return rest
+        })
+        return JSON.stringify(serializable)
+      }
+    }
+  })
+
   const autoUploadTimer = ref(null)
   const AUTO_UPLOAD_INTERVAL = 1000 // 10 seconds
   const autoUploadFromQueue = ref(false)
+
+  // Handle page refresh - mark queued/in-progress uploads as interrupted
+  if (import.meta.client) {
+    onMounted(() => {
+      if (performance.getEntriesByType('navigation')[0]?.type === 'reload') {
+        console.log('🔄 Page was refreshed - marking active uploads as interrupted')
+        uploads.value.forEach(upload => {
+          if (upload.status === 'queued' || upload.status === 'in-progress') {
+            upload.status = 'interrupted'
+          }
+        })
+      }
+    })
+  }
 
   // -------- GETTERS --------
 
@@ -17,12 +64,13 @@ export const useUploadsStore = defineStore('uploads', () => {
 
   // Optimized: compute once, use many times
   const byStatus = computed(() => {
-    const groups = { queued: [], inProgress: [], completed: [], failed: [] }
+    const groups = { queued: [], inProgress: [], completed: [], failed: [], interrupted: [] }
     uploads.value.forEach(upload => {
       if (upload.status === 'queued') groups.queued.push(upload)
       else if (upload.status === 'in-progress') groups.inProgress.push(upload)
       else if (upload.status === 'completed') groups.completed.push(upload)
       else if (upload.status === 'failed') groups.failed.push(upload)
+      else if (upload.status === 'interrupted') groups.interrupted.push(upload)
     })
     return groups
   })
@@ -54,6 +102,13 @@ export const useUploadsStore = defineStore('uploads', () => {
   const failed = computed(() => byStatus.value.failed)
   const hasFailed = computed(() => byStatus.value.failed.length > 0)
   const totalFailed = computed(() => byStatus.value.failed.length)
+
+  /**
+   * Interrupted - Status Getters
+   */
+  const interrupted = computed(() => byStatus.value.interrupted)
+  const hasInterrupted = computed(() => byStatus.value.interrupted.length > 0)
+  const totalInterrupted = computed(() => byStatus.value.interrupted.length)
 
   /**
    * Concurrent Upload Limits
@@ -535,9 +590,11 @@ export const useUploadsStore = defineStore('uploads', () => {
     hasCompleted,
     hasFailed,
     hasInProgress,
+    hasInterrupted,
     hasItems,
     hasQueued,
     inProgress,
+    interrupted,
     maxConcurrentUploads: MAX_CONCURRENT_UPLOADS,
     processQueue,
     queued,
@@ -551,8 +608,9 @@ export const useUploadsStore = defineStore('uploads', () => {
     totalCompleted,
     totalFailed,
     totalInProgress,
+    totalInterrupted,
     totalItems,
     totalQueued,
-    uploads
+    uploads: skipHydrate(uploads)
   }
 })
