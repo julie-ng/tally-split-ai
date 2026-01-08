@@ -11,42 +11,51 @@ const route = useRoute()
 
 const collapsed = ref(false)
 const links = [
-  {
-    label: 'Home',
-    icon: 'i-lucide-house',
-    to: '/',
-  },
-  {
-    label: 'Azure AI Debug',
-    icon: 'i-lucide-flask-conical',
-    to: '/debug-analysis',
-  },
-  {
-    label: 'Blobs',
-    icon: 'i-lucide-blocks',
-    to: '/blobs',
-  },
-  {
-    label: 'Uploads',
-    icon: 'i-lucide-upload-cloud',
-    to: '/uploads',
-    defaultOpen: true,
-    children: [
-      {
-        label: 'List',
-        to: '/uploads',
-        icon: 'i-lucide-list',
-        onSelect: () => {
-          open.value = false
+  [
+    // {
+    //   label: 'Home',
+    //   icon: 'i-lucide-house',
+    //   to: '/',
+    // },
+    {
+      label: 'Azure AI Debug',
+      icon: 'i-lucide-chef-hat',
+      to: '/debug-analysis',
+    },
+    {
+      label: 'Samples',
+      icon: 'i-lucide-squares-subtract',
+      to: '/samples',
+    },
+  ],
+  [
+    {
+      label: 'Blobs',
+      icon: 'i-lucide-blocks',
+      to: '/blobs',
+    },
+    {
+      label: 'Uploads',
+      icon: 'i-lucide-upload-cloud',
+      to: '/uploads',
+      defaultOpen: true,
+      children: [
+        {
+          label: 'List',
+          to: '/uploads',
+          icon: 'i-lucide-list',
+          onSelect: () => {
+            open.value = false
+          },
         },
-      },
-      {
-        label: 'New Upload',
-        icon: 'i-lucide-upload',
-        to: '/uploads/new',
-      }
-    ],
-  },
+        {
+          label: 'New Upload',
+          icon: 'i-lucide-upload',
+          to: '/uploads/new',
+        }
+      ],
+    },
+  ]
 ]
 </script>
 
@@ -65,8 +74,8 @@ const links = [
       <!-- Header -->
       <template #header="{ collapsed }">
         <NuxtLink class="flex items-center" :class="{ 'py-1 px-1 bg-blue-600 rounded-sm': collapsed }" to="/">
-          <UIcon name="i-lucide-scan-barcode" class="size-6" :class="{ 'bg-white': collapsed }" />
-          <div v-if="!collapsed" class="px-2 font-semibold text-slate-800">
+          <UIcon name="i-lucide-scan-barcode" class="size-6" :class="{ 'bg-white': collapsed, 'bg-blue-700': !collapsed }" />
+          <div v-if="!collapsed" class="px-2 font-semibold text-slate-700">
             Receipts AI
           </div>
         </NuxtLink>
