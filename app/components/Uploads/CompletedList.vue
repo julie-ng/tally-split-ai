@@ -1,6 +1,6 @@
 <script setup>
-import { useUploadsStore } from '~/stores/uploads.store'
-const uploadsStore = useUploadsStore()
+import { useUploadQueueStore } from '~/stores/upload-queue.store'
+const uploadsStore = useUploadQueueStore()
 </script>
 
 <template>

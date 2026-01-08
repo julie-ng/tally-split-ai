@@ -1,7 +1,7 @@
 import { defineStore, skipHydrate } from 'pinia'
 import { useLocalStorage } from '@vueuse/core'
 
-export const useUploadsStore = defineStore('uploads', () => {
+export const useUploadQueueStore = defineStore('upload-queue', () => {
 
   // -------- STATE --------
 
@@ -14,7 +14,7 @@ export const useUploadsStore = defineStore('uploads', () => {
    * On save: File objects are stripped before storing
    * On load: File property is set to null (can't restore files after page refresh)
    */
-  const uploads = useLocalStorage('ai-receipts:uploads', [], {
+  const uploads = useLocalStorage('ai-receipts:upload-queue', [], {
     serializer: {
       read: (v) => {
         try {

@@ -4,12 +4,12 @@ useHead({
 })
 
 import { useUserStore } from '~/stores/user.store'
-import { useUploadsStore } from '~/stores/uploads.store'
+import { useUploadQueueStore } from '~/stores/upload-queue.store'
 import { useUploadObject } from '~/composables/useUploadObject'
 
 const userStore = useUserStore()
 const userId = userStore.userId
-const uploadsStore = useUploadsStore()
+const uploadsStore = useUploadQueueStore()
 const { createUploadObject } = useUploadObject()
 
 // uploadsStore.startAutoUpload()
