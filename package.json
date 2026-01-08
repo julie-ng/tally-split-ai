@@ -2,10 +2,7 @@
   "name": "ai-receipts-poc",
   "version": "1.0.0",
   "description": "POC for analyzing receipt scans with handwritten expense splitting",
-  "type": "module",
-  "main": "upload-scans.js",
   "scripts": {
-    "upload": "node upload-scans.js",
     "test": "vitest",
     "build": "nuxt build",
     "dev": "nuxt dev",
