@@ -4,6 +4,9 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxt/ui', '@pinia/nuxt', '@nuxthub/core', 'nuxt-shiki'],
   plugins: ['@/plugins/vue-json-pretty'],
+  watch: [
+    '~~/shared/**/*'
+  ],
   hub: {
     db: 'sqlite'
   },
