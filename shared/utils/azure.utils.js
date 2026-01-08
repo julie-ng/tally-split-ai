@@ -4,6 +4,7 @@
  *
  * @returns Array
  */
+
 function blobTagsJsonToObject(jsonString) {
   if (!jsonString) return []
   const data = JSON.parse(jsonString)

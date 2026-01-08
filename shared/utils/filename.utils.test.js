@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { extractReceiptDate, extractReceiptTotal, extractHashtags, extractHashtagsForAzureBlobs, extractReceiptTitle, filenameToComponentKey, simpleHash, createAzureFilename } from './filename.helper.js';
+import { extractReceiptDate, extractReceiptTotal, extractHashtags, extractHashtagsForAzureBlobs, extractReceiptTitle, filenameToComponentKey, simpleHash, createAzureFilename } from './filename.utils.js';
 
 describe('extractReceiptDate()', () => {
   it('should extract date in YYYY-MM-DD format from the beginning of filename', () => {

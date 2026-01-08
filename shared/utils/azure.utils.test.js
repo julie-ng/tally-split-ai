@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { azureUtils } from './azure-utils.helper.js'
+import { azureUtils } from './azure.utils.js'
 
 describe('azureUtils.blobTagsJsonToObject', () => {
   it('should convert JSON string to array of key-value objects', () => {
