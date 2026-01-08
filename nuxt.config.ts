@@ -2,15 +2,14 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  // css: ['~/assets/scss/main.scss'],
   modules: ['@nuxt/ui', '@pinia/nuxt', '@nuxthub/core', 'nuxt-shiki'],
   plugins: ['@/plugins/vue-json-pretty'],
   hub: {
     db: 'sqlite'
   },
   css: [
-    '~/assets/css/main.css',
-    'vue-json-pretty/lib/styles.css'
+    'vue-json-pretty/lib/styles.css',
+    '~/assets/css/main.css'
   ],
   pinia: {
     storesDirs: ['~/stores/**']

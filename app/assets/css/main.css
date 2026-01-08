@@ -22,8 +22,43 @@
   --ui-primary: var(--color-blue-700);
 }
 
-
+/*
 html {
-  /* reset 16px to 14px */
-  /*font-size: 14px;*/
+  reset 16px to 14px
+  font-size: 14px;
+}
+*/
+
+.vjs-key {
+  color: var(--color-rose-400);
+}
+
+.vjs-value-string {
+  color: var(--color-green-600);
+}
+
+.vjs-value-number {
+  color: var(--color-orange-300);
+}
+
+.vjs-key>.vjs-colon,
+.vjs-tree-brackets {
+  color: var(--color-slate-300);
+}
+
+.vjs-tree-node {
+  .vjs-indent-unit {
+    &.has-line {
+      border-left-color: var(--color-slate-600);
+    }
+  }
+}
+
+.vjs-carets {
+  color: var(--color-slate-500);
+}
+
+.vjs-tree-node.is-highlight,
+.vjs-tree-node:hover {
+  background-color: var(--color-slate-700);
 }
