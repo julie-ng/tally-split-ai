@@ -25,6 +25,8 @@ export const uploads = sqliteTable('uploads', {
   status: text('status').notNull().default('initialized'),
   blobName: text('blob_name').notNull().unique(),
   blobUrl: text('blob_url').notNull().unique(),
+  thumbnailName: text('thumbnail_name'),
+  thumbnailUrl: text('thumbnail_url'),
   originalFilename: text('original_filename').notNull(),
   contentType: text('content_type'),
   size: integer('size'),

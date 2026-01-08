@@ -116,6 +116,22 @@ export function simpleHash(str) {
 }
 
 /**
+ * Create thumbnail filename from original filename
+ *
+ * @param {string} filename - Original filename
+ * @returns {string} Thumbnail filename with -thumbnail suffix before extension
+ */
+export function createThumbnailFilename(filename) {
+  const lastDotIndex = filename.lastIndexOf('.')
+  if (lastDotIndex === -1) {
+    return `${filename}-thumbnail`
+  }
+  const name = filename.substring(0, lastDotIndex)
+  const extension = filename.substring(lastDotIndex)
+  return `${name}-thumbnail${extension}`
+}
+
+/**
  * Create an Azure-friendly filename by replacing special characters with dashes
  * and appending a random suffix. Only accepts image files with .jpg, .jpeg, or .png extensions.
  * Keeps price and hashtag values, just removes parentheses and hash symbols.

@@ -28,11 +28,18 @@ export default defineEventHandler(async (event) => {
   // Construct blob path with userId as virtual directory
   const blobPath = `${userId}/${azureFilename}`
 
+  // Generate thumbnail filename and path
+  const thumbnailFilename = createThumbnailFilename(azureFilename)
+  const thumbnailPath = `${userId}/${thumbnailFilename}`
+
   // Generate SAS token for upload (3 minutes validity)
   const { blobUrl, uploadUrl, expiresAt } = azureStorageUtils.generateBlobSasToken(blobPath, {
     permissions: 'write',
     expiresInMinutes: 3
   })
+
+  // Generate thumbnail URL (without SAS token - will be generated on-demand for viewing)
+  const thumbnailUrl = azureStorageUtils.generateBlobUrl(thumbnailPath)
 
   // Generate deterministic hash ID
   const timestamp = Math.floor(Date.now() / 1000) // Unix timestamp in seconds
@@ -51,6 +58,8 @@ export default defineEventHandler(async (event) => {
     status: 'initialized',
     blobName: blobPath,
     blobUrl,
+    thumbnailName: thumbnailPath,
+    thumbnailUrl,
     originalFilename: filename,
     receiptDate,
     receiptTotal: receiptTotal ? parseFloat(receiptTotal) : null

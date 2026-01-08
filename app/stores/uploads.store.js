@@ -168,22 +168,6 @@ export const useUploadsStore = defineStore('uploads', () => {
   }
 
   /**
-   * Create thumbnail filename from original filename
-   *
-   * @param {string} filename - Original filename
-   * @returns {string} Thumbnail filename with -thumbnail suffix before extension
-   */
-  function createThumbnailFilename(filename) {
-    const lastDotIndex = filename.lastIndexOf('.')
-    if (lastDotIndex === -1) {
-      return `${filename}-thumbnail`
-    }
-    const name = filename.substring(0, lastDotIndex)
-    const extension = filename.substring(lastDotIndex)
-    return `${name}-thumbnail${extension}`
-  }
-
-  /**
    * Upload thumbnail to Azure Blob Storage
    *
    * @param {Blob} thumbnailBlob - The thumbnail blob to upload

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { extractReceiptDate, extractReceiptTotal, extractHashtags, extractHashtagsForAzureBlobs, extractReceiptTitle, filenameToComponentKey, simpleHash, createAzureFilename } from './filename.utils.js';
+import { extractReceiptDate, extractReceiptTotal, extractHashtags, extractHashtagsForAzureBlobs, extractReceiptTitle, filenameToComponentKey, simpleHash, createAzureFilename, createThumbnailFilename } from './filename.utils.js';
 
 describe('extractReceiptDate()', () => {
   it('should extract date in YYYY-MM-DD format from the beginning of filename', () => {
@@ -348,5 +348,33 @@ describe('createAzureFilename()', () => {
     expect(() => createAzureFilename('Receipt (10.00) #test')).toThrow();
     expect(() => createAzureFilename('receipt.txt')).toThrow();
     expect(() => createAzureFilename('receipt.pdf')).toThrow();
+  });
+});
+
+describe('createThumbnailFilename()', () => {
+  it('should add -thumbnail suffix before extension', () => {
+    expect(createThumbnailFilename('receipt.jpg')).toBe('receipt-thumbnail.jpg');
+    expect(createThumbnailFilename('image.png')).toBe('image-thumbnail.png');
+    expect(createThumbnailFilename('photo.jpeg')).toBe('photo-thumbnail.jpeg');
+  });
+
+  it('should handle filenames with multiple dots', () => {
+    expect(createThumbnailFilename('my.receipt.jpg')).toBe('my.receipt-thumbnail.jpg');
+    expect(createThumbnailFilename('file.name.with.dots.png')).toBe('file.name.with.dots-thumbnail.png');
+  });
+
+  it('should handle filenames without extension', () => {
+    expect(createThumbnailFilename('receipt')).toBe('receipt-thumbnail');
+    expect(createThumbnailFilename('noextension')).toBe('noextension-thumbnail');
+  });
+
+  it('should handle long Azure-style filenames', () => {
+    expect(createThumbnailFilename('2025-10-08-DM-7.90-circled-initials-8e8354.jpg'))
+      .toBe('2025-10-08-DM-7.90-circled-initials-8e8354-thumbnail.jpg');
+  });
+
+  it('should preserve original filename structure', () => {
+    expect(createThumbnailFilename('2025-01-01-Store-15.00-abc123.png'))
+      .toBe('2025-01-01-Store-15.00-abc123-thumbnail.png');
   });
 });
