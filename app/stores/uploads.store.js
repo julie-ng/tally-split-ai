@@ -206,12 +206,6 @@ export const useUploadsStore = defineStore('uploads', () => {
     }
     uploads.value.push(uploadObj)
 
-    // Generate and upload thumbnail in the background
-    generateAndUploadThumbnail(uploadObj).catch(error => {
-      console.error(`Failed to generate/upload thumbnail for ${uploadObj.hashId}:`, error)
-      // Don't fail the main upload if thumbnail fails
-    })
-
     // Process queue to start uploads respecting concurrency limits
     processQueue()
   }
@@ -421,6 +415,13 @@ export const useUploadsStore = defineStore('uploads', () => {
     // Mark as in-progress
     uploads.value[index].status = 'in-progress'
 
+    // Generate and upload thumbnail in the background (don't block main upload)
+    const uploadObj = uploads.value[index]
+    generateAndUploadThumbnail(uploadObj).catch(error => {
+      console.error(`Failed to generate/upload thumbnail for ${hashId}:`, error)
+      // Don't fail the main upload if thumbnail fails
+    })
+
     // Upload to Azure
     try {
       await uploadToAzure(hashId)
@@ -465,7 +466,7 @@ export const useUploadsStore = defineStore('uploads', () => {
     console.log('⏰ [Auto-upload] Checking queue...')
 
     if (!autoUploadFromQueue.value) {
-      console.log('⏰ [Auto-upload] Auto-upload is disabled')
+      console.log('⏰ [Auto-upload] Auto-upload is disabled ℹ️')
       return
     }
 
