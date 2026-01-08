@@ -78,7 +78,7 @@ const columns = [
   }
 ]
 
-const expanded = ref({ 1: true })
+const expanded = ref({})
 
 const tableStyles = {
   base: 'min-w-full',
