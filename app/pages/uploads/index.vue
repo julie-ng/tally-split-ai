@@ -1,4 +1,5 @@
 <script setup>
+import { getPaginationRowModel } from '@tanstack/vue-table'
 import { useUserStore } from '~/stores/user.store'
 
 useHead({
@@ -8,10 +9,12 @@ useHead({
 const userStore = useUserStore()
 
 // TODO: handle errors, pending, and refresh
-const { data: uploads, pending, error, refresh } = await useFetch('/api/uploads',
-  {
-    query: { userId: userStore.userId },
-    lazy: true
+const { data: uploads, pending, error, refresh } = await useFetch('/api/uploads', { lazy: true })
+
+const table = useTemplateRef('table')
+const pagination = ref({
+  pageIndex: 0,
+  pageSize: 15
 })
 
 const columns = [
@@ -128,6 +131,17 @@ const getAnalyzeButtonText = (status) => {
     default: return 'Analyze'
   }
 }
+
+const paginationInfo = computed(() => {
+  if (!table.value?.tableApi) return { start: 0, end: 0, total: 0 }
+
+  const state = table.value.tableApi.getState().pagination
+  const total = table.value.tableApi.getFilteredRowModel().rows.length
+  const start = state.pageIndex * state.pageSize + 1
+  const end = Math.min((state.pageIndex + 1) * state.pageSize, total)
+
+  return { start, end, total }
+})
 </script>
 
 <template>
@@ -136,7 +150,9 @@ const getAnalyzeButtonText = (status) => {
       <div class="flex justify-between items-center mb-5">
         <div>
           <h1 class="font-bold text-2xl">Uploads</h1>
-          <p class="mt-1 text-sm text-slate-400">Database records for {{ userStore.userId }}</p>
+          <p class="mt-1 text-sm text-slate-400">
+            Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} database records for {{ userStore.userId }}
+          </p>
         </div>
         <UButton @click="refresh()"
         class="px-4 py-2 cursor-pointer"
@@ -148,13 +164,18 @@ const getAnalyzeButtonText = (status) => {
       <ClientOnly>
         <div class="border bg-white border-slate-200 rounded-lg overflow-hidden">
         <UTable
+          ref="table"
+          v-model:expanded="expanded"
+          v-model:pagination="pagination"
+          :pagination-options="{
+            getPaginationRowModel: getPaginationRowModel()
+          }"
           :data="uploads"
           :columns="columns"
           :ui="tableStyles"
           :loading="pending"
           loading-color="primary"
           loading-animation="carousel"
-          v-model:expanded="expanded"
           class="flex-1"
           >
           <template #expanded="{ row }">
@@ -233,6 +254,17 @@ const getAnalyzeButtonText = (status) => {
             </UButton>
           </template>
         </UTable>
+        <div class="flex justify-between items-center border-t border-default py-4 px-4">
+          <div class="text-sm text-slate-600">
+            Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }}
+          </div>
+          <UPagination
+            :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
+            :items-per-page="table?.tableApi?.getState().pagination.pageSize"
+            :total="table?.tableApi?.getFilteredRowModel().rows.length"
+            @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
+          />
+        </div>
         </div>
       </ClientOnly>
 
