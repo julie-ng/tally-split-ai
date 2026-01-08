@@ -1,18 +1,23 @@
-import { extractReceiptDate, extractReceiptTotal, extractHashtagsForAzureBlobs } from '~~/shared/utils/filename.helper'
+import {
+  extractReceiptDate,
+  extractReceiptTotal,
+  extractHashtagsForAzureBlobs
+} from '~~/shared/utils/filename.utils'
+
 import { useUserStore } from '~/stores/user.store'
 
 /**
  * Extract Azure blob tags from filename and user context
  * @param {string} filename - The filename to extract tags from
+ * @param {string} userId - The user ID
  * @returns {Object} Object with tag keys and values for Azure
  */
-function extractAzureBlobTags(filename) {
-  const userStore = useUserStore()
+function extractAzureBlobTags(filename, userId) {
   const tags = {}
 
   // Add user ID tag
-  if (userStore.userId) {
-    tags['user-id'] = userStore.userId
+  if (userId) {
+    tags['user-id'] = userId
   }
 
   const receiptDate = extractReceiptDate(filename)
@@ -36,6 +41,8 @@ function extractAzureBlobTags(filename) {
 /**
  * @typedef {Object} UploadObject
  * @property {string} hashId - Unique hash identifier
+ * @property {string} userId - User ID (blob path prefix)
+ * @property {string} blobPath - Azure blob path prefix (same as userId)
  * @property {string} originalFilename - Original file name
  * @property {string} azureFilename - Azure blob filename
  * @property {number} size - File size in bytes
@@ -57,6 +64,8 @@ function extractAzureBlobTags(filename) {
  */
 
 export function useUploadObject() {
+  const userStore = useUserStore()
+
   /**
    * Create a standardized upload object with 'queued' status
    *
@@ -71,10 +80,12 @@ export function useUploadObject() {
    * @returns {Promise<UploadObject>} Standardized upload object with 'queued' status
    */
   async function createUploadObject(file, blobResult) {
-    const azureTags = extractAzureBlobTags(file.name)
+    const azureTags = extractAzureBlobTags(file.name, userStore.userId)
 
     return {
       hashId: blobResult.hashId,
+      userId: userStore.userId,
+      blobPath: userStore.userId,
       originalFilename: file.name,
       azureFilename: blobResult.filename,
       size: file.size,

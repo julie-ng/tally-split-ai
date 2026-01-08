@@ -2,12 +2,6 @@
 const props = defineProps({
   upload: Object // should inherit valid schema.
 })
-
-const azureTags = computed(() => {
-  if (!props.upload.azureTags) return []
-  const data = JSON.parse(props.upload.azureTags)
-  return Object.entries(data).map(([key, value]) => ({ key, value }))
-})
 </script>
 
 <template>
@@ -27,7 +21,7 @@ const azureTags = computed(() => {
         <UIFileProperty label="Azure Blob Index Tags">
           <div class="flex flex-wrap gap-2 pt-2">
             <UBadge
-              v-for="tag in azureTags"
+              v-for="tag in azureUtils.blobTagsJsonToObject(upload.azureTags)"
               :key="tag.key"
               class="text-slate-500"
               color="neutral"
@@ -55,7 +49,10 @@ const azureTags = computed(() => {
     </UICollapsiblePropertyGroup>
   </div>
   <div class="col-span-2">
-    <UploadImagePreview :blobName="upload.blobName" :alt="upload.blobName" />
+    <AzureBlobImage
+      :blobName="upload.blobName"
+      :alt="upload.blobName"
+    />
   </div>
 
 </div>

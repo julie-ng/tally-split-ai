@@ -1,52 +1,107 @@
 <script setup>
+import { z } from 'zod'
+
+/**
+ * Component Properties
+ */
 const props = defineProps({
-  upload: Object // should inherit valid schema.
+  upload: Object, // should inherit valid schema
+  analysisData: Object,
+  analysisPending: Boolean,
+  analysisError: Object
 })
 
-// Fetch analysis results
-const { data: analysisData, pending, error } = await useFetch(`/api/analysis/results/${props.upload.hashId}`)
-console.log('analysisData', typeof analysisData.value)
+// Rename to match template usage
+const pending = computed(() => props.analysisPending)
+const error = computed(() => props.analysisError)
 
+const is404 = computed(() => error.value?.statusCode === 404)
+const is500 = computed(() => error.value?.statusCode === 500)
+
+// Do Validation
+const validation = computed(() => zodSchemas.analysisSummarySchema.safeParse(props.analysisData?.data?.azureAI?.summary))
+const isValid = computed(() => validation.value.success)
+const validatedFields = computed(() => validation.value.success ? validation.value.data : null)
 </script>
-
-
 
 
 <template>
 <div class="pt-6 px-4">
-
-  <div class="mb-4">
+  <!-- <div class="mb-4">
     <p>Analysis Status: {{ upload.analysisStatus }}</p>
     <p v-if="upload.analyzedAt">
       Analyzed At: {{ timestampUtils.toShortDate(upload.analyzedAt) }}
     </p>
-  </div>
+  </div> -->
 
-  <!-- Loading state -->
+  <!-- Loading: Data state -->
   <LoadingPlaceholder v-if="pending" title="Loading Analysis" />
 
-  <!-- Error state -->
+  <!-- Error: Cannot Load Data -->
   <UAlert v-else-if="error"
-    title="Unable to Load Analysis"
-    :description="error.message"
+    title="Error Loading Analysis"
     class="my-5"
     color="error"
     variant="subtle"
     icon="i-lucide-triangle-alert"
-  />
+  >
+    <template #description>
+      <div v-if="is404">
+        <p>Analysis results not found. Please run the analysis (TODO: show button)</p>
+      </div>
+      <div v-else-if="is500">
+        <p>Internal Server Error</p>
+        <p>Please try again later.</p>
+      </div>
+      <div v-else>
+        <p>Unknown Error</p>
+        <p>Check the console for more details.</p>
+      </div>
+    </template>
+  </UAlert>
 
   <!-- Analysis data -->
-  <div v-else-if="analysisData?.success">
-    {{ analysisData.data.analyzeResult.documents.length }}
-    <vue-json-pretty :data="analysisData.data"
-      :indent="2"
-      :deep="4"
-      :collapsedNodeLength="3"
-      :showIcon="true"
-      :showLength="true"
-    />
+  <div v-else-if="props.analysisData?.success" >
+
+    <!-- Analysis Header -->
+        <!-- :description="validation.error" -->
+      <UAlert v-if="!isValid"
+        title="Invalid Data Structure"
+        color="error"
+        variant="subtle"
+        icon="i-lucide-triangle-alert"
+        description="foooo bar"
+      >
+       <template #description>
+         <pre><code>{{ validation.error }}</code></pre> <!-- Temp: not sure why this is a string -->
+        </template>
+      </UAlert>
+      <div v-else-if="validatedFields">
+        <UploadAnalysisTabContentHeader
+          :analysisStatus="upload.analysisStatus"
+          :analyzedAt="upload.analyzedAt"
+          :fields="validatedFields"
+        />
+
+        <!-- Items Table -->
+         <ReceiptItemsTable
+          :items="validatedFields.items.items"
+          :hasQuantity="validatedFields.items.hasQuantity"
+          :subtotal="validatedFields.items.subtotal" />
+      </div>
+
+      <!-- Temp? Display raw JSON -->
+      <h1 class="my-3 text-lg font-bold text-blue-700">Analysis JSON</h1>
+      <div class="bg-slate-800 p-4">
+        <vue-json-pretty
+          :data="props.analysisData.data"
+          :indent="2"
+          :deep="4"
+          :showIcon="true"
+          :showLength="true"
+        />
+      </div>
   </div>
-  <!-- <pre class="p-5 bg-slate-100 rounded-lg overflow-x-auto">{{ JSON.stringify(analysisData.data, null, 2) }}</pre> -->
 
   <!-- Not found -->
   <UAlert v-else
@@ -57,6 +112,5 @@ console.log('analysisData', typeof analysisData.value)
     variant="subtle"
     icon="i-lucide-info"
   />
-
 </div>
 </template>

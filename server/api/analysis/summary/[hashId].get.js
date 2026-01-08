@@ -1,0 +1,113 @@
+import fs from 'fs/promises'
+import path from 'path'
+import { db, schema } from 'hub:db'
+import { eq } from 'drizzle-orm'
+
+export default defineEventHandler(async (event) => {
+  // ⚠️ TODO - implement security.
+  requireUserId(event)
+
+  const hashId = getRouterParam(event, 'hashId')
+
+  if (!hashId) {
+    setResponseStatus(event, 400)
+    return { error: 'Hash ID is required' }
+  }
+
+  // Get upload from database
+  const upload = await db.select({
+    hashId: schema.uploads.hashId,
+    originalFilename: schema.uploads.originalFilename,
+    blobName: schema.uploads.blobName,
+    size: schema.uploads.size,
+    createdAt: schema.uploads.createdAt,
+    analyzedAt: schema.uploads.analyzedAt,
+    azureTags: schema.uploads.azureTags
+  })
+    .from(schema.uploads)
+    .where(eq(schema.uploads.hashId, hashId))
+    .get()
+
+  if (!upload) {
+    setResponseStatus(event, 404)
+    return {
+      success: false,
+      error: 'Upload not found in database'
+    }
+  }
+
+  // Read analysis JSON file
+  // const filePath = path.join(process.cwd(), 'tmp', `${hashId}.json`)
+  // const fileContent = await fs.readFile(filePath, 'utf-8')
+  // const analysisData = JSON.parse(fileContent)
+  const contents = await readAnalysisFile(hashId)
+  if (contents.error) {
+    setResponseStatus(event, contents.error.status)
+    return contents.error // includes error message
+  }
+  // console.log(contents)
+  const analysisData = contents.data
+
+
+  // Helper function to deep clone and remove specific keys
+  const removeKeys = (obj, keysToRemove = ['boundingRegions', 'spans']) => {
+    if (obj === null || typeof obj !== 'object') {
+      return obj
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map(item => removeKeys(item, keysToRemove))
+    }
+
+    const cleaned = {}
+    Object.keys(obj).forEach(key => {
+      if (!keysToRemove.includes(key)) {
+        cleaned[key] = removeKeys(obj[key], keysToRemove)
+      }
+    })
+
+    return cleaned
+  }
+
+  const resultFields = analysisData.analyzeResult.documents[0].fields
+  const summary = []
+  Object.keys(resultFields).forEach(key => {
+    const fieldData = resultFields[key]
+    const f = {
+      field: key
+    }
+
+    // Include specific keys and any key starting with "value"
+    Object.keys(fieldData).forEach(fieldKey => {
+      if (fieldKey === 'type' || fieldKey === 'confidence' || fieldKey === 'content' || fieldKey.startsWith('value')) {
+        f[fieldKey] = removeKeys(fieldData[fieldKey])
+      }
+    })
+
+    summary.push(f)
+  })
+
+  const sorted = AZReceiptModelUtils.sortFields(summary)
+  sorted.items = AZReceiptModelUtils.sortItems(sorted.items)
+  // console.log('⭐️ SORTED')
+  // console.log(sorted)
+
+  return {
+    success: true,
+    data: {
+      ...upload,
+      status: analysisData.status,
+      createdDateTime: analysisData.createdDateTime,
+      azureAI: {
+        apiVersion: analysisData.analyzeResult?.apiVersion,
+        modelId: analysisData.analyzeResult?.modelId,
+        summary: sorted,
+        // original: summary
+        // fieldsSummary: summary,
+        // result: {
+        //   document: analysisData.analyzeResult?.documents?.[0]
+        // }
+      }
+    }
+  }
+})

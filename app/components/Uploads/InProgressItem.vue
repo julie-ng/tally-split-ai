@@ -37,7 +37,7 @@ const sizeInBytes = computed(() =>
   </div>
 
   <div v-if="upload.status === 'failed'" class="mb-3 p-3 bg-rose-50 border border-rose-200 rounded">
-    <p class="text-sm text-rose-700 text-base font-semibold mb-2">Upload Failed</p>
+    <p class="text-rose-700 text-base font-semibold mb-2">Upload Failed</p>
     <ul class="text-xs text-rose-700 mb-3">
       <li v-for="(error, index) in upload.errors" :key="index" class="mb-1">
         • {{ error }}

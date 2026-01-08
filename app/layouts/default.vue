@@ -20,6 +20,14 @@ const links = [
     }
   },
   {
+    label: 'Azure AI Debug',
+    icon: 'i-lucide-flask-conical',
+    to: '/debug-analysis',
+    onSelect: () => {
+      open.value = false
+    },
+  },
+  {
     label: 'Blobs',
     icon: 'i-lucide-blocks',
     to: '/blobs',
@@ -53,7 +61,7 @@ const links = [
         },
       }
     ],
-  }
+  },
 ]
 </script>
 

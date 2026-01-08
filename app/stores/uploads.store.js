@@ -8,6 +8,7 @@ export const useUploadsStore = defineStore('uploads', () => {
   const uploads = ref([])
   const autoUploadTimer = ref(null)
   const AUTO_UPLOAD_INTERVAL = 1000 // 10 seconds
+  const autoUploadFromQueue = ref(false)
 
   // -------- GETTERS --------
 
@@ -66,6 +67,118 @@ export const useUploadsStore = defineStore('uploads', () => {
   // -------- ACTIONS --------
 
   /**
+   * Generate a thumbnail from a file using Canvas API
+   *
+   * @param {File} file - The original image file
+   * @param {number} maxWidth - Maximum width in pixels (default: 100)
+   * @returns {Promise<Blob>} Thumbnail as a Blob
+   */
+  function generateThumbnail(file, maxWidth = 100) {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+
+      img.onload = () => {
+        // Calculate dimensions maintaining aspect ratio
+        const scale = maxWidth / img.width
+        canvas.width = maxWidth
+        canvas.height = img.height * scale
+
+        // Draw resized image
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+
+        // Convert to blob with quality adjustment for size
+        canvas.toBlob(
+          (blob) => {
+            if (blob.size > 30000) {
+              // If still too large, reduce quality
+              canvas.toBlob(
+                (blob) => resolve(blob),
+                'image/jpeg',
+                0.7 // Lower quality
+              )
+            } else {
+              resolve(blob)
+            }
+          },
+          'image/jpeg',
+          0.85 // Initial quality
+        )
+      }
+
+      img.onerror = reject
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
+  /**
+   * Create thumbnail filename from original filename
+   *
+   * @param {string} filename - Original filename
+   * @returns {string} Thumbnail filename with -thumbnail suffix before extension
+   */
+  function createThumbnailFilename(filename) {
+    const lastDotIndex = filename.lastIndexOf('.')
+    if (lastDotIndex === -1) {
+      return `${filename}-thumbnail`
+    }
+    const name = filename.substring(0, lastDotIndex)
+    const extension = filename.substring(lastDotIndex)
+    return `${name}-thumbnail${extension}`
+  }
+
+  /**
+   * Upload thumbnail to Azure Blob Storage
+   *
+   * @param {Blob} thumbnailBlob - The thumbnail blob to upload
+   * @param {string} blobName - The blob name (path) for the thumbnail
+   * @returns {Promise<boolean>} True if upload succeeded
+   */
+  async function uploadThumbnailToAzure(thumbnailBlob, blobName) {
+    try {
+      // Get SAS token for thumbnail upload
+      const tokenResponse = await $fetch('/api/tokens/upload', {
+        method: 'POST',
+        body: {
+          action: 'create',
+          blobName
+        }
+      })
+
+      // Upload thumbnail using XHR
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            console.log(`✅ Thumbnail upload complete: ${blobName}`)
+            resolve(true)
+          } else {
+            console.error(`❌ Thumbnail upload failed: ${xhr.status} ${xhr.statusText}`)
+            reject(new Error(`Thumbnail upload failed: ${xhr.status}`))
+          }
+        })
+
+        xhr.addEventListener('error', () => {
+          console.error('❌ Thumbnail upload failed due to network error')
+          reject(new Error('Thumbnail upload network error'))
+        })
+
+        xhr.open('PUT', tokenResponse.upload.url)
+        xhr.setRequestHeader('x-ms-blob-type', 'BlockBlob')
+        xhr.setRequestHeader('Content-Type', 'image/jpeg')
+
+        console.log(`🚀 Starting thumbnail upload: ${blobName}`)
+        xhr.send(thumbnailBlob)
+      })
+    } catch (error) {
+      console.error('❌ Failed to upload thumbnail:', error)
+      throw error
+    }
+  }
+
+  /**
    * Get the name of an upload by its hash ID
    *
    * @param {string} hashId - The unique hash identifier for the upload
@@ -86,15 +199,51 @@ export const useUploadsStore = defineStore('uploads', () => {
    * @param {string} uploadObj.originalFilename - Original filename
    * @throws {Error} If uploadObj.file is not an instance of File
    */
-  function add(uploadObj) {
+  async function add(uploadObj) {
     console.log(`🍍 [Add] (${uploadObj.hashId}) ${uploadObj.originalFilename}`)
     if (!(uploadObj.file instanceof File)) {
       throw new Error('Upload must have `file` attribute of type `File`')
     }
     uploads.value.push(uploadObj)
 
-    if (canStartUpload) {
-      startUpload(uploadObj.hashId)
+    // Generate and upload thumbnail in the background
+    generateAndUploadThumbnail(uploadObj).catch(error => {
+      console.error(`Failed to generate/upload thumbnail for ${uploadObj.hashId}:`, error)
+      // Don't fail the main upload if thumbnail fails
+    })
+
+    // Process queue to start uploads respecting concurrency limits
+    processQueue()
+  }
+
+  /**
+   * Generate and upload a thumbnail for the given upload object
+   *
+   * @param {Object} uploadObj - The upload object
+   * @returns {Promise<void>}
+   */
+  async function generateAndUploadThumbnail(uploadObj) {
+    try {
+      console.log(`🖼️  Generating thumbnail for ${uploadObj.originalFilename}`)
+
+      // Generate thumbnail blob
+      const thumbnailBlob = await generateThumbnail(uploadObj.file)
+
+      console.log(`📏 Thumbnail size: ${(thumbnailBlob.size / 1024).toFixed(2)}KB`)
+
+      // Create thumbnail filename
+      const thumbnailFilename = createThumbnailFilename(uploadObj.azureFilename)
+
+      // Construct blob path with userId directory
+      const thumbnailBlobPath = `${uploadObj.blobPath}/${thumbnailFilename}`
+
+      // Upload thumbnail to Azure
+      await uploadThumbnailToAzure(thumbnailBlob, thumbnailBlobPath)
+
+      console.log(`✅ Thumbnail uploaded successfully: ${thumbnailFilename}`)
+    } catch (error) {
+      console.error(`❌ Thumbnail generation/upload failed:`, error)
+      throw error
     }
   }
 
@@ -315,6 +464,11 @@ export const useUploadsStore = defineStore('uploads', () => {
   async function processQueue() {
     console.log('⏰ [Auto-upload] Checking queue...')
 
+    if (!autoUploadFromQueue.value) {
+      console.log('⏰ [Auto-upload] Auto-upload is disabled')
+      return
+    }
+
     if (!hasQueued.value) {
       console.log('⏰ [Auto-upload] Queue is empty')
       return
@@ -370,6 +524,7 @@ export const useUploadsStore = defineStore('uploads', () => {
 
   return {
     add,
+    autoUploadFromQueue,
     availableSlots,
     canStartUpload,
     completed,

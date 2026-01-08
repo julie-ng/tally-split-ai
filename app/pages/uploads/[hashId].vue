@@ -8,6 +8,9 @@ const userStore = useUserStore()
 // Fetch upload details
 const { data: upload, pending, error } = await useFetch(`/api/uploads/${hashId}`)
 
+// Fetch analysis data
+const { data: analysisData, pending: analysisPending, error: analysisError } = await useFetch(`/api/analysis/summary/${hashId}`)
+
 // Set page title reactively after upload is fetched
 useHead({
   title: () => `${upload.value?.title} | Upload` || `Upload ${hashId}`
@@ -39,7 +42,12 @@ const breadcrumbItems = [
 
     <!-- Upload Details -->
     <div v-else-if="upload">
-      <UploadDetailPanel :upload="upload" />
+      <UploadAnalysisTab
+        :upload="upload"
+        :analysisData="analysisData"
+        :analysisPending="analysisPending"
+        :analysisError="analysisError"
+      />
     </div>
 
     <!-- Not found state -->

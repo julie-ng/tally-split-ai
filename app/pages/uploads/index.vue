@@ -88,19 +88,6 @@ const tableStyles = {
   tr: 'data-[expanded=true]:bg-elevated/50'
 }
 
-const azureTags = function(str) {
-  const data = JSON.parse(str)
-  const result = []
-  for (const [key, value] of Object.entries(data)) {
-    result.push({
-      key: key,
-      value: value
-    })
-  }
-  // console.log(typeof str, result)
-  return result
-}
-
 const deleteUpload = async (hashId, title, blobName) => {
   if (!confirm(`Are you sure you want to delete '${title}' (${blobName})?`)) {
     return
@@ -215,7 +202,7 @@ const getAnalyzeButtonText = (status) => {
             </time>
           </template>
           <template #azureTags-cell="{ row }">
-            <div v-if="row.original.azureTags != null" v-for="tag, i in azureTags(row.original.azureTags)">
+            <div v-if="row.original.azureTags != null" v-for="tag, i in azureUtils.blobTagsJsonToObject(row.original.azureTags)">
               <UBadge :key="`${row.original.hashId}-tag-${tag.key}-${i}`"
                 color="info"
                 variant="soft"
