@@ -121,9 +121,25 @@ function generateBlobSasToken(blobName, { permissions = 'read', expiresInMinutes
   }
 }
 
+/**
+ * Delete a blob from Azure Storage
+ * @param {string} blobName - The blob name/path to delete
+ * @returns {Promise<void>}
+ * @throws {Error} If blob deletion fails
+ */
+async function deleteBlob(blobName) {
+  const containerClient = await getContainerClient()
+  const blockBlobClient = containerClient.getBlockBlobClient(blobName)
+
+  await blockBlobClient.delete({
+    deleteSnapshots: 'include' // Delete blob and all its snapshots
+  })
+}
+
 export const azureStorageUtils = {
   useAzureStorageConfig,
   getContainerClient,
   generateBlobSasToken,
-  generateBlobUrl
+  generateBlobUrl,
+  deleteBlob
 }
