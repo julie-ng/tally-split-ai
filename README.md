@@ -143,6 +143,23 @@ Example of `boudingRegions` Array
 ]
 ```
 
+## Fields
+
+#### `MerchantPhoneNumber`
+
+- **content**: `+49 (0)89 / 38 99 88 83`
+- **valueCurrency**: `+498938998883`
+
+
+#### `Total`
+
+- **content**: `EUR 54,30`
+- **valueCurrency**: 
+  ```json
+  { "currencySymbol": "EUR", "amount": 54.3, "currencyCode": "EUR" }
+  ```
+
+
 ---
 
 ## Azure CLI Commands
