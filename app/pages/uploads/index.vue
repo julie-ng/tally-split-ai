@@ -19,7 +19,7 @@ const { uploads, loading: pending, error } = storeToRefs(uploadsStore)
 const table = useTemplateRef('table')
 const pagination = ref({
   pageIndex: 0,
-  pageSize: 15
+  pageSize: 50
 })
 
 const columns = [
