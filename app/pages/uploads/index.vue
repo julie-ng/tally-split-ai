@@ -1,15 +1,20 @@
 <script setup>
 import { getPaginationRowModel } from '@tanstack/vue-table'
 import { useUserStore } from '~/stores/user.store'
+import { useUploadsStore } from '~/stores/uploads.store'
 
 useHead({
   title: 'Uploads'
 })
 
 const userStore = useUserStore()
+const uploadsStore = useUploadsStore()
 
-// TODO: handle errors, pending, and refresh
-const { data: uploads, pending, error, refresh } = await useFetch('/api/uploads', { lazy: true })
+// Fetch uploads on mount
+await uploadsStore.fetchUploads()
+
+// Get reactive refs from store (preserves reactivity without creating new computed)
+const { uploads, loading: pending, error } = storeToRefs(uploadsStore)
 
 const table = useTemplateRef('table')
 const pagination = ref({
@@ -97,12 +102,7 @@ const deleteUpload = async (hashId, title, blobName) => {
   }
 
   try {
-    await $fetch(`/api/uploads/${hashId}`, {
-      method: 'DELETE'
-    })
-
-    // Refresh the table data
-    refresh()
+    await uploadsStore.deleteUpload(hashId)
   } catch (error) {
     console.error('Failed to delete upload:', error)
     alert('Failed to delete upload. Please try again.')
@@ -116,7 +116,7 @@ const analyzeReceipt = async (hashId) => {
     })
 
     // Refresh table to show updated status
-    refresh()
+    await uploadsStore.fetchUploads()
   } catch (error) {
     console.error('Failed to analyze receipt:', error)
     alert('Failed to analyze receipt. Please try again.')
@@ -154,7 +154,7 @@ const paginationInfo = computed(() => {
             Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} database records for {{ userStore.userId }}
           </p>
         </div>
-        <UButton @click="refresh()"
+        <UButton @click="uploadsStore.fetchUploads()"
         class="px-4 py-2 cursor-pointer"
         >
           Refresh
@@ -163,12 +163,14 @@ const paginationInfo = computed(() => {
 
       <ClientOnly>
         <div class="border bg-white border-slate-200 rounded-lg overflow-hidden">
+          <!-- TODO: autoResetPageIndex configuration works now to keep page when deleting items. But it will break as soon as we try to use filters -->
         <UTable
           ref="table"
           v-model:expanded="expanded"
           v-model:pagination="pagination"
           :pagination-options="{
-            getPaginationRowModel: getPaginationRowModel()
+            getPaginationRowModel: getPaginationRowModel(),
+            autoResetPageIndex: false
           }"
           :data="uploads"
           :columns="columns"
