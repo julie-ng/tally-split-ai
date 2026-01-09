@@ -14,19 +14,22 @@ export default defineEventHandler(async (event) => {
     return { error: 'Hash ID is required' }
   }
 
-  // Get upload from database
-  const upload = await db.select({
-    hashId: schema.uploads.hashId,
-    originalFilename: schema.uploads.originalFilename,
-    blobName: schema.uploads.blobName,
-    size: schema.uploads.size,
-    createdAt: schema.uploads.createdAt,
-    analyzedAt: schema.uploads.analyzedAt,
-    azureTags: schema.uploads.azureTags
+  // Get upload from database with receipt relation
+  const upload = await db.query.uploads.findFirst({
+    where: eq(schema.uploads.hashId, hashId),
+    columns: {
+      hashId: true,
+      originalFilename: true,
+      blobName: true,
+      size: true,
+      createdAt: true,
+      analyzedAt: true,
+      azureTags: true
+    },
+    with: {
+      receipt: true
+    }
   })
-    .from(schema.uploads)
-    .where(eq(schema.uploads.hashId, hashId))
-    .get()
 
   if (!upload) {
     setResponseStatus(event, 404)

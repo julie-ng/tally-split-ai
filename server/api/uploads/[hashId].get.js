@@ -14,24 +14,24 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Query for the specific upload
-  const uploads = await db.select()
-    .from(schema.uploads)
-    .where(
-      and(
-        eq(schema.uploads.hashId, hashId),
-        eq(schema.uploads.userId, userId)
-      )
-    )
-    .limit(1)
+  // Query for the specific upload with receipt relation
+  const upload = await db.query.uploads.findFirst({
+    where: and(
+      eq(schema.uploads.hashId, hashId),
+      eq(schema.uploads.userId, userId)
+    ),
+    with: {
+      receipt: true
+    }
+  })
 
   // Check if upload exists
-  if (!uploads || uploads.length === 0) {
+  if (!upload) {
     throw createError({
       statusCode: 404,
       message: `Upload not found with hash ID: ${hashId}`
     })
   }
 
-  return uploads[0]
+  return upload
 })

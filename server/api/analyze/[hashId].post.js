@@ -90,37 +90,55 @@ export default defineEventHandler(async (event) => {
     }
 
     const fields = document.fields
-    const extractedData = {
-      analysisOcrResult: analyzeResult.content || null,
+
+    // 9. Extract receipt data for the receipts table
+    const receiptData = {
       merchantName: fields.MerchantName?.content || null,
       merchantAddress: fields.MerchantAddress?.content || null,
+      merchantPhone: fields.MerchantPhoneNumber?.content || null,
       receiptDate: fields.TransactionDate?.valueDate || null,
       receiptSubtotal: fields.Subtotal?.valueCurrency?.amount ||
         fields.TaxDetails?.valueArray?.[0]?.valueObject?.NetAmount?.valueCurrency?.amount ||
         null,
       receiptTotal: fields.Total?.valueCurrency?.amount || null,
       receiptCurrency: fields.Total?.valueCurrency?.currencyCode || null,
-      receiptTax: fields.TotalTax?.valueCurrency?.amount || null
+      receiptTax: fields.TotalTax?.valueCurrency?.amount || null,
+      isAnalyzed: true
     }
 
-    // 9. Compare receiptTotal with existing value
-    if (upload.receiptTotal && extractedData.receiptTotal) {
-      if (Math.abs(upload.receiptTotal - extractedData.receiptTotal) > 0.01) {
-        console.warn(
-          `Receipt total mismatch for hashId: ${hashId}, ` +
-          `DB: ${upload.receiptTotal}, ` +
-          `Azure: ${extractedData.receiptTotal}`
-        )
-      }
+    // 10. Get upload with receipt relation to check if receipt exists
+    const uploadWithReceipt = await db.query.uploads.findFirst({
+      where: eq(schema.uploads.hashId, hashId),
+      with: { receipt: true }
+    })
+
+    let receiptId = uploadWithReceipt?.receiptId
+
+    if (receiptId) {
+      // Update existing receipt
+      await db
+        .update(schema.receipts)
+        .set({ ...receiptData, updatedAt: sql`(unixepoch())` })
+        .where(eq(schema.receipts.id, receiptId))
+      console.log(`✅ Updated existing receipt ${receiptId}`)
+    } else {
+      // Create new receipt
+      const [newReceipt] = await db
+        .insert(schema.receipts)
+        .values({ ...receiptData, userId: upload.userId })
+        .returning()
+      receiptId = newReceipt.id
+      console.log(`✅ Created new receipt ${receiptId}`)
     }
 
-    // 10 & 11. Update database with extracted fields and set status to 'completed'
+    // 11. Update upload with analysis status and receipt link
     await db
       .update(schema.uploads)
       .set({
         analysisStatus: 'completed',
         analyzedAt: sql`(unixepoch())`,
-        ...extractedData
+        analysisOcrResult: analyzeResult.content || null,
+        receiptId: receiptId
       })
       .where(eq(schema.uploads.hashId, hashId))
 
@@ -129,7 +147,8 @@ export default defineEventHandler(async (event) => {
       success: true,
       hashId,
       analysisStatus: 'completed',
-      extractedData
+      receiptId,
+      receiptData
     }
 
   } catch (error) {
