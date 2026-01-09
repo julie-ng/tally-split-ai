@@ -2,7 +2,7 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: ['@nuxt/ui', '@pinia/nuxt', '@nuxthub/core', 'nuxt-shiki'],
+  modules: ['@nuxt/ui', '@pinia/nuxt', '@nuxthub/core'],
   plugins: ['@/plugins/vue-json-pretty'],
   watch: [
     '~~/shared/**/*'
@@ -16,14 +16,6 @@ export default defineNuxtConfig({
   ],
   pinia: {
     storesDirs: ['~/stores/**']
-  },
-  shiki: {
-    bundledLangs: ['json'],
-    bundledThemes: ['min-light', 'material-theme-palenight'],
-    defaultTheme: {
-      light: 'min-light',
-      dark: 'material-theme-palenight'
-    }
   },
   app: {
     head: {

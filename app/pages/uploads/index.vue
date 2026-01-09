@@ -169,7 +169,9 @@ const paginationInfo = computed(() => {
         }" :data="uploads" :columns="columns" :ui="tableStyles" :loading="pending" loading-color="primary"
           loading-animation="carousel" class="flex-1">
           <template #expanded="{ row }">
-            <Shiki v-if="uploads" lang="json" :code="JSON.stringify(row.original, null, 2)" class="bg-white text-sm" />
+            <div class="bg-slate-800 p-4">
+              <vue-json-pretty :data="row.original" :indent="2" :deep="4" :showIcon="true" :showLength="true" />
+            </div>
           </template>
           <template #hashId-cell="{ row }">
             <NuxtLink :to="`/uploads/${row.original.hashId}`"
@@ -239,14 +241,6 @@ const paginationInfo = computed(() => {
         </div>
       </div>
     </ClientOnly>
-
-    <!--
-      <details>
-        <summary class="font-bold text-xl">Raw Data</summary>
-        <Shiki v-if="uploads" lang="json" :code="JSON.stringify(uploads, null, 2)" class="bg-white p-6" />
-      </details>
-      -->
-
   </div>
 </UContainer>
 </template>
