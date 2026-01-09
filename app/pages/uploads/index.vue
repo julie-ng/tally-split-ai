@@ -51,13 +51,13 @@ const columns = [
     header: 'Hash ID',
   },
   {
+    accessorKey: 'receiptDate',
+    header: 'Receipt Date',
+  },
+  {
     accessorKey: 'status',
     header: 'Status',
     cell: ({ row }) => `${row.getValue('status')}`
-  },
-  {
-    accessorKey: 'receiptDate',
-    header: 'Receipt Date',
   },
   {
     accessorKey: 'title',
@@ -175,7 +175,7 @@ const paginationInfo = computed(() => {
           </template>
           <template #hashId-cell="{ row }">
             <NuxtLink :to="`/uploads/${row.original.hashId}`"
-              class="text-blue-600 hover:text-blue-800 hover:underline font-mono">
+              class="text-slate-400 hover:text-blue-800 hover:underline font-mono">
               {{ row.original.hashId }}
             </NuxtLink>
           </template>
@@ -205,7 +205,7 @@ const paginationInfo = computed(() => {
           -->
           <template #receiptDate-cell="{ row }">
             <time :datetime="row.original.receiptDate" :title="row.original.receiptDate">
-              {{ timestampUtils.toShortDatetime(row.original.receiptDate) }}
+              {{ timestampUtils.toShortDate(row.original.receiptDate) }}
             </time>
           </template>
           <template #azureTags-cell="{ row }">
@@ -218,14 +218,16 @@ const paginationInfo = computed(() => {
             </div>
           </template>
           <template #actions-cell="{ row }">
-            <UButton loading-icon="i-lucide-loader" loading-auto @click="analyzeReceipt(row.original.hashId)"
+            <UButton icon="i-lucide-focus" loading-icon="i-lucide-loader" loading-auto
+              @click="analyzeReceipt(row.original.hashId)"
               :disabled="row.original.analysisStatus === 'processing' || row.original.analysisStatus === 'completed'"
-              color="info" variant="soft"
+              color="info" variant="solid"
               class="px-3 py-1 text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed mr-2 cursor-pointer">
               {{ getAnalyzeButtonText(row.original.analysisStatus) }}
             </UButton>
-            <UButton @click="deleteUpload(row.original.hashId, row.original.title, row.original.blobName)" color="error"
-              variant="soft" class="px-3 py-1 rounded transition-colors cursor-pointer">
+            <UButton icon="i-lucide-x"
+              @click="deleteUpload(row.original.hashId, row.original.title, row.original.blobName)" color="neutral"
+              variant="outline" class="px-3 py-1 rounded transition-colors cursor-pointer">
               Delete
             </UButton>
           </template>
