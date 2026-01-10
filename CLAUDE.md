@@ -177,9 +177,11 @@ Copy `.env.sample` to `.env` and populate with your Azure credentials.
 - Server routes are used to filter Azure AI responses to render only necessary information to user interface. For example, currently all the bounding boxes that indicate where particular information was extracted is ignored.
 - [Zod](https://zod.dev/) is used for schema validation in both backend and frontend to help ensure consistent API format.
 
-### Nuxt Code Style Preferences
+---
 
-#### Data Structures
+## Code Style Preferences
+
+### Data Schemas and Validations
 
 - Leverage [zod schemas](./shared/utils/zod-schemas.js) in both frontend and backend to drive a consistent data structure from backend to frontend.
   - Backend can mask/filter azure AI response and rename fields.
@@ -187,7 +189,55 @@ Copy `.env.sample` to `.env` and populate with your Azure credentials.
 - Zod is also used to keep `app/components/` relatively consistent. Right now, prioritizing validation via zod v.s. Nuxt's built in `defineProps()` configuration.
 - This is work in progress. Feel free to point out inconsistencies.
 
-#### Re-usable Functions
+### Server
+
+- Instead of using middlewares (which affect every route), I prefer explicit utility functions, e.g. `requireUserId(event)` which are placed at top of API endpoint.
+- Use Nuxt's [`createError()`](https://nuxt.com/docs/4.x/api/utils/create-error) when possible to pass errors.
+- If possible, create and re-use utility functions, esp. to interface with Azure SDKs.
+
+#### Schema Validations in the Backend Server
+
+**DO NOT** manually check schemas in backend APIs, e.g. anything in `./server/api/`. This is duplicate code that bloats the functions and worst of all, suspectible to inconsistency across APIs. It defeats the purpose of having [zod schemas](./shared/utils/zod-schemas/).
+
+```js
+// DO NOT DO THIS
+if (contentType !== undefined) {
+  updates.contentType = contentType
+}
+
+if (title !== undefined && typeof title === 'string') {
+  updates.title = title
+}
+
+if (size !== undefined) {
+  if (typeof size !== 'number' || size < 0) {
+    throw createError({
+      statusCode: 400,
+      message: 'Invalid size. Must be a non-negative number'
+    })
+  }
+  updates.size = size
+}
+```
+
+**Instead, leverage our [zod schemas](./shared/utils/zod-schemas/)**, which have already centrally define our schemes. For errors, we can then just utilize zod's [flattenError()](https://zod.dev/error-formatting#zflattenerror) helper to create friendly error messages.
+
+```js
+// DO THIS INSTEAD
+const result = await readValidatedBody(event, body => zodSchemas.requestSchema.safeParse(body))
+if (!result.success) {
+  setResponseStatus(event, 400)
+  return {
+    success: false,
+    message: "Invalid request body",
+    errors: z.flattenError(result.error).fieldErrors
+  }
+}
+```
+
+Note: all of our zod schemas are accessible via the auto-imported `zodSchemas` utility.
+
+### Code Re-use & Shared Utility Functions
 
 - Name all re-usable utility or helper functions with a `.utils.js` suffix.
 - The corresponding tests should be placed in a file with the same name but with a `.test.js` suffix, e.g. `.utils.test.js`. 
@@ -195,12 +245,6 @@ Copy `.env.sample` to `.env` and populate with your Azure credentials.
 - Frontend only utils are stored in `app/utils`, UI configuration helpers
 - Backend only utils are stored in `server/utils`, esp. Azure SDK wrappers
 - Shared utils are stored in `shared/utils`, esp. text and string manipulation
-
-#### Server
-
-- Instead of using middlewares (which affect every route), I prefer explicit utility functions, e.g. `requireUserId(event)` which are placed at top of API endpoint.
-- Use Nuxt's [`createError()`](https://nuxt.com/docs/4.x/api/utils/create-error) when possible to pass errors.
-- If possible, create and re-use utility functions, esp. to interface with Azure SDKs.
 
 ### Nuxt Best Practices
 
