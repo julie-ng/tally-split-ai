@@ -139,9 +139,11 @@ Copy `.env.sample` to `.env` and populate with your Azure credentials.
 
 ### Database
 
+> [!IMPORTANT]
+> The database file is located at `./.data/db/sqlite.db` instead of standard `./data/`.
+
 - uses SQLite for local development and POC. Might switch to another DB later.
 - uses [Drizzle ORM](https://orm.drizzle.team/docs/get-started-sqlite) as database adapter.
-
 
 ### Tests
 
