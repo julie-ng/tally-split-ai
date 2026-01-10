@@ -111,7 +111,7 @@ const deleteUpload = async (hashId, title, blobName) => {
 
 const analyzeReceipt = async (hashId) => {
   try {
-    await $fetch(`/api/analyze/${hashId}`, {
+    await $fetch(`/api/analysis/${hashId}`, {
       method: 'POST'
     })
 

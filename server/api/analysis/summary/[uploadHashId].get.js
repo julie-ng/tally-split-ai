@@ -5,9 +5,9 @@ import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   requireUserId(event)
-  requireHashIdParam(event)
+  requireHashIdParam(event, 'uploadHashId')
 
-  const hashId = getRouterParam(event, 'hashId')
+  const hashId = getRouterParam(event, 'uploadHashId')
 
   // Get upload from database with receipt relation
   const upload = await db.query.uploads.findFirst({

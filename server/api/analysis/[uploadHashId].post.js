@@ -7,9 +7,9 @@ import { join } from 'node:path'
 
 export default defineEventHandler(async (event) => {
   requireUserId(event)
-  requireHashIdParam(event)
+  requireHashIdParam(event, 'uploadHashId')
 
-  const hashId = getRouterParam(event, 'hashId')
+  const hashId = getRouterParam(event, 'uploadHashId')
 
   try {
     // 1. Fetch upload record from database

@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 /**
  * Schema for hashId route parameter
- * Used in /api/uploads/[hashId] and /api/analyze/[hashId] endpoints
+ * Used in /api/uploads/[hashId] and /api/analysis/[uploadHashId] endpoints
  */
 export const hashIdParamSchema = z.object({
   hashId: z.string().min(1, 'hashId is required')
