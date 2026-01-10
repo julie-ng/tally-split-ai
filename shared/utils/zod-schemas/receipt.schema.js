@@ -20,3 +20,21 @@ export const receiptSchema = z.object({
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime()
 })
+
+/**
+ * Receipt Input Schema - for creating/updating receipts via API
+ * All fields optional since receipts can be created empty and populated later
+ */
+export const receiptInputSchema = z.object({
+  merchantName: z.string().nullable().optional(),
+  merchantAddress: z.string().nullable().optional(),
+  merchantPhone: z.string().nullable().optional(),
+  receiptDate: z.iso.date().optional(),
+  receiptTags: z.string().nullable().optional(),
+  receiptSubtotal: z.number().nullable().optional(),
+  receiptTax: z.number().nullable().optional(),
+  receiptTotal: z.number().nullable().optional(),
+  receiptCurrency: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  isAnalyzed: z.boolean().optional()
+})
