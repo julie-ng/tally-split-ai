@@ -50,15 +50,19 @@ const columns = [
     accessorKey: 'hashId',
     header: 'Hash ID',
   },
-  {
-    accessorKey: 'receiptDate',
-    header: 'Receipt Date',
-  },
+  // {
+  //   accessorKey: 'receiptDate',
+  //   header: 'Receipt Date',
+  // },
   {
     accessorKey: 'status',
     header: 'Status',
     cell: ({ row }) => `${row.getValue('status')}`
   },
+  // {
+  //   accessorKey: 'uploadedAt',
+  //   header: 'Uploaded',
+  // },
   {
     accessorKey: 'title',
     header: 'Title',
@@ -72,10 +76,6 @@ const columns = [
     header: 'Size',
     cell: ({ row }) => `${formatBytes(row.getValue('size'))}`
   },
-  // {
-  //   accessorKey: 'uploadedAt',
-  //   header: 'Uploaded',
-  // },
   {
     accessorKey: 'azureTags',
     header: 'Blob Tags',
@@ -203,9 +203,16 @@ const paginationInfo = computed(() => {
             </a>
           </template>
           -->
+          <!--
           <template #receiptDate-cell="{ row }">
             <time :datetime="row.original.receiptDate" :title="row.original.receiptDate">
               {{ timestampUtils.toShortDate(row.original.receiptDate) }}
+            </time>
+          </template>
+          -->
+          <template #uploadedAt-cell="{ row }">
+            <time :datetime="row.original.uploadedAt" :title="row.original.uploadedAt">
+              {{ timestampUtils.toShortDatetime(row.original.uploadedAt) }}
             </time>
           </template>
           <template #azureTags-cell="{ row }">
