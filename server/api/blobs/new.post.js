@@ -1,17 +1,13 @@
 import { db, schema } from 'hub:db'
 import { z } from 'zod'
 
-const requestSchema = z.object({
-  filename: z.string()
-})
-
 export default defineEventHandler(async (event) => {
   requireUserId(event)
   const userId = event.context.userId
 
   azureStorageUtils.useAzureStorageConfig()
 
-  const result = await readValidatedBody(event, body => requestSchema.safeParse(body))
+  const result = await readValidatedBody(event, body => zodSchemas.newBlobRequestSchema.safeParse(body))
   if (!result.success) {
     setResponseStatus(event, 400)
     return {

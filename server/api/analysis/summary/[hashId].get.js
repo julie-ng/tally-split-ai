@@ -4,15 +4,10 @@ import { db, schema } from 'hub:db'
 import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
-  // ⚠️ TODO - implement security.
   requireUserId(event)
+  requireHashIdParam(event)
 
   const hashId = getRouterParam(event, 'hashId')
-
-  if (!hashId) {
-    setResponseStatus(event, 400)
-    return { error: 'Hash ID is required' }
-  }
 
   // Get upload from database with receipt relation
   const upload = await db.query.uploads.findFirst({

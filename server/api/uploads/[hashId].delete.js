@@ -2,20 +2,12 @@ import { db, schema } from 'hub:db'
 import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
-  // ⚠️ TODO - implement security.
   requireUserId(event)
-  const userId = event.context.userId
+  requireHashIdParam(event)
+
   const hashId = getRouterParam(event, 'hashId')
 
   azureStorageUtils.useAzureStorageConfig()
-
-  // Validate hashId parameter
-  if (!hashId || typeof hashId !== 'string') {
-    throw createError({
-      statusCode: 400,
-      message: 'Invalid hashId parameter'
-    })
-  }
 
   // First, fetch the record to get blob names
   const uploadRecord = await db

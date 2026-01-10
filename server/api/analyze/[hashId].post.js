@@ -7,15 +7,9 @@ import { join } from 'node:path'
 
 export default defineEventHandler(async (event) => {
   requireUserId(event)
-  const hashId = getRouterParam(event, 'hashId')
+  requireHashIdParam(event)
 
-  // Validate hashId parameter
-  if (!hashId || typeof hashId !== 'string') {
-    throw createError({
-      statusCode: 400,
-      message: 'Invalid hashId parameter'
-    })
-  }
+  const hashId = getRouterParam(event, 'hashId')
 
   try {
     // 1. Fetch upload record from database

@@ -3,23 +3,10 @@ import { eq, and } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   requireUserId(event)
+  requireIdParam(event)
+
   const userId = event.context.userId
-  const id = getRouterParam(event, 'id')
-
-  if (!id) {
-    throw createError({
-      statusCode: 400,
-      message: 'Receipt ID is required'
-    })
-  }
-
-  const receiptId = parseInt(id, 10)
-  if (isNaN(receiptId)) {
-    throw createError({
-      statusCode: 400,
-      message: 'Invalid receipt ID. Must be a number'
-    })
-  }
+  const receiptId = parseInt(getRouterParam(event, 'id'), 10)
 
   // Delete the record (filtering by both id and userId for security)
   // Note: Associated uploads will be cascade deleted per schema definition
