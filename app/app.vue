@@ -1,6 +1,6 @@
 <script setup>
 useHead({
-  title: 'Homepage'
+  title: 'Homepage',
 })
 </script>
 
