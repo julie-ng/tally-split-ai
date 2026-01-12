@@ -4,7 +4,7 @@ import { useUserStore } from '~/stores/user.store'
 import { useUploadsStore } from '~/stores/uploads.store'
 
 useHead({
-  title: 'Uploads'
+  title: 'Uploads',
 })
 
 const userStore = useUserStore()
@@ -14,12 +14,13 @@ const uploadsStore = useUploadsStore()
 await uploadsStore.fetchUploads()
 
 // Get reactive refs from store (preserves reactivity without creating new computed)
+// eslint-disable-next-line no-unused-vars
 const { uploads, loading: pending, error } = storeToRefs(uploadsStore)
 
 const table = useTemplateRef('table')
 const pagination = ref({
   pageIndex: 0,
-  pageSize: 50
+  pageSize: 50,
 })
 
 const columns = [
@@ -32,20 +33,20 @@ const columns = [
     id: 'expand',
     cell: ({ row }) =>
       h(UButton, {
-        color: 'neutral',
-        variant: 'ghost',
-        icon: 'i-lucide-chevron-down',
-        square: true,
+        'color': 'neutral',
+        'variant': 'ghost',
+        'icon': 'i-lucide-chevron-down',
+        'square': true,
         'aria-label': 'Expand',
-        ui: {
+        'ui': {
           leadingIcon: [
             'transition-transform',
-            row.getIsExpanded() ? 'duration-200 rotate-180' : ''
-          ]
+            row.getIsExpanded() ? 'duration-200 rotate-180' : '',
+          ],
         },
-        onClick: () => row.toggleExpanded()
-      })
-  },//
+        'onClick': () => row.toggleExpanded(),
+      }),
+  }, //
   {
     accessorKey: 'hashId',
     header: 'Hash ID',
@@ -57,7 +58,7 @@ const columns = [
   {
     accessorKey: 'status',
     header: 'Status',
-    cell: ({ row }) => `${row.getValue('status')}`
+    cell: ({ row }) => `${row.getValue('status')}`,
   },
   // {
   //   accessorKey: 'uploadedAt',
@@ -74,7 +75,7 @@ const columns = [
   {
     accessorKey: 'size',
     header: 'Size',
-    cell: ({ row }) => `${formatBytes(row.getValue('size'))}`
+    cell: ({ row }) => `${formatBytes(row.getValue('size'))}`,
   },
   {
     accessorKey: 'azureTags',
@@ -83,7 +84,7 @@ const columns = [
   {
     accessorKey: 'actions',
     header: 'Actions',
-  }
+  },
 ]
 
 const expanded = ref({})
@@ -93,7 +94,7 @@ const tableStyles = {
   thead: 'bg-slate-50',
   th: 'text-slate-700',
   td: 'align-top',
-  tr: 'data-[expanded=true]:bg-elevated/50'
+  tr: 'data-[expanded=true]:bg-elevated/50',
 }
 
 const deleteUpload = async (hashId, title, blobName) => {
@@ -103,7 +104,8 @@ const deleteUpload = async (hashId, title, blobName) => {
 
   try {
     await uploadsStore.deleteUpload(hashId)
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Failed to delete upload:', error)
     alert('Failed to delete upload. Please try again.')
   }
@@ -112,12 +114,13 @@ const deleteUpload = async (hashId, title, blobName) => {
 const analyzeReceipt = async (hashId) => {
   try {
     await $fetch(`/api/analysis/${hashId}`, {
-      method: 'POST'
+      method: 'POST',
     })
 
     // Refresh table to show updated status
     await uploadsStore.fetchUploads()
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Failed to analyze receipt:', error)
     alert('Failed to analyze receipt. Please try again.')
   }
@@ -145,55 +148,78 @@ const paginationInfo = computed(() => {
 </script>
 
 <template>
-<UContainer>
-  <div class="my-5">
-    <div class="flex justify-between items-center mb-5">
-      <div>
-        <h1 class="font-bold text-2xl">Uploads</h1>
-        <p class="mt-1 text-sm text-slate-400">
-          Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} database records for
-          {{ userStore.userId }}
-        </p>
+  <UContainer>
+    <div class="my-5">
+      <div class="flex justify-between items-center mb-5">
+        <div>
+          <h1 class="font-bold text-2xl">
+            Uploads
+          </h1>
+          <p class="mt-1 text-sm text-slate-400">
+            Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} database records for
+            {{ userStore.userId }}
+          </p>
+        </div>
+        <UButton class="px-4 py-2 cursor-pointer" @click="uploadsStore.fetchUploads()">
+          Refresh
+        </UButton>
       </div>
-      <UButton @click="uploadsStore.fetchUploads()" class="px-4 py-2 cursor-pointer">
-        Refresh
-      </UButton>
-    </div>
 
-    <ClientOnly>
-      <div class="border bg-white border-slate-200 rounded-lg overflow-hidden">
-        <!-- TODO: autoResetPageIndex configuration works now to keep page when deleting items. But it will break as soon as we try to use filters -->
-        <UTable ref="table" v-model:expanded="expanded" v-model:pagination="pagination" :pagination-options="{
-          getPaginationRowModel: getPaginationRowModel(),
-          autoResetPageIndex: false
-        }" :data="uploads" :columns="columns" :ui="tableStyles" :loading="pending" loading-color="primary"
-          loading-animation="carousel" class="flex-1">
-          <template #expanded="{ row }">
-            <div class="bg-slate-800 p-4">
-              <vue-json-pretty :data="row.original" :indent="2" :deep="4" :showIcon="true" :showLength="true" />
-            </div>
-          </template>
-          <template #hashId-cell="{ row }">
-            <NuxtLink :to="`/uploads/${row.original.hashId}`"
-              class="text-slate-400 hover:text-blue-800 hover:underline font-mono">
-              {{ row.original.hashId }}
-            </NuxtLink>
-          </template>
-          <template #status-cell="{ row }">
-            <UBadge :color="badgeStyleHelpers.statusBadgeColor(row.original.status)"
-              :variant="badgeStyleHelpers.statusBadgeVariant(row.original.status)">
-              {{ row.original.status }}
-            </UBadge>
-          </template>
-          <template #title-cell="{ row }">
-            <div class="mb-1 text-slate-800 font-medium">
-              {{ row.original.title }}
-            </div>
-            <a :href="row.original.blobUrl" class="font-xs text-slate-400 hover:underline" target="_blank">
-              {{ row.original.originalFilename }}
-            </a>
-          </template>
-          <!--
+      <ClientOnly>
+        <div class="border bg-white border-slate-200 rounded-lg overflow-hidden">
+          <!-- TODO: autoResetPageIndex configuration works now to keep page when deleting items. But it will break as soon as we try to use filters -->
+          <UTable
+            ref="table"
+            v-model:expanded="expanded"
+            v-model:pagination="pagination"
+            :paginationOptions="{
+              getPaginationRowModel: getPaginationRowModel(),
+              autoResetPageIndex: false,
+            }"
+            :data="uploads"
+            :columns="columns"
+            :ui="tableStyles"
+            :loading="pending"
+            loadingColor="primary"
+            loadingAnimation="carousel"
+            class="flex-1"
+          >
+            <template #expanded="{ row }">
+              <div class="bg-slate-800 p-4">
+                <vue-json-pretty
+                  :data="row.original"
+                  :indent="2"
+                  :deep="4"
+                  :showIcon="true"
+                  :showLength="true"
+                />
+              </div>
+            </template>
+            <template #hashId-cell="{ row }">
+              <NuxtLink
+                :to="`/uploads/${row.original.hashId}`"
+                class="text-slate-400 hover:text-blue-800 hover:underline font-mono"
+              >
+                {{ row.original.hashId }}
+              </NuxtLink>
+            </template>
+            <template #status-cell="{ row }">
+              <UBadge
+                :color="badgeStyleHelpers.statusBadgeColor(row.original.status)"
+                :variant="badgeStyleHelpers.statusBadgeVariant(row.original.status)"
+              >
+                {{ row.original.status }}
+              </UBadge>
+            </template>
+            <template #title-cell="{ row }">
+              <div class="mb-1 text-slate-800 font-medium">
+                {{ row.original.title }}
+              </div>
+              <a :href="row.original.blobUrl" class="font-xs text-slate-400 hover:underline" target="_blank">
+                {{ row.original.originalFilename }}
+              </a>
+            </template>
+            <!--
           <template #blobName-cell="{ row }">
             <a
               :href="row.original.blobUrl"
@@ -203,55 +229,70 @@ const paginationInfo = computed(() => {
             </a>
           </template>
           -->
-          <!--
+            <!--
           <template #receiptDate-cell="{ row }">
             <time :datetime="row.original.receiptDate" :title="row.original.receiptDate">
               {{ timestampUtils.toShortDate(row.original.receiptDate) }}
             </time>
           </template>
           -->
-          <template #uploadedAt-cell="{ row }">
-            <time :datetime="row.original.uploadedAt" :title="row.original.uploadedAt">
-              {{ timestampUtils.toShortDatetime(row.original.uploadedAt) }}
-            </time>
-          </template>
-          <template #azureTags-cell="{ row }">
-            <div v-if="row.original.azureTags != null"
-              v-for="tag, i in azureUtils.blobTagsJsonToObject(row.original.azureTags)">
-              <UBadge :key="`${row.original.hashId}-tag-${tag.key}-${i}`" color="info" variant="soft"
-                class="my-1 mr-1 text-slate-400">
-                {{ tag.key }}: {{ tag.value }}
-              </UBadge>
+            <template #uploadedAt-cell="{ row }">
+              <time :datetime="row.original.uploadedAt" :title="row.original.uploadedAt">
+                {{ timestampUtils.toShortDatetime(row.original.uploadedAt) }}
+              </time>
+            </template>
+            <template #azureTags-cell="{ row }">
+              <div v-if="row.original.azureTags != null">
+                <div v-for="tag, i in azureUtils.blobTagsJsonToObject(row.original.azureTags)" :key="`${row.original.hashId}-tag-${tag.key}-${i}`">
+                  <UBadge
+                    color="info"
+                    variant="soft"
+                    class="my-1 mr-1 text-slate-400"
+                  >
+                    {{ tag.key }}: {{ tag.value }}
+                  </UBadge>
+                </div>
+              </div>
+            </template>
+            <template #actions-cell="{ row }">
+              <UButton
+                icon="i-lucide-focus"
+                loadingIcon="i-lucide-loader"
+                loadingAuto
+                :disabled="row.original.analysisStatus === 'processing' || row.original.analysisStatus === 'completed'"
+                color="info"
+                variant="solid"
+                class="px-3 py-1 text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed mr-2 cursor-pointer"
+                @click="analyzeReceipt(row.original.hashId)"
+              >
+                {{ getAnalyzeButtonText(row.original.analysisStatus) }}
+              </UButton>
+              <UButton
+                icon="i-lucide-x"
+                color="neutral"
+                variant="outline"
+                class="px-3 py-1 rounded transition-colors cursor-pointer"
+                @click="deleteUpload(row.original.hashId, row.original.title, row.original.blobName)"
+              >
+                Delete
+              </UButton>
+            </template>
+          </UTable>
+          <div class="flex justify-between items-center border-t border-default py-4 px-4">
+            <div class="text-sm text-slate-600">
+              Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }}
             </div>
-          </template>
-          <template #actions-cell="{ row }">
-            <UButton icon="i-lucide-focus" loading-icon="i-lucide-loader" loading-auto
-              @click="analyzeReceipt(row.original.hashId)"
-              :disabled="row.original.analysisStatus === 'processing' || row.original.analysisStatus === 'completed'"
-              color="info" variant="solid"
-              class="px-3 py-1 text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed mr-2 cursor-pointer">
-              {{ getAnalyzeButtonText(row.original.analysisStatus) }}
-            </UButton>
-            <UButton icon="i-lucide-x"
-              @click="deleteUpload(row.original.hashId, row.original.title, row.original.blobName)" color="neutral"
-              variant="outline" class="px-3 py-1 rounded transition-colors cursor-pointer">
-              Delete
-            </UButton>
-          </template>
-        </UTable>
-        <div class="flex justify-between items-center border-t border-default py-4 px-4">
-          <div class="text-sm text-slate-600">
-            Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }}
+            <UPagination
+              :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
+              :itemsPerPage="table?.tableApi?.getState().pagination.pageSize"
+              :total="table?.tableApi?.getFilteredRowModel().rows.length"
+              @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
+            />
           </div>
-          <UPagination :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
-            :items-per-page="table?.tableApi?.getState().pagination.pageSize"
-            :total="table?.tableApi?.getFilteredRowModel().rows.length"
-            @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)" />
         </div>
-      </div>
-    </ClientOnly>
-  </div>
-</UContainer>
+      </ClientOnly>
+    </div>
+  </UContainer>
 </template>
 
 <style scoped>

@@ -27,26 +27,35 @@ onMounted(async () => {
     })
 
     summaries.value = await Promise.all(fetchPromises)
-  } catch (e) {
+  }
+  catch (e) {
     error.value = e
-  } finally {
+  }
+  finally {
     pending.value = false
   }
 })
-
 </script>
 
 <template>
-<UContainer class="pt-5">
-  <h1 class="text-2xl font-semibold mb-4">Debugging Azure AI Output</h1>
+  <UContainer class="pt-5">
+    <h1 class="text-2xl font-semibold mb-4">
+      Debugging Azure AI Output
+    </h1>
 
-  <LoadingPlaceholder v-if="pending" title="Loading Analysis Data" />
+    <LoadingPlaceholder v-if="pending" title="Loading Analysis Data" />
 
-  <UAlert v-else-if="error" color="error" title="Failed to load analysis data. Please try again later."
-    icon="i-lucide-circle-alert" variant="subtle" :description="error.message" />
+    <UAlert
+      v-else-if="error"
+      color="error"
+      icon="i-lucide-circle-alert"
+      variant="subtle"
+      title="Failed to load analysis data. Please try again later."
+      :description="error.message"
+    />
 
-  <div v-else>
-    <AnalyzedUploadsTable :uploads="summaries" />
-  </div>
-</UContainer>
+    <div v-else>
+      <AnalyzedUploadsTable :uploads="summaries" />
+    </div>
+  </UContainer>
 </template>

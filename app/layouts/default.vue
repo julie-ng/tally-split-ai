@@ -1,12 +1,11 @@
 <script setup lang="ts">
-// import type { NavigationMenuItem } from '@nuxt/ui'
-
 import { useUserStore } from '~/stores/user.store'
+
 const store = useUserStore()
-const userFullName = store.fullName
+// const userFullName = store.fullName
 const userId = store.userId
 
-const route = useRoute()
+// const route = useRoute()
 // const toast = useToast()
 
 const collapsed = ref(false)
@@ -52,25 +51,26 @@ const links = [
           label: 'New Upload',
           icon: 'i-lucide-upload',
           to: '/uploads/new',
-        }
+        },
       ],
     },
-  ]
+  ],
 ]
 </script>
 
 <template>
   <UDashboardGroup>
-    <UDashboardSidebar id="default"
-      :default-size="12"
-      :min-size="12"
-      :max-size="15"
+    <UDashboardSidebar
+      id="default"
       v-model:collapsed="collapsed"
+      :defaultSize="12"
+      :minSize="12"
+      :maxSize="15"
       collapsible
       resizable
       class="bg-elevated/25"
-      :ui="{ header: 'lg:border-b lg:border-default', footer: 'lg:border-t lg:border-default' }">
-
+      :ui="{ header: 'lg:border-b lg:border-default', footer: 'lg:border-t lg:border-default' }"
+    >
       <!-- Header -->
       <template #header="{ collapsed }">
         <NuxtLink class="flex items-center" :class="{ 'py-1 px-1 bg-blue-600 rounded-sm': collapsed }" to="/">

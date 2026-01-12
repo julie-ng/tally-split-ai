@@ -1,11 +1,11 @@
 <script setup>
-useHead({
-  title: 'Upload'
-})
-
 import { useUserStore } from '~/stores/user.store'
 import { useUploadQueueStore } from '~/stores/upload-queue.store'
 import { useUploadObject } from '~/composables/useUploadObject'
+
+useHead({
+  title: 'Upload',
+})
 
 const userStore = useUserStore()
 const userId = userStore.userId
@@ -14,7 +14,7 @@ const { createUploadObject } = useUploadObject()
 
 // uploadsStore.startAutoUpload()
 
-async function onFilesUpdate(files) {
+async function onFilesUpdate (files) {
   for (const file of files) {
     // Generate Blob Url & SAS token for each file
     try {
@@ -22,8 +22,8 @@ async function onFilesUpdate(files) {
         method: 'POST',
         body: {
           userId,
-          filename: file.name
-        }
+          filename: file.name,
+        },
       })
 
       // DEBUG: remove later
@@ -31,8 +31,8 @@ async function onFilesUpdate(files) {
 
       const uploadObject = await createUploadObject(file, result)
       uploadsStore.add(uploadObject)
-
-    } catch (error) {
+    }
+    catch (error) {
       console.error('❗️ Unable to initialize new blob request')
       console.error(error)
     }
@@ -43,9 +43,13 @@ async function onFilesUpdate(files) {
 <template>
   <UContainer>
     <div class="my-5">
-      <h1 class="font-bold text-3xl">Upload</h1>
-      <p class="mt-1 text-slate-400">(work in progress)</p>
-      <UploadsDropZone class="mb-10" @onUpdate="onFilesUpdate" />
+      <h1 class="font-bold text-3xl">
+        Upload
+      </h1>
+      <p class="mt-1 text-slate-400">
+        (work in progress)
+      </p>
+      <UploadsDropZone class="mb-10" @on-update="onFilesUpdate" />
 
       <div class="grid grid-cols-3 gap-8">
         <div>
@@ -53,7 +57,7 @@ async function onFilesUpdate(files) {
             Queued
             <ClientOnly>
               <span v-if="uploadsStore.hasQueued" class="bg-slate-300 font-normal text-slate-500 inline-block ml-1 w-6 h-6 align-middle text-center text-base/6 rounded-full">
-              {{ uploadsStore.totalQueued }}
+                {{ uploadsStore.totalQueued }}
               </span>
             </ClientOnly>
           </h1>
@@ -75,7 +79,9 @@ async function onFilesUpdate(files) {
           </ClientOnly>
         </div>
         <div>
-          <h1 class="text-lg font-bold">Complete</h1>
+          <h1 class="text-lg font-bold">
+            Complete
+          </h1>
           <ClientOnly>
             <UploadsCompletedList />
           </ClientOnly>

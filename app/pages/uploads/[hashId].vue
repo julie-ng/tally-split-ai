@@ -1,9 +1,6 @@
 <script setup>
-import { useUserStore } from '~/stores/user.store'
-
 const route = useRoute()
 const hashId = route.params.hashId
-const userStore = useUserStore()
 
 // Fetch upload details
 const { data: upload, pending, error } = await useFetch(`/api/uploads/${hashId}`)
@@ -13,17 +10,18 @@ const { data: analysisData, pending: analysisPending, error: analysisError } = a
 
 // Set page title reactively after upload is fetched
 useHead({
-  title: () => `${upload.value?.title} | Upload` || `Upload ${hashId}`
+  // eslint-disable-next-line no-constant-binary-expression
+  title: () => `${upload.value?.title} | Upload` || `Upload ${hashId}`,
 })
 
 const breadcrumbItems = [
   {
     label: 'Uploads',
-    to: '/uploads'
+    to: '/uploads',
   }, {
     label: hashId,
-    to: `/uploads/${hashId}`
-  }
+    to: `/uploads/${hashId}`,
+  },
 ]
 </script>
 
@@ -35,9 +33,14 @@ const breadcrumbItems = [
     <LoadingPlaceholder v-if="pending" title="Loading Upload" :hashId="hashId" />
 
     <!-- Error -->
-    <UAlert v-else-if="error"
-      title="Unable to Load Upload" :description="error.message"
-      class="my-5" color="error" variant="subtle" icon="i-lucide-triangle-alert"
+    <UAlert
+      v-else-if="error"
+      title="Unable to Load Upload"
+      :description="error.message"
+      class="my-5"
+      color="error"
+      variant="subtle"
+      icon="i-lucide-triangle-alert"
     />
 
     <!-- Upload Details -->
