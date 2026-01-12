@@ -19,7 +19,6 @@ AI Receipts POC is a proof-of-concept application for analyzing scanned receipts
 
 ## Project Structure
 
-
 This is a [**Nuxt 4** application](https://nuxt.com/docs/4.x/getting-started/introduction) with the following structure:
 
 ```
@@ -180,6 +179,15 @@ Copy `.env.sample` to `.env` and populate with your Azure credentials.
 ---
 
 ## Code Style Preferences
+
+### Stylistic Preferences
+
+Code style is checked via ESLint (integrated via [Nuxt Eslint module](https://eslint.nuxt.com/packages/module)) and I've chosen to use the [@stylistic/eslint-plugin](https://eslint.style/rules). 
+
+See [eslint.config.mjs](./eslint.config.mjs) for details.
+
+- Do not use semicolons
+- Add traililng commas
 
 ### Data Schemas and Validations
 

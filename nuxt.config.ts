@@ -2,7 +2,7 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: ['@nuxt/ui', '@pinia/nuxt', '@nuxthub/core'],
+  modules: ['@nuxt/ui', '@pinia/nuxt', '@nuxthub/core', '@nuxt/eslint'],
   plugins: ['@/plugins/vue-json-pretty'],
   watch: [
     '~~/shared/**/*'
@@ -48,6 +48,11 @@ export default defineNuxtConfig({
       bodyAttrs: {
         class: ''
       }
+    }
+  },
+  eslint: {
+    config: {
+      stylistic: true
     }
   },
   runtimeConfig: {
