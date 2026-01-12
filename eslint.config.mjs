@@ -39,6 +39,9 @@ export default withNuxt(
       'vue/no-template-shadow': ['error', {
         allow: ['collapsed'], // NuxtUI
       }],
+      'vue/html-indent': ['error', 2, {
+        baseIndent: 1,
+      }],
       '@typescript-eslint/no-unused-vars': 'off',
       '@stylistic/brace-style': ['error', 'stroustrup'],
       '@stylistic/jsx-indent-props': ['warn', 2],
