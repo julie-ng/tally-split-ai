@@ -23,7 +23,7 @@ import * as schema from './schema.ts'
 import {
   extractReceiptDate,
   extractReceiptTotal,
-  extractHashtags
+  extractHashtags,
 } from '../../shared/utils/filename.utils.js'
 
 // Configuration
@@ -41,7 +41,7 @@ const db = drizzle(sqlite, { schema })
  * @param {string} hashId - The upload hashId
  * @returns {boolean} True if analysis file exists
  */
-function hasAnalysisFile(hashId) {
+function hasAnalysisFile (hashId) {
   const filePath = path.join(TMP_DIR, `${hashId}.json`)
   return fs.existsSync(filePath)
 }
@@ -51,7 +51,7 @@ function hasAnalysisFile(hashId) {
  * @param {string} hashId - The upload hashId
  * @returns {Promise<object|null>} API response data or null on error
  */
-async function fetchAnalysisSummary(hashId) {
+async function fetchAnalysisSummary (hashId) {
   try {
     const response = await fetch(`${API_BASE_URL}/api/analysis/summary/${hashId}`)
     if (!response.ok) {
@@ -64,7 +64,8 @@ async function fetchAnalysisSummary(hashId) {
       return null
     }
     return json.data
-  } catch (error) {
+  }
+  catch (error) {
     console.warn(`  ⚠ Failed to fetch analysis for ${hashId}: ${error.message}`)
     return null
   }
@@ -75,7 +76,7 @@ async function fetchAnalysisSummary(hashId) {
  * @param {object} apiData - The API response data
  * @returns {object} Extracted receipt data
  */
-function extractFromAzureAI(apiData) {
+function extractFromAzureAI (apiData) {
   const summary = apiData?.azureAI?.summary
   if (!summary) {
     return {}
@@ -90,7 +91,7 @@ function extractFromAzureAI(apiData) {
     merchantPhone: merchant.phone?.value || null,
     receiptDate: receipt.transactionDate?.value || null,
     receiptTotal: receipt.total?.value?.amount || null,
-    receiptCurrency: receipt.total?.value?.currencyCode || null
+    receiptCurrency: receipt.total?.value?.currencyCode || null,
   }
 }
 
@@ -99,7 +100,7 @@ function extractFromAzureAI(apiData) {
  * @param {string|null} azureTagsJson - JSON string of Azure blob tags
  * @returns {object} Extracted receipt data
  */
-function parseAzureTags(azureTagsJson) {
+function parseAzureTags (azureTagsJson) {
   if (!azureTagsJson) {
     return {}
   }
@@ -109,9 +110,10 @@ function parseAzureTags(azureTagsJson) {
     return {
       receiptDate: tags['receipt-date'] || null,
       receiptTotal: tags['receipt-total'] ? parseFloat(tags['receipt-total']) : null,
-      receiptTags: tags['receipt-tags'] ? tags['receipt-tags'].replace(/\+/g, ', ') : null
+      receiptTags: tags['receipt-tags'] ? tags['receipt-tags'].replace(/\+/g, ', ') : null,
     }
-  } catch (e) {
+  }
+  catch (e) {
     console.warn('  ⚠ Failed to parse azureTags:', e.message)
     return {}
   }
@@ -122,12 +124,12 @@ function parseAzureTags(azureTagsJson) {
  * @param {string} filename - Original filename
  * @returns {object} Extracted receipt data
  */
-function parseFilename(filename) {
+function parseFilename (filename) {
   const hashtags = extractHashtags(filename)
   return {
     receiptDate: extractReceiptDate(filename),
     receiptTotal: extractReceiptTotal(filename) ? parseFloat(extractReceiptTotal(filename)) : null,
-    receiptTags: hashtags.length > 0 ? hashtags.join(', ') : null
+    receiptTags: hashtags.length > 0 ? hashtags.join(', ') : null,
   }
 }
 
@@ -137,7 +139,7 @@ function parseFilename(filename) {
  * @param {boolean} hasAnalysis - Whether Azure AI analysis was used
  * @returns {string|null} Notes string or null if no inferred data
  */
-function buildNotesString(inferred, hasAnalysis) {
+function buildNotesString (inferred, hasAnalysis) {
   const lines = []
 
   if (inferred.receiptDate) {
@@ -156,7 +158,8 @@ function buildNotesString(inferred, hasAnalysis) {
 
   if (hasAnalysis) {
     return `Inferred from Filename / Azure Blob Tags:\n${lines.join('\n')}`
-  } else {
+  }
+  else {
     return `Receipt data inferred from upload filename.\n${lines.join('\n')}`
   }
 }
@@ -164,7 +167,7 @@ function buildNotesString(inferred, hasAnalysis) {
 /**
  * Main migration function
  */
-async function migrateUploadsToReceipts() {
+async function migrateUploadsToReceipts () {
   console.log('Starting migration: Create receipts from existing uploads\n')
   console.log(`Database: ${databaseUrl}`)
   console.log(`API Base URL: ${API_BASE_URL}`)
@@ -203,7 +206,8 @@ async function migrateUploadsToReceipts() {
           fromAzureAI = extractFromAzureAI(apiData)
           withAnalysisCount++
         }
-      } else {
+      }
+      else {
         console.log(`  → No analysis file found`)
       }
 
@@ -215,7 +219,7 @@ async function migrateUploadsToReceipts() {
       const inferred = {
         receiptDate: fromTags.receiptDate || fromFilename.receiptDate,
         receiptTotal: fromTags.receiptTotal || fromFilename.receiptTotal,
-        receiptTags: fromTags.receiptTags || fromFilename.receiptTags
+        receiptTags: fromTags.receiptTags || fromFilename.receiptTags,
       }
 
       // Build notes string
@@ -233,7 +237,7 @@ async function migrateUploadsToReceipts() {
         receiptCurrency: fromAzureAI.receiptCurrency || 'EUR',
         notes: notes,
         userId: upload.userId,
-        isAnalyzed: hasAnalysis
+        isAnalyzed: hasAnalysis,
       }
 
       // Create the receipt
@@ -250,7 +254,8 @@ async function migrateUploadsToReceipts() {
 
       console.log(`  ✓ Created Receipt #${newReceipt.id}`)
       successCount++
-    } catch (error) {
+    }
+    catch (error) {
       console.error(`  ✗ Error: ${error.message}`)
       errorCount++
     }

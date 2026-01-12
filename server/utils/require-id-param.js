@@ -5,14 +5,14 @@
  * @param {H3Event} event
  * @param {string} paramName - Route parameter name (default: 'hashId')
  */
-export function requireHashIdParam(event, paramName = 'hashId') {
+export function requireHashIdParam (event, paramName = 'hashId') {
   const hashId = getRouterParam(event, paramName)
   const result = zodSchemas.hashIdParamSchema.safeParse({ hashId })
 
   if (!result.success) {
     throw createError({
       statusCode: 400,
-      message: `Invalid or missing ${paramName} parameter`
+      message: `Invalid or missing ${paramName} parameter`,
     })
   }
 }
@@ -23,14 +23,14 @@ export function requireHashIdParam(event, paramName = 'hashId') {
  *
  * @param {H3Event} event
  */
-export function requireIdParam(event) {
+export function requireIdParam (event) {
   const id = getRouterParam(event, 'id')
   const result = zodSchemas.idParamSchema.safeParse({ id })
 
   if (!result.success) {
     throw createError({
       statusCode: 400,
-      message: 'Invalid or missing id parameter'
+      message: 'Invalid or missing id parameter',
     })
   }
 }

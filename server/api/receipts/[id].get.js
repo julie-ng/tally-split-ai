@@ -11,17 +11,17 @@ export default defineEventHandler(async (event) => {
   const receipt = await db.query.receipts.findFirst({
     where: and(
       eq(schema.receipts.id, receiptId),
-      eq(schema.receipts.userId, userId)
+      eq(schema.receipts.userId, userId),
     ),
     with: {
-      uploads: true
-    }
+      uploads: true,
+    },
   })
 
   if (!receipt) {
     throw createError({
       statusCode: 404,
-      message: `Receipt not found with ID: ${receiptId}`
+      message: `Receipt not found with ID: ${receiptId}`,
     })
   }
 

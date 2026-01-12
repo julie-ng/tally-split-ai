@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { db, schema } from 'hub:db'
-import { eq, and } from 'drizzle-orm'
-import { sql } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   requireUserId(event)
@@ -16,13 +15,13 @@ export default defineEventHandler(async (event) => {
     return {
       success: false,
       message: 'Invalid request body',
-      errors: z.flattenError(result.error).fieldErrors
+      errors: z.flattenError(result.error).fieldErrors,
     }
   }
 
   const updates = {
     ...result.data,
-    updatedAt: sql`(unixepoch())`
+    updatedAt: sql`(unixepoch())`,
   }
 
   // Update the record (filtering by both id and userId for security)
@@ -31,19 +30,19 @@ export default defineEventHandler(async (event) => {
     .set(updates)
     .where(and(
       eq(schema.receipts.id, receiptId),
-      eq(schema.receipts.userId, userId)
+      eq(schema.receipts.userId, userId),
     ))
     .returning()
 
   if (dbResult.length === 0) {
     throw createError({
       statusCode: 404,
-      message: `Receipt with ID '${receiptId}' not found`
+      message: `Receipt with ID '${receiptId}' not found`,
     })
   }
 
   return {
     success: true,
-    updated: dbResult[0]
+    updated: dbResult[0],
   }
 })

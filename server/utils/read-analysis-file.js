@@ -6,7 +6,7 @@ const ANALYSIS_DIR_NAME = 'tmp'
 export async function readAnalysisFile (hashId) {
   let analysisData
   let result = {
-    hashId
+    hashId,
   }
 
   try {
@@ -14,7 +14,8 @@ export async function readAnalysisFile (hashId) {
     const fileContent = await fs.readFile(filePath, 'utf-8')
     analysisData = JSON.parse(fileContent)
     result.success = true
-  } catch (error) {
+  }
+  catch (error) {
     result.success = false
 
     if (error.code === 'ENOENT') {
@@ -22,8 +23,8 @@ export async function readAnalysisFile (hashId) {
         ...result,
         error: {
           status: 404,
-          message: `Analysis file not found for upload ${hashId}. Please run analysis first.`
-        }
+          message: `Analysis file not found for upload ${hashId}. Please run analysis first.`,
+        },
       }
     }
 
@@ -32,8 +33,8 @@ export async function readAnalysisFile (hashId) {
         ...result,
         error: {
           status: 403,
-          message: 'Access denied. Check permissions to analysis directory.'
-        }
+          message: 'Access denied. Check permissions to analysis directory.',
+        },
       }
     }
 
@@ -41,13 +42,13 @@ export async function readAnalysisFile (hashId) {
       ...result,
       error: {
         status: 500,
-        message: `Failed to read analysis file: ${error.message}.`
-      }
+        message: `Failed to read analysis file: ${error.message}.`,
+      },
     }
   }
 
   return {
     ...result,
-    data: analysisData
+    data: analysisData,
   }
 }

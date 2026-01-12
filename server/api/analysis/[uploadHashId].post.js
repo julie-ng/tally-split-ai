@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
     if (uploads.length === 0) {
       throw createError({
         statusCode: 404,
-        message: `Upload with hashId '${hashId}' not found`
+        message: `Upload with hashId '${hashId}' not found`,
       })
     }
 
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
     if (upload.status !== 'uploaded') {
       throw createError({
         statusCode: 400,
-        message: `Upload must be completed before analysis. Current status: ${upload.status}`
+        message: `Upload must be completed before analysis. Current status: ${upload.status}`,
       })
     }
 
@@ -44,7 +44,7 @@ export default defineEventHandler(async (event) => {
     // 4. Generate read-only SAS token (5 minutes)
     const { uploadUrl: blobUrlWithSas } = azureStorageUtils.generateBlobSasToken(upload.blobName, {
       permissions: 'read',
-      expiresInMinutes: 5
+      expiresInMinutes: 5,
     })
 
     // 5. Get Azure Document Intelligence config
@@ -58,8 +58,8 @@ export default defineEventHandler(async (event) => {
       .post({
         contentType: 'application/json',
         body: {
-          urlSource: blobUrlWithSas
-        }
+          urlSource: blobUrlWithSas,
+        },
       })
 
     if (isUnexpected(initialResponse)) {
@@ -91,19 +91,19 @@ export default defineEventHandler(async (event) => {
       merchantAddress: fields.MerchantAddress?.content || null,
       merchantPhone: fields.MerchantPhoneNumber?.content || null,
       receiptDate: fields.TransactionDate?.valueDate || null,
-      receiptSubtotal: fields.Subtotal?.valueCurrency?.amount ||
-        fields.TaxDetails?.valueArray?.[0]?.valueObject?.NetAmount?.valueCurrency?.amount ||
-        null,
+      receiptSubtotal: fields.Subtotal?.valueCurrency?.amount
+        || fields.TaxDetails?.valueArray?.[0]?.valueObject?.NetAmount?.valueCurrency?.amount
+        || null,
       receiptTotal: fields.Total?.valueCurrency?.amount || null,
       receiptCurrency: fields.Total?.valueCurrency?.currencyCode || null,
       receiptTax: fields.TotalTax?.valueCurrency?.amount || null,
-      isAnalyzed: true
+      isAnalyzed: true,
     }
 
     // 10. Get upload with receipt relation to check if receipt exists
     const uploadWithReceipt = await db.query.uploads.findFirst({
       where: eq(schema.uploads.hashId, hashId),
-      with: { receipt: true }
+      with: { receipt: true },
     })
 
     let receiptId = uploadWithReceipt?.receiptId
@@ -115,7 +115,8 @@ export default defineEventHandler(async (event) => {
         .set({ ...receiptData, updatedAt: sql`(unixepoch())` })
         .where(eq(schema.receipts.id, receiptId))
       console.log(`✅ Updated existing receipt ${receiptId}`)
-    } else {
+    }
+    else {
       // Create new receipt
       const [newReceipt] = await db
         .insert(schema.receipts)
@@ -132,7 +133,7 @@ export default defineEventHandler(async (event) => {
         analysisStatus: 'completed',
         analyzedAt: sql`(unixepoch())`,
         analysisOcrResult: analyzeResult.content || null,
-        receiptId: receiptId
+        receiptId: receiptId,
       })
       .where(eq(schema.uploads.hashId, hashId))
 
@@ -142,10 +143,10 @@ export default defineEventHandler(async (event) => {
       hashId,
       analysisStatus: 'completed',
       receiptId,
-      receiptData
+      receiptData,
     }
-
-  } catch (error) {
+  }
+  catch (error) {
     // Error handling: set status to 'failed'
     console.error(`❌ Analysis failed for ${hashId}:`, error)
 
@@ -154,13 +155,14 @@ export default defineEventHandler(async (event) => {
         .update(schema.uploads)
         .set({ analysisStatus: 'failed' })
         .where(eq(schema.uploads.hashId, hashId))
-    } catch (dbError) {
+    }
+    catch (dbError) {
       console.error('Failed to update status to failed:', dbError)
     }
 
     throw createError({
       statusCode: 500,
-      message: `Analysis failed: ${error.message}`
+      message: `Analysis failed: ${error.message}`,
     })
   }
 })

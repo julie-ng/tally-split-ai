@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
   if (uploadRecord.length === 0) {
     throw createError({
       statusCode: 404,
-      message: `Upload with hashId '${hashId}' not found`
+      message: `Upload with hashId '${hashId}' not found`,
     })
   }
 
@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
   // Delete blobs from Azure Storage (only if upload was completed)
   const deletionResults = {
     originalBlob: false,
-    thumbnail: false
+    thumbnail: false,
   }
 
   if (upload.status === 'uploaded') {
@@ -46,20 +46,24 @@ export default defineEventHandler(async (event) => {
           await azureStorageUtils.deleteBlob(upload.thumbnailName)
           deletionResults.thumbnail = true
           console.log(`✅ Deleted thumbnail: ${upload.thumbnailName}`)
-        } catch (thumbnailError) {
+        }
+        catch (thumbnailError) {
           // Thumbnail might not exist yet (upload interrupted before thumbnail created)
           console.warn(`⚠️ Thumbnail not found or already deleted: ${upload.thumbnailName}`)
+          console.warn(thumbnailError)
         }
       }
-    } catch (error) {
+    }
+    catch (error) {
       console.error('❌ Error deleting blobs from Azure:', error)
       throw createError({
         statusCode: 500,
         message: 'Failed to delete blobs from Azure Storage',
-        data: { error: error.message }
+        data: { error: error.message },
       })
     }
-  } else {
+  }
+  else {
     console.log(`ℹ️ Skipping blob deletion - upload status is '${upload.status}', not 'uploaded'`)
   }
 
@@ -72,6 +76,6 @@ export default defineEventHandler(async (event) => {
   return {
     success: true,
     deleted: result[0],
-    blobsDeletionResults: deletionResults
+    blobsDeletionResults: deletionResults,
   }
 })

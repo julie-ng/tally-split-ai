@@ -3,7 +3,7 @@
  * @returns {Object} Configuration object with endpoint and key
  * @throws {Error} If required environment variables are missing
  */
-export function getAzureDocumentIntelligenceConfig() {
+export function getAzureDocumentIntelligenceConfig () {
   const endpoint = process.env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT
   const key = process.env.AZURE_DOCUMENT_INTELLIGENCE_KEY
 
@@ -17,6 +17,6 @@ export function getAzureDocumentIntelligenceConfig() {
 
   return {
     endpoint,
-    key
+    key,
   }
 }

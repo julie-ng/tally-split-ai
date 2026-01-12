@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
 
     // Filter for image files only
     const imageFiles = files.filter(file =>
-      /\.(jpg|jpeg|png|gif|bmp|tiff)$/i.test(file)
+      /\.(jpg|jpeg|png|gif|bmp|tiff)$/i.test(file),
     )
 
     // Extract metadata from filenames
@@ -19,18 +19,19 @@ export default defineEventHandler(async (event) => {
       title: extractReceiptTitle(filename),
       date: extractReceiptDate(filename),
       total: extractReceiptTotal(filename),
-      tags: extractHashtags(filename)
+      tags: extractHashtags(filename),
     }))
 
     return {
       count: receipts.length,
-      receipts
+      receipts,
     }
-  } catch (error) {
+  }
+  catch (error) {
     throw createError({
       statusCode: 500,
       statusMessage: 'Failed to read scans directory',
-      message: error.message
+      message: error.message,
     })
   }
 })

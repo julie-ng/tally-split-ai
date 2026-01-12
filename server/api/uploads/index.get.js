@@ -1,10 +1,10 @@
 import { db, schema } from 'hub:db'
 import { eq } from 'drizzle-orm'
 
-const delay = (durationMs) => {
-  console.log('delay', durationMs)
-  return new Promise(resolve => setTimeout(resolve, durationMs))
-}
+// const delay = (durationMs) => {
+//   console.log('delay', durationMs)
+//   return new Promise(resolve => setTimeout(resolve, durationMs))
+// }
 
 export default defineEventHandler(async (event) => {
   requireUserId(event)

@@ -2,8 +2,8 @@ import { z } from 'zod'
 
 const requestSchema = (userId) => {
   return z.object({
-    action: z.string().refine((value) => value === 'read', { error: 'Invalid action' }),
-    blobName: z.string().includes(userId, { error: 'Blob name must include user Id' })
+    action: z.string().refine(value => value === 'read', { error: 'Invalid action' }),
+    blobName: z.string().includes(userId, { error: 'Blob name must include user Id' }),
   })
 }
 
@@ -25,8 +25,8 @@ export default defineEventHandler(async (event) => {
     setResponseStatus(event, 400)
     return {
       success: false,
-      message: "Invalid request body",
-      errors: z.flattenError(result.error).fieldErrors
+      message: 'Invalid request body',
+      errors: z.flattenError(result.error).fieldErrors,
     }
   }
   const { action, blobName } = result.data
@@ -39,11 +39,11 @@ export default defineEventHandler(async (event) => {
     blobUrl,
     sasToken,
     uploadUrl,
-    expiresAt
+    expiresAt,
   } = azureStorageUtils.generateBlobSasToken(blobName,
     {
       permissions: 'read',
-      expiresInMinutes: 5
+      expiresInMinutes: 5,
     })
 
   return {
@@ -53,6 +53,6 @@ export default defineEventHandler(async (event) => {
     blobUrl,
     sasToken,
     blobUrlWithSas: uploadUrl,
-    expiresAt
+    expiresAt,
   }
 })

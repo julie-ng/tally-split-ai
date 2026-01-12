@@ -12,13 +12,13 @@ export default defineEventHandler(async (event) => {
     return {
       success: false,
       message: 'Invalid request body',
-      errors: z.flattenError(result.error).fieldErrors
+      errors: z.flattenError(result.error).fieldErrors,
     }
   }
 
   const insertData = {
     userId,
-    ...result.data
+    ...result.data,
   }
 
   const dbResult = await db
@@ -28,6 +28,6 @@ export default defineEventHandler(async (event) => {
 
   return {
     success: true,
-    created: dbResult[0]
+    created: dbResult[0],
   }
 })

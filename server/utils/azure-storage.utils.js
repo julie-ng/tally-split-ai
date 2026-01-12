@@ -2,7 +2,7 @@ import {
   BlobServiceClient,
   StorageSharedKeyCredential,
   BlobSASPermissions,
-  generateBlobSASQueryParameters
+  generateBlobSASQueryParameters,
 } from '@azure/storage-blob'
 
 /**
@@ -10,11 +10,11 @@ import {
  * @returns {Object} Configuration object with account, container, and key
  * @throws {Error} If configuration is missing
  */
-function useAzureStorageConfig() {
+function useAzureStorageConfig () {
   const config = {
     account: process.env.AZ_STORAGE_ACCOUNT,
     container: process.env.AZ_STORAGE_CONTAINER_NAME,
-    accountKey: process.env.AZ_STORAGE_ACCOUNT_KEY
+    accountKey: process.env.AZ_STORAGE_ACCOUNT_KEY,
   }
 
   if (!config.account || !config.container || !config.accountKey) {
@@ -29,7 +29,7 @@ function useAzureStorageConfig() {
  * @param {string} blobName - The blob name/path
  * @returns {string} Full blob URL
  */
-function generateBlobUrl(blobName) {
+function generateBlobUrl (blobName) {
   const { account, container } = useAzureStorageConfig()
   return `https://${account}.blob.core.windows.net/${container}/${blobName}`
 }
@@ -41,13 +41,13 @@ function generateBlobUrl(blobName) {
  * @returns {Promise<ContainerClient>} Container client instance
  * @throws {Error} If checkExists is true and container does not exist
  */
-async function getContainerClient({ checkExists = true } = {}) {
+async function getContainerClient ({ checkExists = true } = {}) {
   const { account, accountKey, container } = useAzureStorageConfig()
 
   const sharedKeyCredential = new StorageSharedKeyCredential(account, accountKey)
   const blobServiceClient = new BlobServiceClient(
     `https://${account}.blob.core.windows.net`,
-    sharedKeyCredential
+    sharedKeyCredential,
   )
 
   const containerClient = blobServiceClient.getContainerClient(container)
@@ -70,7 +70,7 @@ async function getContainerClient({ checkExists = true } = {}) {
  * @param {number} options.expiresInMinutes - Token validity duration in minutes
  * @returns {Object} Object containing sasToken, blobUrl, uploadUrl, and expiresAt
  */
-function generateBlobSasToken(blobName, { permissions = 'read', expiresInMinutes = 5 } = {}) {
+function generateBlobSasToken (blobName, { permissions = 'read', expiresInMinutes = 5 } = {}) {
   const { account, container, accountKey } = useAzureStorageConfig()
 
   // Create shared key credential
@@ -106,9 +106,9 @@ function generateBlobSasToken(blobName, { permissions = 'read', expiresInMinutes
       blobName: blobName,
       permissions: sasPermissions,
       startsOn: startsOn,
-      expiresOn: expiresOn
+      expiresOn: expiresOn,
     },
-    sharedKeyCredential
+    sharedKeyCredential,
   ).toString()
 
   const blobUrl = generateBlobUrl(blobName)
@@ -117,7 +117,7 @@ function generateBlobSasToken(blobName, { permissions = 'read', expiresInMinutes
     sasToken,
     blobUrl,
     uploadUrl: `${blobUrl}?${sasToken}`,
-    expiresAt: expiresOn.toISOString()
+    expiresAt: expiresOn.toISOString(),
   }
 }
 
@@ -127,12 +127,12 @@ function generateBlobSasToken(blobName, { permissions = 'read', expiresInMinutes
  * @returns {Promise<void>}
  * @throws {Error} If blob deletion fails
  */
-async function deleteBlob(blobName) {
+async function deleteBlob (blobName) {
   const containerClient = await getContainerClient()
   const blockBlobClient = containerClient.getBlockBlobClient(blobName)
 
   await blockBlobClient.delete({
-    deleteSnapshots: 'include' // Delete blob and all its snapshots
+    deleteSnapshots: 'include', // Delete blob and all its snapshots
   })
 }
 
@@ -141,5 +141,5 @@ export const azureStorageUtils = {
   getContainerClient,
   generateBlobSasToken,
   generateBlobUrl,
-  deleteBlob
+  deleteBlob,
 }

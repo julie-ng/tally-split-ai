@@ -12,17 +12,17 @@ export default defineEventHandler(async (event) => {
   const upload = await db.query.uploads.findFirst({
     where: and(
       eq(schema.uploads.hashId, hashId),
-      eq(schema.uploads.userId, userId)
+      eq(schema.uploads.userId, userId),
     ),
     with: {
-      receipt: true
-    }
+      receipt: true,
+    },
   })
 
   if (!upload) {
     throw createError({
       statusCode: 404,
-      message: `Upload not found with hash ID: ${hashId}`
+      message: `Upload not found with hash ID: ${hashId}`,
     })
   }
 

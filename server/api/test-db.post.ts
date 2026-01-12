@@ -9,11 +9,11 @@ export default defineEventHandler(async (event) => {
     blobUrl: 'https://examplesdfsdfsd.blob.core.windows.net/test',
     originalFilename: 'test-receipt.jpg',
     contentType: 'image/jpeg',
-    size: 12345
+    size: 12345,
   }).returning()
 
   return {
     success: true,
-    inserted: result[0]
+    inserted: result[0],
   }
 })

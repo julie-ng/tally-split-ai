@@ -12,8 +12,8 @@ export default defineEventHandler(async (event) => {
     setResponseStatus(event, 400)
     return {
       success: false,
-      message: "Invalid request body",
-      errors: z.flattenError(result.error).fieldErrors
+      message: 'Invalid request body',
+      errors: z.flattenError(result.error).fieldErrors,
     }
   }
   const { filename } = result.data
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
   // Generate SAS token for upload (3 minutes validity)
   const { blobUrl, uploadUrl, expiresAt } = azureStorageUtils.generateBlobSasToken(blobPath, {
     permissions: 'write',
-    expiresInMinutes: 3
+    expiresInMinutes: 3,
   })
 
   // Generate thumbnail URL (without SAS token - will be generated on-demand for viewing)
@@ -58,7 +58,7 @@ export default defineEventHandler(async (event) => {
     thumbnailUrl,
     originalFilename: filename,
     receiptDate,
-    receiptTotal: receiptTotal ? parseFloat(receiptTotal) : null
+    receiptTotal: receiptTotal ? parseFloat(receiptTotal) : null,
   }).returning()
 
   return {
@@ -69,8 +69,8 @@ export default defineEventHandler(async (event) => {
       path: blobPath,
       url: blobUrl,
       uploadUrl,
-      uploadExpiresAt: expiresAt
+      uploadExpiresAt: expiresAt,
     },
-    uploadRecord: dbResult[0]
+    uploadRecord: dbResult[0],
   }
 })

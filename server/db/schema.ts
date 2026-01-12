@@ -41,7 +41,7 @@ export const receipts = sqliteTable('receipts', {
 
   // Timestamps
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 })
 
 /**
@@ -75,7 +75,7 @@ export const uploads = sqliteTable('uploads', {
   // Timestamps
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
-  uploadedAt: integer('uploaded_at', { mode: 'timestamp' })
+  uploadedAt: integer('uploaded_at', { mode: 'timestamp' }),
 })
 
 /**
@@ -102,13 +102,13 @@ export const uploads = sqliteTable('uploads', {
 
 // Receipt has many uploads (one receipt can have multiple photos)
 export const receiptsRelations = relations(receipts, ({ many }) => ({
-  uploads: many(uploads)
+  uploads: many(uploads),
 }))
 
 // Upload belongs to one receipt
 export const uploadsRelations = relations(uploads, ({ one }) => ({
   receipt: one(receipts, {
     fields: [uploads.receiptId],
-    references: [receipts.id]
-  })
+    references: [receipts.id],
+  }),
 }))

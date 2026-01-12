@@ -14,19 +14,19 @@ export default defineEventHandler(async (event) => {
     .delete(schema.receipts)
     .where(and(
       eq(schema.receipts.id, receiptId),
-      eq(schema.receipts.userId, userId)
+      eq(schema.receipts.userId, userId),
     ))
     .returning()
 
   if (result.length === 0) {
     throw createError({
       statusCode: 404,
-      message: `Receipt with ID '${receiptId}' not found`
+      message: `Receipt with ID '${receiptId}' not found`,
     })
   }
 
   return {
     success: true,
-    deleted: result[0]
+    deleted: result[0],
   }
 })

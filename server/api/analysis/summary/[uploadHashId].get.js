@@ -1,5 +1,3 @@
-import fs from 'fs/promises'
-import path from 'path'
 import { db, schema } from 'hub:db'
 import { eq } from 'drizzle-orm'
 
@@ -19,18 +17,18 @@ export default defineEventHandler(async (event) => {
       size: true,
       createdAt: true,
       analyzedAt: true,
-      azureTags: true
+      azureTags: true,
     },
     with: {
-      receipt: true
-    }
+      receipt: true,
+    },
   })
 
   if (!upload) {
     setResponseStatus(event, 404)
     return {
       success: false,
-      error: 'Upload not found in database'
+      error: 'Upload not found in database',
     }
   }
 
@@ -46,7 +44,6 @@ export default defineEventHandler(async (event) => {
   // console.log(contents)
   const analysisData = contents.data
 
-
   // Helper function to deep clone and remove specific keys
   const removeKeys = (obj, keysToRemove = ['boundingRegions', 'spans']) => {
     if (obj === null || typeof obj !== 'object') {
@@ -58,7 +55,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const cleaned = {}
-    Object.keys(obj).forEach(key => {
+    Object.keys(obj).forEach((key) => {
       if (!keysToRemove.includes(key)) {
         cleaned[key] = removeKeys(obj[key], keysToRemove)
       }
@@ -69,14 +66,14 @@ export default defineEventHandler(async (event) => {
 
   const resultFields = analysisData.analyzeResult.documents[0].fields
   const summary = []
-  Object.keys(resultFields).forEach(key => {
+  Object.keys(resultFields).forEach((key) => {
     const fieldData = resultFields[key]
     const f = {
-      field: key
+      field: key,
     }
 
     // Include specific keys and any key starting with "value"
-    Object.keys(fieldData).forEach(fieldKey => {
+    Object.keys(fieldData).forEach((fieldKey) => {
       if (fieldKey === 'type' || fieldKey === 'confidence' || fieldKey === 'content' || fieldKey.startsWith('value')) {
         f[fieldKey] = removeKeys(fieldData[fieldKey])
       }
@@ -105,7 +102,7 @@ export default defineEventHandler(async (event) => {
         // result: {
         //   document: analysisData.analyzeResult?.documents?.[0]
         // }
-      }
-    }
+      },
+    },
   }
 })

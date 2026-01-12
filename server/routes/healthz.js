@@ -1,4 +1,4 @@
-function formatUptime(seconds) {
+function formatUptime (seconds) {
   const days = Math.floor(seconds / 86400)
   const hours = Math.floor((seconds % 86400) / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
@@ -25,6 +25,6 @@ export default defineEventHandler((event) => {
     message: 'Server is up and running.',
     timestamp: new Date().toISOString(),
     uptime,
-    uptime_human_readable: formatUptime(uptime)
+    uptime_human_readable: formatUptime(uptime),
   }
 })

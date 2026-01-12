@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
     size: schema.uploads.size,
     createdAt: schema.uploads.createdAt,
     analyzedAt: schema.uploads.analyzedAt,
-    azureTags: schema.uploads.azureTags
+    azureTags: schema.uploads.azureTags,
   })
     .from(schema.uploads)
     .where(inArray(schema.uploads.hashId, analyzedUploads))
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
         contentFormat: analysisData.analyzeResult?.contentFormat,
         pagesLength: analysisData.analyzeResult?.pages?.length || 0,
         stylesLength: analysisData.analyzeResult?.styles?.length || 0,
-        documentsLength: analysisData.analyzeResult?.documents?.length || 0
+        documentsLength: analysisData.analyzeResult?.documents?.length || 0,
       }
 
       if (analysisData.analyzeResult?.documents?.length > 0) {
@@ -53,12 +53,12 @@ export default defineEventHandler(async (event) => {
       }
 
       return enrichedUpload
-    })
+    }),
   )
 
   return {
     success: true,
     count: enrichedUploads.length,
-    uploads: enrichedUploads
+    uploads: enrichedUploads,
   }
 })
