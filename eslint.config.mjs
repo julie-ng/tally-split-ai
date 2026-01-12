@@ -25,9 +25,20 @@ export default withNuxt(
     rules: {
       semi: 'off',
       'no-prototype-builtins': 'off',
+      'no-unused-vars': ['error', { 'args': 'none' }],
       'vue/require-default-prop': 'off',
       'vue/attribute-hyphenation': ['warn', 'never'], // TODO
-      'no-unused-vars': ['error', { 'args': 'none' }],
+      'vue/max-attributes-per-line': ['error', {
+        'singleline': {
+          'max': 3
+        },
+        'multiline': {
+          'max': 1
+        }
+      }],
+      'vue/no-template-shadow': ['error', {
+        'allow': ['collapsed'] // NuxtUI
+      }],
       '@typescript-eslint/no-unused-vars': 'off',
       '@stylistic/brace-style': ['error', 'stroustrup'],
       '@stylistic/jsx-indent-props': ['warn', 2],
