@@ -21,7 +21,7 @@ export const useUploadsStore = defineStore('uploads', () => {
    * Fetch all uploads from the API
    * @returns {Promise<void>}
    */
-  async function fetchUploads() {
+  async function fetchUploads () {
     loading.value = true
     error.value = null
 
@@ -29,11 +29,13 @@ export const useUploadsStore = defineStore('uploads', () => {
       const data = await $fetch('/api/uploads')
       uploads.value = data
       console.log(`✅ Fetched ${data.length} uploads`)
-    } catch (err) {
+    }
+    catch (err) {
       error.value = err
       console.error('❌ Failed to fetch uploads:', err)
       throw err
-    } finally {
+    }
+    finally {
       loading.value = false
     }
   }
@@ -45,10 +47,10 @@ export const useUploadsStore = defineStore('uploads', () => {
    * @param {string} hashId - The unique hash identifier for the upload
    * @returns {Promise<boolean>} True if deletion succeeded
    */
-  async function deleteUpload(hashId) {
+  async function deleteUpload (hashId) {
     try {
       await $fetch(`/api/uploads/${hashId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
       })
 
       // Remove from local state (mutate in place to preserve array reference)
@@ -58,7 +60,8 @@ export const useUploadsStore = defineStore('uploads', () => {
       }
       console.log(`✅ Deleted upload: ${hashId}`)
       return true
-    } catch (err) {
+    }
+    catch (err) {
       console.error(`❌ Failed to delete upload ${hashId}:`, err)
       error.value = err
       throw err
@@ -76,6 +79,6 @@ export const useUploadsStore = defineStore('uploads', () => {
 
     // Actions
     fetchUploads,
-    deleteUpload
+    deleteUpload,
   }
 })

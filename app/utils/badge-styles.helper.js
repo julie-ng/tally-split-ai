@@ -1,4 +1,4 @@
-function statusBadgeColor(status) {
+function statusBadgeColor (status) {
   if (status === 'completed') return 'info'
   if (status === 'uploaded') return 'success'
   if (status === 'failed') return 'error'
@@ -6,7 +6,7 @@ function statusBadgeColor(status) {
   return 'neutral'
 }
 
-function statusBadgeVariant(status) {
+function statusBadgeVariant (status) {
   if (status === 'completed') return 'outline'
   if (status === 'uploaded') return 'outline'
   if (status === 'failed') return 'subtle'
@@ -16,5 +16,5 @@ function statusBadgeVariant(status) {
 
 export const badgeStyleHelpers = {
   statusBadgeColor,
-  statusBadgeVariant
+  statusBadgeVariant,
 }

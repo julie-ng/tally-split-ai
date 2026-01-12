@@ -1,7 +1,7 @@
 import {
   extractReceiptDate,
   extractReceiptTotal,
-  extractHashtagsForAzureBlobs
+  extractHashtagsForAzureBlobs,
 } from '~~/shared/utils/filename.utils'
 
 import { useUserStore } from '~/stores/user.store'
@@ -12,7 +12,7 @@ import { useUserStore } from '~/stores/user.store'
  * @param {string} userId - The user ID
  * @returns {Object} Object with tag keys and values for Azure
  */
-function extractAzureBlobTags(filename, userId) {
+function extractAzureBlobTags (filename, userId) {
   const tags = {}
 
   // Add user ID tag
@@ -63,7 +63,7 @@ function extractAzureBlobTags(filename, userId) {
  * @property {number} retries - Number of retry attempts
  */
 
-export function useUploadObject() {
+export function useUploadObject () {
   const userStore = useUserStore()
 
   /**
@@ -79,7 +79,7 @@ export function useUploadObject() {
    * @param {string} blobResult.hashId - Unique hash identifier from server
    * @returns {Promise<UploadObject>} Standardized upload object with 'queued' status
    */
-  async function createUploadObject(file, blobResult) {
+  async function createUploadObject (file, blobResult) {
     const azureTags = extractAzureBlobTags(file.name, userStore.userId)
 
     return {
@@ -95,16 +95,16 @@ export function useUploadObject() {
         url: blobResult.blob.uploadUrl,
         expiresAt: blobResult.blob.uploadExpiresAt,
         progress: 0,
-        retries: 0
+        retries: 0,
       },
       status: 'queued',
       queuedAt: new Date(),
       errors: [],
-      file
+      file,
     }
   }
 
   return {
-    createUploadObject
+    createUploadObject,
   }
 }
