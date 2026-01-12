@@ -1,10 +1,18 @@
 import globals from 'globals'
+import { globalIgnores } from 'eslint/config'
 import withNuxt from './.nuxt/eslint.config.mjs'
 import stylistic from '@stylistic/eslint-plugin'
 
 // For details, see
 // https://eslint.nuxt.com/packages/module
+// https://eslint.org/docs/latest/use/configure/ignore
+// https://eslint.vuejs.org/
+// https://eslint.style/rules/
 export default withNuxt(
+  globalIgnores([
+    'samples/*',
+    './upload-scans.js',
+  ]),
   {
     // `env` doesn't exist for flag config :-(
     // env: {
@@ -51,5 +59,3 @@ export default withNuxt(
     },
   },
 )
-
-// https://eslint.style/rules/jsx-indent-props
