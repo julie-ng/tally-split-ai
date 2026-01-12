@@ -1,13 +1,13 @@
 <script setup>
 const props = defineProps({
   name: String,
-  value: [String, Array]
+  value: [String, Array],
 })
 
 const isStringValue = typeof props.value === 'string'
 const isArrayValue = Array.isArray(props.value)
 
-function notEmpty() {
+function notEmpty () {
   if (isStringValue && props.value !== '') {
     return true
   }
@@ -16,17 +16,17 @@ function notEmpty() {
   }
   return false
 }
-
 </script>
 
 <template>
-  <article class="flex flex-row my-1" v-if="notEmpty()">
+  <article v-if="notEmpty()" class="flex flex-row my-1">
     <div class="basis-1/4 text-slate-400 text-sm">
       {{ props.name }}
     </div>
     <div v-if="isArrayValue" class="basis-3/4 text-slate-500 text-sm">
-      <span v-for="tag, i in props.value" :id="i" class="px-2 py-1 mr-2 bg-blue-50 text-slate-400 rounded-sm text-xs">{{
-        tag }}</span>
+      <span v-for="tag, i in props.value" :key="i" class="px-2 py-1 mr-2 bg-blue-50 text-slate-400 rounded-sm text-xs">
+        {{ tag }}
+      </span>
       <span v-if="props.value.length === 0">-</span>
     </div>
     <div v-if="isStringValue" class="basis-3/4 text-slate-400 text-sm">

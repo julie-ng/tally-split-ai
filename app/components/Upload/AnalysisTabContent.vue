@@ -1,5 +1,5 @@
 <script setup>
-import { z } from 'zod'
+// import { z } from 'zod'
 
 /**
  * Component Properties
@@ -8,7 +8,7 @@ const props = defineProps({
   upload: Object, // should inherit valid schema
   analysisData: Object,
   analysisPending: Boolean,
-  analysisError: Object
+  analysisError: Object,
 })
 
 // Rename to match template usage
@@ -24,56 +24,56 @@ const isValid = computed(() => validation.value.success)
 const validatedFields = computed(() => validation.value.success ? validation.value.data : null)
 </script>
 
-
 <template>
-<div class="pt-6 px-4">
-  <!-- <div class="mb-4">
+  <div class="pt-6 px-4">
+    <!-- <div class="mb-4">
     <p>Analysis Status: {{ upload.analysisStatus }}</p>
     <p v-if="upload.analyzedAt">
       Analyzed At: {{ timestampUtils.toShortDate(upload.analyzedAt) }}
     </p>
   </div> -->
 
-  <!-- Loading: Data state -->
-  <LoadingPlaceholder v-if="pending" title="Loading Analysis" />
+    <!-- Loading: Data state -->
+    <LoadingPlaceholder v-if="pending" title="Loading Analysis" />
 
-  <!-- Error: Cannot Load Data -->
-  <UAlert v-else-if="error"
-    title="Error Loading Analysis"
-    class="my-5"
-    color="error"
-    variant="subtle"
-    icon="i-lucide-triangle-alert"
-  >
-    <template #description>
-      <div v-if="is404">
-        <p>Analysis results not found. Please run the analysis (TODO: show button)</p>
-      </div>
-      <div v-else-if="is500">
-        <p>Internal Server Error</p>
-        <p>Please try again later.</p>
-      </div>
-      <div v-else>
-        <p>Unknown Error</p>
-        <p>Check the console for more details.</p>
-      </div>
-    </template>
-  </UAlert>
+    <!-- Error: Cannot Load Data -->
+    <UAlert
+      v-else-if="error"
+      title="Error Loading Analysis"
+      class="my-5"
+      color="error"
+      variant="subtle"
+      icon="i-lucide-triangle-alert"
+    >
+      <template #description>
+        <div v-if="is404">
+          <p>Analysis results not found. Please run the analysis (TODO: show button)</p>
+        </div>
+        <div v-else-if="is500">
+          <p>Internal Server Error</p>
+          <p>Please try again later.</p>
+        </div>
+        <div v-else>
+          <p>Unknown Error</p>
+          <p>Check the console for more details.</p>
+        </div>
+      </template>
+    </UAlert>
 
-  <!-- Analysis data -->
-  <div v-else-if="props.analysisData?.success" >
-
-    <!-- Analysis Header -->
-        <!-- :description="validation.error" -->
-      <UAlert v-if="!isValid"
+    <!-- Analysis data -->
+    <div v-else-if="props.analysisData?.success">
+      <!-- Analysis Header -->
+      <!-- :description="validation.error" -->
+      <UAlert
+        v-if="!isValid"
         title="Invalid Data Structure"
         color="error"
         variant="subtle"
         icon="i-lucide-triangle-alert"
         description="foooo bar"
       >
-       <template #description>
-         <pre><code>{{ validation.error }}</code></pre> <!-- Temp: not sure why this is a string -->
+        <template #description>
+          <pre><code>{{ validation.error }}</code></pre> <!-- Temp: not sure why this is a string -->
         </template>
       </UAlert>
       <div v-else-if="validatedFields">
@@ -84,14 +84,17 @@ const validatedFields = computed(() => validation.value.success ? validation.val
         />
 
         <!-- Items Table -->
-         <ReceiptItemsTable
+        <ReceiptItemsTable
           :items="validatedFields.items.items"
           :hasQuantity="validatedFields.items.hasQuantity"
-          :subtotal="validatedFields.items.subtotal" />
+          :subtotal="validatedFields.items.subtotal"
+        />
       </div>
 
       <!-- Temp? Display raw JSON -->
-      <h1 class="my-3 text-lg font-bold text-blue-700">Analysis JSON</h1>
+      <h1 class="my-3 text-lg font-bold text-blue-700">
+        Analysis JSON
+      </h1>
       <div class="bg-slate-800 p-4">
         <vue-json-pretty
           :data="props.analysisData.data"
@@ -101,16 +104,17 @@ const validatedFields = computed(() => validation.value.success ? validation.val
           :showLength="true"
         />
       </div>
-  </div>
+    </div>
 
-  <!-- Not found -->
-  <UAlert v-else
-    title="No Analysis Data"
-    description="Analysis results file not found"
-    class="my-5"
-    color="warning"
-    variant="subtle"
-    icon="i-lucide-info"
-  />
-</div>
+    <!-- Not found -->
+    <UAlert
+      v-else
+      title="No Analysis Data"
+      description="Analysis results file not found"
+      class="my-5"
+      color="warning"
+      variant="subtle"
+      icon="i-lucide-info"
+    />
+  </div>
 </template>

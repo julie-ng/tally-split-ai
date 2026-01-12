@@ -1,12 +1,11 @@
 <script setup>
 defineProps({
-  receipt: Object
+  receipt: Object,
 })
 </script>
 
 <template>
-<div>
-
-receipt
-</div>
+  <div>
+    receipt
+  </div>
 </template>

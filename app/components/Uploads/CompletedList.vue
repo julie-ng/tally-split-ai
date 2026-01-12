@@ -1,16 +1,17 @@
 <script setup>
 import { useUploadQueueStore } from '~/stores/upload-queue.store'
+
 const uploadsStore = useUploadQueueStore()
 </script>
 
 <template>
-<div>
-  <section>
-    <UploadsCompletedItem
-      v-for="item in uploadsStore.completed"
-      :key="`completed-${item.hashId}`"
-      :hashId="item.hashId"
-    />
-  </section>
-</div>
+  <div>
+    <section>
+      <UploadsCompletedItem
+        v-for="item in uploadsStore.completed"
+        :key="`completed-${item.hashId}`"
+        :hashId="item.hashId"
+      />
+    </section>
+  </div>
 </template>

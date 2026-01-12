@@ -3,10 +3,11 @@ const props = defineProps({
   title: String,
   isOpen: {
     type: Boolean,
-    default: true
-  }
+    default: true,
+  },
 })
 
+// eslint-disable-next-line vue/no-dupe-keys
 const isOpen = ref(true)
 </script>
 

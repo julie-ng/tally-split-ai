@@ -1,28 +1,31 @@
 <script setup>
 import { useUploadQueueStore } from '~/stores/upload-queue.store'
+
 const uploadsStore = useUploadQueueStore()
 
 const props = defineProps({
-  hashId: String
+  hashId: String,
 })
 
 // Get the upload from the store
 const upload = computed(() =>
-  uploadsStore.queued.find(u => u.hashId === props.hashId)
+  uploadsStore.queued.find(u => u.hashId === props.hashId),
 )
 
 const sizeInBytes = computed(() =>
-  upload.value ? formatBytes(upload.value.size) : ''
+  upload.value ? formatBytes(upload.value.size) : '',
 )
 </script>
 
 <template>
   <article v-if="upload" class="my-4 p-5 bg-white border-slate-200 border-solid border rounded-md">
-    <UButton color="neutral" variant="ghost"
+    <UButton
+      color="neutral"
+      variant="ghost"
       class="float-right text-slate-500 hover:bg-orange-100 hover:text-orange-500 cursor-pointer"
+      icon="i-lucide-x"
       @click="uploadsStore.remove(props.hashId)"
-      icon="i-lucide-x">
-    </UButton>
+    />
 
     <p class="mb-1 text-slate-400 text-xs">
       {{ sizeInBytes }}
@@ -33,19 +36,24 @@ const sizeInBytes = computed(() =>
 
     <hr class="text-slate-200 my-3">
 
-    <p class="text-slate-600 text-sm mb-3">Extracted from file name</p>
+    <p class="text-slate-600 text-sm mb-3">
+      Extracted from file name
+    </p>
 
     <StackedListItem name="Title" :value="extractReceiptTitle(upload.originalFilename)" />
     <StackedListItem name="Date" :value="extractReceiptDate(upload.originalFilename)" />
     <StackedListItem name="Total" :value="extractReceiptTotal(upload.originalFilename)" />
     <StackedListItem name="Tags" :value="extractHashtags(upload.originalFilename)" />
     <div class="mt-6 flex items-center gap-3">
-      <UButton color="neutral"
+      <UButton
+        color="neutral"
         :variant="uploadsStore.canStartUpload ? 'soft' : 'outline'"
         class="cursor-pointer"
         :disabled="!uploadsStore.canStartUpload"
+        icon="i-lucide-upload"
         @click="uploadsStore.startUpload(props.hashId)"
-        icon="i-lucide-upload">Upload
+      >
+        Upload
       </UButton>
       <p v-if="!uploadsStore.canStartUpload" class="text-slate-500 text-xs">
         Max concurrent uploads reached.

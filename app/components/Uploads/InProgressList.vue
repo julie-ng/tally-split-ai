@@ -1,22 +1,23 @@
 <script setup>
 import { useUploadQueueStore } from '~/stores/upload-queue.store'
+
 const uploadsStore = useUploadQueueStore()
 
 // Combine in-progress and failed uploads
 const activeUploads = computed(() => [
   ...uploadsStore.inProgress,
-  ...uploadsStore.failed
+  ...uploadsStore.failed,
 ])
 </script>
 
 <template>
-<div>
-  <section>
-    <UploadsInProgressItem
-      v-for="item in activeUploads"
-      :key="`active-${item.hashId}`"
-      :hashId="item.hashId"
-    />
-  </section>
-</div>
+  <div>
+    <section>
+      <UploadsInProgressItem
+        v-for="item in activeUploads"
+        :key="`active-${item.hashId}`"
+        :hashId="item.hashId"
+      />
+    </section>
+  </div>
 </template>

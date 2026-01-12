@@ -3,37 +3,39 @@ const emit = defineEmits(['on-update'])
 
 const activeClasses = ref('')
 
-function setActive(e) {
+function setActive (e) {
   activeClasses.value = 'bg-slate-200'
 }
 
-function unsetActive(e) {
+function unsetActive (e) {
   activeClasses.value = ''
 }
 
-function onDrop(e) {
+function onDrop (e) {
   // console.log('💧 Dropped')
   unsetActive(e)
   if (e.dataTransfer.items) {
     const files = [...e.dataTransfer.items]
-      .map((item) => item.getAsFile())
-      .filter((file) => file)
+      .map(item => item.getAsFile())
+      .filter(file => file)
     _showFiles(files)
-  } else {
+  }
+  else {
     console.error('⛔️ Browser does not support `DataTransferItemList` interface.')
   }
 }
 
-function onFilesSelected(e) {
+function onFilesSelected (e) {
   // console.log('💧 Selected')
   if (e.target.files) {
     _showFiles([...e.target.files])
-  } else {
+  }
+  else {
     console.error('⛔️ Browser does not support `FileList` interface.')
   }
 }
 
-function _showFiles(files) {
+function _showFiles (files) {
   emit('on-update', files)
   // files.forEach((file, i) => {
   //   console.log(i)
@@ -41,13 +43,27 @@ function _showFiles(files) {
   // })
 }
 </script>
+
 <template>
   <div>
-    <label id="js-dropzone"
+    <label
+      id="js-dropzone"
       class="my-5 p-5 flex flex-col items-center justify-center cursor-pointer w-full min-h-20 rounded-sm border border-slate-400 border-dashed text-center"
-      :class="activeClasses" @drop.prevent="onDrop" @dragover.prevent="setActive" @dragenter.prevent="setActive"
-      @dragend.prevent="unsetActive" @dragleave.prevent="unsetActive">
-      <input type="file" id="js-files" class="hidden" multiple accept="image/*" @change="onFilesSelected" />
+      :class="activeClasses"
+      @drop.prevent="onDrop"
+      @dragover.prevent="setActive"
+      @dragenter.prevent="setActive"
+      @dragend.prevent="unsetActive"
+      @dragleave.prevent="unsetActive"
+    >
+      <input
+        id="js-files"
+        type="file"
+        class="hidden"
+        multiple
+        accept="image/*"
+        @change="onFilesSelected"
+      >
 
       <div class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-slate-100">
         <UIcon name="i-lucide-image" class="size-5 text-slate-500" />
@@ -61,7 +77,6 @@ function _showFiles(files) {
         PNG or JPG (max. 2MB)
       </p>
     </label>
-
   </div>
 </template>
 

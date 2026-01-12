@@ -2,13 +2,13 @@
 const props = defineProps({
   tagsAsString: {
     type: String,
-    required: true
+    required: true,
   },
   filter: {
     type: Array, // tags to keep
     required: false,
-    default: () => []
-  }
+    default: () => [],
+  },
 })
 
 const tags = computed(() => {
@@ -17,7 +17,8 @@ const tags = computed(() => {
   // If no filter specified, return all tags
   if (props.filter.length === 0) {
     return allTags
-  } else {
+  }
+  else {
     // Filter to only include specified keys
     const filtered = []
     allTags.forEach((tag) => {
@@ -27,19 +28,19 @@ const tags = computed(() => {
     })
     return filtered
   }
-
 })
 </script>
 
 <template>
-<div class="flex flex-wrap gap-2 pt-2">
-  <UBadge v-for="tag in tags"
-    :key="tag.key"
-    class="text-slate-500"
-    color="neutral"
-    variant="soft"
-  >
-    {{ tag.key }}: {{ tag.value }}
-  </UBadge>
-</div>
+  <div class="flex flex-wrap gap-2 pt-2">
+    <UBadge
+      v-for="tag in tags"
+      :key="tag.key"
+      class="text-slate-500"
+      color="neutral"
+      variant="soft"
+    >
+      {{ tag.key }}: {{ tag.value }}
+    </UBadge>
+  </div>
 </template>

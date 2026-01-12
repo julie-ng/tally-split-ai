@@ -4,19 +4,19 @@
 const props = defineProps({
   uploads: {
     type: Array,
-    required: true
-  }
+    required: true,
+  },
 })
 
 const columns = [
   {
     id: 'hashId',
     accessorKey: 'hashId',
-    header: 'Hash ID'
+    header: 'Hash ID',
   },
   {
     accessorKey: 'originalFilename',
-    header: 'Filename'
+    header: 'Filename',
   },
   // {
   //   accessorKey: 'transactionDateTime',
@@ -30,12 +30,12 @@ const columns = [
   {
     accessorKey: 'transactionDate',
     header: 'Date',
-    cell: ({row}) => {
+    cell: ({ row }) => {
       const d = row.getValue('transactionDate')
       return (d === '-')
         ? d
         : dateUtils.formatISODate(d)
-    }
+    },
   },
   // {
   //   accessorKey: 'transactionTime',
@@ -44,7 +44,7 @@ const columns = [
   // },
   {
     accessorKey: 'azureTags',
-    header: 'Blob Tags (filtered)'
+    header: 'Blob Tags (filtered)',
   },
   // {
   //   accessorKey: 'tax',
@@ -52,8 +52,8 @@ const columns = [
   // },
   {
     accessorKey: 'total',
-    header: 'Total'
-  }
+    header: 'Total',
+  },
 ]
 
 const rows = computed(() => {
@@ -64,47 +64,45 @@ const rows = computed(() => {
     transactionTime: upload.azureAI.summary.receipt?.transactionTime?.value || '-',
     azureTags: upload.azureTags,
     total: upload.azureAI.summary.receipt.total?.value?.amount || '-',
-    tax: upload.azureAI.summary.receipt?.totalTax?.value?.amount || '-'
+    tax: upload.azureAI.summary.receipt?.totalTax?.value?.amount || '-',
   }))
 })
 
 const tagsToFilter = [
   'receipt-total',
-  'receipt-date'
+  'receipt-date',
 ]
 </script>
 
 <template>
-<div>
+  <div>
+    <!-- <pre><code>{{ rows }}</code></pre> -->
 
-   <!-- <pre><code>{{ rows }}</code></pre> -->
-
-   <UTable :columns="columns" :data="rows" class="flex-1">
-     <!-- <template #hashId-cell="{ row }">
+    <UTable :columns="columns" :data="rows" class="flex-1">
+      <!-- <template #hashId-cell="{ row }">
       {{ row.hashId }}
      </template>
      <template #originalFilename-cell="{ row }">
       {{ row.originalFilename }}
      </template>
 
-
      <template #tax-cell="{ row }">
       {{ row.tax }}
      </template>
     -->
 
-     <template #azureTags-cell="{ row }">
-      <AzureBlobTags :tagsAsString="row.original.azureTags" :filter="tagsToFilter" />
-     </template>
+      <template #azureTags-cell="{ row }">
+        <AzureBlobTags :tagsAsString="row.original.azureTags" :filter="tagsToFilter" />
+      </template>
       <template #hashId-cell="{ row }">
-       <NuxtLink :to="`/uploads/${row.original.hashId}`" class="text-primary hover:underline">
-         {{ row.original.hashId }}
-       </NuxtLink>
-     </template>
-     <template #total-cell="{ row }">
-      {{ receiptUtils.formatCurrency(row.original.total) }}
-     </template>
-   </UTable>
+        <NuxtLink :to="`/uploads/${row.original.hashId}`" class="text-primary hover:underline">
+          {{ row.original.hashId }}
+        </NuxtLink>
+      </template>
+      <template #total-cell="{ row }">
+        {{ receiptUtils.formatCurrency(row.original.total) }}
+      </template>
+    </UTable>
 
   <!-- <UTable :columns="columns" :data="rows" class="flex-1">
     <template #hashId="{ row }">
@@ -113,5 +111,5 @@ const tagsToFilter = [
       </NuxtLink>
     </template>
   </UTable> -->
-</div>
+  </div>
 </template>

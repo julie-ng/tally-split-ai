@@ -1,12 +1,11 @@
 <script setup>
 defineProps({
-  merchant: Object
+  merchant: Object,
 })
 </script>
 
 <template>
-<div>
-
-  merchant
-</div>
+  <div>
+    merchant
+  </div>
 </template>

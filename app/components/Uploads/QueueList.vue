@@ -10,7 +10,7 @@ const uploadsStore = useUploadQueueStore()
       <UButton
         color="neutral"
         variant="subtle"
-        active-variant="solid"
+        activeVariant="solid"
         class="cursor-pointer"
         icon="i-lucide-brush-cleaning"
         @click="uploadsStore.emptyQueue()"

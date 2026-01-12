@@ -3,7 +3,7 @@ defineProps({
   items: {
     type: Object, // See other Components
     required: true,
-  }
+  },
 })
 </script>
 
