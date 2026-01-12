@@ -15,6 +15,6 @@ export const uploadUpdateSchema = z.object({
   status: z.string().optional(),
   // uploadedAt: z.union([z.literal(true), z.number()]).optional()
 }).refine(
-  (data) => Object.keys(data).length > 0,
-  { error: 'At least one field must be provided for update' }
+  data => Object.keys(data).length > 0,
+  { error: 'At least one field must be provided for update' },
 )

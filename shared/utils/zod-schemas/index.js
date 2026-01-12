@@ -19,5 +19,5 @@ export const zodSchemas = {
   receiptSchema,
   receiptInputSchema,
   uploadObject,
-  uploadUpdateSchema
+  uploadUpdateSchema,
 }

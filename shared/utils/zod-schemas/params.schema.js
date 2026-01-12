@@ -5,7 +5,7 @@ import { z } from 'zod'
  * Used in /api/uploads/[hashId] and /api/analysis/[uploadHashId] endpoints
  */
 export const hashIdParamSchema = z.object({
-  hashId: z.string().min(1, 'hashId is required')
+  hashId: z.string().min(1, 'hashId is required'),
 })
 
 /**
@@ -13,5 +13,5 @@ export const hashIdParamSchema = z.object({
  * Used in /api/receipts/[id] endpoints
  */
 export const idParamSchema = z.object({
-  id: z.string().regex(/^\d+$/, 'id must be a numeric string')
+  id: z.string().regex(/^\d+$/, 'id must be a numeric string'),
 })

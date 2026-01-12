@@ -11,7 +11,7 @@ describe('azureUtils.blobTagsJsonToObject', () => {
       { key: 'user-id', value: 'julie-ng' },
       { key: 'receipt-date', value: '2025-11-18' },
       { key: 'receipt-total', value: '7.75' },
-      { key: 'receipt-tags', value: 'special+initals' }
+      { key: 'receipt-tags', value: 'special+initals' },
     ])
   })
 
@@ -40,7 +40,7 @@ describe('azureUtils.blobTagsJsonToObject', () => {
     const jsonString = '{"user-id":"julie-ng"}'
     const result = azureUtils.blobTagsJsonToObject(jsonString)
     expect(result).toEqual([
-      { key: 'user-id', value: 'julie-ng' }
+      { key: 'user-id', value: 'julie-ng' },
     ])
   })
 
@@ -49,7 +49,7 @@ describe('azureUtils.blobTagsJsonToObject', () => {
     const result = azureUtils.blobTagsJsonToObject(jsonString)
     expect(result).toEqual([
       { key: 'receipt-tags', value: 'special+initals' },
-      { key: 'currency', value: '€' }
+      { key: 'currency', value: '€' },
     ])
   })
 })

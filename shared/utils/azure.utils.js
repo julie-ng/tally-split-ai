@@ -5,12 +5,12 @@
  * @returns Array
  */
 
-function blobTagsJsonToObject(jsonString) {
+function blobTagsJsonToObject (jsonString) {
   if (!jsonString) return []
   const data = JSON.parse(jsonString)
   return Object.entries(data).map(([key, value]) => ({ key, value }))
 }
 
 export const azureUtils = {
-  blobTagsJsonToObject
+  blobTagsJsonToObject,
 }

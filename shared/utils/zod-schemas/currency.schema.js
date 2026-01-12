@@ -5,5 +5,5 @@ import { z } from 'zod'
  */
 export const currencySchema = z.object({
   amount: z.number(),
-  currencyCode: z.string()
+  currencyCode: z.string(),
 })

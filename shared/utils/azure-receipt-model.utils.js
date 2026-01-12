@@ -4,14 +4,13 @@
  * @param valueCurrency {Object} - directly from Azure AI API
  * @return {String}
  */
-function formatCurrency(valueCurrency) {
+function formatCurrency (valueCurrency) {
   return `${valueCurrency.currencySymbol} ${valueCurrency.valueAmount}`
 }
 
-function formatAddress(valueAddress) {
+function formatAddress (valueAddress) {
   return `${valueAddress.road} ${valueAddress.houseNumber}, ${valueAddress.postalCode} ${valueAddress.city}`
 }
-
 
 /**
  * Sorts long "fields" array from Azure.
@@ -19,79 +18,79 @@ function formatAddress(valueAddress) {
  * @param fieldsArray {Array} - directly from Azure AI azureReceiptUtils
  * @return {Object}
  */
-function sortFields(fieldsArray) {
+function sortFields (fieldsArray) {
   const merchantInfo = {}
   const receiptInfo = {}
   let items = [] // TODO
 
   for (const f of fieldsArray) {
     switch (f.field) {
-      case "CountryRegion":
+      case 'CountryRegion':
         receiptInfo.countryRegion = {
           value: f.valueCountryRegion,
-          confidence: f.confidence
+          confidence: f.confidence,
         }
         break
-      case "Items":
+      case 'Items':
         // console.log('got items---->', f.valueArray)
         items = f.valueArray // TODO
         break
-      case "MerchantAddress":
+      case 'MerchantAddress':
         merchantInfo.address = {
           // content: f.content,
           value: f.valueAddress,
           formattedValue: formatAddress(f.valueAddress),
-          confidence: f.confidence
+          confidence: f.confidence,
         }
         break
-      case "MerchantName":
+      case 'MerchantName':
         merchantInfo.name = {
           value: f.content,
-          confidence: f.confidence
+          confidence: f.confidence,
         }
         break
-      case "MerchantPhoneNumber":
+      case 'MerchantPhoneNumber':
         merchantInfo.phone = {
           value: f.valuePhoneNumber,
-          confidence: f.confidence
+          confidence: f.confidence,
         }
         break
-      case "ReceiptType":
+      case 'ReceiptType':
         receiptInfo.type = {
           value: f.valueString,
-          confidence: f.confidence
+          confidence: f.confidence,
         }
         break
-      case "TaxDetails":
+      case 'TaxDetails':
         receiptInfo.taxDetails = {
           value: f.valueArray, // TODO in subfunction
-          confidence: f.confidence
+          confidence: f.confidence,
         }
         break
-      case "Total":
+      case 'Total':
         receiptInfo.total = {
           value: f.valueCurrency, // TODO in subfunction
           formattedValue: formatCurrency(f.valueCurrency),
-          confidence: f.confidence
+          confidence: f.confidence,
         }
         break
-      case "TotalTax":
+      case 'TotalTax':
         receiptInfo.totalTax = {
           value: f.valueCurrency, // TODO in subfunction
           formattedValue: formatCurrency(f.valueCurrency),
-          confidence: f.confidence
+          confidence: f.confidence,
         }
         break
-      case "TransactionDate":
+      case 'TransactionDate':
         receiptInfo.transactionDate = {
           value: f.valueDate,
-          confidence: f.confidence
+          confidence: f.confidence,
         }
         break
-      case "TransactionTime":
+      case 'TransactionTime':
         receiptInfo.transactionTime = {
           value: f.valueTime,
-          confidence: f.confidence
+          confidence: f.confidence,
         }
         break
     }
@@ -100,7 +99,7 @@ function sortFields(fieldsArray) {
   return {
     merchant: merchantInfo,
     receipt: receiptInfo,
-    items: items
+    items: items,
   }
 }
 
@@ -108,7 +107,7 @@ function sortItems (itemsArry) {
   // console.log('👋 sortItems()')
   if (!itemsArry) {
     return {
-      items: []
+      items: [],
     }
   }
 
@@ -119,28 +118,28 @@ function sortItems (itemsArry) {
   itemsArry.forEach((item) => {
     // console.log(item)
     const itemData = {
-      confidence: item.valueObject.confidence
+      confidence: item.valueObject.confidence,
     }
 
     if (item.valueObject.Quantity) {
       hasQuantity = true
       itemData.quantity = {
         value: item.valueObject.Quantity.valueNumber,
-        confidence: item.valueObject.Quantity.confidence
+        confidence: item.valueObject.Quantity.confidence,
       }
     }
 
     if (item.valueObject.Description) {
       itemData.description = {
         value: item.valueObject.Description.valueString,
-        confidence: item.valueObject.Description.confidence
+        confidence: item.valueObject.Description.confidence,
       }
     }
 
     if (item.valueObject.TotalPrice) {
       itemData.totalPrice = {
         value: item.valueObject.TotalPrice.valueCurrency.amount,
-        confidence: item.valueObject.TotalPrice.confidence
+        confidence: item.valueObject.TotalPrice.confidence,
       }
       subtotal += item.valueObject.TotalPrice.valueCurrency.amount
     }
@@ -154,12 +153,12 @@ function sortItems (itemsArry) {
   return {
     hasQuantity,
     subtotal,
-    items: result
+    items: result,
   }
 }
 
 export const AZReceiptModelUtils = {
   sortFields,
   sortItems,
-  formatCurrency
+  formatCurrency,
 }

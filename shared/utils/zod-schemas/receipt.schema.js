@@ -18,7 +18,7 @@ export const receiptSchema = z.object({
   isAnalyzed: z.boolean(),
   userId: z.string(),
   createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime()
+  updatedAt: z.iso.datetime(),
 })
 
 /**
@@ -36,5 +36,5 @@ export const receiptInputSchema = z.object({
   receiptTotal: z.number().nullable().optional(),
   receiptCurrency: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
-  isAnalyzed: z.boolean().optional()
+  isAnalyzed: z.boolean().optional(),
 })

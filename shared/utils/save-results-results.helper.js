@@ -1,5 +1,5 @@
-import { writeFile } from 'fs/promises';
-import chalk from 'chalk';
+import { writeFile } from 'fs/promises'
+import chalk from 'chalk'
 
 /**
  * Save upload results to a JSON file
@@ -13,7 +13,7 @@ import chalk from 'chalk';
  * @param {Array} options.uploadedBlobs - Array of uploaded blob objects
  * @param {string} [options.outputFile='upload-results.json'] - Output file path
  */
-export async function saveUploadResults({
+export async function saveUploadResults ({
   accountName,
   containerName,
   sasToken,
@@ -21,7 +21,7 @@ export async function saveUploadResults({
   errorCount,
   totalCount,
   uploadedBlobs,
-  outputFile = 'upload-results.json'
+  outputFile = 'upload-results.json',
 }) {
   const results = {
     accountName,
@@ -31,20 +31,21 @@ export async function saveUploadResults({
     summary: {
       successful: successCount,
       failed: errorCount,
-      total: totalCount
+      total: totalCount,
     },
     blobs: uploadedBlobs.map(blob => ({
       filename: blob.filename,
       tags: blob.tags,
       url: blob.url,
-      urlWithSas: sasToken ? `${blob.url}?${sasToken}` : null
-    }))
-  };
+      urlWithSas: sasToken ? `${blob.url}?${sasToken}` : null,
+    })),
+  }
 
   try {
-    await writeFile(outputFile, JSON.stringify(results, null, 2));
-    console.log(`\n${chalk.green('✓')} Upload results saved to ${outputFile}`);
-  } catch (error) {
-    console.error(`${chalk.red('Failed to save upload results:')} ${error.message}`);
+    await writeFile(outputFile, JSON.stringify(results, null, 2))
+    console.log(`\n${chalk.green('✓')} Upload results saved to ${outputFile}`)
+  }
+  catch (error) {
+    console.error(`${chalk.red('Failed to save upload results:')} ${error.message}`)
   }
 }

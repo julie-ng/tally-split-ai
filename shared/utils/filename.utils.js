@@ -5,9 +5,9 @@ import crypto from 'node:crypto'
  * @param {string} filename - The filename to parse
  * @returns {string|null} - The extracted date or null
  */
-export function extractReceiptDate(filename) {
-  const match = filename.match(/^(\d{4}-\d{2}-\d{2})/);
-  return match ? match[1] : null;
+export function extractReceiptDate (filename) {
+  const match = filename.match(/^(\d{4}-\d{2}-\d{2})/)
+  return match ? match[1] : null
 }
 
 /**
@@ -16,9 +16,9 @@ export function extractReceiptDate(filename) {
  * @param {string} filename - The filename to parse
  * @returns {string|null} - The extracted amount or null
  */
-export function extractReceiptTotal(filename) {
-  const match = filename.match(/\(([0-9.]+)\)/);
-  return match ? match[1] : null;
+export function extractReceiptTotal (filename) {
+  const match = filename.match(/\(([0-9.]+)\)/)
+  return match ? match[1] : null
 }
 
 /**
@@ -27,17 +27,16 @@ export function extractReceiptTotal(filename) {
  * @param {string} filename - The filename to parse
  * @returns {Array} - Array of hashtag values or empty array.
  */
-export function extractHashtags(filename) {
-  const results = []
-  const hashtagPattern = /#([a-zA-Z0-9_-]+)/g;
-  const matches = [...filename.matchAll(hashtagPattern)];
+export function extractHashtags (filename) {
+  const hashtagPattern = /#([a-zA-Z0-9_-]+)/g
+  const matches = [...filename.matchAll(hashtagPattern)]
 
   if (matches.length === 0) {
-    return [];
+    return []
   }
 
-  const tags = matches.map(match => match[1]);
-  return tags;
+  const tags = matches.map(match => match[1])
+  return tags
 }
 
 /**
@@ -46,16 +45,16 @@ export function extractHashtags(filename) {
  * @param {string} filename - The filename to parse
  * @returns {string|null} - "+"-separated hashtag values
  */
-export function extractHashtagsForAzureBlobs(filename) {
-  const hashtagPattern = /#([a-zA-Z0-9_-]+)/g;
-  const matches = [...filename.matchAll(hashtagPattern)];
+export function extractHashtagsForAzureBlobs (filename) {
+  const hashtagPattern = /#([a-zA-Z0-9_-]+)/g
+  const matches = [...filename.matchAll(hashtagPattern)]
 
   if (matches.length === 0) {
-    return null;
+    return null
   }
 
-  const tags = matches.map(match => match[1]);
-  return tags.join('+');
+  const tags = matches.map(match => match[1])
+  return tags.join('+')
 }
 
 /**
@@ -63,25 +62,25 @@ export function extractHashtagsForAzureBlobs(filename) {
  * @param {string} filename - The filename to parse
  * @returns {string} - The extracted title, trimmed
  */
-export function extractReceiptTitle(filename) {
-  let title = filename;
+export function extractReceiptTitle (filename) {
+  let title = filename
 
   // Remove file extension
-  title = title.replace(/\.[^.]+$/, '');
+  title = title.replace(/\.[^.]+$/, '')
 
   // Remove YYYY-MM-DD date prefix
-  title = title.replace(/^\d{4}-\d{2}-\d{2}\s*/, '');
+  title = title.replace(/^\d{4}-\d{2}-\d{2}\s*/, '')
 
   // Remove price in parentheses
-  title = title.replace(/\([0-9.]+\)/, '');
+  title = title.replace(/\([0-9.]+\)/, '')
 
   // Remove hashtags
-  title = title.replace(/#[a-zA-Z0-9_-]+/g, '');
+  title = title.replace(/#[a-zA-Z0-9_-]+/g, '')
 
   // Clean up extra whitespace
-  title = title.trim().replace(/\s+/g, ' ');
+  title = title.trim().replace(/\s+/g, ' ')
 
-  return title;
+  return title
 }
 
 /**
@@ -90,14 +89,14 @@ export function extractReceiptTitle(filename) {
  * @param {string} filename - The filename to convert
  * @returns {string} - The component key in kebab-case
  */
-export function filenameToComponentKey(filename) {
+export function filenameToComponentKey (filename) {
   return filename
     .toLowerCase()
     .trim()
     .replace(/\s+/g, '-')                    // Replace spaces with dashes
     .replace(/[^a-z0-9-]/g, '-')             // Replace special characters with dashes
     .replace(/-+/g, '-')                      // Replace multiple consecutive dashes with single dash
-    .replace(/^-|-$/g, '');                   // Remove leading/trailing dashes
+    .replace(/^-|-$/g, '')                   // Remove leading/trailing dashes
 }
 
 /**
@@ -105,14 +104,14 @@ export function filenameToComponentKey(filename) {
  * @param {string} str - The string to hash
  * @returns {string} - An 8-character hexadecimal hash
  */
-export function simpleHash(str) {
-  let hash = 0;
+export function simpleHash (str) {
+  let hash = 0
   for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
+    const char = str.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash // Convert to 32-bit integer
   }
-  return (hash >>> 0).toString(16).padStart(8, '0');
+  return (hash >>> 0).toString(16).padStart(8, '0')
 }
 
 /**
@@ -121,7 +120,7 @@ export function simpleHash(str) {
  * @param {string} filename - Original filename
  * @returns {string} Thumbnail filename with -thumbnail suffix before extension
  */
-export function createThumbnailFilename(filename) {
+export function createThumbnailFilename (filename) {
   const lastDotIndex = filename.lastIndexOf('.')
   if (lastDotIndex === -1) {
     return `${filename}-thumbnail`
@@ -139,38 +138,38 @@ export function createThumbnailFilename(filename) {
  * @returns {string} - The processed filename with random suffix
  * @throws {Error} - If filename doesn't have a valid image extension
  */
-export function createAzureFilename(filename) {
+export function createAzureFilename (filename) {
   // Extract file extension first
-  const extensionMatch = filename.match(/(\.[^.]+)$/);
-  const extension = extensionMatch ? extensionMatch[1].toLowerCase() : '';
+  const extensionMatch = filename.match(/(\.[^.]+)$/)
+  const extension = extensionMatch ? extensionMatch[1].toLowerCase() : ''
 
   // Validate that file has a proper image extension
-  const validExtensions = ['.jpg', '.jpeg', '.png'];
+  const validExtensions = ['.jpg', '.jpeg', '.png']
   if (!validExtensions.includes(extension)) {
-    throw new Error(`Invalid file extension. Only ${validExtensions.join(', ')} are allowed.`);
+    throw new Error(`Invalid file extension. Only ${validExtensions.join(', ')} are allowed.`)
   }
 
   // Remove extension for processing
-  let processedName = filename.slice(0, -extension.length);
+  let processedName = filename.slice(0, -extension.length)
 
   // Remove parentheses but keep the price value
-  processedName = processedName.replace(/[()]/g, '-');
+  processedName = processedName.replace(/[()]/g, '-')
 
   // Remove hash symbols but keep the tag values
-  processedName = processedName.replace(/#/g, '-');
+  processedName = processedName.replace(/#/g, '-')
 
   // Replace whitespace with dashes
-  processedName = processedName.replace(/\s+/g, '-');
+  processedName = processedName.replace(/\s+/g, '-')
 
   // Clean up multiple consecutive dashes
-  processedName = processedName.replace(/-+/g, '-');
+  processedName = processedName.replace(/-+/g, '-')
 
   // Remove leading/trailing dashes
-  processedName = processedName.replace(/^-+|-+$/g, '');
+  processedName = processedName.replace(/^-+|-+$/g, '')
 
   // Generate random 6-character suffix using crypto.randomBytes
-  const randomSuffix = crypto.randomBytes(3).toString('hex');
+  const randomSuffix = crypto.randomBytes(3).toString('hex')
 
   // Combine processed name with random suffix and extension
-  return `${processedName}-${randomSuffix}${extension}`;
+  return `${processedName}-${randomSuffix}${extension}`
 }

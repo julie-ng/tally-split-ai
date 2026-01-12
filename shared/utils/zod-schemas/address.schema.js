@@ -9,8 +9,8 @@ export const addressSchema = z.object({
     road: z.string().optional(),
     postalCode: z.string().optional(),
     city: z.string().optional(),
-    streetAddress: z.string().optional()
+    streetAddress: z.string().optional(),
   }),
   formattedValue: z.string(),
-  confidence: z.number()
+  confidence: z.number(),
 })
