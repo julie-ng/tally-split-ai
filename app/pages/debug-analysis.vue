@@ -17,16 +17,21 @@ const analyzedUploads = [
 // Fetch all analysis summaries
 const summaries = ref([])
 const pending = ref(true)
-
+const error = ref(null)
 
 onMounted(async () => {
-  const fetchPromises = analyzedUploads.map(async (hashId) => {
-    const response = await $fetch(`/api/analysis/summary/${hashId}`)
-    return response.data
-  })
+  try {
+    const fetchPromises = analyzedUploads.map(async (hashId) => {
+      const response = await $fetch(`/api/analysis/summary/${hashId}`)
+      return response.data
+    })
 
-  summaries.value = await Promise.all(fetchPromises)
-  pending.value = false
+    summaries.value = await Promise.all(fetchPromises)
+  } catch (e) {
+    error.value = e
+  } finally {
+    pending.value = false
+  }
 })
 
 </script>
@@ -36,6 +41,9 @@ onMounted(async () => {
   <h1 class="text-2xl font-semibold mb-4">Debugging Azure AI Output</h1>
 
   <LoadingPlaceholder v-if="pending" title="Loading Analysis Data" />
+
+  <UAlert v-else-if="error" color="error" title="Failed to load analysis data. Please try again later."
+    icon="i-lucide-circle-alert" variant="subtle" :description="error.message" />
 
   <div v-else>
     <AnalyzedUploadsTable :uploads="summaries" />
