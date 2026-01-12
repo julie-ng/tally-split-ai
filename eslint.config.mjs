@@ -12,42 +12,41 @@ export default withNuxt(
     //   node: true,
     // },
     plugins: {
-      '@stylistic': stylistic
+      '@stylistic': stylistic,
     },
     languageOptions: {
       globals: {
         ...globals.browser,
         ...globals.node,
         defineEventHandler: true,
-        defineNitroPlugin: true
-      }
+        defineNitroPlugin: true,
+      },
     },
     rules: {
-      semi: 'off',
+      'semi': 'off',
       'no-prototype-builtins': 'off',
-      'no-unused-vars': ['error', { 'args': 'none' }],
+      'no-unused-vars': ['error', { args: 'none' }],
       'vue/require-default-prop': 'off',
       'vue/attribute-hyphenation': ['warn', 'never'], // TODO
       'vue/max-attributes-per-line': ['error', {
-        'singleline': {
-          'max': 3
+        singleline: {
+          max: 3,
         },
-        'multiline': {
-          'max': 1
-        }
+        multiline: {
+          max: 1,
+        },
       }],
       'vue/no-template-shadow': ['error', {
-        'allow': ['collapsed'] // NuxtUI
+        allow: ['collapsed'], // NuxtUI
       }],
       '@typescript-eslint/no-unused-vars': 'off',
       '@stylistic/brace-style': ['error', 'stroustrup'],
       '@stylistic/jsx-indent-props': ['warn', 2],
-      '@stylistic/jsx-max-props-per-line': ['warn', { "maximum": 3 }],
+      '@stylistic/jsx-max-props-per-line': ['warn', { maximum: 3 }],
       '@stylistic/no-multi-spaces': ['error', { ignoreEOLComments: true }],
-      '@stylistic/space-before-function-paren': ['error', 'always']
-    }
-  }
+      '@stylistic/space-before-function-paren': ['error', 'always'],
+    },
+  },
 )
-
 
 // https://eslint.style/rules/jsx-indent-props
