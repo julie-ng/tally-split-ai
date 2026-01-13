@@ -22,6 +22,11 @@ const links = [
       to: '/debug-analysis',
     },
     {
+      label: 'Blobs',
+      icon: 'i-lucide-blocks',
+      to: '/blobs',
+    },
+    {
       label: 'Samples',
       icon: 'i-lucide-squares-subtract',
       to: '/samples',
@@ -29,9 +34,9 @@ const links = [
   ],
   [
     {
-      label: 'Blobs',
-      icon: 'i-lucide-blocks',
-      to: '/blobs',
+      label: 'Receipts',
+      icon: 'i-lucide-receipt-euro',
+      to: '/receipts',
     },
     {
       label: 'Uploads',
