@@ -8,7 +8,10 @@ const address = computed(() => props.merchant.address)
 </script>
 
 <template>
-  <div class="text-sm">
+  <div class="text-sm border border-red-200 p-2">
+    <p class="text-red-600 font-semibold">
+      Component to be deprecated.
+    </p>
     <h1 class="text-slate-800">
       {{ props.merchant.name.value }}
     </h1>
