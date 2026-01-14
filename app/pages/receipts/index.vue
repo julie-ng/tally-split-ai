@@ -14,6 +14,7 @@ const receiptsStore = useReceiptsStore()
 await receiptsStore.fetchReceipts()
 
 // Get reactive refs from store (preserves reactivity without creating new computed)
+// eslint-disable-next-line no-unused-vars
 const { receipts, loading: pending, error } = storeToRefs(receiptsStore)
 
 const table = useTemplateRef('table')
@@ -46,9 +47,17 @@ const columns = [
     header: 'ID',
   },
   {
-    accessorKey: 'merchantName',
-    header: 'Merchant',
+    accessorKey: 'isAnalyzed',
+    header: 'Status',
   },
+  {
+    accessorKey: 'title',
+    header: 'Title',
+  },
+  // {
+  //   accessorKey: 'merchantName',
+  //   header: 'Merchant',
+  // },
   {
     accessorKey: 'receiptDate',
     header: 'Date',
@@ -57,13 +66,13 @@ const columns = [
     accessorKey: 'receiptTotal',
     header: 'Total',
   },
+  // {
+  //   accessorKey: 'receiptTags',
+  //   header: 'Tags',
+  // },
   {
-    accessorKey: 'receiptTags',
-    header: 'Tags',
-  },
-  {
-    accessorKey: 'isAnalyzed',
-    header: 'Status',
+    accessorKey: 'azureTags',
+    header: 'Azure Tags',
   },
   {
     accessorKey: 'actions',
@@ -144,6 +153,7 @@ const paginationInfo = computed(() => {
             loadingAnimation="carousel"
             class="flex-1"
           >
+            <!-- JSON view -->
             <template #expanded="{ row }">
               <div class="bg-slate-800 p-4">
                 <vue-json-pretty
@@ -155,31 +165,54 @@ const paginationInfo = computed(() => {
                 />
               </div>
             </template>
+
+            <!-- Receipt ID w/ Link -->
             <template #id-cell="{ row }">
               <NuxtLink
                 :to="`/receipts/${row.original.id}`"
                 class="text-slate-400 hover:text-blue-800 hover:underline font-mono"
               >
-                {{ row.original.id }}
+                #{{ row.original.id }}
               </NuxtLink>
             </template>
-            <template #merchantName-cell="{ row }">
-              <div class="text-slate-800 font-medium">
-                {{ row.original.merchantName || '—' }}
-              </div>
+
+            <!-- Title -->
+            <template #title-cell="{ row }">
+              <NuxtLink :to="`/receipts/${row.original.id}`" class="block text-slate-800 hover:text-blue-800 hover:underline">
+                {{ row.original.title || '—' }}
+              </NuxtLink>
+              <p class="text-slate-400">
+                {{ row.original.merchantName || '-' }}
+              </p>
             </template>
+
+            <!-- Merchant Name -->
+            <!-- <template #merchantName-cell="{ row }">
+              <div class="text-slate-800">
+                <NuxtLink :to="`/receipts/${row.original.id}`" class="hover:text-blue-800 hover:underline">
+                  {{ row.original.merchantName || '—' }}
+                </NuxtLink>
+              </div>
+            </template> -->
+
+            <!-- Receipt Date -->
             <template #receiptDate-cell="{ row }">
               <time v-if="row.original.receiptDate" :datetime="row.original.receiptDate" :title="row.original.receiptDate">
                 {{ timestampUtils.toShortDate(row.original.receiptDate) }}
               </time>
               <span v-else class="text-slate-400">—</span>
             </template>
+
+            <!-- Receipt Total -->
             <template #receiptTotal-cell="{ row }">
-              <span v-if="row.original.receiptTotal != null" class="font-medium">
+              <div v-if="row.original.receiptTotal != null" class="font-medium text-right">
                 {{ receiptUtils.formatCurrency(row.original.receiptTotal, row.original.receiptCurrency || 'EUR') }}
-              </span>
+              </div>
               <span v-else class="text-slate-400">—</span>
             </template>
+
+            <!-- Receipt Tags -->
+            <!--
             <template #receiptTags-cell="{ row }">
               <div v-if="row.original.receiptTags" class="flex flex-wrap gap-1">
                 <UBadge
@@ -194,14 +227,25 @@ const paginationInfo = computed(() => {
               </div>
               <span v-else class="text-slate-400">—</span>
             </template>
+            -->
+
+            <!-- Azure Tags -->
+            <template #azureTags-cell="{ row }">
+              <AzureBlobTags v-if="row.original.azureTags" :tagsAsString="row.original.azureTags" />
+              <span v-else class="text-slate-400">—</span>
+            </template>
+
+            <!-- Analysis Status -->
             <template #isAnalyzed-cell="{ row }">
               <UBadge
                 :color="row.original.isAnalyzed ? 'success' : 'neutral'"
-                :variant="row.original.isAnalyzed ? 'solid' : 'soft'"
+                variant="subtle"
               >
                 {{ row.original.isAnalyzed ? 'Analyzed' : 'Not Analyzed' }}
               </UBadge>
             </template>
+
+            <!-- Actions Column -->
             <template #actions-cell="{ row }">
               <NuxtLink :to="`/receipts/${row.original.id}/edit`">
                 <UButton
@@ -224,6 +268,8 @@ const paginationInfo = computed(() => {
               </UButton>
             </template>
           </UTable>
+
+          <!-- Pagination -->
           <div class="flex justify-between items-center border-t border-default py-4 px-4">
             <div class="text-sm text-slate-600">
               Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }}
