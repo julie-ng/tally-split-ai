@@ -144,6 +144,24 @@ Copy `.env.sample` to `.env` and populate with your Azure credentials.
 - uses SQLite for local development and POC. Might switch to another DB later.
 - uses [Drizzle ORM](https://orm.drizzle.team/docs/get-started-sqlite) as database adapter.
 
+#### Migrations
+
+Because we are using a Nuxt module, we use the Nuxt specific commands. Do not use the `npx drizzle-kit…` commands.
+
+| Command (Use) | Description |
+|:--|:--|
+| `npx nuxt db generate` | Generates sqlite migration files incl. .sql |
+| `npx nuxt db migrate` | Applies the migration |
+
+#### Database Seeds
+
+When running seed files, e.g. [seed-receipts.js](./server/db/seed-receipts.js), because Drizzle and Nuxt use TypeScript, we have to use `npx` instead of `node`.
+
+```bash
+# Seed database files with TypeScript
+npx tsx ./server/db/seed-receipts.js
+```
+
 ### Tests
 
 - Write [vitest](https://vitest.dev/) unit tests for utility functions. See coding style preferences for details.
