@@ -7,7 +7,14 @@ const { data: receipt, pending, error } = await useFetch(`/api/receipts/${id}`)
 
 // Set page title reactively after receipt is fetched
 useHead({
-  title: () => `${receipt.value?.merchantName || `Receipt #${id}`} | Receipt`,
+  title: () => {
+    if (receipt.value?.title) {
+      return `${receipt.value.title} | Receipt #${id}`
+    }
+    else {
+      return `Receipt #${id}`
+    }
+  },
 })
 
 const breadcrumbItems = [
@@ -15,7 +22,7 @@ const breadcrumbItems = [
     label: 'Receipts',
     to: '/receipts',
   }, {
-    label: `Receipt #${id}`,
+    label: `#${id}`,
     to: `/receipts/${id}`,
   },
 ]
@@ -41,7 +48,7 @@ const breadcrumbItems = [
 
     <!-- Receipt Details -->
     <div v-else-if="receipt">
-      <ReceiptDetail :receipt="receipt" />
+      <receipt-v2-tabs :receipt="receipt" />
     </div>
 
     <!-- Not found state -->
