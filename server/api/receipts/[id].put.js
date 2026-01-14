@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
     return {
       success: false,
       message: 'Invalid request body',
-      errors: z.flattenError(result.error).fieldErrors,
+      errors: z.flattenError(result.error), // returns flattened errors
     }
   }
 

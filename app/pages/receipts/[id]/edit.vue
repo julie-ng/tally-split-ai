@@ -11,7 +11,11 @@ const receiptsStore = useReceiptsStore()
 const { data: receipt, pending, error } = await useFetch(`/api/receipts/${id}`)
 
 useHead({
-  title: () => `Edit ${receipt.value?.merchantName || `Receipt #${id}`}`,
+  title: () => {
+    return receipt.value?.merchantName
+      ? `Edit #${id} - ${receipt.value?.merchantName}`
+      : `Receipt #${id}`
+  },
 })
 
 const breadcrumbItems = [
@@ -43,6 +47,8 @@ const handleSave = async (formData) => {
   }
   catch (err) {
     console.error('Failed to save receipt:', err)
+    // Error Message: err.message
+    // Errors Object (already zod Flattened): err.data.errors
     saveError.value = err
   }
   finally {
@@ -76,7 +82,7 @@ const handleCancel = () => {
     <!-- Edit Form -->
     <div v-else-if="receipt" class="my-5">
       <h1 class="font-bold text-3xl mb-5">
-        Edit {{ receipt.merchantName || `Receipt #${id}` }}
+        Edit "{{ receipt.title || `Receipt #${id}` }}"
       </h1>
 
       <!-- Save Error Alert -->
@@ -90,12 +96,14 @@ const handleCancel = () => {
         icon="i-lucide-triangle-alert"
       />
 
-      <ReceiptEditForm
-        :receipt="receipt"
-        :saving="saving"
-        @save="handleSave"
-        @cancel="handleCancel"
-      />
+      <div class="max-w-3xl">
+        <receipt-v2-edit-form
+          :receipt="receipt"
+          :saving="saving"
+          @save="handleSave"
+          @cancel="handleCancel"
+        />
+      </div>
     </div>
 
     <!-- Not found state -->

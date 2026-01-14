@@ -6,38 +6,23 @@ const props = defineProps({
 
 const emit = defineEmits(['save', 'cancel'])
 
+// Store original values for comparison
+const original = { ...props.receipt }
+
 // Create reactive form state from receipt data
-const formData = ref({
-  merchantName: props.receipt.merchantName || '',
-  merchantAddress: props.receipt.merchantAddress || '',
-  merchantPhone: props.receipt.merchantPhone || '',
-  receiptDate: props.receipt.receiptDate || '',
-  receiptTags: props.receipt.receiptTags || '',
-  receiptSubtotal: props.receipt.receiptSubtotal,
-  receiptTax: props.receipt.receiptTax,
-  receiptTotal: props.receipt.receiptTotal,
-  receiptCurrency: props.receipt.receiptCurrency || 'EUR',
-  notes: props.receipt.notes || '',
-  isAnalyzed: props.receipt.isAnalyzed || false,
-})
+const formData = ref({ ...props.receipt })
 
 const handleSubmit = () => {
-  // Convert empty strings to null for optional fields
-  const cleanedData = {
-    merchantName: formData.value.merchantName || null,
-    merchantAddress: formData.value.merchantAddress || null,
-    merchantPhone: formData.value.merchantPhone || null,
-    receiptDate: formData.value.receiptDate || null,
-    receiptTags: formData.value.receiptTags || null,
-    receiptSubtotal: formData.value.receiptSubtotal,
-    receiptTax: formData.value.receiptTax,
-    receiptTotal: formData.value.receiptTotal,
-    receiptCurrency: formData.value.receiptCurrency || null,
-    notes: formData.value.notes || null,
-    isAnalyzed: formData.value.isAnalyzed,
+  // Only include fields that actually changed
+  const changes = {}
+  for (const key in formData.value) {
+    if (formData.value[key] !== original[key]) {
+      // Convert empty strings to null
+      changes[key] = formData.value[key] || null
+    }
   }
 
-  emit('save', cleanedData)
+  emit('save', changes)
 }
 
 const handleCancel = () => {
@@ -55,27 +40,27 @@ const handleCancel = () => {
             Merchant Information
           </h2>
           <div class="space-y-4">
-            <UFormGroup label="Merchant Name" name="merchantName">
+            <label label="Merchant Name" name="merchantName">
               <UInput
                 v-model="formData.merchantName"
                 placeholder="e.g., Café Central"
               />
-            </UFormGroup>
+            </label>
 
-            <UFormGroup label="Merchant Address" name="merchantAddress">
+            <label label="Merchant Address" name="merchantAddress">
               <UTextarea
                 v-model="formData.merchantAddress"
                 placeholder="e.g., Hauptstraße 1, 10115 Berlin"
                 :rows="3"
               />
-            </UFormGroup>
+            </label>
 
-            <UFormGroup label="Merchant Phone" name="merchantPhone">
+            <label label="Merchant Phone" name="merchantPhone">
               <UInput
                 v-model="formData.merchantPhone"
                 placeholder="e.g., +49 30 12345678"
               />
-            </UFormGroup>
+            </label>
           </div>
         </div>
 
@@ -87,14 +72,14 @@ const handleCancel = () => {
             Transaction Details
           </h2>
           <div class="space-y-4">
-            <UFormGroup label="Receipt Date" name="receiptDate">
+            <label label="Receipt Date" name="receiptDate">
               <UInput
                 v-model="formData.receiptDate"
                 type="date"
               />
-            </UFormGroup>
+            </label>
 
-            <UFormGroup
+            <label
               label="Tags"
               name="receiptTags"
               help="Comma-separated tags (e.g., tip, business, dinner)"
@@ -103,16 +88,16 @@ const handleCancel = () => {
                 v-model="formData.receiptTags"
                 placeholder="e.g., tip, business"
               />
-            </UFormGroup>
+            </label>
 
-            <UFormGroup label="Analysis Status" name="isAnalyzed">
+            <label label="Analysis Status" name="isAnalyzed">
               <div class="flex items-center gap-2">
                 <UCheckbox
                   v-model="formData.isAnalyzed"
                   label="Analyzed"
                 />
               </div>
-            </UFormGroup>
+            </label>
           </div>
         </div>
 
@@ -124,39 +109,39 @@ const handleCancel = () => {
             Financial Details
           </h2>
           <div class="grid grid-cols-2 gap-4">
-            <UFormGroup label="Subtotal" name="receiptSubtotal">
+            <label label="Subtotal" name="receiptSubtotal">
               <UInput
                 v-model.number="formData.receiptSubtotal"
                 type="number"
                 step="0.01"
                 placeholder="0.00"
               />
-            </UFormGroup>
+            </label>
 
-            <UFormGroup label="Tax" name="receiptTax">
+            <label label="Tax" name="receiptTax">
               <UInput
                 v-model.number="formData.receiptTax"
                 type="number"
                 step="0.01"
                 placeholder="0.00"
               />
-            </UFormGroup>
+            </label>
 
-            <UFormGroup label="Total" name="receiptTotal">
+            <label label="Total" name="receiptTotal">
               <UInput
                 v-model.number="formData.receiptTotal"
                 type="number"
                 step="0.01"
                 placeholder="0.00"
               />
-            </UFormGroup>
+            </label>
 
-            <UFormGroup label="Currency" name="receiptCurrency">
+            <label label="Currency" name="receiptCurrency">
               <UInput
                 v-model="formData.receiptCurrency"
                 placeholder="EUR"
               />
-            </UFormGroup>
+            </label>
           </div>
         </div>
 
@@ -167,13 +152,13 @@ const handleCancel = () => {
           <h2 class="text-xl font-semibold mb-4 text-slate-800">
             Notes
           </h2>
-          <UFormGroup label="Notes" name="notes">
+          <label label="Notes" name="notes">
             <UTextarea
               v-model="formData.notes"
               placeholder="Add any additional notes about this receipt..."
               :rows="4"
             />
-          </UFormGroup>
+          </label>
         </div>
 
         <!-- Form Actions -->
