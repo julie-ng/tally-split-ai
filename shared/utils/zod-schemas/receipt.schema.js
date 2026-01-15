@@ -26,6 +26,7 @@ export const receiptSchema = z.object({
  * All fields optional since receipts can be created empty and populated later
  */
 export const receiptInputSchema = z.object({
+  title: z.string().optional(), // this is the problem…
   merchantName: z.string().nullable().optional(),
   merchantAddress: z.string().nullable().optional(),
   merchantPhone: z.string().nullable().optional(),

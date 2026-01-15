@@ -1,7 +1,14 @@
 <script setup>
-defineProps({
+const props = defineProps({
   label: String,
-  text: String,
+  text: [String, Number],
+})
+
+const displayText = computed(() => {
+  if (typeof props.text === 'number') {
+    return String(props.text)
+  }
+  return props.text
 })
 </script>
 
@@ -11,7 +18,7 @@ defineProps({
       {{ label }}
     </p>
     <p class="text-base text-slate-500">
-      {{ text }}
+      {{ displayText }}
       <slot />
     </p>
   </div>

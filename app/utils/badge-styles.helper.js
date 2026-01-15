@@ -14,7 +14,21 @@ function statusBadgeVariant (status) {
   return 'soft'
 }
 
+function analysisBadgeColor (isAnalyzed) {
+  return isAnalyzed
+    ? 'info'
+    : 'neutral'
+}
+
+function analysisBadgeVariant (isAnalyzed) {
+  return isAnalyzed
+    ? 'subtle'
+    : 'subtle'
+}
+
 export const badgeStyleHelpers = {
+  analysisBadgeColor,
+  analysisBadgeVariant,
   statusBadgeColor,
   statusBadgeVariant,
 }

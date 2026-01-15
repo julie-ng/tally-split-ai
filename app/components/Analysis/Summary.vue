@@ -12,7 +12,7 @@ const props = defineProps({
   <div>
     Purchased {{ dateUtils.formatISODate(summary.receipt.transactionDate.value) }}, {{ dateUtils.timeWithoutSeconds(summary.receipt.transactionTime.value) }}
     <!-- {{ props.summary }} -->
-    <ReceiptMerchantInfo :merchant="summary.merchant" />
+    <!-- <ReceiptMerchantFields :merchant="summary.merchant" /> -->
 
     Subtotal
     Tax

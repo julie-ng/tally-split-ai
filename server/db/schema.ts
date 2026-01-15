@@ -19,6 +19,9 @@ import { sql, relations } from 'drizzle-orm'
 export const receipts = sqliteTable('receipts', {
   id: integer('id').primaryKey({ autoIncrement: true }),
 
+  // User-facing fields
+  title: text('title').default('Untitled'),
+
   // Business fields (extracted from OCR)
   merchantName: text('merchant_name'),
   merchantAddress: text('merchant_address'),

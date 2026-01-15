@@ -9,6 +9,30 @@ function formatCurrency (amount, currencySymbol = '€') {
   return `${numericAmount.toFixed(2)} ${currencySymbol}`
 }
 
+function extractTotalsAsArray (receipt) {
+  return [
+    {
+      key: 'Subtotal',
+      value: receipt.receiptSubtotal != null
+        ? receipt.receiptSubtotal.toFixed(2)
+        : '-',
+    },
+    {
+      key: 'Tax',
+      value: receipt.receiptTax != null
+        ? receipt.receiptTax.toFixed(2)
+        : '-',
+    },
+    {
+      key: 'Total',
+      value: receipt.receiptTotal != null
+        ? receipt.receiptTotal.toFixed(2)
+        : '-',
+    },
+  ]
+}
+
 export const receiptUtils = {
+  extractTotalsAsArray,
   formatCurrency,
 }
