@@ -44,8 +44,6 @@ const handleSave = async (formData) => {
   try {
     await receiptsStore.updateReceipt(id, formData)
     const currentTitle = formData.title || receipt.value.title
-    console.log('got Toast?', toast)
-    console.log('got current title?', currentTitle)
     toast.add({
       title: 'Receipt saved',
       description: `Updated ${currentTitle}`,
