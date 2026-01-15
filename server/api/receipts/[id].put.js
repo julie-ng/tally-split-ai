@@ -9,7 +9,12 @@ export default defineEventHandler(async (event) => {
   const userId = event.context.userId
   const receiptId = parseInt(getRouterParam(event, 'id'), 10)
 
+  const rawBody = await readBody(event)
+  console.log('🎛️ PUT/receipts/[id]/ - RAW Request Body:', rawBody)
+
   const result = await readValidatedBody(event, body => zodSchemas.receiptInputSchema.safeParse(body))
+  console.log('🎛️ PUT/receipts/[id]/ - Validated Request Body (result):', result)
+
   if (!result.success) {
     setResponseStatus(event, 400)
     return {

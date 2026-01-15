@@ -70,6 +70,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
    * @returns {Promise<Object>} The updated receipt object
    */
   async function updateReceipt (id, data) {
+    console.log('🍍 updateReceipt()', data)
     try {
       const result = await $fetch(`/api/receipts/${id}`, {
         method: 'PUT',
