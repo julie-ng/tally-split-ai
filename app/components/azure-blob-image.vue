@@ -26,7 +26,7 @@ const imageUrl = computed(() => tokenData.value?.blobUrlWithSas || '')
 <template>
   <div>
     <!-- Loading state -->
-    <LoadingPlaceholder v-if="pending" title="Loading Image" />
+    <loading-placeholder v-if="pending" title="Loading Image" />
 
     <!-- Error state -->
     <UAlert

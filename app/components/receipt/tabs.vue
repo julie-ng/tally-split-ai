@@ -78,17 +78,17 @@ if (!schemaCheck.success) {
               icon="i-lucide-triangle-alert"
             />
             <!-- <ReceiptOverviewTab :receipt="receipt" /> -->
-            <receipt-v2-overview-tab :receipt="receipt" />
+            <receipt-overview-tab :receipt="receipt" />
           </template>
 
           <!-- eslint-disable-next-line vue/no-unused-vars -->
           <template #rawJson="{ item }">
-            <receipt-v2-raw-json-tab :receipt="receipt" />
+            <receipt-raw-json-tab :receipt="receipt" />
           </template>
         </UTabs>
       </div>
       <div id="side-col" class="mt-5">
-        <receipt-v2-upload-column
+        <receipt-upload-column
           v-if="props.receipt.uploads.length > 0"
           :upload="props.receipt.uploads[0]"
         />

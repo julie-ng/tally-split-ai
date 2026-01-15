@@ -65,14 +65,14 @@ if (!schemaCheck.success) {
     >
       <!-- eslint-disable-next-line vue/no-unused-vars -->
       <template #overview="{ item }">
-        <UploadInvalidSchemaAlert v-if="!schemaCheck.success" />
-        <UploadOverviewTabContent :upload="upload" />
+        <upload-invalid-schema-alert v-if="!schemaCheck.success" />
+        <upload-overview-tab-content :upload="upload" />
       </template>
 
       <!-- eslint-disable-next-line vue/no-unused-vars -->
       <template #analysis="{ item }">
-        <UploadInvalidSchemaAlert v-if="!schemaCheck.success" />
-        <UploadAnalysisTabContent
+        <upload-invalid-schema-alert v-if="!schemaCheck.success" />
+        <upload-analysis-tab-content
           :upload="upload"
           :analysisData="analysisData"
           :analysisPending="analysisPending"

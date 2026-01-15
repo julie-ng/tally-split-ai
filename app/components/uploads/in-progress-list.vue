@@ -13,7 +13,7 @@ const activeUploads = computed(() => [
 <template>
   <div>
     <section>
-      <UploadsInProgressItem
+      <uploads-in-progress-item
         v-for="item in activeUploads"
         :key="`active-${item.hashId}`"
         :hashId="item.hashId"

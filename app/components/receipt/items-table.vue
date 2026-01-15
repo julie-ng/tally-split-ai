@@ -14,9 +14,6 @@ defineProps({
 
 <template>
   <div class="border border-red-200 p-2">
-    <p class="text-red-600 font-semibold">
-      Component to be deprecated.
-    </p>
     <table class="my-3 text-sm">
       <thead>
         <tr>

@@ -33,7 +33,7 @@ const breadcrumbItems = [
     <UBreadcrumb :items="breadcrumbItems" />
 
     <!-- Loading -->
-    <LoadingPlaceholder v-if="pending" title="Loading Receipt" :hashId="id" />
+    <loading-placeholder v-if="pending" title="Loading Receipt" :hashId="id" />
 
     <!-- Error -->
     <UAlert
@@ -48,12 +48,12 @@ const breadcrumbItems = [
 
     <!-- Receipt Details -->
     <div v-else-if="receipt">
-      <receipt-v2-tabs :receipt="receipt" />
+      <receipt-tabs :receipt="receipt" />
     </div>
 
     <!-- Not found state -->
     <div v-else>
-      <NotFound :title="`Receipt Not Found`" :hashId="id" />
+      <not-found :title="`Receipt Not Found`" :hashId="id" />
     </div>
   </UContainer>
 </template>

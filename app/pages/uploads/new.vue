@@ -49,7 +49,7 @@ async function onFilesUpdate (files) {
       <p class="mt-1 text-slate-400">
         (work in progress)
       </p>
-      <UploadsDropZone class="mb-10" @on-update="onFilesUpdate" />
+      <uploads-drop-zone class="mb-10" @on-update="onFilesUpdate" />
 
       <div class="grid grid-cols-3 gap-8">
         <div>
@@ -62,7 +62,7 @@ async function onFilesUpdate (files) {
             </ClientOnly>
           </h1>
           <ClientOnly>
-            <UploadsQueueList />
+            <uploads-queue-list />
           </ClientOnly>
         </div>
         <div>
@@ -75,7 +75,7 @@ async function onFilesUpdate (files) {
             </ClientOnly>
           </h1>
           <ClientOnly>
-            <UploadsInProgressList />
+            <uploads-in-progress-list />
           </ClientOnly>
         </div>
         <div>
@@ -83,7 +83,7 @@ async function onFilesUpdate (files) {
             Complete
           </h1>
           <ClientOnly>
-            <UploadsCompletedList />
+            <uploads-completed-list />
           </ClientOnly>
         </div>
       </div>

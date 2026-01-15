@@ -40,10 +40,10 @@ const sizeInBytes = computed(() =>
       Extracted from file name
     </p>
 
-    <StackedListItem name="Title" :value="extractReceiptTitle(upload.originalFilename)" />
-    <StackedListItem name="Date" :value="extractReceiptDate(upload.originalFilename)" />
-    <StackedListItem name="Total" :value="extractReceiptTotal(upload.originalFilename)" />
-    <StackedListItem name="Tags" :value="extractHashtags(upload.originalFilename)" />
+    <stacked-list-item name="Title" :value="extractReceiptTitle(upload.originalFilename)" />
+    <stacked-list-item name="Date" :value="extractReceiptDate(upload.originalFilename)" />
+    <stacked-list-item name="Total" :value="extractReceiptTotal(upload.originalFilename)" />
+    <stacked-list-item name="Tags" :value="extractHashtags(upload.originalFilename)" />
     <div class="mt-6 flex items-center gap-3">
       <UButton
         color="neutral"

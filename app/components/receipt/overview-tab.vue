@@ -25,9 +25,9 @@ const dates = computed(() => {
         <h1 class="my-2 font-semibold">
           Analysis
         </h1>
-        <receipt-v2-analysis-status :receipt="receipt" />
+        <receipt-analysis-status :receipt="receipt" />
         <hr class="my-4 border-b-slate-100 text-slate-300 border-dashed">
-        <receipt-v2-metadata :receipt="receipt" />
+        <receipt-metadata :receipt="receipt" />
       </div>
 
       <!-- [Column 2] Transaction Details -->
@@ -37,17 +37,17 @@ const dates = computed(() => {
         </h1>
 
         <!-- Receipt Dates -->
-        <DataKeyValueTable :items="dates" />
+        <data-key-value-table :items="dates" />
         <hr class="my-4 border-b-slate-100 text-slate-300 border-dashed">
 
         <!-- Receipt Totals -->
-        <DataKeyValueTable :items="receiptUtils.extractTotalsAsArray(receipt)" currency="EUR" />
+        <data-key-value-table :items="receiptUtils.extractTotalsAsArray(receipt)" currency="EUR" />
       </div>
 
       <!-- [Column 3]: Merchant Info -->
       <div class="pt-8">
         <!-- Merchant Info -->
-        <receipt-v2-merchant-info
+        <receipt-merchant-info
           v-if="props.receipt.merchantName"
           :name="props.receipt.merchantName"
           :address="props.receipt.merchantAddress"
@@ -59,7 +59,7 @@ const dates = computed(() => {
 
     <div class="px-4">
       <hr class="my-4 border-b-slate-100 text-slate-300">
-      <receipt-v2-notes :receipt="props.receipt" />
+      <receipt-notes :receipt="props.receipt" />
     </div>
   </div>
 </template>

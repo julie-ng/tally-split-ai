@@ -23,7 +23,7 @@ const { data: sampleReceipts, error } = await useFetch('/api/sample-receipts')
       <div v-else-if="sampleReceipts">
         <section class="grid col-start-1 row-start-1 grid-cols-4 gap-4 rounded-lg">
           <article v-for="receipt in sampleReceipts.receipts" :key="receipt.filename" class="">
-            <SamplesScanCard
+            <samples-scan-card
               :title="receipt.title"
               :filename="receipt.filename"
               :date="receipt.date"

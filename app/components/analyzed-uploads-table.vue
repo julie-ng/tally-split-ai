@@ -92,7 +92,7 @@ const tagsToFilter = [
     -->
 
       <template #azureTags-cell="{ row }">
-        <AzureBlobTags :tagsAsString="row.original.azureTags" :filter="tagsToFilter" />
+        <azure-blob-tags :tagsAsString="row.original.azureTags" :filter="tagsToFilter" />
       </template>
       <template #hashId-cell="{ row }">
         <NuxtLink :to="`/uploads/${row.original.hashId}`" class="text-primary hover:underline">

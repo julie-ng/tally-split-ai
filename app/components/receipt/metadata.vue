@@ -35,7 +35,7 @@ defineProps({
     <template v-if="receipt.receiptTags">
       <div>Tags</div>
       <div>
-        <receipt-v2-tags :tags="receipt.receiptTags" color="neutral" />
+        <receipt-tags :tags="receipt.receiptTags" color="neutral" />
       </div>
     </template>
   </div>

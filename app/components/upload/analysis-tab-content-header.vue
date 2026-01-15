@@ -67,17 +67,17 @@ const totals = [
         </div>
       </div>
       <hr class="my-3 border-slate-200">
-      <DataKeyValueTable :items="totals" currency="€" />
+      <data-key-value-table :items="totals" currency="€" />
       <hr class="my-3 border-slate-200">
     </div>
     <div>
-      <DataKeyValueTable :items="dates" />
+      <data-key-value-table :items="dates" />
       <hr class="my-3 border-slate-200">
 
       <p class="text-sm text-slate-500 mb-1">
         Merchant
       </p>
-      <ReceiptMerchantInfo :merchant="fields.merchant" class="mb-4" />
+      <analysis-merchant-info :merchant="fields.merchant" class="mb-4" />
 
       <!-- <p class="text-sm text-slate-500 mb-1">Receipt Date</p>
       <p class="mb-4">{{ fields.receipt.transactionDate.value }}</p>

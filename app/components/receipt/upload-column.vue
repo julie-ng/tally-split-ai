@@ -14,7 +14,7 @@ const altText = computed(() => {
 
 <template>
   <div>
-    <AzureBlobImage
+    <azure-blob-image
       v-if="hasBlobImage"
       :blobName="props.upload.blobName"
       :alt="altText"

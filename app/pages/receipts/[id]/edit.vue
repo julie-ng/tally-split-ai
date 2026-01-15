@@ -75,7 +75,7 @@ const handleCancel = () => {
     <UBreadcrumb :items="breadcrumbItems" />
 
     <!-- Loading -->
-    <LoadingPlaceholder v-if="pending" title="Loading Receipt" :hashId="id" />
+    <loading-placeholder v-if="pending" title="Loading Receipt" :hashId="id" />
 
     <!-- Error -->
     <UAlert
@@ -103,7 +103,7 @@ const handleCancel = () => {
       />
 
       <div class="max-w-3xl">
-        <receipt-v2-edit-form
+        <receipt-edit-form
           :receipt="receipt"
           :saving="saving"
           @save="handleSave"
@@ -114,7 +114,7 @@ const handleCancel = () => {
 
     <!-- Not found state -->
     <div v-else>
-      <NotFound :title="`Receipt Not Found`" :hashId="id" />
+      <not-found :title="`Receipt Not Found`" :hashId="id" />
     </div>
   </UContainer>
 </template>

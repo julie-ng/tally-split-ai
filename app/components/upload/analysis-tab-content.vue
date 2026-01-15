@@ -34,7 +34,7 @@ const validatedFields = computed(() => validation.value.success ? validation.val
   </div> -->
 
     <!-- Loading: Data state -->
-    <LoadingPlaceholder v-if="pending" title="Loading Analysis" />
+    <loading-placeholder v-if="pending" title="Loading Analysis" />
 
     <!-- Error: Cannot Load Data -->
     <UAlert
@@ -77,7 +77,7 @@ const validatedFields = computed(() => validation.value.success ? validation.val
         </template>
       </UAlert>
       <div v-else-if="validatedFields">
-        <UploadAnalysisTabContentHeader
+        <upload-analysis-tab-content-header
           :analysisStatus="upload.analysisStatus"
           :analyzedAt="upload.analyzedAt"
           :fields="validatedFields"

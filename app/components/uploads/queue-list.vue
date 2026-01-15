@@ -18,7 +18,7 @@ const uploadsStore = useUploadQueueStore()
         Empty Queue
       </UButton>
     </div>
-    <UploadsQueueItem
+    <uploads-queue-item
       v-for="upload in uploadsStore.queued"
       :key="`queued-${upload.hashId}`"
       :hashId="upload.hashId"

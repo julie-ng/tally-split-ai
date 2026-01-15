@@ -43,7 +43,7 @@ onMounted(async () => {
       Debugging Azure AI Output
     </h1>
 
-    <LoadingPlaceholder v-if="pending" title="Loading Analysis Data" />
+    <loading-placeholder v-if="pending" title="Loading Analysis Data" />
 
     <UAlert
       v-else-if="error"
@@ -55,7 +55,7 @@ onMounted(async () => {
     />
 
     <div v-else>
-      <AnalyzedUploadsTable :uploads="summaries" />
+      <analyzed-uploads-table :uploads="summaries" />
     </div>
   </UContainer>
 </template>
