@@ -48,6 +48,7 @@ const dates = computed(() => {
       <div class="pt-8">
         <!-- Merchant Info -->
         <receipt-v2-merchant-info
+          v-if="props.receipt.merchantName"
           :name="props.receipt.merchantName"
           :address="props.receipt.merchantAddress"
           :phone="props.receipt.merchantPhone"

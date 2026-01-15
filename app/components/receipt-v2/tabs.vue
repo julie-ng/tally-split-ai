@@ -88,7 +88,10 @@ if (!schemaCheck.success) {
         </UTabs>
       </div>
       <div id="side-col" class="mt-5">
-        <receipt-v2-upload-column :upload="props.receipt.uploads[0]" />
+        <receipt-v2-upload-column
+          v-if="props.receipt.uploads.length > 0"
+          :upload="props.receipt.uploads[0]"
+        />
       </div>
     </div><!-- /.grid -->
   </div>
