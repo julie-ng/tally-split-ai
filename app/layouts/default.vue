@@ -37,6 +37,15 @@ const links = [
       label: 'Receipts',
       icon: 'i-lucide-receipt-euro',
       to: '/receipts',
+      children: [
+        {
+          label: 'JSON',
+          to: '/api/receipts/',
+          external: true,
+          target: '_blank',
+          icon: 'i-lucide-file-braces',
+        },
+      ],
     },
     {
       label: 'Uploads',
@@ -44,6 +53,13 @@ const links = [
       to: '/uploads',
       defaultOpen: true,
       children: [
+        {
+          label: 'JSON',
+          to: '/api/uploads/',
+          external: true,
+          target: '_blank',
+          icon: 'i-lucide-file-braces',
+        },
         {
           label: 'List',
           to: '/uploads',
