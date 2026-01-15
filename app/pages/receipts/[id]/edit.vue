@@ -4,6 +4,7 @@ import { useReceiptsStore } from '~/stores/receipts.store'
 const route = useRoute()
 const router = useRouter()
 const id = route.params.id
+const toast = useToast()
 
 const receiptsStore = useReceiptsStore()
 
@@ -12,8 +13,8 @@ const { data: receipt, pending, error } = await useFetch(`/api/receipts/${id}`)
 
 useHead({
   title: () => {
-    return receipt.value?.merchantName
-      ? `Edit #${id} - ${receipt.value?.merchantName}`
+    return receipt.value?.title
+      ? `Edit #${id} - ${receipt.value?.title}`
       : `Receipt #${id}`
   },
 })
@@ -42,6 +43,16 @@ const handleSave = async (formData) => {
 
   try {
     await receiptsStore.updateReceipt(id, formData)
+    const currentTitle = formData.title || receipt.value.title
+    console.log('got Toast?', toast)
+    console.log('got current title?', currentTitle)
+    toast.add({
+      title: 'Receipt saved',
+      description: `Updated ${currentTitle}`,
+      icon: 'i-lucide-receipt-euro',
+      color: 'success',
+      duration: 1500,
+    })
     // Navigate to detail page on success
     await router.push(`/receipts/${id}`)
   }
