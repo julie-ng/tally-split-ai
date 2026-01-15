@@ -86,14 +86,11 @@ const handleCancel = () => {
       </h1>
 
       <!-- Save Error Alert -->
-      <UAlert
+      <zod-errors-pretty
         v-if="saveError"
-        title="Failed to Save Receipt"
-        :description="saveError.message"
-        class="mb-5"
-        color="error"
-        variant="subtle"
-        icon="i-lucide-triangle-alert"
+        title="Error saving receipt"
+        :errors="saveError.data.errors"
+        :message="saveError.message"
       />
 
       <div class="max-w-3xl">
