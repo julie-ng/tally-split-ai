@@ -20,7 +20,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
    * Fetch all receipts from the API
    * @returns {Promise<void>}
    */
-  async function fetchReceipts() {
+  async function fetchReceipts () {
     loading.value = true
     error.value = null
 
@@ -44,7 +44,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
    * @param {number} id - The receipt ID
    * @returns {Promise<Object>} The receipt object with uploads relation
    */
-  async function fetchReceipt(id) {
+  async function fetchReceipt (id) {
     loading.value = true
     error.value = null
 
@@ -69,7 +69,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
    * @param {Object} data - The receipt data to update
    * @returns {Promise<Object>} The updated receipt object
    */
-  async function updateReceipt(id, data) {
+  async function updateReceipt (id, data) {
     try {
       const result = await $fetch(`/api/receipts/${id}`, {
         method: 'PUT',
@@ -99,7 +99,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
    * @param {number} id - The receipt ID
    * @returns {Promise<boolean>} True if deletion succeeded
    */
-  async function deleteReceipt(id) {
+  async function deleteReceipt (id) {
     try {
       await $fetch(`/api/receipts/${id}`, {
         method: 'DELETE',
