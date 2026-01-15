@@ -95,7 +95,12 @@ const handleCancel = () => {
             </label>
           </div>
           <div class="col-span-2">
-            <UInput id="subtotal" v-model="formData.receiptSubtotal" class="w-80" />
+            <UInput
+              id="subtotal"
+              v-model="formData.receiptSubtotal"
+              type="number"
+              class="w-80"
+            />
           </div>
           <div>
             <label for="tax">
@@ -103,7 +108,12 @@ const handleCancel = () => {
             </label>
           </div>
           <div class="col-span-2">
-            <UInput id="tax" v-model="formData.receiptTax" class="w-80" />
+            <UInput
+              id="tax"
+              v-model="formData.receiptTax"
+              type="number"
+              class="w-80"
+            />
           </div>
           <div>
             <label for="total">
@@ -111,7 +121,12 @@ const handleCancel = () => {
             </label>
           </div>
           <div class="col-span-2">
-            <UInput id="total" v-model="formData.receiptTotal" class="w-80" />
+            <UInput
+              id="total"
+              v-model="formData.receiptTotal"
+              type="number"
+              class="w-80"
+            />
           </div>
         </div>
       </section>
