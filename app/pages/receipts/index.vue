@@ -178,7 +178,7 @@ const paginationInfo = computed(() => {
 
             <!-- Title -->
             <template #title-cell="{ row }">
-              <NuxtLink :to="`/receipts/${row.original.id}`" class="block text-slate-800 hover:text-blue-800 hover:underline">
+              <NuxtLink :to="`/receipts/${row.original.id}`" class=" text-slate-800 hover:text-blue-800 hover:underline">
                 {{ row.original.title || '—' }}
               </NuxtLink>
               <p class="text-slate-400">

@@ -91,7 +91,7 @@ const handleCancel = () => {
         <div class="grid grid-cols-3 gap-4">
           <div>
             <label for="subtotal">
-              Subtotal
+              Subtotal <span class="text-slate-400">(EUR)</span>
             </label>
           </div>
           <div class="col-span-2">
@@ -104,7 +104,7 @@ const handleCancel = () => {
           </div>
           <div>
             <label for="tax">
-              Tax
+              Tax <span class="text-slate-400">(EUR)</span>
             </label>
           </div>
           <div class="col-span-2">
@@ -117,7 +117,7 @@ const handleCancel = () => {
           </div>
           <div>
             <label for="total">
-              Total
+              Total <span class="text-slate-400">(EUR)</span>
             </label>
           </div>
           <div class="col-span-2">
