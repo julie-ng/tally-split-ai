@@ -7,6 +7,7 @@ useHead({
   title: 'Receipts',
 })
 
+const toast = useToast()
 const userStore = useUserStore()
 const receiptsStore = useReceiptsStore()
 
@@ -90,14 +91,23 @@ const tableStyles = {
   tr: 'data-[expanded=true]:bg-elevated/50',
 }
 
-const deleteReceipt = async (id, merchantName) => {
-  const displayName = merchantName || `Receipt #${id}`
+const deleteReceipt = async (id, title, merchantName) => {
+  const displayName = (merchantName)
+    ? `Receipt #${id}: ${title} from ${merchantName}`
+    : `Receipt #${id}: ${title}`
   if (!confirm(`Are you sure you want to delete "${displayName}"?`)) {
     return
   }
 
   try {
     await receiptsStore.deleteReceipt(id)
+    toast.add({
+      title: 'Receipt deleted',
+      description: `Successfully deleted ${displayName}`,
+      icon: 'i-lucide-receipt-euro',
+      color: 'success',
+      duration: 1500,
+    })
   }
   catch (error) {
     console.error('Failed to delete receipt:', error)
@@ -262,7 +272,7 @@ const paginationInfo = computed(() => {
                 color="neutral"
                 variant="outline"
                 class="px-3 py-1 rounded transition-colors cursor-pointer"
-                @click="deleteReceipt(row.original.id, row.original.merchantName)"
+                @click="deleteReceipt(row.original.id, row.original.title, row.original.merchantName)"
               >
                 Delete
               </UButton>
