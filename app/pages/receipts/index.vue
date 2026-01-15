@@ -55,10 +55,6 @@ const columns = [
     accessorKey: 'title',
     header: 'Title',
   },
-  // {
-  //   accessorKey: 'merchantName',
-  //   header: 'Merchant',
-  // },
   {
     accessorKey: 'receiptDate',
     header: 'Date',
@@ -67,19 +63,63 @@ const columns = [
     accessorKey: 'receiptTotal',
     header: 'Total',
   },
-  // {
-  //   accessorKey: 'receiptTags',
-  //   header: 'Tags',
-  // },
   {
     accessorKey: 'azureTags',
     header: 'Azure Tags',
   },
   {
-    accessorKey: 'actions',
-    header: 'Actions',
+    id: 'actions',
+    meta: {
+      class: {
+        td: 'text-right',
+      },
+    },
+    cell: ({ row }) => {
+      return h(
+        UDropdownMenu,
+        {
+          'content': {
+            align: 'end',
+          },
+          'items': getRowActionItems(row),
+          'aria-label': 'Actions dropdown',
+        },
+        () =>
+          h(UButton, {
+            'icon': 'i-lucide-ellipsis-vertical',
+            'color': 'neutral',
+            'variant': 'ghost',
+            'aria-label': 'Actions dropdown',
+          }),
+      )
+    },
   },
 ]
+
+// row = receipt
+function getRowActionItems (row) {
+  return [
+    {
+      type: 'label',
+      label: 'Actions',
+    },
+    {
+      type: 'separator',
+    },
+    {
+      label: 'Edit',
+      to: `/receipts/${row.original.id}/edit`,
+      icon: 'i-lucide-edit',
+    },
+    {
+      label: 'Delete',
+      icon: 'i-lucide-trash-2',
+      onSelect () {
+        deleteReceipt(row.original.id, row.original.title, row.original.merchantName)
+      },
+    },
+  ]
+}
 
 const highlightTotals = ref(true)
 const expanded = ref({})
@@ -270,29 +310,6 @@ const paginationInfo = computed(() => {
               >
                 {{ row.original.isAnalyzed ? 'Analyzed' : 'Not Analyzed' }}
               </UBadge>
-            </template>
-
-            <!-- Actions Column -->
-            <template #actions-cell="{ row }">
-              <NuxtLink :to="`/receipts/${row.original.id}/edit`">
-                <UButton
-                  icon="i-lucide-pencil"
-                  color="info"
-                  variant="solid"
-                  class="px-3 py-1 text-sm rounded transition-colors mr-2 cursor-pointer"
-                >
-                  Edit
-                </UButton>
-              </NuxtLink>
-              <UButton
-                icon="i-lucide-x"
-                color="neutral"
-                variant="outline"
-                class="px-3 py-1 rounded transition-colors cursor-pointer"
-                @click="deleteReceipt(row.original.id, row.original.title, row.original.merchantName)"
-              >
-                Delete
-              </UButton>
             </template>
           </UTable>
 
