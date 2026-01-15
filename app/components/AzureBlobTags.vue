@@ -9,8 +9,21 @@ const props = defineProps({
     required: false,
     default: () => [],
   },
+  highlightTotal: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
+  totalsMatch: {
+    type: Boolean,
+    required: false,
+    default: true,
+  },
 })
 
+/**
+ * Setup Tags Array
+ */
 const tags = computed(() => {
   const allTags = azureUtils.blobTagsJsonToObject(props.tagsAsString)
 
@@ -29,16 +42,44 @@ const tags = computed(() => {
     return filtered
   }
 })
+
+/**
+ * Customized Styles
+ */
+const shouldHighlight = key => props.highlightTotal && key === 'receipt-total'
+
+const tagColor = (key) => {
+  let color = 'neutral' // default
+  if (shouldHighlight(key)) {
+    color = props.totalsMatch
+      ? 'info'
+      : 'error'
+  }
+  return color
+}
+
+const tagVariant = (key) => {
+  // console.log(`tagColor() ${props.highlightTotal}`, key)
+  return shouldHighlight(key)
+    ? 'subtle'
+    : 'soft'
+}
+
+const extraClasses = (key) => {
+  return shouldHighlight(key)
+    ? ''
+    : 'text-slate-500'
+}
 </script>
 
 <template>
-  <div class="flex flex-wrap gap-2 pt-2">
+  <div class="flex flex-wrap gap-2">
     <UBadge
       v-for="tag in tags"
       :key="tag.key"
-      class="text-slate-500"
-      color="neutral"
-      variant="soft"
+      :color="tagColor(tag.key)"
+      :variant="tagVariant(tag.key)"
+      :class="extraClasses(tag.key)"
     >
       {{ tag.key }}: {{ tag.value }}
     </UBadge>

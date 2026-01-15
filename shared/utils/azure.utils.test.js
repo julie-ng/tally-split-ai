@@ -53,3 +53,40 @@ describe('azureUtils.blobTagsJsonToObject', () => {
     ])
   })
 })
+
+describe('azureUtils.getReceiptTotalBlobTag', () => {
+  it('should return receipt-total value when present', () => {
+    // eslint-disable-next-line @stylistic/quotes
+    const jsonString = "{\"user-id\":\"julie-ng\",\"receipt-date\":\"2025-11-18\",\"receipt-total\":\"7.75\",\"receipt-tags\":\"special+initals\"}"
+    const result = azureUtils.getReceiptTotalBlobTag(jsonString)
+    expect(result).toBe('7.75')
+  })
+
+  it('should return null when receipt-total is not present', () => {
+    // eslint-disable-next-line @stylistic/quotes
+    const jsonString = "{\"user-id\":\"julie-ng\",\"receipt-date\":\"2025-11-18\"}"
+    const result = azureUtils.getReceiptTotalBlobTag(jsonString)
+    expect(result).toBeNull()
+  })
+
+  it('should return null for empty JSON object', () => {
+    const jsonString = '{}'
+    const result = azureUtils.getReceiptTotalBlobTag(jsonString)
+    expect(result).toBeNull()
+  })
+
+  it('should return null for null input', () => {
+    const result = azureUtils.getReceiptTotalBlobTag(null)
+    expect(result).toBeNull()
+  })
+
+  it('should return null for undefined input', () => {
+    const result = azureUtils.getReceiptTotalBlobTag(undefined)
+    expect(result).toBeNull()
+  })
+
+  it('should return null for empty string', () => {
+    const result = azureUtils.getReceiptTotalBlobTag('')
+    expect(result).toBeNull()
+  })
+})

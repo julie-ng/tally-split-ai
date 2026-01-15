@@ -81,6 +81,7 @@ const columns = [
   },
 ]
 
+const highlightTotals = ref(true)
 const expanded = ref({})
 
 const tableStyles = {
@@ -115,6 +116,26 @@ const deleteReceipt = async (id, title, merchantName) => {
   }
 }
 
+function totalsMatch (blobTagsString, total) {
+  const tagValue = azureUtils.getReceiptTotalBlobTag(blobTagsString)
+  if (total === null || tagValue === null) {
+    return null
+  }
+  return Number(tagValue) === total
+}
+
+function highlightTotal (isMatch) {
+  if (isMatch === null) {
+    return ''
+  }
+  else if (!highlightTotals.value || isMatch) {
+    return ''
+  }
+  else {
+    return 'text-red-400'
+  }
+}
+
 const paginationInfo = computed(() => {
   if (!table.value?.tableApi) return { start: 0, end: 0, total: 0 }
 
@@ -143,6 +164,10 @@ const paginationInfo = computed(() => {
         <UButton class="px-4 py-2 cursor-pointer" @click="receiptsStore.fetchReceipts()">
           Refresh
         </UButton>
+      </div>
+
+      <div class="my-2">
+        <UCheckbox v-model="highlightTotals" label="Highlight Totals" />
       </div>
 
       <ClientOnly>
@@ -188,22 +213,23 @@ const paginationInfo = computed(() => {
 
             <!-- Title -->
             <template #title-cell="{ row }">
-              <NuxtLink :to="`/receipts/${row.original.id}`" class=" text-slate-800 hover:text-blue-800 hover:underline">
-                {{ row.original.title || '—' }}
-              </NuxtLink>
+              <h1 class="flex items-center gap-2">
+                <NuxtLink :to="`/receipts/${row.original.id}`" class=" text-slate-600 font-semibold hover:text-blue-800 hover:underline">
+                  {{ row.original.title || '—' }}
+                </NuxtLink>
+                <UBadge
+                  v-if="totalsMatch(row.original.azureTags, row.original.receiptTotal) === false"
+                  icon="i-lucide-euro"
+                  color="error"
+                  variant="outline"
+                >
+                  Mismatch
+                </UBadge>
+              </h1>
               <p class="text-slate-400">
                 {{ row.original.merchantName || '-' }}
               </p>
             </template>
-
-            <!-- Merchant Name -->
-            <!-- <template #merchantName-cell="{ row }">
-              <div class="text-slate-800">
-                <NuxtLink :to="`/receipts/${row.original.id}`" class="hover:text-blue-800 hover:underline">
-                  {{ row.original.merchantName || '—' }}
-                </NuxtLink>
-              </div>
-            </template> -->
 
             <!-- Receipt Date -->
             <template #receiptDate-cell="{ row }">
@@ -215,40 +241,31 @@ const paginationInfo = computed(() => {
 
             <!-- Receipt Total -->
             <template #receiptTotal-cell="{ row }">
-              <div v-if="row.original.receiptTotal != null" class="font-medium text-right">
+              <div
+                v-if="row.original.receiptTotal != null"
+                class="font-medium text-right"
+                :class="highlightTotal(totalsMatch(row.original.azureTags, row.original.receiptTotal))"
+              >
                 {{ receiptUtils.formatCurrency(row.original.receiptTotal, row.original.receiptCurrency || 'EUR') }}
               </div>
               <span v-else class="text-slate-400">—</span>
             </template>
 
-            <!-- Receipt Tags -->
-            <!--
-            <template #receiptTags-cell="{ row }">
-              <div v-if="row.original.receiptTags" class="flex flex-wrap gap-1">
-                <UBadge
-                  v-for="(tag, i) in row.original.receiptTags.split(',')"
-                  :key="`tag-${i}`"
-                  color="info"
-                  variant="soft"
-                  class="text-slate-400"
-                >
-                  {{ tag.trim() }}
-                </UBadge>
-              </div>
-              <span v-else class="text-slate-400">—</span>
-            </template>
-            -->
-
             <!-- Azure Tags -->
             <template #azureTags-cell="{ row }">
-              <AzureBlobTags v-if="row.original.azureTags" :tagsAsString="row.original.azureTags" />
+              <AzureBlobTags
+                v-if="row.original.azureTags"
+                :tagsAsString="row.original.azureTags"
+                :highlightTotal="highlightTotals"
+                :totalsMatch="totalsMatch(row.original.azureTags, row.original.receiptTotal)"
+              />
               <span v-else class="text-slate-400">—</span>
             </template>
 
             <!-- Analysis Status -->
             <template #isAnalyzed-cell="{ row }">
               <UBadge
-                :color="row.original.isAnalyzed ? 'success' : 'neutral'"
+                :color="row.original.isAnalyzed ? 'info' : 'neutral'"
                 variant="subtle"
               >
                 {{ row.original.isAnalyzed ? 'Analyzed' : 'Not Analyzed' }}
