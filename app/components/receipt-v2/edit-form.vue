@@ -170,7 +170,7 @@ const handleCancel = () => {
             </label>
           </div>
           <div class="col-span-2">
-            <UInput v-model="formData.merchantName" class="w-80" />
+            <UInput id="merchantName" v-model="formData.merchantName" class="w-80" />
           </div>
           <div>
             <label for="merchantAddress">
@@ -178,7 +178,7 @@ const handleCancel = () => {
             </label>
           </div>
           <div class="col-span-2">
-            <UTextarea v-model="formData.merchantAddress" class="w-80" />
+            <UTextarea id="merchantAddress" v-model="formData.merchantAddress" class="w-80" />
           </div>
           <div>
             <label for="merchantPhone">
@@ -186,7 +186,7 @@ const handleCancel = () => {
             </label>
           </div>
           <div class="col-span-2">
-            <UInput v-model="formData.merchantPhone" class="w-80" />
+            <UInput id="merchantPhone" v-model="formData.merchantPhone" class="w-80" />
           </div>
         </div>
       </section>
