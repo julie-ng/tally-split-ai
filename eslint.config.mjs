@@ -50,12 +50,22 @@ export default withNuxt(
       'vue/html-indent': ['error', 2, {
         baseIndent: 1,
       }],
+      'vue/multi-word-component-names': ['error'],
       '@typescript-eslint/no-unused-vars': 'off',
       '@stylistic/brace-style': ['error', 'stroustrup'],
       '@stylistic/jsx-indent-props': ['warn', 2],
       '@stylistic/jsx-max-props-per-line': ['warn', { maximum: 3 }],
       '@stylistic/no-multi-spaces': ['error', { ignoreEOLComments: true }],
       '@stylistic/space-before-function-paren': ['error', 'always'],
+    },
+  },
+  {
+    files: [
+      'app/pages/**/*.vue',
+      'app/layouts/**/*.vue',
+    ],
+    rules: {
+      'vue/multi-word-component-names': 'off',
     },
   },
 )

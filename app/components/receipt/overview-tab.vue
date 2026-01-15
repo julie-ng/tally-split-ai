@@ -27,7 +27,7 @@ const dates = computed(() => {
         </h1>
         <receipt-analysis-status :receipt="receipt" />
         <hr class="my-4 border-b-slate-100 text-slate-300 border-dashed">
-        <receipt-metadata :receipt="receipt" />
+        <receipt-metadata-info :receipt="receipt" />
       </div>
 
       <!-- [Column 2] Transaction Details -->
@@ -59,7 +59,7 @@ const dates = computed(() => {
 
     <div class="px-4">
       <hr class="my-4 border-b-slate-100 text-slate-300">
-      <receipt-notes :receipt="props.receipt" />
+      <receipt-notes-text :receipt="props.receipt" />
     </div>
   </div>
 </template>
