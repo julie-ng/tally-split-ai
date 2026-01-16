@@ -54,7 +54,7 @@ const { data, pending, error } = await useFetch('/api/blobs', {
         <p class="text-slate-600 mb-5">
           Found {{ data.count }} blob{{ data.count !== 1 ? 's' : '' }} on Azure
         </p>
-        <blob-grid :blobs="data.blobs" />
+        <blob-table :blobs="data.blobs" />
       </div>
     </div>
   </UContainer>
