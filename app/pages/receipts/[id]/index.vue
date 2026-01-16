@@ -50,7 +50,7 @@ const breadcrumbItems = [
 
     <!-- Receipt Details -->
     <div v-else-if="receipt" class="mr-4">
-      <receipt-tabs-navigation :receipt="receipt" />
+      <receipt-tabs :receipt="receipt" />
     </div>
 
     <!-- Not found state -->

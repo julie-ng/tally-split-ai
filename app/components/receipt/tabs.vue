@@ -1,4 +1,5 @@
 <script setup>
+// eslint-disable vue/multi-word-component-names
 const props = defineProps({
   receipt: Object,
 })
