@@ -3,6 +3,9 @@ const props = defineProps({
   receipt: Object,
 })
 
+// Temp - only show 1st upload
+const blobFile = computed(() => props.receipt.uploads[0])
+
 const dates = computed(() => {
   return [
     {
@@ -36,6 +39,18 @@ const dates = computed(() => {
           Transaction Details
         </h1>
 
+        <!-- Merchant Info -->
+        <receipt-merchant-info
+          v-if="props.receipt.merchantName"
+          :name="props.receipt.merchantName"
+          :address="props.receipt.merchantAddress"
+          :phone="props.receipt.merchantPhone"
+          :relaxedLineHeight="true"
+          class="my-4"
+        />
+
+        <hr class="my-4 border-b-slate-100 text-slate-300 border-dashed">
+
         <!-- Receipt Dates -->
         <data-key-value-table :items="dates" />
         <hr class="my-4 border-b-slate-100 text-slate-300 border-dashed">
@@ -45,15 +60,11 @@ const dates = computed(() => {
       </div>
 
       <!-- [Column 3]: Merchant Info -->
-      <div class="pt-8">
-        <!-- Merchant Info -->
-        <receipt-merchant-info
-          v-if="props.receipt.merchantName"
-          :name="props.receipt.merchantName"
-          :address="props.receipt.merchantAddress"
-          :phone="props.receipt.merchantPhone"
-          class="my-4"
-        />
+      <div class="px-4 py-2">
+        <h1 class="mt-2 mb-4 font-semibold">
+          Azure Blob Info
+        </h1>
+        <azure-blob-info :upload="blobFile" />
       </div>
     </div>
 
