@@ -6,6 +6,7 @@ useHead({
 })
 
 const userStore = useUserStore()
+const viewMode = ref('grid')
 
 const { data, pending, error } = await useFetch('/api/blobs', {
   query: { userId: userStore.userId },
@@ -49,12 +50,20 @@ const { data, pending, error } = await useFetch('/api/blobs', {
         </NuxtLink>
       </div>
 
-      <!-- Blobs list -->
+      <!-- Display Blobs -->
       <div v-else class="mt-10">
         <p class="text-slate-600 mb-5">
           Found {{ data.count }} blob{{ data.count !== 1 ? 's' : '' }} on Azure
         </p>
-        <blob-table :blobs="data.blobs" />
+        <div class="mb-4">
+          <ui-layout-toggle v-model="viewMode" />
+        </div>
+
+        <!-- Grid View -->
+        <blob-grid v-if="viewMode === 'grid'" :blobs="data.blobs" />
+
+        <!-- Table View -->
+        <blob-table v-if="viewMode === 'list'" :blobs="data.blobs" />
       </div>
     </div>
   </UContainer>
