@@ -14,11 +14,16 @@ const altText = computed(() => {
 
 <template>
   <div>
-    <azure-blob-image
+    <azure-blob-sas-link
       v-if="hasBlobImage"
-      :blobName="props.upload.blobName"
-      :alt="altText"
-    />
+      :blobName="upload.blobName"
+      :blobUrl="upload.blobUrl"
+    >
+      <azure-blob-image
+        :blobName="props.upload.blobName"
+        :alt="altText"
+      />
+    </azure-blob-sas-link>
     <UAlert
       v-else
       color="error"

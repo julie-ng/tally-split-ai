@@ -1,6 +1,5 @@
 <script setup>
-// eslint-disable-next-line no-unused-vars
-const props = defineProps({
+defineProps({
   upload: Object,
 })
 </script>
@@ -23,13 +22,11 @@ const props = defineProps({
 
     <!-- Azure Blob Name -->
     <ui-file-property label="Blob Name">
-      <NuxtLink
-        :to="upload.blobUrl"
-        :external="true"
-        class="hover:underline hover:text-blue-600 text-sm"
-      >
-        {{ upload.blobName }}
-      </NuxtLink>
+      <azure-blob-sas-link
+        :blobName="upload.blobName"
+        :blobUrl="upload.blobUrl"
+        :ui="{ class: 'hover:underline hover:text-blue-600 text-sm' }"
+      />
     </ui-file-property>
 
     <!-- Azure Blob Tags -->
