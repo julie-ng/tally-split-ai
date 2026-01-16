@@ -30,7 +30,9 @@ const breadcrumbItems = [
 
 <template>
   <UContainer class="pt-5">
-    <UBreadcrumb :items="breadcrumbItems" />
+    <div class="ml-4">
+      <UBreadcrumb :items="breadcrumbItems" />
+    </div>
 
     <!-- Loading -->
     <loading-placeholder v-if="pending" title="Loading Receipt" :hashId="id" />
@@ -47,7 +49,7 @@ const breadcrumbItems = [
     />
 
     <!-- Receipt Details -->
-    <div v-else-if="receipt">
+    <div v-else-if="receipt" class="mr-4">
       <receipt-tabs-navigation :receipt="receipt" />
     </div>
 
