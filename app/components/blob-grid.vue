@@ -3,10 +3,6 @@ defineProps({
   // Expects array per /api/blobs
   blobs: Array,
 })
-
-function removeUsernamePrefix (blobName) {
-  return blobName.split('/').pop()
-}
 </script>
 
 <template>
@@ -20,7 +16,7 @@ function removeUsernamePrefix (blobName) {
           <!-- Blob Name -->
           <h2 class="font-semibold text-blue-800 font-mono">
             <a :href="blob.sasUrl" target="_blank" class="hover:underline">
-              {{ removeUsernamePrefix(blob.filename) }}
+              {{ azureUtils.removeUsernamePrefixFromBlobname(blob.filename) }}
             </a>
           </h2>
         </template>

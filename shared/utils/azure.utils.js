@@ -19,7 +19,19 @@ function getReceiptTotalBlobTag (jsonString) {
     : null
 }
 
+/**
+ * Removes the username prefix from a blob path
+ * e.g. "userId123/receipt.jpg" -> "receipt.jpg"
+ *
+ * @param {string} blobName - The full blob path including username prefix
+ * @returns {string} The filename without the username prefix
+ */
+function removeUsernamePrefixFromBlobname (blobName) {
+  return blobName.split('/').pop()
+}
+
 export const azureUtils = {
   blobTagsJsonToObject,
   getReceiptTotalBlobTag,
+  removeUsernamePrefixFromBlobname,
 }
