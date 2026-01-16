@@ -7,6 +7,7 @@ const userId = store.userId
 
 // const route = useRoute()
 // const toast = useToast()
+const open = ref(false)
 
 const collapsed = ref(false)
 const links = [
@@ -43,7 +44,7 @@ const links = [
           to: '/api/receipts/',
           external: true,
           target: '_blank',
-          icon: 'i-lucide-file-braces',
+          icon: 'i-lucide-braces',
         },
       ],
     },
@@ -58,7 +59,7 @@ const links = [
           to: '/api/uploads/',
           external: true,
           target: '_blank',
-          icon: 'i-lucide-file-braces',
+          icon: 'i-lucide-braces',
         },
         {
           label: 'List',
