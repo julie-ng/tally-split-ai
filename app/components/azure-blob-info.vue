@@ -7,21 +7,14 @@ defineProps({
 <template>
   <div>
     <!-- Original Filename -->
-    <ui-file-property label="Original Filename">
-      <p class="text-sm font-mono">
+    <ui-file-property label="Original Filename" :ui="{ class: 'my-4' }">
+      <p class="text-sm mt-1">
         {{ upload.originalFilename }}
       </p>
     </ui-file-property>
 
-    <!-- File Size -->
-    <ui-file-property label="File Size">
-      <p class="text-sm font-mono">
-        {{ formatBytes(upload.size) }}
-      </p>
-    </ui-file-property>
-
     <!-- Azure Blob Name -->
-    <ui-file-property label="Blob Name">
+    <ui-file-property label="Blob Name" :ui="{ class: 'my-4' }">
       <azure-blob-sas-link
         :blobName="upload.blobName"
         :blobUrl="upload.blobUrl"
@@ -29,8 +22,15 @@ defineProps({
       />
     </ui-file-property>
 
+    <!-- File Size -->
+    <ui-file-property label="File Size" :ui="{ class: 'my-4' }">
+      <p class="text-sm">
+        {{ formatBytes(upload.size) }}
+      </p>
+    </ui-file-property>
+
     <!-- Azure Blob Tags -->
-    <ui-file-property label="Azure Blob Tags">
+    <ui-file-property label="Azure Blob Tags" :ui="{ class: 'my-4' }">
       <div class="my-2">
         <azure-blob-tags :tagsAsString="upload.azureTags" />
       </div>
