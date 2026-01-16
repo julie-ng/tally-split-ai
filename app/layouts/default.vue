@@ -5,12 +5,17 @@ const store = useUserStore()
 // const userFullName = store.fullName
 const userId = store.userId
 
-// const route = useRoute()
+const route = useRoute()
 // const toast = useToast()
 const open = ref(false)
 
 const collapsed = ref(false)
-const links = [
+
+function isActive (path: string) {
+  return route.path === path || route.path.startsWith(path + '/')
+}
+
+const links = computed(() => [
   [
     // {
     //   label: 'Home',
@@ -33,6 +38,8 @@ const links = [
       label: 'Receipts',
       icon: 'i-lucide-receipt-euro',
       to: '/receipts',
+      active: isActive('/receipts'),
+      defaultOpen: true,
       children: [
         {
           label: 'JSON',
@@ -47,6 +54,7 @@ const links = [
       label: 'Uploads',
       icon: 'i-lucide-upload-cloud',
       to: '/uploads',
+      active: isActive('/uploads'),
       defaultOpen: true,
       children: [
         {
@@ -72,7 +80,7 @@ const links = [
       ],
     },
   ],
-]
+])
 </script>
 
 <template>
