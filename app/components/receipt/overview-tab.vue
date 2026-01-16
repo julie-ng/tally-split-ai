@@ -22,19 +22,17 @@ const dates = computed(() => {
 
 <template>
   <div>
-    <div class="grid grid-cols-3 gap-4">
-      <!-- [Column 1] Analysis, Metadata -->
+    <div class="grid grid-cols-2 gap-4">
+      <!-- [Column 1] Receipt Info -->
       <div class="px-4 py-2">
         <h1 class="my-2 font-semibold">
-          Analysis
+          Receipt
         </h1>
-        <receipt-analysis-status :receipt="receipt" />
-        <hr class="my-4 border-b-slate-100 text-slate-300 border-dashed">
-        <receipt-metadata-info :receipt="receipt" />
-      </div>
 
-      <!-- [Column 2] Transaction Details -->
-      <div class="px-4 py-2">
+        <receipt-metadata-info :receipt="receipt" />
+
+        <hr class="my-4 border-slate-300 border-dashed">
+
         <h1 class="my-2 font-semibold">
           Transaction Details
         </h1>
@@ -44,22 +42,21 @@ const dates = computed(() => {
           v-if="props.receipt.merchantName"
           :name="props.receipt.merchantName"
           :address="props.receipt.merchantAddress"
-          :phone="props.receipt.merchantPhone"
           :relaxedLineHeight="true"
           class="my-4"
         />
 
-        <hr class="my-4 border-b-slate-100 text-slate-300 border-dashed">
+        <hr class="my-4 border-slate-300 border-dashed">
 
         <!-- Receipt Dates -->
         <data-key-value-table :items="dates" />
-        <hr class="my-4 border-b-slate-100 text-slate-300 border-dashed">
+        <hr class="my-4 border-slate-300 border-dashed">
 
         <!-- Receipt Totals -->
         <data-key-value-table :items="receiptUtils.extractTotalsAsArray(receipt)" currency="EUR" />
       </div>
 
-      <!-- [Column 3]: Merchant Info -->
+      <!-- [Column 2]: Azure Blob Info -->
       <div class="px-4 py-2">
         <h1 class="mt-2 mb-4 font-semibold">
           Azure Blob Info
@@ -69,7 +66,7 @@ const dates = computed(() => {
     </div>
 
     <div class="px-4">
-      <hr class="my-4 border-b-slate-100 text-slate-300">
+      <hr class="my-6 border-slate-200">
       <receipt-notes-text :receipt="props.receipt" />
     </div>
   </div>

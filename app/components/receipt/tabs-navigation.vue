@@ -45,7 +45,7 @@ if (!schemaCheck.success) {
 <template>
   <div class="mt-3">
     <!-- Receipt Title -->
-    <h1 class="font-bold text-3xl mb-2">
+    <h1 class="font-bold text-3xl mb-2 ml-4">
       <template v-if="props.receipt.title">
         {{ props.receipt.title }}
       </template>
@@ -87,7 +87,7 @@ if (!schemaCheck.success) {
           </template>
         </UTabs>
       </div>
-      <div id="side-col" class="mt-5">
+      <div id="side-col" class="mt-12">
         <receipt-upload-column
           v-if="props.receipt.uploads.length > 0"
           :upload="props.receipt.uploads[0]"
