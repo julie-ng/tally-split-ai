@@ -17,9 +17,9 @@ const displayText = computed(() => {
     <p class="text-sm text-slate-400 tracking-wide">
       {{ label }}
     </p>
-    <p class="text-base text-slate-500">
+    <div class="text-base text-slate-500">
       {{ displayText }}
       <slot />
-    </p>
+    </div>
   </div>
 </template>
