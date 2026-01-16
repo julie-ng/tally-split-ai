@@ -46,7 +46,7 @@ const imageUrl = computed(() => tokenData.value?.blobUrlWithSas || '')
       :alt="blobName"
       :data-blob-name="tokenData.blobName"
       :data-sas-expiry="tokenData.expiresAt"
-      class="w-full h-auto rounded-lg"
+      class="w-full h-auto"
     >
   </div>
 </template>

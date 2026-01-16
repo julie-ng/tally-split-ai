@@ -13,7 +13,7 @@ const altText = computed(() => {
 </script>
 
 <template>
-  <div>
+  <div class="border border-slate-200">
     <azure-blob-sas-link
       v-if="hasBlobImage"
       :blobName="upload.blobName"
