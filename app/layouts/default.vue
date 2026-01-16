@@ -18,19 +18,14 @@ const links = [
     //   to: '/',
     // },
     {
-      label: 'Azure AI Debug',
-      icon: 'i-lucide-chef-hat',
-      to: '/debug-analysis',
+      label: 'Debug Analyses',
+      icon: 'i-lucide-microscope',
+      to: '/analyses',
     },
     {
       label: 'Blobs',
       icon: 'i-lucide-blocks',
       to: '/blobs',
-    },
-    {
-      label: 'Samples',
-      icon: 'i-lucide-squares-subtract',
-      to: '/samples',
     },
   ],
   [

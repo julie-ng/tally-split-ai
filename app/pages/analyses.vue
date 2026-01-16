@@ -40,7 +40,7 @@ onMounted(async () => {
 <template>
   <UContainer class="pt-5">
     <h1 class="text-2xl font-semibold mb-4">
-      Debugging Azure AI Output
+      Debugging Azure AI Output (Analyses)
     </h1>
 
     <loading-placeholder v-if="pending" title="Loading Analysis Data" />
