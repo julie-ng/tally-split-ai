@@ -4,23 +4,22 @@ const props = defineProps({
 })
 
 const address = computed(() => props.merchant.address)
-// const phone = computed(() => props.merchant.phone)
+const phone = computed(() => props.merchant.phone)
 </script>
 
 <template>
-  <div class="text-sm border border-red-200 p-2">
-    <h1 class="text-slate-800">
+  <div class="text-sm">
+    <h1>
       {{ props.merchant.name.value }}
     </h1>
     <p v-if="address.value" class="my-1">
       {{ address.value.road }} {{ address.value.houseNumber }}<br>
       {{ address.value.postalCode }} {{ address.value.city }}
     </p>
-  <!-- Hide Phone for now  -->
-  <!--
-  <p v-if="phone.value" class="my-1">
-    {{ phone.value }}
-  </p>
-  -->
+    <!-- Hide Phone for now  -->
+
+    <p v-if="phone" class="my-1">
+      {{ phone.value }}
+    </p>
   </div>
 </template>
