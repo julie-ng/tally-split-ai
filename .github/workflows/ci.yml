@@ -56,5 +56,9 @@ jobs:
           rm package-lock.json
           npm install
 
+      # Missing in runner
+      - name: install sass
+        run: npm install -D sass-embedded
+
       - name: Build Nuxt app
         run: npm run build
