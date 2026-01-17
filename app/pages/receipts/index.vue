@@ -293,7 +293,7 @@ const paginationInfo = computed(() => {
 
             <!-- Azure Tags -->
             <template #azureTags-cell="{ row }">
-              <azure-blob-tags
+              <blob-tags
                 v-if="row.original.azureTags"
                 :tagsAsString="row.original.azureTags"
                 :highlightTotal="highlightTotals"

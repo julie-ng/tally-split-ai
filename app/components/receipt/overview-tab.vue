@@ -61,13 +61,13 @@ const dates = computed(() => {
         <h1 class="mt-2 mb-4 font-semibold">
           Azure Blob Info
         </h1>
-        <azure-blob-info :upload="blobFile" />
+        <blob-info :upload="blobFile" />
       </div>
     </div>
 
     <div class="px-4">
       <hr class="my-6 border-slate-200">
-      <receipt-notes-text :receipt="props.receipt" />
+      <receipt-notes :receipt="props.receipt" />
     </div>
   </div>
 </template>
