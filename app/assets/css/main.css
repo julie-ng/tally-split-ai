@@ -30,7 +30,7 @@ html {
 */
 
 .vjs-key {
-  color: var(--color-rose-400);
+  color: var(--color-gray-600);
 }
 
 .vjs-value-string {
@@ -38,27 +38,40 @@ html {
 }
 
 .vjs-value-number {
-  color: var(--color-orange-300);
+  color: var(--color-blue-500);
+  font-weight: semibold;
+}
+
+.vjs-value-null {
+  color: var(--color-orange-600);
+}
+
+.vjs-value-boolean {
+  color: var(--color-pink-500);
 }
 
 .vjs-key>.vjs-colon,
 .vjs-tree-brackets {
-  color: var(--color-slate-300);
+  color: var(--color-slate-700);
 }
 
 .vjs-tree-node {
   .vjs-indent-unit {
     &.has-line {
-      border-left-color: var(--color-slate-600);
+      border-left-color: var(--color-slate-300);
     }
   }
 }
 
+.vjs-comment {
+  color: var(--color-slate-400);
+}
+
 .vjs-carets {
-  color: var(--color-slate-500);
+  color: var(--color-slate-300);
 }
 
 .vjs-tree-node.is-highlight,
 .vjs-tree-node:hover {
-  background-color: var(--color-slate-700);
+  background-color: var(--color-slate-100);
 }

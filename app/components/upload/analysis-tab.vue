@@ -82,7 +82,7 @@ if (!schemaCheck.success) {
 
       <!-- eslint-disable-next-line vue/no-unused-vars -->
       <template #rawJson="{ item }">
-        <div class="bg-slate-800 p-4">
+        <div class="bg-slate-50 p-4">
           <vue-json-pretty
             :data="props.upload"
             :indent="2"

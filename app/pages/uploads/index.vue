@@ -185,7 +185,7 @@ const paginationInfo = computed(() => {
             class="flex-1"
           >
             <template #expanded="{ row }">
-              <div class="bg-slate-800 p-4">
+              <div class="bg-slate-50 p-4">
                 <vue-json-pretty
                   :data="row.original"
                   :indent="2"

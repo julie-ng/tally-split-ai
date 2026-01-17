@@ -95,7 +95,7 @@ const validatedFields = computed(() => validation.value.success ? validation.val
       <h1 class="my-3 text-lg font-bold text-blue-700">
         Analysis JSON
       </h1>
-      <div class="bg-slate-800 p-4">
+      <div class="bg-slate-50 p-4">
         <vue-json-pretty
           :data="props.analysisData.data"
           :indent="2"
