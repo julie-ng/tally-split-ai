@@ -258,6 +258,14 @@ const paginationInfo = computed(() => {
                   {{ row.original.title || '—' }}
                 </NuxtLink>
                 <UBadge
+                  v-if="!row.original.uploads || row.original.uploads.length === 0"
+                  icon="i-lucide-triangle-alert"
+                  color="warning"
+                  variant="outline"
+                >
+                  Missing Upload
+                </UBadge>
+                <UBadge
                   v-if="totalsMatch(row.original.azureTags, row.original.receiptTotal) === false"
                   icon="i-lucide-euro"
                   color="error"
