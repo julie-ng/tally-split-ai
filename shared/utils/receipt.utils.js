@@ -5,6 +5,9 @@
  * @returns {string} - Formatted currency string (e.g., "5.00 €")
  */
 function formatCurrency (amount, currencySymbol = '€') {
+  if (amount === '-' || amount === null || amount === undefined) {
+    return '-'
+  }
   const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount
   return `${numericAmount.toFixed(2)} ${currencySymbol}`
 }

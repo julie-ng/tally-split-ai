@@ -123,47 +123,55 @@ const upload = computed(() => props.receipt.uploads?.[0])
       <div v-else-if="validatedFields">
         <!-- Analysis Header -->
         <div class="grid grid-cols-2 gap-x-20">
+          <!-- Column 1 -->
           <div>
+            <p class="font-semibold my-2">
+              Analysis
+            </p>
             <div class="grid grid-cols-2 gap-0">
               <div class="py-1 text-slate-500 text-sm">
-                Analyzed At
+                Analysis Date
               </div>
               <div class="py-1.5 text-sm text-right">
                 {{ timestampUtils.toShortDate(upload?.analyzedAt) }}
               </div>
-              <div class="py-1.5 text-slate-500 text-sm">
-                Analysis Status
-              </div>
-              <div class="py-1 text-right">
-                <UBadge
-                  :label="upload?.analysisStatus"
-                  :color="badgeStyleHelpers.statusBadgeColor(upload?.analysisStatus)"
-                  :variant="badgeStyleHelpers.statusBadgeVariant(upload?.analysisStatus)"
-                  class="capitalize"
-                />
-              </div>
             </div>
-            <hr class="my-3 border-slate-200">
-            <data-key-value-table :items="totals" currency="€" />
-            <hr class="my-3 border-slate-200">
-          </div>
-          <div>
-            <data-key-value-table :items="dates" />
-            <hr class="my-3 border-slate-200">
 
-            <p class="text-sm text-slate-500 mb-1">
+            <!-- Extracted Info -->
+            <hr class="my-3 border-slate-300 border-dashed">
+            <p class="font-semibold my-2">
+              Transaction Info <analyzed-by-ai-icon />
+            </p>
+            <!-- Receipt Date, time -->
+            <data-key-value-table :items="dates" />
+            <hr class="my-3 border-slate-300 border-dashed">
+
+            <!-- Totals -->
+            <data-key-value-table :items="totals" currency="€" />
+            <hr class="my-3 border-slate-300 border-dashed">
+
+            <!-- Merchant -->
+            <p class="font-semibold my-2">
               Merchant
+              <analyzed-by-ai-icon />
             </p>
             <analysis-merchant-info :merchant="validatedFields.merchant" class="mb-4" />
+            <hr class="my-3 border-slate-300 border-dashed">
           </div>
-        </div>
 
-        <!-- Items Table -->
-        <receipt-items-table
-          :items="validatedFields.items.items"
-          :has-quantity="validatedFields.items.hasQuantity"
-          :subtotal="validatedFields.items.subtotal"
-        />
+          <!-- Column 2 -->
+          <div>
+            <!-- Items Table -->
+            <p class="font-semibold my-2">
+              Line Items <analyzed-by-ai-icon />
+            </p>
+            <receipt-items-table
+              :items="validatedFields.items.items"
+              :has-quantity="validatedFields.items.hasQuantity"
+              :subtotal="validatedFields.items.subtotal"
+            />
+          </div>
+        </div><!-- /.grid -->
       </div>
 
       <!-- Raw JSON (for debugging) -->

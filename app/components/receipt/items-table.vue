@@ -13,7 +13,7 @@ defineProps({
 </script>
 
 <template>
-  <div class="border border-red-200 p-2">
+  <div class="">
     <table class="my-3 text-sm">
       <thead>
         <tr>
