@@ -13,11 +13,11 @@ const tabItems = [
     value: 'overview',
     slot: 'overview',
   },
-  // {
-  //   label: 'Uploads',
-  //   value: 'uploads',
-  //   slot: 'uploads',
-  // },
+  {
+    label: 'Analysis',
+    value: 'analysis',
+    slot: 'analysis',
+  },
   {
     label: 'Raw JSON',
     value: 'raw-json',
@@ -143,6 +143,11 @@ const analyzeReceipt = async () => {
             />
             <!-- <ReceiptOverviewTab :receipt="receipt" /> -->
             <receipt-overview-tab :receipt="receipt" />
+          </template>
+
+          <!-- eslint-disable-next-line vue/no-unused-vars -->
+          <template #analysis="{ item }">
+            <receipt-analysis-tab :receipt="receipt" />
           </template>
 
           <!-- eslint-disable-next-line vue/no-unused-vars -->
