@@ -80,7 +80,7 @@ const rows = computed(() => {
       </template>
 
       <template #tags-cell="{ row }">
-        <tags-object-list :tags="row.original.tags" :ui="{ class: 'text-slate-400' }" />
+        <blob-tags :tags="row.original.tags" :ui="{ class: 'text-slate-400' }" />
       </template>
     </UTable>
   </div>

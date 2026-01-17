@@ -295,7 +295,7 @@ const paginationInfo = computed(() => {
             <template #azureTags-cell="{ row }">
               <blob-tags
                 v-if="row.original.azureTags"
-                :tagsAsString="row.original.azureTags"
+                :tags="row.original.azureTags"
                 :highlightTotal="highlightTotals"
                 :totalsMatch="totalsMatch(row.original.azureTags, row.original.receiptTotal)"
               />

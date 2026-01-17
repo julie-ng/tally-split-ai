@@ -54,7 +54,7 @@ defineProps({
           </div>
         </div>
         <div class="mt-4">
-          <tags-object-list :tags="blob.tags" :ui="{ class: 'text-slate-400' }" />
+          <blob-tags :tags="blob.tags" :ui="{ class: 'text-slate-400' }" />
         </div>
       </UCard>
     </article>

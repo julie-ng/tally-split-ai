@@ -1,11 +1,13 @@
 <script setup>
 const props = defineProps({
-  tagsAsString: {
-    type: String,
+  // Single tags prop - can be string or object
+  tags: {
+    type: [String, Object],
     required: true,
   },
+  // For string type
   filter: {
-    type: Array, // tags to keep
+    type: Array,
     required: false,
     default: () => [],
   },
@@ -19,69 +21,40 @@ const props = defineProps({
     required: false,
     default: true,
   },
+  // For object type
+  color: {
+    type: String,
+    required: false,
+    default: 'neutral',
+  },
+  variant: {
+    type: String,
+    required: false,
+    default: 'soft',
+  },
+  ui: {
+    type: Object,
+    required: false,
+    default: () => ({}),
+  },
 })
 
-/**
- * Setup Tags Array
- */
-const tags = computed(() => {
-  const allTags = azureUtils.blobTagsJsonToObject(props.tagsAsString)
-
-  // If no filter specified, return all tags
-  if (props.filter.length === 0) {
-    return allTags
-  }
-  else {
-    // Filter to only include specified keys
-    const filtered = []
-    allTags.forEach((tag) => {
-      if (props.filter.includes(tag.key)) {
-        filtered.push(tag)
-      }
-    })
-    return filtered
-  }
-})
-
-/**
- * Customized Styles
- */
-const shouldHighlight = key => props.highlightTotal && key === 'receipt-total'
-
-const tagColor = (key) => {
-  let color = 'neutral' // default
-  if (shouldHighlight(key)) {
-    color = props.totalsMatch
-      ? 'info'
-      : 'error'
-  }
-  return color
-}
-
-const tagVariant = (key) => {
-  // console.log(`tagColor() ${props.highlightTotal}`, key)
-  return shouldHighlight(key)
-    ? 'subtle'
-    : 'soft'
-}
-
-const extraClasses = (key) => {
-  return shouldHighlight(key)
-    ? ''
-    : 'text-slate-500'
-}
+const isStringType = computed(() => typeof props.tags === 'string')
 </script>
 
 <template>
-  <div class="flex flex-wrap gap-2">
-    <UBadge
-      v-for="tag in tags"
-      :key="tag.key"
-      :color="tagColor(tag.key)"
-      :variant="tagVariant(tag.key)"
-      :class="extraClasses(tag.key)"
-    >
-      {{ tag.key }}: {{ tag.value }}
-    </UBadge>
-  </div>
+  <blob-tags-string
+    v-if="isStringType"
+    :tags-as-string="props.tags"
+    :filter="props.filter"
+    :highlight-total="props.highlightTotal"
+    :totals-match="props.totalsMatch"
+  />
+  <blob-tags-object
+    v-else
+    :tags="props.tags"
+    :color="props.color"
+    :variant="props.variant"
+    :ui="props.ui"
+  />
 </template>

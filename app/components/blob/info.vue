@@ -32,7 +32,7 @@ defineProps({
     <!-- Azure Blob Tags -->
     <ui-file-property label="Azure Blob Tags" :ui="{ class: 'my-4' }">
       <div class="my-2">
-        <blob-tags :tagsAsString="upload.azureTags" />
+        <blob-tags :tags="upload.azureTags" />
       </div>
     </ui-file-property>
   </div>
