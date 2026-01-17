@@ -88,9 +88,9 @@ const links = computed(() => [
     <UDashboardSidebar
       id="default"
       v-model:collapsed="collapsed"
-      :defaultSize="12"
-      :minSize="12"
-      :maxSize="15"
+      :default-size="12"
+      :min-size="12"
+      :max-size="15"
       collapsible
       resizable
       class="bg-elevated/25"

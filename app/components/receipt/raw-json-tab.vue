@@ -10,8 +10,8 @@ defineProps({
       :data="receipt"
       :indent="2"
       :deep="4"
-      :showIcon="true"
-      :showLength="true"
+      :show-icon="true"
+      :show-length="true"
     />
   </div>
 </template>

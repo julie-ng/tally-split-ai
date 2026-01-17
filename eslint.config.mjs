@@ -35,7 +35,7 @@ export default withNuxt(
       'no-prototype-builtins': 'off',
       'no-unused-vars': ['error', { args: 'none' }],
       'vue/require-default-prop': 'off',
-      'vue/attribute-hyphenation': ['warn', 'never'], // TODO
+      'vue/attribute-hyphenation': ['warn', 'always'],
       'vue/max-attributes-per-line': ['error', {
         singleline: {
           max: 3,

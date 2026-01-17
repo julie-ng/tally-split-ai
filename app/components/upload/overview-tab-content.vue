@@ -51,7 +51,7 @@ const props = defineProps({
     </div>
     <div class="col-span-2">
       <blob-image
-        :blobName="upload.blobName"
+        :blob-name="upload.blobName"
         :alt="upload.blobName"
       />
     </div>

@@ -16,11 +16,11 @@ const altText = computed(() => {
   <div class="border border-slate-200">
     <blob-sas-link
       v-if="hasBlobImage"
-      :blobName="upload.blobName"
-      :blobUrl="upload.blobUrl"
+      :blob-name="upload.blobName"
+      :blob-url="upload.blobUrl"
     >
       <blob-image
-        :blobName="props.upload.blobName"
+        :blob-name="props.upload.blobName"
         :alt="altText"
       />
     </blob-sas-link>

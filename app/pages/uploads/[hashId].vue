@@ -30,7 +30,7 @@ const breadcrumbItems = [
     <UBreadcrumb :items="breadcrumbItems" />
 
     <!-- Loading -->
-    <loading-placeholder v-if="pending" title="Loading Upload" :hashId="hashId" />
+    <loading-placeholder v-if="pending" title="Loading Upload" :hash-id="hashId" />
 
     <!-- Error -->
     <UAlert
@@ -47,15 +47,15 @@ const breadcrumbItems = [
     <div v-else-if="upload">
       <upload-analysis-tab
         :upload="upload"
-        :analysisData="analysisData"
-        :analysisPending="analysisPending"
-        :analysisError="analysisError"
+        :analysis-data="analysisData"
+        :analysis-pending="analysisPending"
+        :analysis-error="analysisError"
       />
     </div>
 
     <!-- Not found state -->
     <div v-else>
-      <not-found :title="`Upload Not Found`" :hashId="hashId" />
+      <not-found :title="`Upload Not Found`" :hash-id="hashId" />
     </div>
   </UContainer>
 </template>

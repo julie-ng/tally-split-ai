@@ -172,7 +172,7 @@ const paginationInfo = computed(() => {
             ref="table"
             v-model:expanded="expanded"
             v-model:pagination="pagination"
-            :paginationOptions="{
+            :pagination-options="{
               getPaginationRowModel: getPaginationRowModel(),
               autoResetPageIndex: false,
             }"
@@ -180,8 +180,8 @@ const paginationInfo = computed(() => {
             :columns="columns"
             :ui="tableStyles"
             :loading="pending"
-            loadingColor="primary"
-            loadingAnimation="carousel"
+            loading-color="primary"
+            loading-animation="carousel"
             class="flex-1"
           >
             <template #expanded="{ row }">
@@ -190,8 +190,8 @@ const paginationInfo = computed(() => {
                   :data="row.original"
                   :indent="2"
                   :deep="4"
-                  :showIcon="true"
-                  :showLength="true"
+                  :show-icon="true"
+                  :show-length="true"
                 />
               </div>
             </template>
@@ -257,8 +257,8 @@ const paginationInfo = computed(() => {
             <template #actions-cell="{ row }">
               <UButton
                 icon="i-lucide-focus"
-                loadingIcon="i-lucide-loader"
-                loadingAuto
+                loading-icon="i-lucide-loader"
+                loading-auto
                 :disabled="row.original.analysisStatus === 'processing' || row.original.analysisStatus === 'completed'"
                 color="info"
                 variant="solid"
@@ -284,7 +284,7 @@ const paginationInfo = computed(() => {
             </div>
             <UPagination
               :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
-              :itemsPerPage="table?.tableApi?.getState().pagination.pageSize"
+              :items-per-page="table?.tableApi?.getState().pagination.pageSize"
               :total="table?.tableApi?.getFilteredRowModel().rows.length"
               @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
             />

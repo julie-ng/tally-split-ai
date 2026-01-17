@@ -16,8 +16,8 @@ defineProps({
     <!-- Azure Blob Name -->
     <ui-file-property label="Blob Name" :ui="{ class: 'my-4' }">
       <blob-sas-link
-        :blobName="upload.blobName"
-        :blobUrl="upload.blobUrl"
+        :blob-name="upload.blobName"
+        :blob-url="upload.blobUrl"
         :ui="{ class: 'hover:underline hover:text-blue-600 text-sm' }"
       />
     </ui-file-property>

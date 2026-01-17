@@ -42,7 +42,7 @@ const dates = computed(() => {
           v-if="props.receipt.merchantName"
           :name="props.receipt.merchantName"
           :address="props.receipt.merchantAddress"
-          :relaxedLineHeight="true"
+          :relaxed-line-height="true"
           class="my-4"
         />
 
