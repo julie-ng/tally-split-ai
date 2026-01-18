@@ -125,7 +125,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
         <div class="grid grid-cols-2 gap-x-20">
           <!-- Column 1 -->
           <div>
-            <p class="font-semibold my-2">
+            <p class="font-semibold my-2 text-primary-700">
               Analysis
             </p>
             <div class="grid grid-cols-2 gap-0">
@@ -139,7 +139,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
 
             <!-- Extracted Info -->
             <hr class="my-3 border-slate-300 border-dashed">
-            <p class="font-semibold my-2">
+            <p class="font-semibold my-2 text-primary-700">
               Transaction Info <analyzed-by-ai-icon />
             </p>
             <!-- Receipt Date, time -->
@@ -151,7 +151,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
             <hr class="my-3 border-slate-300 border-dashed">
 
             <!-- Merchant -->
-            <p class="font-semibold my-2">
+            <p class="font-semibold my-2 text-primary-700">
               Merchant
               <analyzed-by-ai-icon />
             </p>
@@ -162,7 +162,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
           <!-- Column 2 -->
           <div>
             <!-- Items Table -->
-            <p class="font-semibold my-2">
+            <p class="font-semibold my-2 text-primary-700">
               Line Items <analyzed-by-ai-icon />
             </p>
             <receipt-items-table
@@ -175,7 +175,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
       </div>
 
       <!-- Raw JSON (for debugging) -->
-      <h1 class="my-3 text-lg font-bold text-blue-700">
+      <h1 class="my-3 font-semibold text-blue-700">
         Analysis JSON
       </h1>
       <div class="bg-slate-50 p-4 rounded">

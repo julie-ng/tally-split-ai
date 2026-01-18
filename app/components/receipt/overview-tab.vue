@@ -25,7 +25,7 @@ const dates = computed(() => {
     <div class="grid grid-cols-2 gap-4">
       <!-- [Column 1] Receipt Info -->
       <div class="px-4 py-2">
-        <h1 class="my-2 font-semibold">
+        <h1 class="my-2 font-semibold text-primary-700">
           Receipt
         </h1>
 
@@ -33,7 +33,7 @@ const dates = computed(() => {
 
         <hr class="my-4 border-slate-300 border-dashed">
 
-        <h1 class="my-2 font-semibold">
+        <h1 class="my-2 font-semibold text-primary-700">
           Transaction Details
         </h1>
 
@@ -58,7 +58,7 @@ const dates = computed(() => {
 
       <!-- [Column 2]: Azure Blob Info -->
       <div class="px-4 py-2">
-        <h1 class="mt-2 mb-4 font-semibold">
+        <h1 class="mt-2 mb-4 font-semibold text-primary-700">
           Azure Blob Info
         </h1>
         <blob-info :upload="blobFile" />
@@ -68,6 +68,20 @@ const dates = computed(() => {
     <div class="px-4">
       <hr class="my-6 border-slate-200">
       <receipt-notes :receipt="props.receipt" />
+
+      <!-- Edit Button -->
+      <div class="my-3">
+        <NuxtLink :to="`/receipts/${receipt.id}/edit`">
+          <UButton
+            icon="i-lucide-pencil"
+            color="secondary"
+            variant="solid"
+            class="hover:cursor-pointer"
+          >
+            Edit Receipt
+          </UButton>
+        </NuxtLink>
+      </div>
     </div>
   </div>
 </template>

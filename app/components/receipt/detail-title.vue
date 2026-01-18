@@ -72,10 +72,21 @@ const analyzeReceipt = async () => {
       <template v-else>
         {{ `Receipt #${id}` }}
       </template>
+      <UBadge
+        v-if="isAnalyzed"
+        icon="i-lucide-focus"
+        color="info"
+        variant="outline"
+        size="lg"
+        class="ml-2"
+      >
+        Analyzed
+      </UBadge>
     </h1>
     <div class="flex items-center gap-2">
       <UButton
-        color="info"
+        v-if="!isAnalyzed"
+        color="primary"
         variant="solid"
         icon="i-lucide-focus"
         :disabled="!canAnalyze || isAnalyzing"
@@ -87,8 +98,8 @@ const analyzeReceipt = async () => {
       </UButton>
       <UButton
         icon="i-lucide-pencil"
-        color="neutral"
-        variant="subtle"
+        color="secondary"
+        variant="solid"
         class="hover:cursor-pointer"
       >
         Edit
