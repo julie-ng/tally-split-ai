@@ -125,7 +125,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
         <div class="grid grid-cols-2 gap-x-20">
           <!-- Column 1 -->
           <div>
-            <p class="font-semibold my-2 text-primary-700">
+            <p class="font-semibold mb-2 text-primary-700">
               Analysis
             </p>
             <div class="grid grid-cols-2 gap-0">
@@ -150,6 +150,21 @@ const upload = computed(() => props.receipt.uploads?.[0])
             <data-key-value-table :items="totals" currency="€" />
             <hr class="my-3 border-slate-300 border-dashed">
 
+            <!-- Azure Blob Tags -->
+            <p class="font-semibold mt-2 mb-3 text-primary-700">
+              Azure Blob Tags
+              <analyzed-by-human-icon color="text-slate-400" />
+            </p>
+            <blob-tags
+              v-if="upload?.azureTags"
+              :tags="upload.azureTags"
+            />
+            <p v-else class="text-slate-400 text-sm">
+              No tags
+            </p>
+
+            <hr class="mt-5 mb-3 border-slate-300 border-dashed">
+
             <!-- Merchant -->
             <p class="font-semibold my-2 text-primary-700">
               Merchant
@@ -162,7 +177,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
           <!-- Column 2 -->
           <div>
             <!-- Items Table -->
-            <p class="font-semibold my-2 text-primary-700">
+            <p class="font-semibold mb-2 text-primary-700">
               Line Items <analyzed-by-ai-icon />
             </p>
             <receipt-items-table
@@ -175,7 +190,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
       </div>
 
       <!-- Raw JSON (for debugging) -->
-      <h1 class="my-3 font-semibold text-blue-700">
+      <h1 class="mt-2 mb-3 font-semibold text-blue-700">
         Analysis JSON
       </h1>
       <div class="bg-slate-50 p-4 rounded">
