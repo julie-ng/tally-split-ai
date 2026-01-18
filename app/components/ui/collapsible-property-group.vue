@@ -7,20 +7,25 @@ const props = defineProps({
   },
 })
 
-// eslint-disable-next-line vue/no-dupe-keys
-const isOpen = ref(true)
+const isOpen = ref(props.isOpen)
 </script>
 
 <template>
   <UCollapsible v-model:open="isOpen">
-    <h2 class="mb-3 font-semibold text-lg cursor-pointer flex items-center justify-between">
-      {{ props.title }}
+    <!-- Trigger (default slot) -->
+    <div class="font-semibold cursor-pointer flex items-center justify-between w-full">
+      <slot v-if="$slots.title" name="title" />
+      <template v-else>
+        {{ props.title }}
+      </template>
       <UIcon
         name="i-lucide-chevron-down"
         class="size-5 transition-transform duration-200"
         :class="{ 'rotate-180': isOpen }"
       />
-    </h2>
+    </div>
+
+    <!-- Content slot -->
     <template #content>
       <slot />
     </template>

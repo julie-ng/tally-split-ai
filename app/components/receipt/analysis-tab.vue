@@ -177,14 +177,41 @@ const upload = computed(() => props.receipt.uploads?.[0])
           <!-- Column 2 -->
           <div>
             <!-- Items Table -->
-            <p class="font-semibold mb-2 text-primary-700">
-              Line Items <analyzed-by-ai-icon />
-            </p>
-            <receipt-items-table
-              :items="validatedFields.items.items"
-              :has-quantity="validatedFields.items.hasQuantity"
-              :subtotal="validatedFields.items.subtotal"
-            />
+            <!-- Line Items -->
+            <hr class="my-0 border-slate-300 border-dashed">
+
+            <ui-collapsible-property-group class="py-2">
+              <template #title>
+                <p class="font-semibold text-primary-700">
+                  Line Items <analyzed-by-ai-icon />
+                </p>
+              </template>
+              <receipt-items-table
+                :items="validatedFields.items.items"
+                :has-quantity="validatedFields.items.hasQuantity"
+                :subtotal="validatedFields.items.subtotal"
+              />
+            </ui-collapsible-property-group>
+
+            <hr class="my-0 border-slate-300 border-dashed">
+
+            <!-- OCR Analysis -->
+            <ui-collapsible-property-group class="py-2" :is-open="false">
+              <template #title>
+                <p class="font-semibold text-primary-700">
+                  OCR Analysis <analyzed-by-ai-icon />
+                </p>
+              </template>
+              <ui-file-property label="Status" :text="upload?.analysisStatus" />
+              <ui-file-property v-if="upload?.analyzedAt" label="Analyzed At" :text="timestampUtils.toShortDate(upload.analyzedAt)" />
+              <ui-file-property v-if="upload?.analysisOcrResult" label="OCR Result">
+                <ClientOnly>
+                  <pre class="w-fit mt-1 p-5 bg-slate-100 rounded-lg font-mono text-sm">{{ upload.analysisOcrResult }}</pre>
+                </ClientOnly>
+              </ui-file-property>
+            </ui-collapsible-property-group>
+
+            <hr class="my-0 border-slate-300 border-dashed">
           </div>
         </div><!-- /.grid -->
       </div>
