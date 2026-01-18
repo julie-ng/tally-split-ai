@@ -48,7 +48,7 @@ defineProps({
         </tr>
         <tr v-if="subtotal">
           <td v-if="hasQuantity" />
-          <td :colspan="hasQuantity ? 1 : 2" class="p-2 pr-4 text-right">
+          <td class="py-2 pr-4 text-right">
             Subtotal
           </td>
           <td class="p-2 text-right">
