@@ -83,6 +83,33 @@ export const uploads = sqliteTable('uploads', {
 })
 
 /**
+ * Splits table - tracks expense splitting between two people
+ */
+export const splits = sqliteTable('splits', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+
+  // Optional receipt association (null for standalone splits)
+  receiptId: integer('receipt_id').references(() => receipts.id, { onDelete: 'set null' }),
+
+  // Split details
+  splitAmount: real('split_amount').notNull(), // Amount to split (defaults to receipt total)
+  paidBy: text('paid_by'), // 'user1' or 'user2' - nullable until settled
+  owedAmount: real('owed_amount'), // splitAmount / 2, rounded down - calculated when paidBy is set
+
+  // Settlement tracking
+  isSettled: integer('is_settled', { mode: 'boolean' }).notNull().default(false),
+  settledAt: integer('settled_at', { mode: 'timestamp' }),
+
+  // Metadata
+  notes: text('notes'),
+  userId: text('user_id').notNull(),
+
+  // Timestamps
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+})
+
+/**
  * Receipt items table - line items from receipts
  */
 // export const receiptItems = sqliteTable('receipt_items', {
@@ -104,15 +131,27 @@ export const uploads = sqliteTable('uploads', {
  * Relations
  */
 
-// Receipt has many uploads (one receipt can have multiple photos)
-export const receiptsRelations = relations(receipts, ({ many }) => ({
+// Receipt has many uploads and optionally one split
+export const receiptsRelations = relations(receipts, ({ many, one }) => ({
   uploads: many(uploads),
+  split: one(splits, {
+    fields: [receipts.id],
+    references: [splits.receiptId],
+  }),
 }))
 
 // Upload belongs to one receipt
 export const uploadsRelations = relations(uploads, ({ one }) => ({
   receipt: one(receipts, {
     fields: [uploads.receiptId],
+    references: [receipts.id],
+  }),
+}))
+
+// Split belongs to one receipt (optional)
+export const splitsRelations = relations(splits, ({ one }) => ({
+  receipt: one(receipts, {
+    fields: [splits.receiptId],
     references: [receipts.id],
   }),
 }))

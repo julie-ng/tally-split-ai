@@ -49,6 +49,10 @@ export default defineNuxtConfig({
       demoUserEmail: '',
       demoUserId: '',
       // usernameHashSalt: '',
+
+      // Expense splitting identifiers (will be replaced with user IDs later)
+      splitUser1: '',
+      splitUser2: '',
     },
   },
   watch: [
