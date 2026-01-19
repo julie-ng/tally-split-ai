@@ -138,17 +138,17 @@ const upload = computed(() => props.receipt.uploads?.[0])
             </div>
 
             <!-- Extracted Info -->
-            <hr class="my-3 border-slate-300 border-dashed">
+            <hr class="my-3 border-slate-300 border-solid">
             <p class="font-semibold my-2 text-primary-700">
               Transaction Info <analyzed-by-ai-icon />
             </p>
             <!-- Receipt Date, time -->
             <data-key-value-table :items="dates" />
-            <hr class="my-3 border-slate-300 border-dashed">
+            <hr class="my-3 border-slate-300 border-solid">
 
             <!-- Totals -->
             <data-key-value-table :items="totals" currency="€" />
-            <hr class="my-3 border-slate-300 border-dashed">
+            <hr class="my-3 border-slate-300 border-solid">
 
             <!-- Azure Blob Tags -->
             <p class="font-semibold mt-2 mb-3 text-primary-700">
@@ -163,7 +163,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
               No tags
             </p>
 
-            <hr class="mt-5 mb-3 border-slate-300 border-dashed">
+            <hr class="mt-5 mb-3 border-slate-300 border-solid">
 
             <!-- Merchant -->
             <p class="font-semibold my-2 text-primary-700">
@@ -171,14 +171,14 @@ const upload = computed(() => props.receipt.uploads?.[0])
               <analyzed-by-ai-icon />
             </p>
             <analysis-merchant-info :merchant="validatedFields.merchant" class="mb-4" />
-            <hr class="my-3 border-slate-300 border-dashed">
+            <hr class="my-3 border-slate-300 border-solid">
           </div>
 
           <!-- Column 2 -->
           <div>
             <!-- Items Table -->
             <!-- Line Items -->
-            <hr class="my-0 border-slate-300 border-dashed">
+            <!-- <hr class="my-0 border-slate-300 border-dashed"> -->
 
             <ui-collapsible-property-group class="py-2">
               <template #title>
@@ -193,7 +193,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
               />
             </ui-collapsible-property-group>
 
-            <hr class="my-0 border-slate-300 border-dashed">
+            <hr class="my-0 border-slate-300 border-solid">
 
             <!-- OCR Analysis -->
             <ui-collapsible-property-group class="py-2" :is-open="false">
@@ -211,7 +211,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
               </ui-file-property>
             </ui-collapsible-property-group>
 
-            <hr class="my-0 border-slate-300 border-dashed">
+            <hr class="my-0 border-slate-300 border-solid">
           </div>
         </div><!-- /.grid -->
       </div>

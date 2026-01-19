@@ -31,7 +31,7 @@ const dates = computed(() => {
 
         <receipt-metadata-info :receipt="receipt" />
 
-        <hr class="my-4 border-slate-300 border-dashed">
+        <hr class="my-4 border-slate-300 border-solid">
 
         <h1 class="my-2 font-semibold text-primary-700">
           Transaction Details
@@ -46,11 +46,11 @@ const dates = computed(() => {
           class="my-4"
         />
 
-        <hr class="my-4 border-slate-300 border-dashed">
+        <hr class="my-4 border-slate-300 border-solid">
 
         <!-- Receipt Dates -->
         <data-key-value-table :items="dates" />
-        <hr class="my-4 border-slate-300 border-dashed">
+        <hr class="my-4 border-slate-300 border-solid">
 
         <!-- Receipt Totals -->
         <data-key-value-table :items="receiptUtils.extractTotalsAsArray(receipt)" currency="EUR" />
@@ -66,7 +66,7 @@ const dates = computed(() => {
     </div>
 
     <div class="px-4">
-      <hr class="my-6 border-slate-200">
+      <hr class="my-6 border-slate-300">
       <receipt-notes :receipt="props.receipt" />
 
       <!-- Edit Button -->
