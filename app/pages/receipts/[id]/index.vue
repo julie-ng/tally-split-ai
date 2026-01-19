@@ -30,10 +30,12 @@ const breadcrumbItems = [
 
 <template>
   <UContainer class="pt-5">
-    <UBreadcrumb :items="breadcrumbItems" />
+    <div class="ml-4">
+      <UBreadcrumb :items="breadcrumbItems" />
+    </div>
 
     <!-- Loading -->
-    <loading-placeholder v-if="pending" title="Loading Receipt" :hashId="id" />
+    <loading-placeholder v-if="pending" title="Loading Receipt" :hash-id="id" />
 
     <!-- Error -->
     <UAlert
@@ -47,13 +49,13 @@ const breadcrumbItems = [
     />
 
     <!-- Receipt Details -->
-    <div v-else-if="receipt">
-      <receipt-tabs-navigation :receipt="receipt" />
+    <div v-else-if="receipt" class="mr-4">
+      <receipt-detail :receipt="receipt" />
     </div>
 
     <!-- Not found state -->
     <div v-else>
-      <not-found :title="`Receipt Not Found`" :hashId="id" />
+      <not-found :title="`Receipt Not Found`" :hash-id="id" />
     </div>
   </UContainer>
 </template>

@@ -74,21 +74,21 @@ if (!schemaCheck.success) {
         <upload-invalid-schema-alert v-if="!schemaCheck.success" />
         <upload-analysis-tab-content
           :upload="upload"
-          :analysisData="analysisData"
-          :analysisPending="analysisPending"
-          :analysisError="analysisError"
+          :analysis-data="analysisData"
+          :analysis-pending="analysisPending"
+          :analysis-error="analysisError"
         />
       </template>
 
       <!-- eslint-disable-next-line vue/no-unused-vars -->
       <template #rawJson="{ item }">
-        <div class="bg-slate-800 p-4">
+        <div class="bg-slate-50 p-4">
           <vue-json-pretty
             :data="props.upload"
             :indent="2"
             :deep="4"
-            :showIcon="true"
-            :showLength="true"
+            :show-icon="true"
+            :show-length="true"
           />
         </div>
       </template>

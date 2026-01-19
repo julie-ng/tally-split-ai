@@ -6,7 +6,7 @@ defineProps({
 
 <template>
   <section>
-    <h1 class="text-base my-2 font-semibold">
+    <h1 class="text-base my-2 font-semibold text-primary-700">
       Notes
     </h1>
     <div class="text-sm">
@@ -16,18 +16,6 @@ defineProps({
       <p v-else class="text-slate-400">
         This receipt has no notes.
       </p>
-      <div class="my-3">
-        <NuxtLink :to="`/receipts/${receipt.id}/edit`">
-          <UButton
-            icon="i-lucide-pencil"
-            color="info"
-            variant="outline"
-            class="hover:cursor-pointer"
-          >
-            Edit Receipt
-          </UButton>
-        </NuxtLink>
-      </div>
     </div>
   </section>
 </template>

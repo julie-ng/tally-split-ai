@@ -35,7 +35,7 @@ export default withNuxt(
       'no-prototype-builtins': 'off',
       'no-unused-vars': ['error', { args: 'none' }],
       'vue/require-default-prop': 'off',
-      'vue/attribute-hyphenation': ['warn', 'never'], // TODO
+      'vue/attribute-hyphenation': ['warn', 'always'],
       'vue/max-attributes-per-line': ['error', {
         singleline: {
           max: 3,
@@ -61,8 +61,9 @@ export default withNuxt(
   },
   {
     files: [
-      'app/pages/**/*.vue',
+      'app/components/**/*.vue', // subfolder is multi-world
       'app/layouts/**/*.vue',
+      'app/pages/**/*.vue',
     ],
     rules: {
       'vue/multi-word-component-names': 'off',

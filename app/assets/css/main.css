@@ -3,62 +3,67 @@
 
 @theme static {
   --font-sans: 'Inter', sans-serif;
+  --font-mono: 'Inconsolata', sans-serif;
 
-  --color-green-50: #EFFDF5;
-  --color-green-100: #D9FBE8;
-  --color-green-200: #B3F5D1;
-  --color-green-300: #75EDAE;
-  --color-green-400: #00DC82;
-  --color-green-500: #00C16A;
-  --color-green-600: #00A155;
-  --color-green-700: #007F45;
-  --color-green-800: #016538;
-  --color-green-900: #0A5331;
-  --color-green-950: #052E16;
+  /* How to adjust colors */
+  /* Set in `app.config.js` per */
+  /* https://ui.nuxt.com/docs/getting-started/theme/design-system */
 }
 
-:root {
-  --jng-primary-color: #4259FF;
-  --ui-primary: var(--color-blue-700);
+/* Only applies to elements with both the class AND data-state="active" */
+.data-\[state\=active\]\:text-primary[data-state="active"] {
+  color: var(--color-blue-700);
 }
 
-/*
-html {
-  reset 16px to 14px
-  font-size: 14px;
+.vjs-tree {
+  font-family: var(--font-mono) !important;
+  font-size: 16px;
+  font-weight: 500;
 }
-*/
 
 .vjs-key {
-  color: var(--color-rose-400);
+  color: var(--color-gray-600);
 }
 
 .vjs-value-string {
-  color: var(--color-green-600);
+  color: var(--color-emerald-700);
 }
 
 .vjs-value-number {
-  color: var(--color-orange-300);
+  color: var(--color-blue-500);
+  font-weight: semibold;
+}
+
+.vjs-value-null {
+  color: var(--color-orange-600);
+}
+
+.vjs-value-boolean {
+  color: var(--color-pink-500);
 }
 
 .vjs-key>.vjs-colon,
 .vjs-tree-brackets {
-  color: var(--color-slate-300);
+  color: var(--color-slate-700);
 }
 
 .vjs-tree-node {
   .vjs-indent-unit {
     &.has-line {
-      border-left-color: var(--color-slate-600);
+      border-left-color: var(--color-slate-300);
     }
   }
 }
 
+.vjs-comment {
+  color: var(--color-slate-400);
+}
+
 .vjs-carets {
-  color: var(--color-slate-500);
+  color: var(--color-slate-300);
 }
 
 .vjs-tree-node.is-highlight,
 .vjs-tree-node:hover {
-  background-color: var(--color-slate-700);
+  background-color: var(--color-slate-100);
 }

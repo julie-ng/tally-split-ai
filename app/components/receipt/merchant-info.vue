@@ -14,7 +14,14 @@ const props = defineProps({
     required: false,
     default: '',
   },
+  relaxedLineHeight: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
 })
+
+const textSize = computed(() => props.relaxedLineHeight ? 'text-sm/relaxed' : 'text-sm')
 
 // Format address: if it has a single comma followed by space and 5 digits (postal code),
 // replace ", " with a line break
@@ -26,8 +33,8 @@ const formattedAddress = computed(() => {
 </script>
 
 <template>
-  <div class="text-sm">
-    <h1 class="text-slate-800">
+  <div :class="textSize">
+    <h1 class="text-slate-500 font-medium">
       {{ name }}
     </h1>
     <!-- eslint-disable-next-line vue/no-v-html -->

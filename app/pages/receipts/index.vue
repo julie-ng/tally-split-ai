@@ -216,7 +216,7 @@ const paginationInfo = computed(() => {
             ref="table"
             v-model:expanded="expanded"
             v-model:pagination="pagination"
-            :paginationOptions="{
+            :pagination-options="{
               getPaginationRowModel: getPaginationRowModel(),
               autoResetPageIndex: false,
             }"
@@ -224,19 +224,19 @@ const paginationInfo = computed(() => {
             :columns="columns"
             :ui="tableStyles"
             :loading="pending"
-            loadingColor="primary"
-            loadingAnimation="carousel"
+            loading-color="primary"
+            loading-animation="carousel"
             class="flex-1"
           >
             <!-- JSON view -->
             <template #expanded="{ row }">
-              <div class="bg-slate-800 p-4">
+              <div class="bg-slate-50 p-4">
                 <vue-json-pretty
                   :data="row.original"
                   :indent="2"
                   :deep="4"
-                  :showIcon="true"
-                  :showLength="true"
+                  :show-icon="true"
+                  :show-length="true"
                 />
               </div>
             </template>
@@ -257,6 +257,14 @@ const paginationInfo = computed(() => {
                 <NuxtLink :to="`/receipts/${row.original.id}`" class=" text-slate-600 font-semibold hover:text-blue-800 hover:underline">
                   {{ row.original.title || '—' }}
                 </NuxtLink>
+                <UBadge
+                  v-if="!row.original.uploads || row.original.uploads.length === 0"
+                  icon="i-lucide-triangle-alert"
+                  color="warning"
+                  variant="outline"
+                >
+                  Missing Upload
+                </UBadge>
                 <UBadge
                   v-if="totalsMatch(row.original.azureTags, row.original.receiptTotal) === false"
                   icon="i-lucide-euro"
@@ -293,11 +301,11 @@ const paginationInfo = computed(() => {
 
             <!-- Azure Tags -->
             <template #azureTags-cell="{ row }">
-              <azure-blob-tags
+              <blob-tags
                 v-if="row.original.azureTags"
-                :tagsAsString="row.original.azureTags"
-                :highlightTotal="highlightTotals"
-                :totalsMatch="totalsMatch(row.original.azureTags, row.original.receiptTotal)"
+                :tags="row.original.azureTags"
+                :highlight-total="highlightTotals"
+                :totals-match="totalsMatch(row.original.azureTags, row.original.receiptTotal)"
               />
               <span v-else class="text-slate-400">—</span>
             </template>
@@ -320,7 +328,7 @@ const paginationInfo = computed(() => {
             </div>
             <UPagination
               :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
-              :itemsPerPage="table?.tableApi?.getState().pagination.pageSize"
+              :items-per-page="table?.tableApi?.getState().pagination.pageSize"
               :total="table?.tableApi?.getFilteredRowModel().rows.length"
               @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
             />

@@ -1,4 +1,5 @@
 <script setup>
+// eslint-disable vue/multi-word-component-names
 const props = defineProps({
   receipt: Object,
 })
@@ -12,11 +13,11 @@ const tabItems = [
     value: 'overview',
     slot: 'overview',
   },
-  // {
-  //   label: 'Uploads',
-  //   value: 'uploads',
-  //   slot: 'uploads',
-  // },
+  {
+    label: 'Analysis',
+    value: 'analysis',
+    slot: 'analysis',
+  },
   {
     label: 'Raw JSON',
     value: 'raw-json',
@@ -44,15 +45,13 @@ if (!schemaCheck.success) {
 
 <template>
   <div class="mt-3">
-    <!-- Receipt Title -->
-    <h1 class="font-bold text-3xl mb-2">
-      <template v-if="props.receipt.title">
-        {{ props.receipt.title }}
-      </template>
-      <template v-else>
-        {{ `Receipt #${props.receipt.id}` }}
-      </template>
-    </h1>
+    <!-- Receipt Title Row -->
+    <receipt-detail-title
+      :id="props.receipt.id"
+      :title="props.receipt.title"
+      :is-analyzed="props.receipt.isAnalyzed"
+      :has-uploads="props.receipt.uploads?.length > 0"
+    />
 
     <div class="grid grid-cols-4 gap-4">
       <div id="main-col" class="col-span-3">
@@ -63,7 +62,8 @@ if (!schemaCheck.success) {
           size="xl"
           variant="link"
           class="w-full"
-          :ui="{ indicator: 'border-b-3 border-primary', trigger: 'cursor-pointer' }"
+          color="primary"
+          :ui="{ indicator: 'border-b-3 border-primary-700', trigger: 'cursor-pointer' }"
         >
           <!-- Overview Tab -->
           <!-- eslint-disable-next-line vue/no-unused-vars -->
@@ -82,12 +82,17 @@ if (!schemaCheck.success) {
           </template>
 
           <!-- eslint-disable-next-line vue/no-unused-vars -->
+          <template #analysis="{ item }">
+            <receipt-analysis-tab :receipt="receipt" />
+          </template>
+
+          <!-- eslint-disable-next-line vue/no-unused-vars -->
           <template #rawJson="{ item }">
             <receipt-raw-json-tab :receipt="receipt" />
           </template>
         </UTabs>
       </div>
-      <div id="side-col" class="mt-5">
+      <div id="side-col" class="mt-12">
         <receipt-upload-column
           v-if="props.receipt.uploads.length > 0"
           :upload="props.receipt.uploads[0]"

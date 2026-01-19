@@ -78,15 +78,15 @@ const validatedFields = computed(() => validation.value.success ? validation.val
       </UAlert>
       <div v-else-if="validatedFields">
         <upload-analysis-tab-content-header
-          :analysisStatus="upload.analysisStatus"
-          :analyzedAt="upload.analyzedAt"
+          :analysis-status="upload.analysisStatus"
+          :analyzed-at="upload.analyzedAt"
           :fields="validatedFields"
         />
 
         <!-- Items Table -->
         <ReceiptItemsTable
           :items="validatedFields.items.items"
-          :hasQuantity="validatedFields.items.hasQuantity"
+          :has-quantity="validatedFields.items.hasQuantity"
           :subtotal="validatedFields.items.subtotal"
         />
       </div>
@@ -95,13 +95,13 @@ const validatedFields = computed(() => validation.value.success ? validation.val
       <h1 class="my-3 text-lg font-bold text-blue-700">
         Analysis JSON
       </h1>
-      <div class="bg-slate-800 p-4">
+      <div class="bg-slate-50 p-4">
         <vue-json-pretty
           :data="props.analysisData.data"
           :indent="2"
           :deep="4"
-          :showIcon="true"
-          :showLength="true"
+          :show-icon="true"
+          :show-length="true"
         />
       </div>
     </div>

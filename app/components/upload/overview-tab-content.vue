@@ -50,8 +50,8 @@ const props = defineProps({
       </ui-collapsible-property-group>
     </div>
     <div class="col-span-2">
-      <azure-blob-image
-        :blobName="upload.blobName"
+      <blob-image
+        :blob-name="upload.blobName"
         :alt="upload.blobName"
       />
     </div>

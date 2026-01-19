@@ -10,7 +10,7 @@ const uploadsStore = useUploadQueueStore()
       <uploads-completed-item
         v-for="item in uploadsStore.completed"
         :key="`completed-${item.hashId}`"
-        :hashId="item.hashId"
+        :hash-id="item.hashId"
       />
     </section>
   </div>

@@ -40,15 +40,6 @@ const links = computed(() => [
       to: '/receipts',
       active: isActive('/receipts'),
       defaultOpen: true,
-      children: [
-        {
-          label: 'JSON',
-          to: '/api/receipts/',
-          external: true,
-          target: '_blank',
-          icon: 'i-lucide-braces',
-        },
-      ],
     },
     {
       label: 'Uploads',
@@ -57,13 +48,6 @@ const links = computed(() => [
       active: isActive('/uploads'),
       defaultOpen: true,
       children: [
-        {
-          label: 'JSON',
-          to: '/api/uploads/',
-          external: true,
-          target: '_blank',
-          icon: 'i-lucide-braces',
-        },
         {
           label: 'List',
           to: '/uploads',
@@ -80,6 +64,59 @@ const links = computed(() => [
       ],
     },
   ],
+  [
+    {
+      label: 'JSON APIs',
+      icon: 'i-lucide-braces',
+      to: '/uploads',
+      active: isActive('/uploads'),
+      defaultOpen: true,
+      children: [
+        {
+          label: 'blobs/',
+          to: '/api/blobs/',
+          external: true,
+          target: '_blank',
+        },
+        {
+          label: 'receipts/',
+          to: '/api/receipts/',
+          external: true,
+          target: '_blank',
+        },
+        {
+          label: 'receipts/[id]',
+          to: '/api/receipts/1',
+          external: true,
+          target: '_blank',
+        },
+        {
+          label: 'tokens/read',
+          to: '/api/tokens/read',
+          external: true,
+          target: '_blank',
+        },
+        {
+          label: 'tokens/upload',
+          to: '/api/tokens/upload',
+          external: true,
+          target: '_blank',
+        },
+        {
+          label: 'uploads/',
+          to: '/api/uploads/',
+          external: true,
+          target: '_blank',
+        },
+        {
+          label: 'uploads/[hashId]',
+          to: '/api/uploads/7aaaa195168e',
+          external: true,
+          target: '_blank',
+        },
+      ],
+    },
+  ],
 ])
 </script>
 
@@ -88,9 +125,9 @@ const links = computed(() => [
     <UDashboardSidebar
       id="default"
       v-model:collapsed="collapsed"
-      :defaultSize="12"
-      :minSize="12"
-      :maxSize="15"
+      :default-size="12"
+      :min-size="12"
+      :max-size="15"
       collapsible
       resizable
       class="bg-elevated/25"

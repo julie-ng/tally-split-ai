@@ -207,6 +207,21 @@ See [eslint.config.mjs](./eslint.config.mjs) for details.
 - Do not use semicolons
 - Add traililng commas
 
+### Component Naming Conventions
+
+Per [vue/multi-word-component-names rule](https://eslint.vuejs.org/rules/multi-word-component-names.html) prefer kebab case when naming components, e.g.
+
+- ❌ Bad: `<BlobSasLink>`
+- ✅ Good: `<blob-sas-link>`
+
+#### Component Attributes
+
+Attributes per [vue/attribute-hyphenation rule](https://eslint.vuejs.org/rules/attribute-hyphenation.html) should also use kebab case.
+
+- ❌ Bad: `<MyComponent myProp="prop" />`
+- ✅ Good: `<MyComponent my-prop="prop" />`
+
+
 ### Data Schemas and Validations
 
 - Leverage [zod schemas](./shared/utils/zod-schemas.js) in both frontend and backend to drive a consistent data structure from backend to frontend.
@@ -272,12 +287,13 @@ Note: all of our zod schemas are accessible via the auto-imported `zodSchemas` u
 - Backend only utils are stored in `server/utils`, esp. Azure SDK wrappers
 - Shared utils are stored in `shared/utils`, esp. text and string manipulation
 
-### Nuxt Best Practices
+### Nuxt & Vue Best Practices
 
 #### Official Best Practices
 
 See official docs on:
 
+- [Vue.js Style Guide](https://vuejs.org/style-guide/) - official guide, with recommendations separated into "essential", "strongly recommended", etc. categories. Site says it's a bit outdated. But still good reference point.
 - [Nuxt and hydration](https://nuxt.com/docs/4.x/guide/best-practices/hydration)
   - Challenge here is figuring out what really is client only, which then needs to be wrapped in `<ClientOnly>` tags, like in [./app/components/Upload/OverviewTabContent.vue](app/components/Upload/OverviewTabContent.vue)
 - [Nuxt Performance](https://nuxt.com/docs/4.x/guide/best-practices/performance)

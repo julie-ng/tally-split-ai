@@ -55,7 +55,7 @@ onMounted(async () => {
     />
 
     <div v-else>
-      <analyzed-uploads-table :uploads="summaries" />
+      <analysis-table :uploads="summaries" />
     </div>
   </UContainer>
 </template>

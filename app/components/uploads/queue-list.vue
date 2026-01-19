@@ -10,7 +10,7 @@ const uploadsStore = useUploadQueueStore()
       <UButton
         color="neutral"
         variant="subtle"
-        activeVariant="solid"
+        active-variant="solid"
         class="cursor-pointer"
         icon="i-lucide-brush-cleaning"
         @click="uploadsStore.emptyQueue()"
@@ -21,7 +21,7 @@ const uploadsStore = useUploadQueueStore()
     <uploads-queue-item
       v-for="upload in uploadsStore.queued"
       :key="`queued-${upload.hashId}`"
-      :hashId="upload.hashId"
+      :hash-id="upload.hashId"
     />
   </section>
 </template>
