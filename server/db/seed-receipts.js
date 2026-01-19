@@ -89,9 +89,9 @@ function extractFromAzureAI (apiData) {
     merchantName: merchant.name?.value || null,
     merchantAddress: merchant.address?.formattedValue || null,
     merchantPhone: merchant.phone?.value || null,
-    receiptDate: receipt.transactionDate?.value || null,
-    receiptTotal: receipt.total?.value?.amount || null,
-    receiptCurrency: receipt.total?.value?.currencyCode || null,
+    date: receipt.transactionDate?.value || null,
+    total: receipt.total?.value?.amount || null,
+    currency: receipt.total?.value?.currencyCode || null,
   }
 }
 
@@ -108,9 +108,9 @@ function parseAzureTags (azureTagsJson) {
   try {
     const tags = JSON.parse(azureTagsJson)
     return {
-      receiptDate: tags['receipt-date'] || null,
-      receiptTotal: tags['receipt-total'] ? parseFloat(tags['receipt-total']) : null,
-      receiptTags: tags['receipt-tags'] ? tags['receipt-tags'].replace(/\+/g, ', ') : null,
+      date: tags['receipt-date'] || null,
+      total: tags['receipt-total'] ? parseFloat(tags['receipt-total']) : null,
+      tags: tags['receipt-tags'] ? tags['receipt-tags'].replace(/\+/g, ', ') : null,
     }
   }
   catch (e) {
@@ -127,9 +127,9 @@ function parseAzureTags (azureTagsJson) {
 function parseFilename (filename) {
   const hashtags = extractHashtags(filename)
   return {
-    receiptDate: extractReceiptDate(filename),
-    receiptTotal: extractReceiptTotal(filename) ? parseFloat(extractReceiptTotal(filename)) : null,
-    receiptTags: hashtags.length > 0 ? hashtags.join(', ') : null,
+    date: extractReceiptDate(filename),
+    total: extractReceiptTotal(filename) ? parseFloat(extractReceiptTotal(filename)) : null,
+    tags: hashtags.length > 0 ? hashtags.join(', ') : null,
   }
 }
 
@@ -142,14 +142,14 @@ function parseFilename (filename) {
 function buildNotesString (inferred, hasAnalysis) {
   const lines = []
 
-  if (inferred.receiptDate) {
-    lines.push(`- date: ${inferred.receiptDate}`)
+  if (inferred.date) {
+    lines.push(`- date: ${inferred.date}`)
   }
-  if (inferred.receiptTotal) {
-    lines.push(`- total: ${inferred.receiptTotal}`)
+  if (inferred.total) {
+    lines.push(`- total: ${inferred.total}`)
   }
-  if (inferred.receiptTags) {
-    lines.push(`- tags: ${inferred.receiptTags}`)
+  if (inferred.tags) {
+    lines.push(`- tags: ${inferred.tags}`)
   }
 
   if (lines.length === 0) {
@@ -217,9 +217,9 @@ async function migrateUploadsToReceipts () {
 
       // Merge inferred data (tags take priority over filename)
       const inferred = {
-        receiptDate: fromTags.receiptDate || fromFilename.receiptDate,
-        receiptTotal: fromTags.receiptTotal || fromFilename.receiptTotal,
-        receiptTags: fromTags.receiptTags || fromFilename.receiptTags,
+        date: fromTags.date || fromFilename.date,
+        total: fromTags.total || fromFilename.total,
+        tags: fromTags.tags || fromFilename.tags,
       }
 
       // Build notes string
@@ -231,10 +231,10 @@ async function migrateUploadsToReceipts () {
         merchantName: fromAzureAI.merchantName || null,
         merchantAddress: fromAzureAI.merchantAddress || null,
         merchantPhone: fromAzureAI.merchantPhone || null,
-        receiptDate: fromAzureAI.receiptDate || inferred.receiptDate,
-        receiptTotal: fromAzureAI.receiptTotal || inferred.receiptTotal,
-        receiptTags: inferred.receiptTags, // Tags only come from inferred
-        receiptCurrency: fromAzureAI.receiptCurrency || 'EUR',
+        date: fromAzureAI.date || inferred.date,
+        total: fromAzureAI.total || inferred.total,
+        tags: inferred.tags, // Tags only come from inferred
+        currency: fromAzureAI.currency || 'EUR',
         notes: notes,
         userId: upload.userId,
         isAnalyzed: hasAnalysis,

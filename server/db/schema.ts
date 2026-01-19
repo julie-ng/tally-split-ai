@@ -26,12 +26,12 @@ export const receipts = sqliteTable('receipts', {
   merchantName: text('merchant_name'),
   merchantAddress: text('merchant_address'),
   merchantPhone: text('merchant_phone'),
-  receiptTags: text('receipt_tags'), // Comma-separated tags
-  receiptDate: text('receipt_date'), // ISO date string
-  receiptSubtotal: real('receipt_subtotal'),
-  receiptTax: real('receipt_tax'),
-  receiptTotal: real('receipt_total'),
-  receiptCurrency: text('receipt_currency'),
+  tags: text('tags'), // Comma-separated tags
+  date: text('date'), // ISO date string
+  subtotal: real('subtotal'),
+  tax: real('tax'),
+  total: real('total'),
+  currency: text('currency'),
 
   // User fields
   notes: text('notes'), // User-editable notes

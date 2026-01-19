@@ -10,7 +10,7 @@ const dates = computed(() => {
   return [
     {
       key: 'Receipt Date',
-      value: dateUtils.formatISODate(props.receipt.receiptDate),
+      value: dateUtils.formatISODate(props.receipt.date),
     },
     {
       key: 'Receipt Time',

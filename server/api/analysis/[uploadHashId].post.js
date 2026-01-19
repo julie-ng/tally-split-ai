@@ -90,13 +90,13 @@ export default defineEventHandler(async (event) => {
       merchantName: fields.MerchantName?.content || null,
       merchantAddress: fields.MerchantAddress?.content || null,
       merchantPhone: fields.MerchantPhoneNumber?.content || null,
-      receiptDate: fields.TransactionDate?.valueDate || null,
-      receiptSubtotal: fields.Subtotal?.valueCurrency?.amount
+      date: fields.TransactionDate?.valueDate || null,
+      subtotal: fields.Subtotal?.valueCurrency?.amount
         || fields.TaxDetails?.valueArray?.[0]?.valueObject?.NetAmount?.valueCurrency?.amount
         || null,
-      receiptTotal: fields.Total?.valueCurrency?.amount || null,
-      receiptCurrency: fields.Total?.valueCurrency?.currencyCode || null,
-      receiptTax: fields.TotalTax?.valueCurrency?.amount || null,
+      total: fields.Total?.valueCurrency?.amount || null,
+      currency: fields.Total?.valueCurrency?.currencyCode || null,
+      tax: fields.TotalTax?.valueCurrency?.amount || null,
       isAnalyzed: true,
     }
 

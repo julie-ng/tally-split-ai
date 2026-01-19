@@ -56,11 +56,11 @@ const columns = [
     header: 'Title',
   },
   {
-    accessorKey: 'receiptDate',
+    accessorKey: 'date',
     header: 'Date',
   },
   {
-    accessorKey: 'receiptTotal',
+    accessorKey: 'total',
     header: 'Total',
   },
   {
@@ -266,7 +266,7 @@ const paginationInfo = computed(() => {
                   Missing Upload
                 </UBadge>
                 <UBadge
-                  v-if="totalsMatch(row.original.azureTags, row.original.receiptTotal) === false"
+                  v-if="totalsMatch(row.original.azureTags, row.original.total) === false"
                   icon="i-lucide-euro"
                   color="error"
                   variant="outline"
@@ -280,21 +280,21 @@ const paginationInfo = computed(() => {
             </template>
 
             <!-- Receipt Date -->
-            <template #receiptDate-cell="{ row }">
-              <time v-if="row.original.receiptDate" :datetime="row.original.receiptDate" :title="row.original.receiptDate">
-                {{ timestampUtils.toShortDate(row.original.receiptDate) }}
+            <template #date-cell="{ row }">
+              <time v-if="row.original.date" :datetime="row.original.date" :title="row.original.date">
+                {{ timestampUtils.toShortDate(row.original.date) }}
               </time>
               <span v-else class="text-slate-400">—</span>
             </template>
 
             <!-- Receipt Total -->
-            <template #receiptTotal-cell="{ row }">
+            <template #total-cell="{ row }">
               <div
-                v-if="row.original.receiptTotal != null"
+                v-if="row.original.total != null"
                 class="font-medium text-right"
-                :class="highlightTotal(totalsMatch(row.original.azureTags, row.original.receiptTotal))"
+                :class="highlightTotal(totalsMatch(row.original.azureTags, row.original.total))"
               >
-                {{ receiptUtils.formatCurrency(row.original.receiptTotal, row.original.receiptCurrency || 'EUR') }}
+                {{ receiptUtils.formatCurrency(row.original.total, row.original.currency || 'EUR') }}
               </div>
               <span v-else class="text-slate-400">—</span>
             </template>
@@ -305,7 +305,7 @@ const paginationInfo = computed(() => {
                 v-if="row.original.azureTags"
                 :tags="row.original.azureTags"
                 :highlight-total="highlightTotals"
-                :totals-match="totalsMatch(row.original.azureTags, row.original.receiptTotal)"
+                :totals-match="totalsMatch(row.original.azureTags, row.original.total)"
               />
               <span v-else class="text-slate-400">—</span>
             </template>

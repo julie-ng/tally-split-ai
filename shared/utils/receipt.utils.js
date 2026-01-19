@@ -16,20 +16,20 @@ function extractTotalsAsArray (receipt) {
   return [
     {
       key: 'Subtotal',
-      value: receipt.receiptSubtotal != null
-        ? receipt.receiptSubtotal.toFixed(2)
+      value: receipt.subtotal != null
+        ? receipt.subtotal.toFixed(2)
         : '-',
     },
     {
       key: 'Tax',
-      value: receipt.receiptTax != null
-        ? receipt.receiptTax.toFixed(2)
+      value: receipt.tax != null
+        ? receipt.tax.toFixed(2)
         : '-',
     },
     {
       key: 'Total',
-      value: receipt.receiptTotal != null
-        ? receipt.receiptTotal.toFixed(2)
+      value: receipt.total != null
+        ? receipt.total.toFixed(2)
         : '-',
     },
   ]
