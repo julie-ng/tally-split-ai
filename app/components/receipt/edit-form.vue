@@ -116,6 +116,19 @@ const handleCancel = () => {
             />
           </div>
           <div>
+            <label for="tip">
+              Tip <span class="text-slate-400">(EUR)</span>
+            </label>
+          </div>
+          <div class="col-span-2">
+            <UInput
+              id="tip"
+              v-model="formData.tip"
+              type="number"
+              class="w-80"
+            />
+          </div>
+          <div>
             <label for="total">
               Total <span class="text-slate-400">(EUR)</span>
             </label>

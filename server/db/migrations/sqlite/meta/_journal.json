@@ -71,6 +71,13 @@
       "when": 1768829220034,
       "tag": "0009_sharp_morgan_stark",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1768830104761,
+      "tag": "0010_smiling_kang",
+      "breakpoints": true
     }
   ]
 }

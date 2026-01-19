@@ -30,6 +30,7 @@ export const receipts = sqliteTable('receipts', {
   date: text('date'), // ISO date string
   subtotal: real('subtotal'),
   tax: real('tax'),
+  tip: real('tip'),
   total: real('total'),
   currency: text('currency'),
 
