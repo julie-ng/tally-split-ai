@@ -25,17 +25,7 @@ const dates = computed(() => {
     <div class="grid grid-cols-2 gap-4">
       <!-- [Column 1] Receipt Info -->
       <div class="px-4 py-2">
-        <h1 class="my-2 font-semibold text-primary-700">
-          Receipt
-        </h1>
-
-        <receipt-metadata-info :receipt="receipt" />
-
-        <hr class="my-4 border-slate-300 border-solid">
-
-        <h1 class="my-2 font-semibold text-primary-700">
-          Transaction Details
-        </h1>
+        <ui-section-subtitle text="Transaction Details" />
 
         <!-- Merchant Info -->
         <receipt-merchant-info
@@ -46,21 +36,26 @@ const dates = computed(() => {
           class="my-4"
         />
 
-        <hr class="my-4 border-slate-300 border-solid">
+        <USeparator class="my-4" />
 
         <!-- Receipt Dates -->
         <data-key-value-table :items="dates" />
-        <hr class="my-4 border-slate-300 border-solid">
+        <USeparator class="my-4" />
 
         <!-- Receipt Totals -->
         <data-key-value-table :items="receiptUtils.extractTotalsAsArray(receipt)" currency="EUR" />
       </div>
 
-      <!-- [Column 2]: Azure Blob Info -->
+      <!-- [Column 2]: -->
       <div class="px-4 py-2">
-        <h1 class="mt-2 mb-4 font-semibold text-primary-700">
-          Azure Blob Info
-        </h1>
+        <!-- Receipt metadata -->
+        <ui-section-subtitle text="Receipt" />
+        <receipt-metadata-info :receipt="receipt" />
+
+        <USeparator class="my-4" />
+
+        <!-- Blob Info -->
+        <ui-section-subtitle text="Azure Blob Info" />
         <blob-info :upload="blobFile" />
       </div>
     </div>

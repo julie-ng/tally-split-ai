@@ -138,17 +138,17 @@ const upload = computed(() => props.receipt.uploads?.[0])
             </div>
 
             <!-- Extracted Info -->
-            <hr class="my-3 border-slate-300 border-solid">
+            <USeparator class="my-3" />
             <p class="font-semibold my-2 text-primary-700">
               Transaction Info <analyzed-by-ai-icon />
             </p>
             <!-- Receipt Date, time -->
             <data-key-value-table :items="dates" />
-            <hr class="my-3 border-slate-300 border-solid">
+            <USeparator class="my-3" />
 
             <!-- Totals -->
             <data-key-value-table :items="totals" currency="€" />
-            <hr class="my-3 border-slate-300 border-solid">
+            <USeparator class="my-3" />
 
             <!-- Azure Blob Tags -->
             <p class="font-semibold mt-2 mb-3 text-primary-700">
@@ -162,8 +162,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
             <p v-else class="text-slate-400 text-sm">
               No tags
             </p>
-
-            <hr class="mt-5 mb-3 border-slate-300 border-solid">
+            <USeparator class="mt-5 mb-3" />
 
             <!-- Merchant -->
             <p class="font-semibold my-2 text-primary-700">
@@ -171,7 +170,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
               <analyzed-by-ai-icon />
             </p>
             <analysis-merchant-info :merchant="validatedFields.merchant" class="mb-4" />
-            <hr class="my-3 border-slate-300 border-solid">
+            <USeparator class="my-3" />
           </div>
 
           <!-- Column 2 -->
@@ -193,7 +192,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
               />
             </ui-collapsible-property-group>
 
-            <hr class="my-0 border-slate-300 border-solid">
+            <USeparator class="my-0" />
 
             <!-- OCR Analysis -->
             <ui-collapsible-property-group class="py-2" :is-open="false">
@@ -211,7 +210,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
               </ui-file-property>
             </ui-collapsible-property-group>
 
-            <hr class="my-0 border-slate-300 border-solid">
+            <USeparator class="my-0" />
           </div>
         </div><!-- /.grid -->
       </div>
