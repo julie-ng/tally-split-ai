@@ -23,7 +23,7 @@ const db = drizzle(sqlite, { schema })
 /**
  * Main seeding function
  */
-async function seedSplits() {
+async function seedSplits () {
   console.log('Starting seed: Create splits from receipts with totals\n')
   console.log(`Database: ${databaseUrl}\n`)
 
