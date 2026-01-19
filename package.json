@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
+    "predev": "nuxt prepare",
     "postinstall": "nuxt prepare",
     "db:generate": "nuxt db generate",
     "db:migrate": "nuxt db migrate",
