@@ -48,6 +48,16 @@ const dates = computed(() => {
           <!-- Receipt Totals -->
           <data-key-value-table :items="receiptUtils.extractTotalsAsArray(receipt)" currency="EUR" />
         </section>
+
+        <USeparator class="my-4" />
+
+        <!-- Split Costs -->
+        <section>
+          <ui-section-subtitle>
+            Split Costs
+          </ui-section-subtitle>
+          <receipt-split />
+        </section>
       </div>
 
       <!-- [Column 2]: -->

@@ -45,14 +45,12 @@ export default defineNuxtConfig({
       // TODO: remove after auth implementation
       demoUserFirstName: '',
       demoUserLastName: '',
-      demoUserUsername: '',
       demoUserEmail: '',
       demoUserId: '',
-      // usernameHashSalt: '',
-
-      // Expense splitting identifiers (will be replaced with user IDs later)
-      splitUser1: '',
-      splitUser2: '',
+      splitUserOneId: '',
+      splitUserTwoId: '',
+      splitUserOneName: '',
+      splitUserTwoName: '',
     },
   },
   watch: [
