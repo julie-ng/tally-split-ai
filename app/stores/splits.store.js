@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { splitUpdateSchema } from '~~/shared/utils/zod-schemas/split.schema.js'
 
 /**
  * Store for managing splits with lazy loading and optimistic updates
@@ -44,16 +45,33 @@ export const useSplitsStore = defineStore('splits', () => {
    * @param {number} id - Split ID
    * @returns {boolean} True if userADebt + userBDebt === splitAmount
    */
-  const doesSplitSumUp = computed(() => (id) => {
-    const split = splits.value[id]
-    if (!split || split.userADebt === null || split.userBDebt === null) {
-      return true // No validation needed if debts aren't set
-    }
-
+  const doesSplitAddUp = computed(() => (id) => {
+    const split = _getSplit(id)
     const sum = split.userADebt + split.userBDebt
     const tolerance = 0.01 // Account for floating point precision
-    return Math.abs(sum - split.splitAmount) <= tolerance
+    const doesIt = Math.abs(sum - split.splitAmount) <= tolerance
+    // console.log(`🍍 doesSplitAddUp(${id})`, doesIt)
+    return doesIt
   })
+
+  // -------- INTERNAL HELPERS --------
+
+  /**
+   * Get split from state, throw if not found (DRY helper)
+   * @private
+   * @param {number} id - Split ID
+   * @returns {Object} The split object
+   */
+  function _getSplit (id) {
+    const split = splits.value[id]
+    if (!split) {
+      // const error = new Error(`Split ${id} not found in state`)
+      // errors.value[id] = error
+      // throw error
+      fetchSplit(id)
+    }
+    return split
+  }
 
   // -------- ACTIONS --------
 
@@ -96,12 +114,7 @@ export const useSplitsStore = defineStore('splits', () => {
    * @returns {Promise<Object>} Updated split
    */
   async function _persistSplit (id, payload) {
-    const currentSplit = splits.value[id]
-    if (!currentSplit) {
-      const error = new Error(`Split ${id} not found in state`)
-      errors.value[id] = error
-      throw error
-    }
+    const currentSplit = _getSplit(id)
 
     // Store original state for rollback
     const originalSplit = { ...currentSplit }
@@ -140,137 +153,38 @@ export const useSplitsStore = defineStore('splits', () => {
   }
 
   /**
-   * Update split amount (does NOT recalculate debts)
+   * Smart update function - routes to appropriate business logic based on which properties changed
    * @param {number} id - Split ID
-   * @param {number} amount - New split amount
+   * @param {Object} updates - Fields to update
    * @returns {Promise<Object>} Updated split
    */
-  async function updateSplitAmount (id, amount) {
-    console.log(`🍍 updateSplitAmount(${id})`, amount)
-    if (typeof amount !== 'number' || amount < 0) {
-      throw new Error('Split amount must be a non-negative number')
-    }
-    return _persistSplit(id, { splitAmount: amount })
-  }
+  async function updateSplit (id, updates) {
+    console.log(`🍍 updateSplit(${id})`, updates)
 
-  /**
-   * Update who paid for the split
-   * @param {number} id - Split ID
-   * @param {string} userId - User ID
-   * @returns {Promise<Object>} Updated split
-   */
-  async function updatePaidBy (id, userId) {
-    console.log(`🍍 updatePaidBy(${id})`, userId)
-    return _persistSplit(id, { paidBy: userId })
-  }
-
-  /**
-   * Update debt for one user (automatically calculates the other user's debt)
-   * TODO: Need to map userId to userADebt/userBDebt properly - currently hardcoded
-   * @param {number} id - Split ID
-   * @param {Object} params - { userId: string, amount: number }
-   * @returns {Promise<Object>} Updated split
-   */
-  async function updateDebt (id, { userId, amount }) {
-    console.log(`🍍 updateDebt(${id})`, { userId, amount })
-
-    const currentSplit = splits.value[id]
-    if (!currentSplit) {
-      throw new Error(`Split ${id} not found in state`)
+    // Validate with zod
+    const result = splitUpdateSchema.safeParse(updates)
+    if (!result.success) {
+      const error = new Error(`Invalid updates: ${JSON.stringify(result.error.errors)}`)
+      errors.value[id] = error
+      throw error
     }
 
-    if (typeof amount !== 'number' || amount < 0) {
-      throw new Error('Debt amount must be a non-negative number')
+    const currentSplit = _getSplit(id)
+    const payload = { ...updates }
+
+    // Business logic: Apply transformations based on what changed
+    if ('userADebt' in updates && !('userBDebt' in updates)) {
+      // Only userADebt changed - calculate userBDebt
+      payload.userBDebt = Math.floor((currentSplit.splitAmount - updates.userADebt) * 100) / 100
     }
-
-    // Calculate complementary debt
-    const otherDebt = Math.floor((currentSplit.splitAmount - amount) * 100) / 100
-    const roundedAmount = Math.floor(amount * 100) / 100
-
-    // TODO: This mapping is hardcoded - need to determine proper user mapping
-    const payload = userId === 'user1'
-      ? { userADebt: roundedAmount, userBDebt: otherDebt }
-      : { userADebt: otherDebt, userBDebt: roundedAmount }
+    else if ('userBDebt' in updates && !('userADebt' in updates)) {
+      // Only userBDebt changed - calculate userADebt
+      payload.userADebt = Math.floor((currentSplit.splitAmount - updates.userBDebt) * 100) / 100
+    }
+    // If both debt fields provided, use as-is
+    // If splitAmount changed alone, no auto-calculation (per user requirement)
 
     return _persistSplit(id, payload)
-  }
-
-  /**
-   * Update settlement status
-   * @param {number} id - Split ID
-   * @param {boolean} isSettled - Settlement status
-   * @returns {Promise<Object>} Updated split
-   */
-  async function updateIsSettled (id, isSettled) {
-    console.log(`🍍 updateIsSettled(${id})`, isSettled)
-    if (typeof isSettled !== 'boolean') {
-      throw new Error('isSettled must be a boolean')
-    }
-    return _persistSplit(id, { isSettled })
-  }
-
-  /**
-   * Create a new split
-   * @param {Object} data - Split data
-   * @returns {Promise<Object>} Created split
-   */
-  async function createSplit (data) {
-    console.log(`🍍 createSplit()`, data)
-    try {
-      // Calculate debt amounts for equal split
-      const halfAmount = Math.floor(data.splitAmount / 2 * 100) / 100
-
-      const payload = {
-        ...data,
-        userADebt: data.paidBy ? halfAmount : null,
-        userBDebt: data.paidBy ? halfAmount : null,
-      }
-
-      const result = await $fetch('/api/splits', {
-        method: 'POST',
-        body: payload,
-      })
-
-      // Add to local state
-      if (result.created) {
-        splits.value[result.created.id] = result.created
-        console.log(`✅ Created split: ${result.created.id}`)
-      }
-
-      return result.created
-    }
-    catch (err) {
-      console.error('❌ Failed to create split:', err)
-      throw err
-    }
-  }
-
-  /**
-   * Delete a split
-   * @param {number} id - Split ID
-   * @returns {Promise<boolean>}
-   */
-  async function deleteSplit (id) {
-    console.log(`🍍 deleteSplit(${id})`)
-    try {
-      await $fetch(`/api/splits/${id}`, {
-        method: 'DELETE',
-      })
-
-      // Remove from local state
-      delete splits.value[id]
-      delete loading.value[id]
-      delete saving.value[id]
-      delete errors.value[id]
-
-      console.log(`✅ Deleted split: ${id}`)
-      return true
-    }
-    catch (err) {
-      errors.value[id] = err
-      console.error(`❌ Failed to delete split ${id}:`, err)
-      throw err
-    }
   }
 
   /**
@@ -294,16 +208,11 @@ export const useSplitsStore = defineStore('splits', () => {
     isSplitSaving,
     getSplitError,
     allSplits,
-    doesSplitSumUp,
+    doesSplitAddUp,
 
     // Actions
     fetchSplit,
-    updateSplitAmount,
-    updatePaidBy,
-    updateDebt,
-    updateIsSettled,
-    createSplit,
-    deleteSplit,
+    updateSplit,
     clearSplitError,
   }
 })
