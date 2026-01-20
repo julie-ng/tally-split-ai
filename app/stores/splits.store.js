@@ -17,27 +17,43 @@ export const useSplitsStore = defineStore('splits', () => {
   /**
    * Get a split by ID from state (doesn't fetch)
    */
-  const getSplitById = computed(() => (id) => splits.value[id])
+  const getSplitById = computed(() => id => splits.value[id])
 
   /**
    * Check if a split is loading
    */
-  const isSplitLoading = computed(() => (id) => loading.value[id] || false)
+  const isSplitLoading = computed(() => id => loading.value[id] || false)
 
   /**
    * Check if a split is saving
    */
-  const isSplitSaving = computed(() => (id) => saving.value[id] || false)
+  const isSplitSaving = computed(() => id => saving.value[id] || false)
 
   /**
    * Get error for a split
    */
-  const getSplitError = computed(() => (id) => errors.value[id] || null)
+  const getSplitError = computed(() => id => errors.value[id] || null)
 
   /**
    * Get all splits as array (for listing)
    */
   const allSplits = computed(() => Object.values(splits.value))
+
+  /**
+   * Check if debt amounts sum to split amount (for UI warnings)
+   * @param {number} id - Split ID
+   * @returns {boolean} True if userADebt + userBDebt === splitAmount
+   */
+  const doesSplitSumUp = computed(() => (id) => {
+    const split = splits.value[id]
+    if (!split || split.userADebt === null || split.userBDebt === null) {
+      return true // No validation needed if debts aren't set
+    }
+
+    const sum = split.userADebt + split.userBDebt
+    const tolerance = 0.01 // Account for floating point precision
+    return Math.abs(sum - split.splitAmount) <= tolerance
+  })
 
   // -------- ACTIONS --------
 
@@ -47,6 +63,7 @@ export const useSplitsStore = defineStore('splits', () => {
    * @returns {Promise<Object>} The split object
    */
   async function fetchSplit (id) {
+    console.log(`🍍 fetchSplit(${id})`)
     // Return from cache if exists
     if (splits.value[id]) {
       return splits.value[id]
@@ -72,12 +89,13 @@ export const useSplitsStore = defineStore('splits', () => {
   }
 
   /**
-   * Update a split with validation and optimistic updates
+   * Internal helper: Persist split updates with optimistic updates and rollback
+   * @private
    * @param {number} id - Split ID
-   * @param {Object} updates - Fields to update
+   * @param {Object} payload - Ready-to-send payload
    * @returns {Promise<Object>} Updated split
    */
-  async function updateSplit (id, updates) {
+  async function _persistSplit (id, payload) {
     const currentSplit = splits.value[id]
     if (!currentSplit) {
       const error = new Error(`Split ${id} not found in state`)
@@ -89,35 +107,12 @@ export const useSplitsStore = defineStore('splits', () => {
     const originalSplit = { ...currentSplit }
 
     // Optimistic update
-    splits.value[id] = { ...currentSplit, ...updates }
+    splits.value[id] = { ...currentSplit, ...payload }
 
     saving.value[id] = true
     errors.value[id] = null
 
     try {
-      // Prepare update payload
-      const payload = { ...updates }
-
-      // BUSINESS LOGIC: Calculate debt amounts if splitAmount changed
-      if (updates.splitAmount !== undefined) {
-        const halfAmount = Math.floor(updates.splitAmount / 2 * 100) / 100
-        payload.userADebt = halfAmount
-        payload.userBDebt = halfAmount
-      }
-
-      // VALIDATION: Ensure debts add up to splitAmount
-      const finalSplitAmount = payload.splitAmount ?? currentSplit.splitAmount
-      const finalUserADebt = payload.userADebt ?? currentSplit.userADebt
-      const finalUserBDebt = payload.userBDebt ?? currentSplit.userBDebt
-
-      if (finalUserADebt !== null && finalUserBDebt !== null) {
-        const sum = finalUserADebt + finalUserBDebt
-        const tolerance = 0.01
-        if (Math.abs(sum - finalSplitAmount) > tolerance) {
-          throw new Error(`Debt amounts (${sum}) don't match split amount (${finalSplitAmount})`)
-        }
-      }
-
       // Call backend API
       const result = await $fetch(`/api/splits/${id}`, {
         method: 'PUT',
@@ -137,16 +132,6 @@ export const useSplitsStore = defineStore('splits', () => {
       splits.value[id] = originalSplit
       errors.value[id] = err
       console.error(`❌ Failed to update split ${id}:`, err)
-
-      // Show toast error (using Nuxt UI toast)
-      const toast = useToast()
-      toast.add({
-        title: 'Error updating split',
-        description: err.message || 'Failed to save changes',
-        color: 'red',
-        timeout: 5000,
-      })
-
       throw err
     }
     finally {
@@ -155,11 +140,82 @@ export const useSplitsStore = defineStore('splits', () => {
   }
 
   /**
+   * Update split amount (does NOT recalculate debts)
+   * @param {number} id - Split ID
+   * @param {number} amount - New split amount
+   * @returns {Promise<Object>} Updated split
+   */
+  async function updateSplitAmount (id, amount) {
+    console.log(`🍍 updateSplitAmount(${id})`, amount)
+    if (typeof amount !== 'number' || amount < 0) {
+      throw new Error('Split amount must be a non-negative number')
+    }
+    return _persistSplit(id, { splitAmount: amount })
+  }
+
+  /**
+   * Update who paid for the split
+   * @param {number} id - Split ID
+   * @param {string} userId - User ID
+   * @returns {Promise<Object>} Updated split
+   */
+  async function updatePaidBy (id, userId) {
+    console.log(`🍍 updatePaidBy(${id})`, userId)
+    return _persistSplit(id, { paidBy: userId })
+  }
+
+  /**
+   * Update debt for one user (automatically calculates the other user's debt)
+   * TODO: Need to map userId to userADebt/userBDebt properly - currently hardcoded
+   * @param {number} id - Split ID
+   * @param {Object} params - { userId: string, amount: number }
+   * @returns {Promise<Object>} Updated split
+   */
+  async function updateDebt (id, { userId, amount }) {
+    console.log(`🍍 updateDebt(${id})`, { userId, amount })
+
+    const currentSplit = splits.value[id]
+    if (!currentSplit) {
+      throw new Error(`Split ${id} not found in state`)
+    }
+
+    if (typeof amount !== 'number' || amount < 0) {
+      throw new Error('Debt amount must be a non-negative number')
+    }
+
+    // Calculate complementary debt
+    const otherDebt = Math.floor((currentSplit.splitAmount - amount) * 100) / 100
+    const roundedAmount = Math.floor(amount * 100) / 100
+
+    // TODO: This mapping is hardcoded - need to determine proper user mapping
+    const payload = userId === 'user1'
+      ? { userADebt: roundedAmount, userBDebt: otherDebt }
+      : { userADebt: otherDebt, userBDebt: roundedAmount }
+
+    return _persistSplit(id, payload)
+  }
+
+  /**
+   * Update settlement status
+   * @param {number} id - Split ID
+   * @param {boolean} isSettled - Settlement status
+   * @returns {Promise<Object>} Updated split
+   */
+  async function updateIsSettled (id, isSettled) {
+    console.log(`🍍 updateIsSettled(${id})`, isSettled)
+    if (typeof isSettled !== 'boolean') {
+      throw new Error('isSettled must be a boolean')
+    }
+    return _persistSplit(id, { isSettled })
+  }
+
+  /**
    * Create a new split
    * @param {Object} data - Split data
    * @returns {Promise<Object>} Created split
    */
   async function createSplit (data) {
+    console.log(`🍍 createSplit()`, data)
     try {
       // Calculate debt amounts for equal split
       const halfAmount = Math.floor(data.splitAmount / 2 * 100) / 100
@@ -195,6 +251,7 @@ export const useSplitsStore = defineStore('splits', () => {
    * @returns {Promise<boolean>}
    */
   async function deleteSplit (id) {
+    console.log(`🍍 deleteSplit(${id})`)
     try {
       await $fetch(`/api/splits/${id}`, {
         method: 'DELETE',
@@ -237,10 +294,14 @@ export const useSplitsStore = defineStore('splits', () => {
     isSplitSaving,
     getSplitError,
     allSplits,
+    doesSplitSumUp,
 
     // Actions
     fetchSplit,
-    updateSplit,
+    updateSplitAmount,
+    updatePaidBy,
+    updateDebt,
+    updateIsSettled,
     createSplit,
     deleteSplit,
     clearSplitError,
