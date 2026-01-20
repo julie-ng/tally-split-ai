@@ -11,6 +11,7 @@ const isSettled = ref(false)
 const splitAmount = ref('19.50')
 const user1Amount = ref('8.75')
 const user2Amount = ref('8.75')
+const paidBy = ref(null)
 
 const settledText = computed(() => isSettled.value ? 'Settled Up' : 'Unsettled')
 const toggleSettle = () => {
@@ -35,7 +36,7 @@ const savedIconClasses = computed(function () {
 
 <template>
   <div>
-    <div class="grid grid-cols-2 gap-1 items-center text-sm">
+    <div class="grid grid-cols-[1fr_2fr] gap-1 items-center text-sm">
       <!-- Split Amount -->
       <div>Split Amount</div>
       <div class="text-right">
@@ -47,6 +48,11 @@ const savedIconClasses = computed(function () {
           :ui="{ base: 'text-right', trailingIcon: 'size-4 text-slate-400' }"
         />
       </div>
+
+      <!-- Paid by -->
+      <div>Paid By</div>
+      <div class="text-right">
+        <receipt-split-paid-by v-model="paidBy" />
       </div>
 
       <!-- User 1 Owes -->
