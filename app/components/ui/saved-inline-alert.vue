@@ -14,7 +14,7 @@ defineProps({
 </script>
 
 <template>
-  <span>
+  <span :class="colorClass">
     Saved
     <UIcon
       :name="icon"
