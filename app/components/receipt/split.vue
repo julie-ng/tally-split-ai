@@ -98,5 +98,15 @@ const savedIconClasses = computed(function () {
         <UCheckbox v-model="isSettled" class="cursor-pointer" />
       </div>
     </div>
+
+    <!-- <div class="text-right">
+      <UButton
+        color="secondary"
+        class="mt-3 cursor-pointer"
+        icon="i-lucide-save"
+      >
+        Update Split
+      </UButton>
+    </div> -->
   </div>
 </template>
