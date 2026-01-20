@@ -2,20 +2,9 @@ import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'
 import { sql, relations } from 'drizzle-orm'
 
 /**
- * Users table
- */
-// export const users = sqliteTable('users', {
-//   id: text('id').primaryKey(),
-//   userId: text('user_id').notNull().unique(),
-//   email: text('email').notNull().unique(),
-//   fullName: text('full_name').notNull(),
-//   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
-//   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
-// })
-
-/**
  * Receipts table - stores business/finance data extracted from receipt uploads
  */
+// @ts-expect-error implicit return type any
 export const receipts = sqliteTable('receipts', {
   id: integer('id').primaryKey({ autoIncrement: true }),
 
@@ -38,6 +27,7 @@ export const receipts = sqliteTable('receipts', {
   notes: text('notes'), // User-editable notes
 
   // Relationships
+  // @ts-expect-error implicit return type any
   splitId: integer('split_id').references(() => splits.id, { onDelete: 'set null' }),
 
   // Status tracking
@@ -88,10 +78,12 @@ export const uploads = sqliteTable('uploads', {
 /**
  * Splits table - tracks expense splitting between two people
  */
+// @ts-expect-error implicit type any
 export const splits = sqliteTable('splits', {
   id: integer('id').primaryKey({ autoIncrement: true }),
 
   // Optional receipt association (null for standalone splits)
+  // @ts-expect-error implicit return type any
   receiptId: integer('receipt_id').references(() => receipts.id, { onDelete: 'set null' }),
 
   // Split details
@@ -112,24 +104,6 @@ export const splits = sqliteTable('splits', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 })
-
-/**
- * Receipt items table - line items from receipts
- */
-// export const receiptItems = sqliteTable('receipt_items', {
-//   id: integer('id').primaryKey({ autoIncrement: true }),
-//   receiptId: integer('receipt_id').notNull().references(() => receipts.id),
-
-//   description: text('description').notNull(),
-//   quantity: real('quantity'),
-//   unitPrice: real('unit_price'),
-//   totalPrice: real('total_price').notNull(),
-
-//   // For expense splitting
-//   assignedTo: text('assigned_to'), // User initials or ID
-
-//   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
-// })
 
 /**
  * Relations

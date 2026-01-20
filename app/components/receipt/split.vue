@@ -165,11 +165,11 @@ const settledClass = computed(function () {
     : 'border-slate-200'
 })
 
-const savedIconClasses = computed(function () {
-  return !isSaving.value && !error.value
-    ? 'opacity-100'
-    : 'opacity-0'
-})
+// const savedIconClasses = computed(function () {
+//   return !isSaving.value && !error.value
+//     ? 'opacity-100'
+//     : 'opacity-0'
+// })
 </script>
 
 <template>
