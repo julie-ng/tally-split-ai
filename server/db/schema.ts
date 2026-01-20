@@ -37,6 +37,9 @@ export const receipts = sqliteTable('receipts', {
   // User fields
   notes: text('notes'), // User-editable notes
 
+  // Relationships
+  splitId: integer('split_id').references(() => splits.id, { onDelete: 'set null' }),
+
   // Status tracking
   isAnalyzed: integer('is_analyzed', { mode: 'boolean' }).notNull().default(false),
 
@@ -136,8 +139,8 @@ export const splits = sqliteTable('splits', {
 export const receiptsRelations = relations(receipts, ({ many, one }) => ({
   uploads: many(uploads),
   split: one(splits, {
-    fields: [receipts.id],
-    references: [splits.receiptId],
+    fields: [receipts.splitId],
+    references: [splits.id],
   }),
 }))
 
