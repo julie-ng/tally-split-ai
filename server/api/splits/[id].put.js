@@ -21,42 +21,9 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Fetch existing record if we need to recalculate owedAmount
-  let existingSplit = null
-  if (result.data.paidBy !== undefined || result.data.splitAmount !== undefined) {
-    existingSplit = await db.query.splits.findFirst({
-      where: and(
-        eq(schema.splits.id, splitId),
-        eq(schema.splits.userId, userId),
-      ),
-    })
-
-    if (!existingSplit) {
-      throw createError({
-        statusCode: 404,
-        message: `Split with ID '${splitId}' not found`,
-      })
-    }
-  }
-
   const updates = {
     ...result.data,
     updatedAt: sql`(unixepoch())`,
-  }
-
-  // Recalculate owedAmount if splitAmount or paidBy changed
-  if (result.data.paidBy !== undefined || result.data.splitAmount !== undefined) {
-    const newPaidBy = (result.data.paidBy !== undefined)
-      ? result.data.paidBy
-      : existingSplit.paidBy
-    const newSplitAmount = result.data.splitAmount ?? existingSplit.splitAmount
-
-    if (newPaidBy) {
-      updates.owedAmount = Math.floor(newSplitAmount / 2 * 100) / 100
-    }
-    else {
-      updates.owedAmount = null
-    }
   }
 
   // Set settledAt timestamp when marking as settled

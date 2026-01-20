@@ -16,15 +16,16 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Calculate owedAmount only if paidBy is set
-  const owedAmount = result.data.paidBy
-    ? Math.floor(result.data.splitAmount / 2 * 100) / 100
-    : null
+  // Calculate both user debts (equal split for now)
+  const halfAmount = Math.floor(result.data.splitAmount / 2 * 100) / 100
+  const userADebt = result.data.paidBy ? halfAmount : null
+  const userBDebt = result.data.paidBy ? halfAmount : null
 
   const insertData = {
     userId,
     ...result.data,
-    owedAmount,
+    userADebt,
+    userBDebt,
     isSettled: result.data.isSettled ?? false,
   }
 

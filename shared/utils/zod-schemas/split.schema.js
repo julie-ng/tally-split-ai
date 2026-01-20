@@ -8,7 +8,8 @@ export const splitSchema = z.object({
   receiptId: z.number().nullable(),
   splitAmount: z.number(),
   paidBy: z.enum(['user1', 'user2']).nullable(), // null until settled
-  owedAmount: z.number().nullable(), // calculated when paidBy is set
+  userADebt: z.number().nullable(), // Amount userA owes
+  userBDebt: z.number().nullable(), // Amount userB owes
   isSettled: z.boolean(),
   settledAt: z.string().nullable(),
   notes: z.string().nullable(),
@@ -34,6 +35,8 @@ export const splitInputSchema = z.object({
 export const splitUpdateSchema = z.object({
   splitAmount: z.number().optional(),
   paidBy: z.enum(['user1', 'user2']).nullable().optional(),
+  userADebt: z.number().nullable().optional(),
+  userBDebt: z.number().nullable().optional(),
   notes: z.string().nullable().optional(),
   isSettled: z.boolean().optional(),
 })

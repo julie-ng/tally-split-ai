@@ -65,7 +65,8 @@ async function seedSplits () {
         receiptId: receipt.id,
         splitAmount: receipt.total,
         paidBy: null, // Not settled yet
-        owedAmount: null, // Calculated when paidBy is set
+        userADebt: null, // Set when split is assigned
+        userBDebt: null, // Set when split is assigned
         isSettled: false,
         userId: receipt.userId,
       })
