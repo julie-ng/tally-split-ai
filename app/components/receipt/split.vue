@@ -40,21 +40,38 @@ const savedIconClasses = computed(function () {
       <div>Split Amount</div>
       <div class="text-right">
         <ui-saved-inline-alert />
-        <UInput v-model="splitAmount" class="w-24" :ui="{ base: 'text-right' }" />
+        <UInput
+          v-model="splitAmount"
+          trailing-icon="i-lucide-euro"
+          class="w-24"
+          :ui="{ base: 'text-right', trailingIcon: 'size-4 text-slate-400' }"
+        />
+      </div>
       </div>
 
       <!-- User 1 Owes -->
       <div>{{ user1Name }} owes</div>
       <div class="text-right">
-        <ui-saved-inline-alert />
-        <UInput v-model="user1Amount" class="w-24" :ui="{ base: 'text-right' }" />
+        <!-- <ui-saved-inline-alert /> -->
+        <!-- i-ic-outline-euro-symbol -->
+        <UInput
+          v-model="user1Amount"
+          trailing-icon="i-lucide-euro"
+          class="w-24"
+          :ui="{ base: 'text-right', trailingIcon: 'size-4 text-slate-400' }"
+        />
       </div>
 
       <!-- User 2 Owes -->
       <div>{{ user2Name }} owes</div>
       <div class="text-right">
-        <ui-saved-inline-alert />
-        <UInput v-model="user2Amount" class="w-24" :ui="{ base: 'text-right' }" />
+        <!-- <ui-saved-inline-alert /> -->
+        <UInput
+          v-model="user2Amount"
+          trailing-icon="i-lucide-euro"
+          class="w-24"
+          :ui="{ base: 'text-right', trailingIcon: 'size-4 text-slate-400' }"
+        />
       </div>
     </div>
 
