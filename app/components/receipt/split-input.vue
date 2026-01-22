@@ -29,7 +29,7 @@ const props = defineProps({
   },
 })
 
-console.log('highlightOnSuccess?', props.highlightOnSuccess, 'sums up?', props.sumsUp)
+// console.log('highlightOnSuccess?', props.highlightOnSuccess, 'sums up?', props.sumsUp)
 
 const inputBaseClass = computed(function () {
   const showBorder = (!props.sumsUp || (props.sumsUp && props.highlightOnSuccess))
