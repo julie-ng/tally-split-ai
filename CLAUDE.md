@@ -218,8 +218,8 @@ Per [vue/multi-word-component-names rule](https://eslint.vuejs.org/rules/multi-w
 
 Attributes per [vue/attribute-hyphenation rule](https://eslint.vuejs.org/rules/attribute-hyphenation.html) should also use kebab case.
 
-- ❌ Bad: `<MyComponent myProp="prop" />`
-- ✅ Good: `<MyComponent my-prop="prop" />`
+- ❌ Bad: `<my-component myProp="prop" />`
+- ✅ Good: `<my-component my-prop="prop" />`
 
 
 ### Data Schemas and Validations
@@ -288,6 +288,19 @@ Note: all of our zod schemas are accessible via the auto-imported `zodSchemas` u
 - Shared utils are stored in `shared/utils`, esp. text and string manipulation
 
 ### Nuxt & Vue Best Practices
+
+- **Optimistic Updates with Hybrid Rendering**. Because we are using hybrid rendering, we can leverage optimistic fetches. 
+  - Use Nuxt's [`callOnce()`](https://nuxt.com/docs/4.x/api/utils/call-once) for data fetches, so it's _only_ done on backend, which also prevents UI flickers. 
+  - Also use `{ mode: 'navigation' }` to ensure it does re-render when user navigates between pages.
+- **Throwing Errors** - if possible, outside of utility functions, prefer Nuxt's [`createError()`](https://nuxt.com/docs/4.x/getting-started/error-handling#createerror) over generic `new Error()` for better error handling across server and client. 
+
+#### Components
+
+- **Two Way Bindings** - when binding properties between a parent and child components, do not manually setup emits and properties for the binding. Use Vue's [`defineModel()`](https://vuejs.org/guide/components/v-model) instead.
+- **User Input Validation, incl. defaults**: although it's logical, **avoid** type checking and preventing `null`s, or empty inputs being sent to Pinia stores. This is _duplicate logic_ (horrible to debug) that is handled in Pinia, which leverages our zod schemas. Assume instead we have clean error handling across the stack.
+  - Both frontend _and_ backend leverage the zod schemas (single source of truth) for data validation.
+  - In frontend Pinia is responsible for data validation and curating what gets sent to backend.
+  - In frontend, component only responsible for surfacing and displaying errors.
 
 #### Official Best Practices
 
