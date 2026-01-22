@@ -22,12 +22,33 @@ const props = defineProps({
     required: false,
     default: true,
   },
+  highlightOnSuccess: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
 })
 
+console.log('highlightOnSuccess?', props.highlightOnSuccess, 'sums up?', props.sumsUp)
+
 const inputBaseClass = computed(function () {
-  return (props.sumsUp)
-    ? 'text-right'
-    : 'text-right border border-orange-400 rounded-md ring-0'
+  const showBorder = (!props.sumsUp || (props.sumsUp && props.highlightOnSuccess))
+  let borderColor = ''
+
+  if (props.highlightOnSuccess && props.sumsUp) {
+    borderColor = 'border-emerald-500'
+  }
+
+  if (!props.sumsUp) {
+    borderColor = 'border-orange-500'
+  }
+
+  const result = showBorder
+    ? `text-right border ${borderColor} rounded-md ring-0`
+    : 'text-right'
+
+  // console.log('result', result)
+  return result
 })
 </script>
 
@@ -38,8 +59,11 @@ const inputBaseClass = computed(function () {
     </div>
     <div class="text-right">
       <!-- <ui-saved-inline-alert /> -->
-      <div v-if="$slots.warning" class="inline-block mr-2 font-normal text-orange-500">
-        <slot name="warning" />
+      <div v-if="$slots.success" class="inline-block mr-2 font-normal text-emerald-500">
+        <slot name="success" />
+      </div>
+      <div v-if="$slots.warn" class="inline-block mr-2 font-normal text-orange-500">
+        <slot name="warn" />
       </div>
 
       <UInput
