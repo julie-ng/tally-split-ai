@@ -23,5 +23,19 @@ export default defineAppConfig({
         },
       },
     },
+    button: {
+      compoundVariants: [
+        {
+          color: 'neutral',
+          variant: 'solid',
+          class: 'bg-slate-500 hover:bg-slate-700 active:bg-slate-700',
+        },
+        {
+          color: 'neutral',
+          variant: 'subtle',
+          class: 'bg-slate-200 border-slate-300 hover:bg-slate-300 active:bg-slate-300',
+        },
+      ],
+    },
   },
 })
