@@ -47,6 +47,21 @@ const toggleSettle = () => {
   isSettled.value = !isSettled.value
 }
 
+const zeroOut = () => {
+  pendingUpdates.value.splitAmount = 0
+  pendingUpdates.value.userADebt = 0
+  pendingUpdates.value.userBDebt = 0
+  pendingUpdates.value.paidBy = null
+  pendingUpdates.value.isSettled = false
+  debouncedUpdate()
+}
+
+const splitHalf = () => {
+  pendingUpdates.value.userADebt = split.value?.splitAmount / 2
+  pendingUpdates.value.userBDebt = split.value?.splitAmount / 2
+  debouncedUpdate()
+}
+
 /**
  * Split Refs
  */
@@ -152,8 +167,12 @@ function showToast (err) {
       :sums-up="sumsUp"
       label="Split Amount"
       input-name="splitAmount"
+      :highlight-on-success="true"
     >
-      <template v-if="!sumsUp" #warning>
+      <template v-if="sumsUp" #success>
+        Shares add up
+      </template>
+      <template v-if="!sumsUp" #warn>
         Shares do not add up
       </template>
     </receipt-split-input>
@@ -197,6 +216,30 @@ function showToast (err) {
       </div>
       <div class="flex justify-end">
         <UCheckbox v-model="isSettled" class="cursor-pointer" />
+      </div>
+    </div>
+
+    <div class="flex justify-between items-center mt-3 text-sm">
+      <div>Reset</div>
+      <div>
+        <UButton
+          variant="solid"
+          color="neutral"
+          class="mr-2 cursor-pointer"
+          icon="i-lucide-zap"
+          @click="splitHalf"
+        >
+          Split 50/50
+        </UButton>
+        <UButton
+          variant="solid"
+          color="neutral"
+          class="cursor-pointer"
+          icon="i-lucide-eraser"
+          @click="zeroOut"
+        >
+          Reset to zero
+        </UButton>
       </div>
     </div>
 
