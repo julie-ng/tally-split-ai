@@ -128,12 +128,6 @@ const settledClass = computed(function () {
     : 'border-slate-200'
 })
 
-const inputBaseClass = computed(function () {
-  return (sumsUp.value)
-    ? 'text-right'
-    : 'text-right border border-orange-400 rounded-md ring-0'
-})
-
 /**
  * Helpers
  */
@@ -152,25 +146,17 @@ function showToast (err) {
 
 <template>
   <div>
-    <section class="flex justify-between items-center my-2 text-sm">
-      <!-- Split Amount -->
-      <div class="font-medium">
-        Split Amount
-      </div>
-      <div class="text-right">
-        <!-- <ui-saved-inline-alert /> -->
-        <span v-if="!sumsUp" class="inline-block mr-2 font-normal text-orange-500">
-          Shares do not add up to this.
-        </span>
-        <UInput
-          v-model="splitAmount"
-          name="splitAmount"
-          trailing-icon="i-lucide-euro"
-          class="w-24"
-          :ui="{ base: inputBaseClass, trailingIcon: 'size-4 text-slate-400' }"
-        />
-      </div>
-    </section>
+    <!-- Split Amount -->
+    <receipt-split-input
+      v-model="splitAmount"
+      :sums-up="sumsUp"
+      label="Split Amount"
+      input-name="splitAmount"
+    >
+      <template v-if="!sumsUp" #warning>
+        Shares do not add up
+      </template>
+    </receipt-split-input>
 
     <!-- Paid by -->
     <section class="flex justify-between items-center my-2 text-sm">
@@ -187,50 +173,26 @@ function showToast (err) {
     </section>
 
     <!-- User A Share -->
-    <section class="flex justify-between items-center my-2 text-sm">
-      <div class="font-medium">
-        {{ user1Name }}'s Share
-      </div>
-      <div class="text-right">
-        <!-- <ui-saved-inline-alert /> -->
-        <!-- i-ic-outline-euro-symbol -->
-        <UInput
-          v-model="userADebt"
-          name="userADebt"
-          trailing-icon="i-lucide-euro"
-          class="w-24"
-          :ui="{ base: inputBaseClass, trailingIcon: 'size-4 text-slate-400' }"
-        />
-      </div>
-    </section>
+    <receipt-split-input
+      v-model="userADebt"
+      :label="`${user1Name}'s Share`"
+      :sums-up="sumsUp"
+      input-name="userADebt"
+    />
 
     <!-- User B Share -->
-    <section class="flex justify-between items-center my-2 text-sm">
-      <div class="font-medium">
-        {{ user2Name }}'s Share
-      </div>
-      <div class="text-right">
-        <UInput
-          v-model="userBDebt"
-          name="userBDebt"
-          trailing-icon="i-lucide-euro"
-          class="w-24"
-          :ui="{ base: inputBaseClass, trailingIcon: 'size-4 text-slate-400' }"
-        />
-      </div>
-    </section>
+    <receipt-split-input
+      v-model="userBDebt"
+      :label="`${user2Name}'s Share`"
+      :sums-up="sumsUp"
+      input-name="userBDebt"
+    />
 
     <!-- Settle Button -->
     <div class="mt-4 border rounded-md p-3 grid grid-cols-2 cursor-pointer hover:bg-slate-50" :class="settledClass" @click="toggleSettle">
       <div class="text-left">
         <div class="text-sm">
           {{ settledText }}
-          <!-- <UIcon name="i-lucide-loader-circle" class="size-5 align-middle text-blue-400 animate-spin" /> -->
-          <!-- <UIcon
-            name="i-lucide-cloud-check"
-            class="size-5 align-middle text-blue-500 transition-opacity transition-discrete ease-in-out duration-300"
-            :class="savedIconClasses"
-          /> -->
         </div>
       </div>
       <div class="flex justify-end">
