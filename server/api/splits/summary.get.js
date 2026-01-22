@@ -15,17 +15,17 @@ export default defineEventHandler(async (event) => {
   // Calculate running totals for each user
   let userAOwes = 0
   let userBOwes = 0
-  let pendingCount = 0 // splits without debt amounts set
+  let pendingCount = 0 // splits without share amounts set
 
   for (const split of splits) {
-    if (split.userADebt === null || split.userBDebt === null) {
+    if (split.userAShare === null || split.userBShare === null) {
       // Skip splits that don't have amounts assigned yet
       pendingCount++
       continue
     }
 
-    userAOwes += split.userADebt
-    userBOwes += split.userBDebt
+    userAOwes += split.userAShare
+    userBOwes += split.userBShare
   }
 
   // Net balance: positive means userA owes userB, negative means userB owes userA

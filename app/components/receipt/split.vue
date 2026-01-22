@@ -49,16 +49,16 @@ const toggleSettle = () => {
 
 const zeroOut = () => {
   pendingUpdates.value.splitAmount = 0
-  pendingUpdates.value.userADebt = 0
-  pendingUpdates.value.userBDebt = 0
+  pendingUpdates.value.userAShare = 0
+  pendingUpdates.value.userBShare = 0
   pendingUpdates.value.paidBy = null
   pendingUpdates.value.isSettled = false
   debouncedUpdate()
 }
 
 const splitHalf = () => {
-  pendingUpdates.value.userADebt = split.value?.splitAmount / 2
-  pendingUpdates.value.userBDebt = split.value?.splitAmount / 2
+  pendingUpdates.value.userAShare = split.value?.splitAmount / 2
+  pendingUpdates.value.userBShare = split.value?.splitAmount / 2
   debouncedUpdate()
 }
 
@@ -86,21 +86,21 @@ const paidBy = computed({
   },
 })
 
-const userADebt = computed({
-  get: () => split.value?.userADebt,
+const userAShare = computed({
+  get: () => split.value?.userAShare,
   set: (value) => {
     if (value !== '') { // user clears field
-      pendingUpdates.value.userADebt = parseFloat(value)
+      pendingUpdates.value.userAShare = parseFloat(value)
       debouncedUpdate()
     }
   },
 })
 
-const userBDebt = computed({
-  get: () => split.value?.userBDebt,
+const userBShare = computed({
+  get: () => split.value?.userBShare,
   set: (value) => {
     if (value !== '') { // user clears field
-      pendingUpdates.value.userBDebt = parseFloat(value)
+      pendingUpdates.value.userBShare = parseFloat(value)
       debouncedUpdate()
     }
   },
@@ -193,18 +193,18 @@ function showToast (err) {
 
     <!-- User A Share -->
     <receipt-split-input
-      v-model="userADebt"
+      v-model="userAShare"
       :label="`${user1Name}'s Share`"
       :sums-up="sumsUp"
-      input-name="userADebt"
+      input-name="userAShare"
     />
 
     <!-- User B Share -->
     <receipt-split-input
-      v-model="userBDebt"
+      v-model="userBShare"
       :label="`${user2Name}'s Share`"
       :sums-up="sumsUp"
-      input-name="userBDebt"
+      input-name="userBShare"
     />
 
     <!-- Settle Button -->

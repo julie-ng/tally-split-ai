@@ -89,8 +89,8 @@ export const splits = sqliteTable('splits', {
   // Split details
   splitAmount: real('split_amount').notNull(), // Amount to split (defaults to receipt total)
   paidBy: text('paid_by'), // 'user1' or 'user2' - nullable until settled
-  userADebt: real('user_a_debt'), // Amount userA owes
-  userBDebt: real('user_b_debt'), // Amount userB owes
+  userAShare: real('user_a_share'), // Amount userA's share
+  userBShare: real('user_b_share'), // Amount userB's share
 
   // Settlement tracking
   isSettled: integer('is_settled', { mode: 'boolean' }).notNull().default(false),

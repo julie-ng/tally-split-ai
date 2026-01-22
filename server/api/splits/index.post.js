@@ -16,16 +16,16 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Calculate both user debts (equal split for now)
+  // Calculate both user shares (equal split for now)
   const halfAmount = Math.floor(result.data.splitAmount / 2 * 100) / 100
-  const userADebt = result.data.paidBy ? halfAmount : null
-  const userBDebt = result.data.paidBy ? halfAmount : null
+  const userAShare = result.data.paidBy ? halfAmount : null
+  const userBShare = result.data.paidBy ? halfAmount : null
 
   const insertData = {
     userId,
     ...result.data,
-    userADebt,
-    userBDebt,
+    userAShare,
+    userBShare,
     isSettled: result.data.isSettled ?? false,
   }
 

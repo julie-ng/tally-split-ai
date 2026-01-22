@@ -41,13 +41,13 @@ export const useSplitsStore = defineStore('splits', () => {
   const allSplits = computed(() => Object.values(splits.value))
 
   /**
-   * Check if debt amounts sum to split amount (for UI warnings)
+   * Check if share amounts sum to split amount (for UI warnings)
    * @param {number} id - Split ID
-   * @returns {boolean} True if userADebt + userBDebt === splitAmount
+   * @returns {boolean} True if userAShare + userBShare === splitAmount
    */
   const doesSplitAddUp = computed(() => (id) => {
     const split = _getSplit(id)
-    const sum = split.userADebt + split.userBDebt
+    const sum = split.userAShare + split.userBShare
     const tolerance = 0.01 // Account for floating point precision
     const doesIt = Math.abs(sum - split.splitAmount) <= tolerance
     // console.log(`🍍 doesSplitAddUp(${id})`, doesIt)
@@ -173,15 +173,15 @@ export const useSplitsStore = defineStore('splits', () => {
     const payload = { ...updates }
 
     // Business logic: Apply transformations based on what changed
-    if ('userADebt' in updates && !('userBDebt' in updates)) {
-      // Only userADebt changed - calculate userBDebt
-      payload.userBDebt = Math.floor((currentSplit.splitAmount - updates.userADebt) * 100) / 100
+    if ('userAShare' in updates && !('userBShare' in updates)) {
+      // Only userAShare changed - calculate userBShare
+      payload.userBShare = Math.floor((currentSplit.splitAmount - updates.userAShare) * 100) / 100
     }
-    else if ('userBDebt' in updates && !('userADebt' in updates)) {
-      // Only userBDebt changed - calculate userADebt
-      payload.userADebt = Math.floor((currentSplit.splitAmount - updates.userBDebt) * 100) / 100
+    else if ('userBShare' in updates && !('userAShare' in updates)) {
+      // Only userBShare changed - calculate userAShare
+      payload.userAShare = Math.floor((currentSplit.splitAmount - updates.userBShare) * 100) / 100
     }
-    // If both debt fields provided, use as-is
+    // If both share fields provided, use as-is
     // If splitAmount changed alone, no auto-calculation (per user requirement)
 
     return _persistSplit(id, payload)
