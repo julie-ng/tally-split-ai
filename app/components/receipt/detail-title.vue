@@ -97,6 +97,7 @@ const analyzeReceipt = async () => {
         Analyze
       </UButton>
       <UButton
+        :to="`/receipts/${props.id}/edit`"
         icon="i-lucide-pencil"
         color="secondary"
         variant="solid"
