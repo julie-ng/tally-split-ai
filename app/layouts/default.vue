@@ -17,16 +17,6 @@ function isActive (path: string) {
 
 const links = computed(() => [
   [
-    // {
-    //   label: 'Home',
-    //   icon: 'i-lucide-house',
-    //   to: '/',
-    // },
-    {
-      label: 'Debug Analyses',
-      icon: 'i-lucide-microscope',
-      to: '/analyses',
-    },
     {
       label: 'Blobs',
       icon: 'i-lucide-blocks',
@@ -39,7 +29,6 @@ const links = computed(() => [
       icon: 'i-lucide-receipt-euro',
       to: '/receipts',
       active: isActive('/receipts'),
-      defaultOpen: true,
     },
     {
       label: 'Uploads',
@@ -69,7 +58,6 @@ const links = computed(() => [
       label: 'JSON APIs',
       icon: 'i-lucide-braces',
       to: '/uploads',
-      active: isActive('/uploads'),
       defaultOpen: true,
       children: [
         {
