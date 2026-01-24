@@ -70,6 +70,7 @@ const inputBaseClass = computed(function () {
         v-model="model"
         :name="inputName"
         :class="inputWidth"
+        variant="subtle"
         trailing-icon="i-lucide-euro"
         :ui="{ base: inputBaseClass, trailingIcon: 'size-4 text-slate-400' }"
       />

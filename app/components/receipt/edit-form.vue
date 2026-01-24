@@ -52,7 +52,12 @@ const handleCancel = () => {
           </label>
         </div>
         <div class="col-span-2">
-          <UInput id="title" v-model="formData.title" class="w-80" />
+          <UInput
+            id="title"
+            v-model="formData.title"
+            class="w-80"
+            variant="subtle"
+          />
         </div>
 
         <!-- Receipt Date -->
@@ -67,6 +72,7 @@ const handleCancel = () => {
             v-model="formData.date"
             type="date"
             class="w-80"
+            variant="subtle"
           />
         </div>
 
@@ -77,7 +83,12 @@ const handleCancel = () => {
           </label>
         </div>
         <div class="col-span-2">
-          <UInput id="tags" v-model="formData.tags" class="w-80" />
+          <UInput
+            id="tags"
+            v-model="formData.tags"
+            class="w-80"
+            variant="subtle"
+          />
         </div>
       </div>
 
@@ -100,6 +111,7 @@ const handleCancel = () => {
               v-model="formData.subtotal"
               type="number"
               class="w-80"
+              variant="subtle"
             />
           </div>
           <div>
@@ -113,6 +125,7 @@ const handleCancel = () => {
               v-model="formData.tax"
               type="number"
               class="w-80"
+              variant="subtle"
             />
           </div>
           <div>
@@ -126,6 +139,7 @@ const handleCancel = () => {
               v-model="formData.tip"
               type="number"
               class="w-80"
+              variant="subtle"
             />
           </div>
           <div>
@@ -139,6 +153,7 @@ const handleCancel = () => {
               v-model="formData.total"
               type="number"
               class="w-80"
+              variant="subtle"
             />
           </div>
         </div>
@@ -164,6 +179,7 @@ const handleCancel = () => {
               placeholder="Add any additional notes about this receipt..."
               :rows="6"
               class="w-80"
+              variant="subtle"
             />
           </div>
         </div>
@@ -183,7 +199,12 @@ const handleCancel = () => {
             </label>
           </div>
           <div class="col-span-2">
-            <UInput id="merchantName" v-model="formData.merchantName" class="w-80" />
+            <UInput
+              id="merchantName"
+              v-model="formData.merchantName"
+              class="w-80"
+              variant="subtle"
+            />
           </div>
           <div>
             <label for="merchantAddress">
@@ -191,7 +212,12 @@ const handleCancel = () => {
             </label>
           </div>
           <div class="col-span-2">
-            <UTextarea id="merchantAddress" v-model="formData.merchantAddress" class="w-80" />
+            <UTextarea
+              id="merchantAddress"
+              v-model="formData.merchantAddress"
+              class="w-80"
+              variant="subtle"
+            />
           </div>
           <div>
             <label for="merchantPhone">
@@ -199,7 +225,12 @@ const handleCancel = () => {
             </label>
           </div>
           <div class="col-span-2">
-            <UInput id="merchantPhone" v-model="formData.merchantPhone" class="w-80" />
+            <UInput
+              id="merchantPhone"
+              v-model="formData.merchantPhone"
+              class="w-80"
+              variant="subtle"
+            />
           </div>
         </div>
       </section>
