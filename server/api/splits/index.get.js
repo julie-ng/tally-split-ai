@@ -8,7 +8,11 @@ export default defineEventHandler(async (event) => {
   const splits = await db.query.splits.findMany({
     where: eq(schema.splits.userId, userId),
     with: {
-      receipt: true,
+      receipt: {
+        with: {
+          uploads: true,
+        },
+      },
     },
   })
 

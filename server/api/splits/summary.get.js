@@ -13,8 +13,8 @@ export default defineEventHandler(async (event) => {
   })
 
   // Calculate running totals for each user
-  let userAOwes = 0
-  let userBOwes = 0
+  let userAShare = 0
+  let userBShare = 0
   let pendingCount = 0 // splits without share amounts set
 
   for (const split of splits) {
@@ -24,16 +24,16 @@ export default defineEventHandler(async (event) => {
       continue
     }
 
-    userAOwes += split.userAShare
-    userBOwes += split.userBShare
+    userAShare += split.userAShare
+    userBShare += split.userBShare
   }
 
-  // Net balance: positive means userA owes userB, negative means userB owes userA
-  const netBalance = userAOwes - userBOwes
+  // Net balance: positive means userA Share userB, negative means userB Share userA
+  const netBalance = userAShare - userBShare
 
   return {
-    userAOwes: Math.round(userAOwes * 100) / 100,
-    userBOwes: Math.round(userBOwes * 100) / 100,
+    userAShare: Math.round(userAShare * 100) / 100,
+    userBShare: Math.round(userBShare * 100) / 100,
     netBalance: Math.round(netBalance * 100) / 100,
     unsettledCount: splits.length,
     pendingCount, // splits without amounts assigned

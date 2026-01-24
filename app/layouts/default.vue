@@ -31,6 +31,12 @@ const links = computed(() => [
       active: isActive('/receipts'),
     },
     {
+      label: 'Splits',
+      icon: 'i-lucide-coins',
+      to: '/splits',
+      active: isActive('/splits'),
+    },
+    {
       label: 'Uploads',
       icon: 'i-lucide-upload-cloud',
       to: '/uploads',

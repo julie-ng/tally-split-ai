@@ -76,6 +76,34 @@ export const useSplitsStore = defineStore('splits', () => {
   // -------- ACTIONS --------
 
   /**
+   * Fetch all splits for the current user
+   * @returns {Promise<Array>} Array of split objects
+   */
+  async function fetchAllSplits () {
+    console.log('🍍 fetchAllSplits()')
+    loading.value.all = true
+    errors.value.all = null
+
+    try {
+      const data = await $fetch('/api/splits')
+      // Populate splits map
+      for (const split of data) {
+        splits.value[split.id] = split
+      }
+      console.log(`✅ Fetched ${data.length} splits`)
+      return data
+    }
+    catch (err) {
+      errors.value.all = err
+      console.error('❌ Failed to fetch all splits:', err)
+      throw err
+    }
+    finally {
+      loading.value.all = false
+    }
+  }
+
+  /**
    * Fetch a split by ID (lazy loads if not in state)
    * @param {number} id - Split ID
    * @returns {Promise<Object>} The split object
@@ -211,6 +239,7 @@ export const useSplitsStore = defineStore('splits', () => {
     doesSplitAddUp,
 
     // Actions
+    fetchAllSplits,
     fetchSplit,
     updateSplit,
     clearSplitError,
