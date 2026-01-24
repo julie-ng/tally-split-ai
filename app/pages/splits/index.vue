@@ -104,6 +104,12 @@ function getUserName (userId) {
   return 'Unsure'
 }
 
+function netBalanceText (summary) {
+  return summary.netBalance >= 0
+    ? `${user1Name} owes`
+    : `${user2Name} owes`
+}
+
 /**
  * Refresh both splits and summary
  */
@@ -147,44 +153,24 @@ const paginationInfo = computed(() => {
 
       <!-- Summary Cards -->
       <div v-if="summary" class="grid grid-cols-4 gap-4 mb-5">
-        <div class="border rounded-lg p-4 bg-white">
-          <div class="text-sm text-slate-500">
-            {{ user1Name }}'s Share
-          </div>
-          <div class="text-2xl font-bold text-slate-800">
-            {{ receiptUtils.formatCurrency(summary.userAShare, 'EUR') }}
-          </div>
-        </div>
-        <div class="border rounded-lg p-4 bg-white">
-          <div class="text-sm text-slate-500">
-            {{ user2Name }}'s Share
-          </div>
-          <div class="text-2xl font-bold text-slate-800">
-            {{ receiptUtils.formatCurrency(summary.userBShare, 'EUR') }}
-          </div>
-        </div>
-        <div class="border rounded-lg p-4 bg-white">
-          <div class="text-sm text-slate-500">
-            Net Balance
-          </div>
-          <div class="text-2xl font-bold" :class="summary.netBalance >= 0 ? 'text-emerald-600' : 'text-red-600'">
-            {{ receiptUtils.formatCurrency(Math.abs(summary.netBalance), 'EUR') }}
-            <span class="text-sm font-normal text-slate-500">
-              ({{ summary.netBalance >= 0 ? `${user1Name} owes` : `${user2Name} owes` }})
-            </span>
-          </div>
-        </div>
-        <div class="border rounded-lg p-4 bg-white">
-          <div class="text-sm text-slate-500">
-            Unsettled
-          </div>
-          <div class="text-2xl font-bold text-slate-800">
-            {{ summary.unsettledCount }}
-            <span v-if="summary.pendingCount > 0" class="text-sm font-normal text-orange-500">
-              ({{ summary.pendingCount }} pending)
-            </span>
-          </div>
-        </div>
+        <split-card
+          :title="`${receiptUtils.formatCurrency(summary.userAShare, 'EUR')}`"
+          :subtitle="`${user1Name}'s Share`"
+        />
+        <split-card
+          :title="`${receiptUtils.formatCurrency(summary.userBShare, 'EUR')}`"
+          :subtitle="`${user2Name}'s Share`"
+        />
+        <split-card
+          :title="`${receiptUtils.formatCurrency(Math.abs(summary.netBalance), 'EUR')}`"
+          :note="netBalanceText(summary)"
+          subtitle="Net Balance"
+        />
+        <split-card
+          :title="summary.unsettledCount"
+          :note="`${summary.pendingCount} pending`"
+          subtitle="Unsettled"
+        />
       </div>
 
       <!-- Table -->
