@@ -37,31 +37,31 @@ const pagination = ref({
 const columns = [
   {
     accessorKey: 'analysisStatus',
-    header: 'Status',
-  },
-  {
-    accessorKey: 'title',
-    header: 'Receipt',
+    header: 'Analyzed',
   },
   {
     accessorKey: 'date',
     header: 'Date',
   },
   {
-    accessorKey: 'receiptTotal',
-    header: 'Receipt Total',
+    accessorKey: 'title',
+    header: 'Receipt',
   },
+  // {
+  //   accessorKey: 'receiptTotal',
+  //   header: 'Receipt Total',
+  // },
   {
     accessorKey: 'splitAmount',
     header: 'Split Amount',
   },
   {
     accessorKey: 'userAShare',
-    header: `${user1Name}`,
+    header: `${user1Name}'s' Share`,
   },
   {
     accessorKey: 'userBShare',
-    header: `${user2Name}`,
+    header: `${user2Name}'s Share`,
   },
   {
     accessorKey: 'paidBy',
@@ -101,7 +101,7 @@ function getFirstUpload (split) {
 function getUserName (userId) {
   if (userId === user1Id) return user1Name
   if (userId === user2Id) return user2Name
-  return 'Unsure'
+  return '?'
 }
 
 function netBalanceText (summary) {
@@ -221,16 +221,8 @@ const paginationInfo = computed(() => {
                 v-if="row.original.receipt?.date"
                 :datetime="row.original.receipt.date"
               >
-                {{ timestampUtils.toShortDate(row.original.receipt.date) }}
+                {{ timestampUtils.toGermanISODate(row.original.receipt.date) }}
               </time>
-              <span v-else class="text-slate-400">—</span>
-            </template>
-
-            <!-- Receipt Total -->
-            <template #receiptTotal-cell="{ row }">
-              <div v-if="row.original.receipt?.total != null" class="text-right font-medium">
-                {{ receiptUtils.formatCurrency(row.original.receipt.total, row.original.receipt.currency || 'EUR') }}
-              </div>
               <span v-else class="text-slate-400">—</span>
             </template>
 
@@ -239,7 +231,9 @@ const paginationInfo = computed(() => {
               <div v-if="row.original.splitAmount != null" class="text-right font-medium">
                 {{ receiptUtils.formatCurrency(row.original.splitAmount, 'EUR') }}
               </div>
-              <span v-else class="text-slate-400">—</span>
+              <div v-else class="text-slate-400 text-right">
+                —
+              </div>
             </template>
 
             <!-- User A Share (Read-Only) -->
@@ -247,7 +241,9 @@ const paginationInfo = computed(() => {
               <div v-if="row.original.userAShare != null" class="text-right font-medium">
                 {{ receiptUtils.formatCurrency(row.original.userAShare, 'EUR') }}
               </div>
-              <span v-else class="text-slate-400">—</span>
+              <div v-else class="text-slate-400 text-right">
+                -
+              </div>
             </template>
 
             <!-- User B Share (Read-Only) -->
@@ -255,22 +251,32 @@ const paginationInfo = computed(() => {
               <div v-if="row.original.userBShare != null" class="text-right font-medium">
                 {{ receiptUtils.formatCurrency(row.original.userBShare, 'EUR') }}
               </div>
-              <span v-else class="text-slate-400">—</span>
+              <div v-else class="text-slate-400 text-right">
+                -
+              </div>
             </template>
 
             <!-- Paid By (Read-Only) -->
             <template #paidBy-cell="{ row }">
-              <span class="text-sm">{{ getUserName(row.original.paidBy) }}</span>
+              <div class="text-sm">
+                {{ getUserName(row.original.paidBy) }}
+              </div>
             </template>
 
             <!-- Is Settled (Read-Only) -->
             <template #isSettled-cell="{ row }">
-              <UBadge
+              <UIcon
+                :name="row.original.isSettled ? 'i-lucide-square-check' : 'i-lucide-square'"
+                class="size-4"
+                :class="row.original.isSettled ? 'text-emerald-600' : 'text-slate-300'"
+                :title="row.original.isSettled ? 'Settled Up' : 'Unsettled'"
+              />
+              <!-- <UBadge
                 :color="row.original.isSettled ? 'success' : 'neutral'"
-                variant="subtle"
+                variant="outline"
               >
                 {{ row.original.isSettled ? 'Settled' : 'Unsettled' }}
-              </UBadge>
+              </UBadge> -->
             </template>
 
             <!-- Actions -->
@@ -281,6 +287,7 @@ const paginationInfo = computed(() => {
                   color="primary"
                   size="xs"
                   icon="i-lucide-edit"
+                  class="cursor-pointer"
                 >
                   Edit
                 </UButton>
