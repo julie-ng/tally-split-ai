@@ -14,6 +14,8 @@ const splitsStore = useSplitsStore()
 const config = useRuntimeConfig()
 const user1Name = config.public.splitUserOneName
 const user2Name = config.public.splitUserTwoName
+const user1Id = config.public.splitUserOneId
+const user2Id = config.public.splitUserTwoId
 
 // Fetch all splits on mount
 await callOnce(() => splitsStore.fetchAllSplits(), { mode: 'navigation' })
@@ -91,6 +93,15 @@ const tableStyles = {
  */
 function getFirstUpload (split) {
   return split?.receipt?.uploads?.[0] || null
+}
+
+/**
+ * Get user name by ID
+ */
+function getUserName (userId) {
+  if (userId === user1Id) return user1Name
+  if (userId === user2Id) return user2Name
+  return 'Unsure'
 }
 
 /**
@@ -237,30 +248,57 @@ const paginationInfo = computed(() => {
               <span v-else class="text-slate-400">—</span>
             </template>
 
-            <!-- Editable columns via splits-table-cell component -->
+            <!-- Split Amount (Read-Only) -->
             <template #splitAmount-cell="{ row }">
-              <splits-table-cell :split-id="row.original.id" field="splitAmount" />
+              <div v-if="row.original.splitAmount != null" class="text-right font-medium">
+                {{ receiptUtils.formatCurrency(row.original.splitAmount, 'EUR') }}
+              </div>
+              <span v-else class="text-slate-400">—</span>
             </template>
 
+            <!-- User A Share (Read-Only) -->
             <template #userAShare-cell="{ row }">
-              <splits-table-cell :split-id="row.original.id" field="userAShare" />
+              <div v-if="row.original.userAShare != null" class="text-right font-medium">
+                {{ receiptUtils.formatCurrency(row.original.userAShare, 'EUR') }}
+              </div>
+              <span v-else class="text-slate-400">—</span>
             </template>
 
+            <!-- User B Share (Read-Only) -->
             <template #userBShare-cell="{ row }">
-              <splits-table-cell :split-id="row.original.id" field="userBShare" />
+              <div v-if="row.original.userBShare != null" class="text-right font-medium">
+                {{ receiptUtils.formatCurrency(row.original.userBShare, 'EUR') }}
+              </div>
+              <span v-else class="text-slate-400">—</span>
             </template>
 
+            <!-- Paid By (Read-Only) -->
             <template #paidBy-cell="{ row }">
-              <splits-table-cell :split-id="row.original.id" field="paidBy" />
+              <span class="text-sm">{{ getUserName(row.original.paidBy) }}</span>
             </template>
 
+            <!-- Is Settled (Read-Only) -->
             <template #isSettled-cell="{ row }">
-              <splits-table-cell :split-id="row.original.id" field="isSettled" />
+              <UBadge
+                :color="row.original.isSettled ? 'success' : 'neutral'"
+                variant="subtle"
+              >
+                {{ row.original.isSettled ? 'Settled' : 'Unsettled' }}
+              </UBadge>
             </template>
 
             <!-- Actions -->
             <template #actions-cell="{ row }">
-              <splits-table-cell :split-id="row.original.id" field="actions" />
+              <NuxtLink :to="`/receipts/${row.original.receipt?.id}`">
+                <UButton
+                  variant="soft"
+                  color="primary"
+                  size="xs"
+                  icon="i-lucide-edit"
+                >
+                  Edit
+                </UButton>
+              </NuxtLink>
             </template>
 
             <!-- Filename -->
