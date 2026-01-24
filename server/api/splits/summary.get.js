@@ -5,19 +5,37 @@ export default defineEventHandler(async (event) => {
   requireUserId(event)
   const userId = event.context.userId
 
+  // Get optional year/month filter from query params
+  const query = getQuery(event)
+  const year = query.year ? parseInt(query.year) : null
+  const month = query.month ? parseInt(query.month) : null
+
   const splits = await db.query.splits.findMany({
     where: and(
       eq(schema.splits.userId, userId),
       eq(schema.splits.isSettled, false),
     ),
+    with: {
+      receipt: true,
+    },
   })
+
+  // Filter by receipt date if year/month provided
+  let filteredSplits = splits
+  if (year && month) {
+    filteredSplits = splits.filter((split) => {
+      if (!split.receipt?.date) return false
+      const date = new Date(split.receipt.date)
+      return date.getFullYear() === year && date.getMonth() + 1 === month
+    })
+  }
 
   // Calculate running totals for each user
   let userAShare = 0
   let userBShare = 0
   let pendingCount = 0 // splits without share amounts set
 
-  for (const split of splits) {
+  for (const split of filteredSplits) {
     if (split.userAShare === null || split.userBShare === null) {
       // Skip splits that don't have amounts assigned yet
       pendingCount++
@@ -35,7 +53,7 @@ export default defineEventHandler(async (event) => {
     userAShare: Math.round(userAShare * 100) / 100,
     userBShare: Math.round(userBShare * 100) / 100,
     netBalance: Math.round(netBalance * 100) / 100,
-    unsettledCount: splits.length,
+    unsettledCount: filteredSplits.length,
     pendingCount, // splits without amounts assigned
   }
 })

@@ -3,8 +3,27 @@ import { getPaginationRowModel } from '@tanstack/vue-table'
 import { useUserStore } from '~/stores/user.store'
 import { useSplitsStore } from '~/stores/splits.store'
 
+// Get route params
+const route = useRoute()
+const year = parseInt(route.params.year)
+const month = parseInt(route.params.month)
+
+// Validate params
+if (!year || !month || month < 1 || month > 12) {
+  throw createError({
+    statusCode: 400,
+    message: 'Invalid year or month',
+  })
+}
+
+// Helper for month name
+const monthName = computed(() => {
+  const date = new Date(year, month - 1, 1)
+  return date.toLocaleDateString('en-US', { month: 'long' })
+})
+
 useHead({
-  title: 'Splits',
+  title: `Splits - ${monthName.value} ${year}`,
 })
 
 const userStore = useUserStore()
@@ -17,15 +36,17 @@ const user2Name = config.public.splitUserTwoName
 const user1Id = config.public.splitUserOneId
 const user2Id = config.public.splitUserTwoId
 
-// Fetch all splits on mount
-await callOnce(() => splitsStore.fetchAllSplits(), { mode: 'navigation' })
+// Fetch filtered splits on mount
+await callOnce(() => splitsStore.fetchAllSplits({ year, month }), { mode: 'navigation' })
 
 // Get reactive refs from store
 const { allSplits: splits, loading } = storeToRefs(splitsStore)
 const pending = computed(() => loading.value.all || false)
 
-// Fetch summary data
-const { data: summary, refresh: refreshSummary } = await useFetch('/api/splits/summary')
+// Fetch filtered summary data
+const { data: summary, refresh: refreshSummary } = await useFetch('/api/splits/summary', {
+  query: { year, month },
+})
 
 // Table setup
 const table = useTemplateRef('table')
@@ -47,10 +68,6 @@ const columns = [
     accessorKey: 'title',
     header: 'Receipt',
   },
-  // {
-  //   accessorKey: 'receiptTotal',
-  //   header: 'Receipt Total',
-  // },
   {
     accessorKey: 'splitAmount',
     header: 'Split Amount',
@@ -115,7 +132,7 @@ function netBalanceText (summary) {
  */
 async function refreshAll () {
   await Promise.all([
-    splitsStore.fetchAllSplits(),
+    splitsStore.fetchAllSplits({ year, month }),
     refreshSummary(),
   ])
 }
@@ -135,11 +152,18 @@ const paginationInfo = computed(() => {
 <template>
   <UContainer>
     <div class="my-5">
+      <!-- Breadcrumb -->
+      <div class="mb-3">
+        <NuxtLink to="/splits" class="text-sm text-blue-600 hover:underline">
+          ← All Splits
+        </NuxtLink>
+      </div>
+
       <!-- Header -->
       <div class="flex justify-between items-center mb-5">
         <div>
           <h1 class="font-bold text-2xl">
-            Splits
+            Splits - {{ monthName }} {{ year }}
           </h1>
           <p class="mt-1 text-sm text-slate-400">
             Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} splits for
@@ -149,17 +173,6 @@ const paginationInfo = computed(() => {
         <UButton class="px-4 py-2 cursor-pointer" @click="refreshAll">
           Refresh
         </UButton>
-      </div>
-
-      <!-- Month Filter Links -->
-      <div class="mb-4 p-3 bg-slate-50 rounded-md">
-        <span class="text-sm text-slate-600 font-medium mr-3">Filter by month:</span>
-        <NuxtLink to="/splits/2025/11" class="text-sm text-blue-600 hover:underline mr-3">
-          November 2025
-        </NuxtLink>
-        <NuxtLink to="/splits/2025/12" class="text-sm text-blue-600 hover:underline">
-          December 2025
-        </NuxtLink>
       </div>
 
       <!-- Summary Cards -->
@@ -282,12 +295,6 @@ const paginationInfo = computed(() => {
                 :class="row.original.isSettled ? 'text-emerald-600' : 'text-slate-300'"
                 :title="row.original.isSettled ? 'Settled Up' : 'Unsettled'"
               />
-              <!-- <UBadge
-                :color="row.original.isSettled ? 'success' : 'neutral'"
-                variant="outline"
-              >
-                {{ row.original.isSettled ? 'Settled' : 'Unsettled' }}
-              </UBadge> -->
             </template>
 
             <!-- Actions -->

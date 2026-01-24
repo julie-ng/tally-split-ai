@@ -77,15 +77,22 @@ export const useSplitsStore = defineStore('splits', () => {
 
   /**
    * Fetch all splits for the current user
+   * @param {Object} filters - Optional filters { year, month }
    * @returns {Promise<Array>} Array of split objects
    */
-  async function fetchAllSplits () {
-    console.log('🍍 fetchAllSplits()')
+  async function fetchAllSplits (filters = {}) {
+    console.log('🍍 fetchAllSplits()', filters)
     loading.value.all = true
     errors.value.all = null
 
     try {
-      const data = await $fetch('/api/splits')
+      const params = new URLSearchParams()
+      if (filters.year) params.append('year', filters.year)
+      if (filters.month) params.append('month', filters.month)
+
+      const url = `/api/splits${params.toString() ? '?' + params.toString() : ''}`
+      const data = await $fetch(url)
+
       // Populate splits map
       for (const split of data) {
         splits.value[split.id] = split
