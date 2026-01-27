@@ -20,6 +20,9 @@ export default defineEventHandler(async (event) => {
         expiresInMinutes: 5,
       })
 
+      // Remove user-id from tags before returning
+      const { 'user-id': _userId, ...filteredTags } = blob.tags || {}
+
       blobs.push({
         filename: blob.name,
         url: blobUrl,
@@ -28,7 +31,7 @@ export default defineEventHandler(async (event) => {
         lastModified: blob.properties.lastModified,
         size: blob.properties.contentLength,
         contentType: blob.properties.contentType,
-        tags: blob.tags || {},
+        tags: filteredTags,
       })
     }
 

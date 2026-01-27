@@ -14,10 +14,10 @@ export default defineEventHandler(async (event) => {
 
   // Aggregate azureTags from uploads for each receipt
   const receiptsWithAggregatedTags = receipts.map((receipt) => {
-    // Collect all unique azureTags from uploads
+    // Collect all unique azureTags from uploads, filtering out internal tags
     const allTags = receipt.uploads
       .filter(upload => upload.azureTags)
-      .map(upload => upload.azureTags)
+      .map(upload => azureUtils.excludeInternalBlobTags(upload.azureTags))
       .join(',')
 
     return {

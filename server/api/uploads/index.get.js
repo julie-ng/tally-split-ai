@@ -20,5 +20,11 @@ export default defineEventHandler(async (event) => {
   // Artificial delay for testing loading states
   // await delay(1500)
 
-  return uploads
+  // Filter out internal blob tags from azureTags
+  const uploadsWithFilteredTags = uploads.map(upload => ({
+    ...upload,
+    azureTags: upload.azureTags ? azureUtils.excludeInternalBlobTags(upload.azureTags) : upload.azureTags,
+  }))
+
+  return uploadsWithFilteredTags
 })

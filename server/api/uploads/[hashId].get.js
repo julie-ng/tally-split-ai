@@ -26,5 +26,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  return upload
+  // Filter out internal blob tags from azureTags
+  return {
+    ...upload,
+    azureTags: upload.azureTags ? azureUtils.excludeInternalBlobTags(upload.azureTags) : upload.azureTags,
+  }
 })

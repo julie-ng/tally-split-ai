@@ -23,6 +23,11 @@ const props = defineProps({
   },
 })
 
+// Filter out internal tags
+const filteredTags = computed(() => {
+  return azureUtils.excludeInternalBlobTags(props.tags)
+})
+
 const uiClasses = computed(() => {
   if (props.ui && Object.hasOwn(props.ui, 'class')) {
     return props.ui.class
@@ -36,7 +41,7 @@ const uiClasses = computed(() => {
 <template>
   <div class="flex flex-wrap gap-2">
     <UBadge
-      v-for="(value, key) in props.tags"
+      v-for="(value, key) in filteredTags"
       :key="key"
       :color="props.color"
       :variant="props.variant"

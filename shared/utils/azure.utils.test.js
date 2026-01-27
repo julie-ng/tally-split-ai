@@ -122,3 +122,115 @@ describe('azureUtils.removeUsernamePrefixFromBlobname', () => {
     expect(result).toBe('')
   })
 })
+
+describe('azureUtils.excludeInternalBlobTags', () => {
+  describe('string input (JSON)', () => {
+    it('should exclude user-id from JSON string', () => {
+      const jsonString = '{"user-id":"julie-ng","receipt-total":"7.75","receipt-tags":"special"}'
+      const result = azureUtils.excludeInternalBlobTags(jsonString)
+      const parsed = JSON.parse(result)
+
+      expect(parsed).not.toHaveProperty('user-id')
+      expect(parsed).toHaveProperty('receipt-total', '7.75')
+      expect(parsed).toHaveProperty('receipt-tags', 'special')
+    })
+
+    it('should handle JSON with only internal tags', () => {
+      const jsonString = '{"user-id":"julie-ng"}'
+      const result = azureUtils.excludeInternalBlobTags(jsonString)
+      const parsed = JSON.parse(result)
+
+      expect(parsed).toEqual({})
+    })
+
+    it('should handle empty JSON object', () => {
+      const jsonString = '{}'
+      const result = azureUtils.excludeInternalBlobTags(jsonString)
+
+      expect(result).toBe('{}')
+    })
+
+    it('should handle invalid JSON gracefully', () => {
+      const invalidJson = 'not-valid-json'
+      const result = azureUtils.excludeInternalBlobTags(invalidJson)
+
+      expect(result).toBe(invalidJson)
+    })
+
+    it('should preserve all non-internal tags', () => {
+      const jsonString = '{"user-id":"julie-ng","receipt-date":"2025-11-18","receipt-total":"7.75"}'
+      const result = azureUtils.excludeInternalBlobTags(jsonString)
+      const parsed = JSON.parse(result)
+
+      expect(Object.keys(parsed)).toHaveLength(2)
+      expect(parsed).toHaveProperty('receipt-date', '2025-11-18')
+      expect(parsed).toHaveProperty('receipt-total', '7.75')
+    })
+  })
+
+  describe('object input', () => {
+    it('should exclude user-id from object', () => {
+      const tags = {
+        'user-id': 'julie-ng',
+        'receipt-total': '7.75',
+        'receipt-tags': 'special',
+      }
+      const result = azureUtils.excludeInternalBlobTags(tags)
+
+      expect(result).not.toHaveProperty('user-id')
+      expect(result).toHaveProperty('receipt-total', '7.75')
+      expect(result).toHaveProperty('receipt-tags', 'special')
+    })
+
+    it('should handle object with only internal tags', () => {
+      const tags = { 'user-id': 'julie-ng' }
+      const result = azureUtils.excludeInternalBlobTags(tags)
+
+      expect(result).toEqual({})
+    })
+
+    it('should handle empty object', () => {
+      const tags = {}
+      const result = azureUtils.excludeInternalBlobTags(tags)
+
+      expect(result).toEqual({})
+    })
+
+    it('should preserve all non-internal tags', () => {
+      const tags = {
+        'user-id': 'julie-ng',
+        'receipt-date': '2025-11-18',
+        'receipt-total': '7.75',
+      }
+      const result = azureUtils.excludeInternalBlobTags(tags)
+
+      expect(Object.keys(result)).toHaveLength(2)
+      expect(result).toHaveProperty('receipt-date', '2025-11-18')
+      expect(result).toHaveProperty('receipt-total', '7.75')
+    })
+  })
+
+  describe('edge cases', () => {
+    it('should return null for null input', () => {
+      const result = azureUtils.excludeInternalBlobTags(null)
+      expect(result).toBeNull()
+    })
+
+    it('should return undefined for undefined input', () => {
+      const result = azureUtils.excludeInternalBlobTags(undefined)
+      expect(result).toBeUndefined()
+    })
+
+    it('should return array as-is (unsupported type)', () => {
+      const tags = ['user-id', 'receipt-total']
+      const result = azureUtils.excludeInternalBlobTags(tags)
+
+      expect(result).toBe(tags)
+    })
+
+    it('should return number as-is (unsupported type)', () => {
+      const result = azureUtils.excludeInternalBlobTags(123)
+      expect(result).toBe(123)
+    })
+  })
+})

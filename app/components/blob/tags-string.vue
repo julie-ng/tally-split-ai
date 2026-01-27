@@ -25,7 +25,9 @@ const props = defineProps({
  * Setup Tags Array
  */
 const tags = computed(() => {
-  const allTags = azureUtils.blobTagsJsonToObject(props.tagsAsString)
+  // First exclude internal tags
+  const filteredString = azureUtils.excludeInternalBlobTags(props.tagsAsString)
+  const allTags = azureUtils.blobTagsJsonToObject(filteredString)
 
   // If no filter specified, return all tags
   if (props.filter.length === 0) {
