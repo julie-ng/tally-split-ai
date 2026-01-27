@@ -3,13 +3,13 @@ import { getPaginationRowModel } from '@tanstack/vue-table'
 import { useUserStore } from '~/stores/user.store'
 import { useSplitsStore } from '~/stores/splits.store'
 
-// Get route params
+// Get route params reactively so navigation between months works
 const route = useRoute()
-const year = parseInt(route.params.year)
-const month = parseInt(route.params.month)
+const year = computed(() => parseInt(route.params.year))
+const month = computed(() => parseInt(route.params.month))
 
 // Validate params
-if (!year || !month || month < 1 || month > 12) {
+if (!year.value || !month.value || month.value < 1 || month.value > 12) {
   throw createError({
     statusCode: 400,
     message: 'Invalid year or month',
@@ -18,12 +18,12 @@ if (!year || !month || month < 1 || month > 12) {
 
 // Helper for month name
 const monthName = computed(() => {
-  const date = new Date(year, month - 1, 1)
+  const date = new Date(year.value, month.value - 1, 1)
   return date.toLocaleDateString('en-US', { month: 'long' })
 })
 
 useHead({
-  title: `Splits - ${monthName.value} ${year}`,
+  title: `Splits - ${monthName.value} ${year.value}`,
 })
 
 const userStore = useUserStore()
@@ -36,17 +36,21 @@ const user2Name = config.public.splitUserTwoName
 const user1Id = config.public.splitUserOneId
 const user2Id = config.public.splitUserTwoId
 
-// Fetch filtered splits on mount
-await callOnce(() => splitsStore.fetchAllSplits({ year, month }), { mode: 'navigation' })
+// Fetch all splits (no filter) so the store has full dataset for client-side filtering
+await callOnce(() => splitsStore.fetchAllSplits(), { mode: 'navigation' })
 
-// Get reactive refs from store
-const { allSplits: splits, loading } = storeToRefs(splitsStore)
+// Get splits filtered by month (reactive to year/month changes)
+const splits = computed(() => splitsStore.getSplitsByMonth(year.value, month.value))
+const { loading } = storeToRefs(splitsStore)
 const pending = computed(() => loading.value.all || false)
 
 // Fetch filtered summary data
 const { data: summary, refresh: refreshSummary } = await useFetch('/api/splits/summary', {
   query: { year, month },
 })
+
+// Refetch summary when navigating between months
+watch([year, month], () => refreshSummary())
 
 // Table setup
 const table = useTemplateRef('table')
@@ -132,7 +136,7 @@ function netBalanceText (summary) {
  */
 async function refreshAll () {
   await Promise.all([
-    splitsStore.fetchAllSplits({ year, month }),
+    splitsStore.fetchAllSplits(),
     refreshSummary(),
   ])
 }

@@ -41,6 +41,20 @@ export const useSplitsStore = defineStore('splits', () => {
   const allSplits = computed(() => Object.values(splits.value))
 
   /**
+   * Get splits filtered by year and month (based on receipt.date)
+   * @param {number} year - Full year (e.g. 2025)
+   * @param {number} month - Month 1-12
+   * @returns {Array} Filtered splits
+   */
+  const getSplitsByMonth = computed(() => (year, month) => {
+    return allSplits.value.filter((split) => {
+      if (!split.receipt?.date) return false
+      const date = new Date(split.receipt.date)
+      return date.getFullYear() === year && date.getMonth() + 1 === month
+    })
+  })
+
+  /**
    * Check if share amounts sum to split amount (for UI warnings)
    * @param {number} id - Split ID
    * @returns {boolean} True if userAShare + userBShare === splitAmount
@@ -93,10 +107,12 @@ export const useSplitsStore = defineStore('splits', () => {
       const url = `/api/splits${params.toString() ? '?' + params.toString() : ''}`
       const data = await $fetch(url)
 
-      // Populate splits map
+      // Replace splits map (backend is source of truth)
+      const newSplits = {}
       for (const split of data) {
-        splits.value[split.id] = split
+        newSplits[split.id] = split
       }
+      splits.value = newSplits
       console.log(`✅ Fetched ${data.length} splits`)
       return data
     }
@@ -243,6 +259,7 @@ export const useSplitsStore = defineStore('splits', () => {
     isSplitSaving,
     getSplitError,
     allSplits,
+    getSplitsByMonth,
     doesSplitAddUp,
 
     // Actions
