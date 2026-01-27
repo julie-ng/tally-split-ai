@@ -59,7 +59,10 @@ function excludeInternalBlobTags (tags) {
     }
     catch (error) {
       // If parsing fails, return original
-      console.warn(error)
+      // Suppress warning during tests
+      if (typeof process !== 'undefined' && process.env?.VITEST !== 'true') {
+        console.warn(error)
+      }
       return tags
     }
   }
