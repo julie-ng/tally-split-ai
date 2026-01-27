@@ -59,6 +59,7 @@ function excludeInternalBlobTags (tags) {
     }
     catch (error) {
       // If parsing fails, return original
+      console.warn(error)
       return tags
     }
   }

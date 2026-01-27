@@ -15,9 +15,10 @@ const receiptsStore = useReceiptsStore()
 await callOnce(() => receiptsStore.fetchReceipts(), { mode: 'navigation' })
 
 // Get reactive refs from store
+// eslint-disable-next-line no-unused-vars
 const { allReceipts: receipts, loading, errors } = storeToRefs(receiptsStore)
 const pending = computed(() => loading.value.all || false)
-const error = computed(() => errors.value.all || null)
+// const error = computed(() => errors.value.all || null) //  ⚠️ TODO: Error handling
 
 const table = useTemplateRef('table')
 const pagination = ref({

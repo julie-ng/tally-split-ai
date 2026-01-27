@@ -21,6 +21,7 @@ export default defineEventHandler(async (event) => {
       })
 
       // Remove user-id from tags before returning
+      // eslint-disable-next-line no-unused-vars
       const { 'user-id': _userId, ...filteredTags } = blob.tags || {}
 
       blobs.push({
