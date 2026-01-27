@@ -136,31 +136,12 @@ const paginationInfo = computed(() => {
   <UContainer>
     <div class="my-5">
       <!-- Header -->
-      <div class="flex justify-between items-center mb-5">
-        <div>
-          <h1 class="font-bold text-2xl">
-            Splits
-          </h1>
-          <p class="mt-1 text-sm text-slate-400">
-            Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} splits for
-            {{ userStore.userId }}
-          </p>
-        </div>
-        <UButton class="px-4 py-2 cursor-pointer" @click="refreshAll">
-          Refresh
-        </UButton>
-      </div>
-
-      <!-- Month Filter Links -->
-      <div class="mb-4 p-3 bg-slate-50 rounded-md">
-        <span class="text-sm text-slate-600 font-medium mr-3">Filter by month:</span>
-        <NuxtLink to="/splits/2025/11" class="text-sm text-blue-600 hover:underline mr-3">
-          November 2025
-        </NuxtLink>
-        <NuxtLink to="/splits/2025/12" class="text-sm text-blue-600 hover:underline">
-          December 2025
-        </NuxtLink>
-      </div>
+      <splits-monthly-header
+        title="Splits"
+        :pagination-info="paginationInfo"
+        :user-id="userStore.userId"
+        @refresh="refreshAll"
+      />
 
       <!-- Summary Cards -->
       <div v-if="summary" class="grid grid-cols-4 gap-4 mb-5">

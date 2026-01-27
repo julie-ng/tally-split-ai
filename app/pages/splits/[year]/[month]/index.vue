@@ -160,20 +160,13 @@ const paginationInfo = computed(() => {
       </div>
 
       <!-- Header -->
-      <div class="flex justify-between items-center mb-5">
-        <div>
-          <h1 class="font-bold text-2xl">
-            Splits - {{ monthName }} {{ year }}
-          </h1>
-          <p class="mt-1 text-sm text-slate-400">
-            Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} splits for
-            {{ userStore.userId }}
-          </p>
-        </div>
-        <UButton class="px-4 py-2 cursor-pointer" @click="refreshAll">
-          Refresh
-        </UButton>
-      </div>
+      <splits-monthly-header
+        :title="`${monthName} ${year}`"
+        :period="`${monthName} ${year}`"
+        :pagination-info="paginationInfo"
+        :user-id="userStore.userId"
+        @refresh="refreshAll"
+      />
 
       <!-- Summary Cards -->
       <div v-if="summary" class="grid grid-cols-4 gap-4 mb-5">
