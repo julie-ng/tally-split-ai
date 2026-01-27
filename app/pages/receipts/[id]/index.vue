@@ -1,9 +1,18 @@
 <script setup>
-const route = useRoute()
-const id = route.params.id
+import { useReceiptsStore } from '~/stores/receipts.store'
 
-// Fetch receipt details with uploads relation
-const { data: receipt, pending, error } = await useFetch(`/api/receipts/${id}`)
+const route = useRoute()
+const id = parseInt(route.params.id)
+
+const receiptsStore = useReceiptsStore()
+
+// Use callOnce for SSR + navigation optimization
+await callOnce(() => receiptsStore.fetchReceipt(id), { mode: 'navigation' })
+
+// Get reactive refs from store
+const receipt = computed(() => receiptsStore.getReceiptById(id))
+const pending = computed(() => receiptsStore.isReceiptLoading(id))
+const error = computed(() => receiptsStore.getReceiptError(id))
 
 // Set page title reactively after receipt is fetched
 useHead({

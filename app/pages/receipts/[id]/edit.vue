@@ -3,13 +3,19 @@ import { useReceiptsStore } from '~/stores/receipts.store'
 
 const route = useRoute()
 const router = useRouter()
-const id = route.params.id
+const id = parseInt(route.params.id)
 const toast = useToast()
 
 const receiptsStore = useReceiptsStore()
 
-// Fetch receipt data
-const { data: receipt, pending, error } = await useFetch(`/api/receipts/${id}`)
+// Use callOnce for SSR + navigation optimization
+await callOnce(() => receiptsStore.fetchReceipt(id), { mode: 'navigation' })
+
+// Get reactive refs from store
+const receipt = computed(() => receiptsStore.getReceiptById(id))
+const pending = computed(() => receiptsStore.isReceiptLoading(id))
+const error = computed(() => receiptsStore.getReceiptError(id))
+const saving = computed(() => receiptsStore.isReceiptSaving(id))
 
 useHead({
   title: () => {
@@ -34,11 +40,9 @@ const breadcrumbItems = [
   },
 ]
 
-const saving = ref(false)
 const saveError = ref(null)
 
 const handleSave = async (formData) => {
-  saving.value = true
   saveError.value = null
 
   try {
@@ -59,9 +63,6 @@ const handleSave = async (formData) => {
     // Error Message: err.message
     // Errors Object (already zod Flattened): err.data.errors
     saveError.value = err
-  }
-  finally {
-    saving.value = false
   }
 }
 

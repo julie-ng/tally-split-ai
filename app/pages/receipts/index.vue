@@ -11,12 +11,13 @@ const toast = useToast()
 const userStore = useUserStore()
 const receiptsStore = useReceiptsStore()
 
-// Fetch receipts on mount
-await receiptsStore.fetchReceipts()
+// Use callOnce for SSR + navigation optimization
+await callOnce(() => receiptsStore.fetchReceipts(), { mode: 'navigation' })
 
-// Get reactive refs from store (preserves reactivity without creating new computed)
-// eslint-disable-next-line no-unused-vars
-const { receipts, loading: pending, error } = storeToRefs(receiptsStore)
+// Get reactive refs from store
+const { allReceipts: receipts, loading, errors } = storeToRefs(receiptsStore)
+const pending = computed(() => loading.value.all || false)
+const error = computed(() => errors.value.all || null)
 
 const table = useTemplateRef('table')
 const pagination = ref({
