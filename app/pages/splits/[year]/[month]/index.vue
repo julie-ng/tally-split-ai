@@ -151,6 +151,31 @@ const paginationInfo = computed(() => {
 
   return { start, end, total }
 })
+
+/**
+ * Check if all splits in this month are already settled
+ */
+const allSettled = computed(() =>
+  splits.value.length > 0 && splits.value.every(s => s.isSettled),
+)
+
+/**
+ * Handle marking all splits for the month as settled
+ */
+async function handleMarkAllSettled () {
+  if (!confirm(`Mark all ${splits.value.length} splits for ${monthName.value} ${year.value} as settled?`)) {
+    return
+  }
+
+  try {
+    await splitsStore.markMonthAsSettled(year.value, month.value)
+    // Refresh summary to update counts
+    await refreshSummary()
+  }
+  catch (err) {
+    alert('Failed to mark splits as settled. Please try again.')
+  }
+}
 </script>
 
 <template>
@@ -329,6 +354,19 @@ const paginationInfo = computed(() => {
               :total="table?.tableApi?.getFilteredRowModel().rows.length"
               @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
             />
+          </div>
+
+          <!-- Mark All as Settled -->
+          <div class="px-4 py-3 border-t border-default">
+            <UButton
+              color="primary"
+              variant="solid"
+              icon="i-lucide-check-check"
+              :disabled="splits.length === 0 || allSettled"
+              @click="handleMarkAllSettled"
+            >
+              Mark All as Settled
+            </UButton>
           </div>
         </div>
       </ClientOnly>

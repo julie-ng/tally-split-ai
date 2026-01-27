@@ -246,6 +246,57 @@ export const useSplitsStore = defineStore('splits', () => {
     delete errors.value[id]
   }
 
+  /**
+   * Mark all splits in a given month as settled
+   * @param {number} year - Full year (e.g. 2025)
+   * @param {number} month - Month 1-12
+   * @returns {Promise<Object>} Result with updatedCount
+   */
+  async function markMonthAsSettled (year, month) {
+    console.log(`🍍 markMonthAsSettled(${year}, ${month})`)
+
+    // 1. Get affected splits
+    const monthSplits = getSplitsByMonth(year, month)
+
+    if (monthSplits.length === 0) {
+      console.log('⚠️ No splits to settle for this month')
+      return { success: true, updatedCount: 0 }
+    }
+
+    // 2. Store originals for rollback
+    const originals = {}
+    for (const split of monthSplits) {
+      originals[split.id] = { ...splits.value[split.id] }
+    }
+
+    // 3. Optimistic update: mark all as settled in state
+    // Note: settledAt will be set by the backend
+    for (const split of monthSplits) {
+      splits.value[split.id] = {
+        ...splits.value[split.id],
+        isSettled: true,
+      }
+    }
+
+    // 4. Call batch API
+    try {
+      const result = await $fetch('/api/splits/batch-settle', {
+        method: 'PUT',
+        body: { year, month },
+      })
+      console.log(`✅ Marked ${result.updatedCount} splits as settled`)
+      return result
+    }
+    catch (err) {
+      // 5. Rollback on error
+      for (const id in originals) {
+        splits.value[id] = originals[id]
+      }
+      console.error('❌ Failed to mark month as settled:', err)
+      throw err
+    }
+  }
+
   return {
     // State
     splits,
@@ -267,5 +318,6 @@ export const useSplitsStore = defineStore('splits', () => {
     fetchSplit,
     updateSplit,
     clearSplitError,
+    markMonthAsSettled,
   }
 })
