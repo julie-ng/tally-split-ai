@@ -41,58 +41,63 @@ const breadcrumbItems = [
 </script>
 
 <template>
-  <UContainer class="pt-5">
-    <div class="ml-4">
-      <UBreadcrumb :items="breadcrumbItems" />
-    </div>
+  <NuxtLayout>
+    <UContainer class="pt-5">
+      <div class="ml-4">
+        <UBreadcrumb :items="breadcrumbItems" />
+      </div>
 
-    <!-- Loading -->
-    <loading-placeholder v-if="pending" title="Loading Receipt" :hash-id="id" />
+      <!-- Loading -->
+      <loading-placeholder v-if="pending" title="Loading Receipt" :hash-id="id" />
 
-    <!-- Error -->
-    <UAlert
-      v-else-if="error"
-      title="Unable to Load Receipt"
-      :description="error.message"
-      class="my-5"
-      color="error"
-      variant="subtle"
-      icon="i-lucide-triangle-alert"
-    />
+      <!-- Error -->
+      <UAlert
+        v-else-if="error"
+        title="Unable to Load Receipt"
+        :description="error.message"
+        class="my-5"
+        color="error"
+        variant="subtle"
+        icon="i-lucide-triangle-alert"
+      />
 
-    <!-- Receipt Details -->
-    <div v-else-if="receipt" class="mr-4">
-      <receipt-detail :receipt="receipt" />
-    </div>
+      <!-- Receipt Details -->
+      <div v-else-if="receipt" class="mr-4">
+        <receipt-detail :receipt="receipt" />
+      </div>
 
-    <!-- Not found state -->
-    <div v-else>
-      <not-found :title="`Receipt Not Found`" :hash-id="id" />
-    </div>
+      <!-- Not found state -->
+      <div v-else>
+        <not-found :title="`Receipt Not Found`" :hash-id="id" />
+      </div>
 
-    <!-- Prev/Next Navigation -->
-    <div class="flex justify-between items-center mt-8 mb-12 ml-4 mr-4">
-      <UButton
-        v-if="adjacentIds.prevId"
-        :to="`/receipts/${adjacentIds.prevId}`"
-        icon="i-lucide-chevron-left"
-        color="neutral"
-        variant="ghost"
-      >
-        Previous
-      </UButton>
-      <span v-else />
-      <UButton
-        v-if="adjacentIds.nextId"
-        :to="`/receipts/${adjacentIds.nextId}`"
-        trailing-icon="i-lucide-chevron-right"
-        color="neutral"
-        variant="ghost"
-      >
-        Next
-      </UButton>
-    </div>
-  </UContainer>
+      <!-- Prev/Next Navigation -->
+      <div class="flex justify-between items-center mt-8 mb-12 ml-4 mr-4">
+        <UButton
+          v-if="adjacentIds.prevId"
+          :to="`/receipts/${adjacentIds.prevId}`"
+          icon="i-lucide-chevron-left"
+          color="neutral"
+          variant="ghost"
+        >
+          Previous
+        </UButton>
+        <span v-else />
+        <UButton
+          v-if="adjacentIds.nextId"
+          :to="`/receipts/${adjacentIds.nextId}`"
+          trailing-icon="i-lucide-chevron-right"
+          color="neutral"
+          variant="ghost"
+        >
+          Next
+        </UButton>
+      </div>
+    </UContainer>
+    <template #panel-footer>
+      Edit page
+    </template>
+  </nuxtlayout>
 </template>
 
 <style scoped>
