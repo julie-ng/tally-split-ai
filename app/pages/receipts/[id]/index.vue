@@ -8,11 +8,14 @@ const receiptsStore = useReceiptsStore()
 
 // Use callOnce for SSR + navigation optimization
 await callOnce(() => receiptsStore.fetchReceipt(id), { mode: 'navigation' })
+// Fetch all receipts for prev/next navigation (cached if already loaded)
+await callOnce(() => receiptsStore.fetchReceipts(), { mode: 'navigation' })
 
 // Get reactive refs from store
 const receipt = computed(() => receiptsStore.getReceiptById(id))
 const pending = computed(() => receiptsStore.isReceiptLoading(id))
 const error = computed(() => receiptsStore.getReceiptError(id))
+const adjacentIds = computed(() => receiptsStore.getAdjacentReceiptIds(id))
 
 // Set page title reactively after receipt is fetched
 useHead({
@@ -65,6 +68,29 @@ const breadcrumbItems = [
     <!-- Not found state -->
     <div v-else>
       <not-found :title="`Receipt Not Found`" :hash-id="id" />
+    </div>
+
+    <!-- Prev/Next Navigation -->
+    <div class="flex justify-between items-center mt-8 mb-12 ml-4 mr-4">
+      <UButton
+        v-if="adjacentIds.prevId"
+        :to="`/receipts/${adjacentIds.prevId}`"
+        icon="i-lucide-chevron-left"
+        color="neutral"
+        variant="ghost"
+      >
+        Previous
+      </UButton>
+      <span v-else />
+      <UButton
+        v-if="adjacentIds.nextId"
+        :to="`/receipts/${adjacentIds.nextId}`"
+        trailing-icon="i-lucide-chevron-right"
+        color="neutral"
+        variant="ghost"
+      >
+        Next
+      </UButton>
     </div>
   </UContainer>
 </template>

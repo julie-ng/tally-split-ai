@@ -53,6 +53,24 @@ export const useReceiptsStore = defineStore('receipts', () => {
    */
   const totalReceipts = computed(() => allReceipts.value.length)
 
+  /**
+   * Get adjacent (prev/next) receipt IDs for navigation, ordered by ID
+   * @returns {{ prevId: number|null, nextId: number|null }}
+   */
+  const getAdjacentReceiptIds = computed(() => (currentId) => {
+    const sortedIds = allReceipts.value
+      .map(r => r.id)
+      .sort((a, b) => a - b)
+
+    const idx = sortedIds.indexOf(currentId)
+    if (idx === -1) return { prevId: null, nextId: null }
+
+    return {
+      prevId: idx > 0 ? sortedIds[idx - 1] : null,
+      nextId: idx < sortedIds.length - 1 ? sortedIds[idx + 1] : null,
+    }
+  })
+
   // -------- INTERNAL HELPERS --------
 
   /**
@@ -285,6 +303,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
     getReceiptError,
     allReceipts,
     totalReceipts,
+    getAdjacentReceiptIds,
 
     // Actions
     fetchReceipts,
