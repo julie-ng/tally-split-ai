@@ -256,7 +256,7 @@ export const useSplitsStore = defineStore('splits', () => {
     console.log(`🍍 markMonthAsSettled(${year}, ${month})`)
 
     // 1. Get affected splits
-    const monthSplits = getSplitsByMonth(year, month)
+    const monthSplits = getSplitsByMonth.value(year, month)
 
     if (monthSplits.length === 0) {
       console.log('⚠️ No splits to settle for this month')

@@ -173,7 +173,9 @@ async function handleMarkAllSettled () {
     await refreshSummary()
   }
   catch (err) {
+    console.error(err)
     alert('Failed to mark splits as settled. Please try again.')
+    throw createError(err)
   }
 }
 </script>
