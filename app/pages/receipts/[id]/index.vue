@@ -15,8 +15,6 @@ await callOnce(() => receiptsStore.fetchReceipts(), { mode: 'navigation' })
 const receipt = computed(() => receiptsStore.getReceiptById(id))
 const pending = computed(() => receiptsStore.isReceiptLoading(id))
 const error = computed(() => receiptsStore.getReceiptError(id))
-const adjacentIds = computed(() => receiptsStore.getAdjacentReceiptIds(id))
-
 // Set page title reactively after receipt is fetched
 useHead({
   title: () => {
@@ -70,34 +68,12 @@ const breadcrumbItems = [
       <div v-else>
         <not-found :title="`Receipt Not Found`" :hash-id="id" />
       </div>
-
-      <!-- Prev/Next Navigation -->
-      <div class="flex justify-between items-center mt-8 mb-12 ml-4 mr-4">
-        <UButton
-          v-if="adjacentIds.prevId"
-          :to="`/receipts/${adjacentIds.prevId}`"
-          icon="i-lucide-chevron-left"
-          color="neutral"
-          variant="ghost"
-        >
-          Previous
-        </UButton>
-        <span v-else />
-        <UButton
-          v-if="adjacentIds.nextId"
-          :to="`/receipts/${adjacentIds.nextId}`"
-          trailing-icon="i-lucide-chevron-right"
-          color="neutral"
-          variant="ghost"
-        >
-          Next
-        </UButton>
-      </div>
     </UContainer>
+
     <template #panel-footer>
-      Edit page
+      <receipt-next-prev-nav :receipt-id="id" />
     </template>
-  </nuxtlayout>
+  </NuxtLayout>
 </template>
 
 <style scoped>

@@ -162,7 +162,7 @@ const links = computed(() => [
 
       <template v-if="$slots['panel-footer']" #footer>
         <!-- Set manual height because of 1px diff. -->
-        <div class="border-t py-2 border-t-slate-200 bg-slate-100" style="height: 49px">
+        <div class="border-t py-2 border-t-slate-200 bg-slate-100">
           <slot name="panel-footer" />
         </div>
       </template>

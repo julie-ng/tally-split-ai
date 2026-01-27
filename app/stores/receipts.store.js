@@ -55,6 +55,8 @@ export const useReceiptsStore = defineStore('receipts', () => {
 
   /**
    * Get adjacent (prev/next) receipt IDs for navigation, ordered by ID
+   * ⚠️ ideally this should be ordered by reciept date.
+   * But we're keeping logic simple for POC with just 1 user.
    * @returns {{ prevId: number|null, nextId: number|null }}
    */
   const getAdjacentReceiptIds = computed(() => (currentId) => {
