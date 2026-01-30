@@ -63,8 +63,9 @@ const links = computed(() => [
     {
       label: 'JSON APIs',
       icon: 'i-lucide-braces',
-      to: '/uploads',
+      // to: '/',
       defaultOpen: true,
+      active: false,
       children: [
         {
           label: 'blobs/',
