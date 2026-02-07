@@ -23,6 +23,11 @@ export default defineEventHandler(async (event) => {
     updatedAt: sql`(unixepoch())`,
   }
 
+  // Serialize azureTags object to JSON string for SQLite
+  if (updates.azureTags) {
+    updates.azureTags = JSON.stringify(updates.azureTags)
+  }
+
   const dbResult = await db
     .update(schema.uploads)
     .set(updates)
