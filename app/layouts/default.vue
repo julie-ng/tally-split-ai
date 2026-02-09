@@ -64,7 +64,7 @@ const links = computed(() => [
       label: 'JSON APIs',
       icon: 'i-lucide-braces',
       // to: '/',
-      defaultOpen: true,
+      defaultOpen: false,
       active: false,
       children: [
         {
