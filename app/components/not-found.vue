@@ -5,7 +5,7 @@ const props = defineProps({
     default: 'Loading',
   },
   hashId: {
-    type: String,
+    type: [String, Number],
     default: '',
   },
 })
