@@ -41,6 +41,16 @@ const breadcrumbItems = [
 <template>
   <NuxtLayout>
     <UContainer class="pt-5">
+      <div class="mb-5">
+        <UButton
+          color="neutral"
+          variant="outline"
+          class="cursor-pointer"
+          @click="receiptsStore.clearAllCaches()"
+        >
+          Reset Local Storage
+        </UButton>
+      </div>
       <div class="ml-4">
         <UBreadcrumb :items="breadcrumbItems" />
       </div>
