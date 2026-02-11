@@ -152,11 +152,11 @@ export const useReceiptsStore = defineStore('receipts', () => {
    * @returns {Promise<Object>} The receipt object with uploads relation
    */
   async function fetchReceipt (id, force = false) {
-    console.log(`🍍 fetchReceipt(${id}, force=${force})`)
+    console.log(`🍍 [ Receipts ] fetchReceipt(${id}, force=${force})`)
 
     // Return from cache if fresh and not forced
     if (!force && _isCacheFresh(id)) {
-      console.log(`✅ Using cached receipt: ${id}`)
+      console.log(`⚡️[ Receipts ] Using cached receipt: ${id}`)
       return receiptsById.value[id].data
     }
 
@@ -166,12 +166,12 @@ export const useReceiptsStore = defineStore('receipts', () => {
     try {
       const data = await $fetch(`/api/receipts/${id}`)
       _cacheReceipt(data)
-      console.log(`✅ Fetched and cached receipt: ${id}`)
+      console.log(`✅ [ Receipts ] Fetched and cached receipt: ${id}`)
       return data
     }
     catch (err) {
       errors.value[id] = err
-      console.error(`❌ Failed to fetch receipt ${id}:`, err)
+      console.error(`❌ [ Receipts ] Failed to fetch receipt ${id}:`, err)
       throw createError({
         statusCode: err.statusCode || 404,
         message: err.message || `Receipt ${id} not found`,

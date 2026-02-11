@@ -95,7 +95,7 @@ export const useSplitsStore = defineStore('splits', () => {
    * @returns {Promise<Array>} Array of split objects
    */
   async function fetchAllSplits (filters = {}) {
-    console.log('🍍 fetchAllSplits()', filters)
+    console.log('🍍 [ Splits ] fetchAllSplits()', filters)
     loading.value.all = true
     errors.value.all = null
 
@@ -113,12 +113,12 @@ export const useSplitsStore = defineStore('splits', () => {
         newSplits[split.id] = split
       }
       splits.value = newSplits
-      console.log(`✅ Fetched ${data.length} splits`)
+      console.log(`✅ [ Splits ] Fetched ${data.length} splits`)
       return data
     }
     catch (err) {
       errors.value.all = err
-      console.error('❌ Failed to fetch all splits:', err)
+      console.error('❌ [ Splits ] Failed to fetch all splits:', err)
       throw err
     }
     finally {
@@ -132,7 +132,7 @@ export const useSplitsStore = defineStore('splits', () => {
    * @returns {Promise<Object>} The split object
    */
   async function fetchSplit (id) {
-    console.log(`🍍 fetchSplit(${id})`)
+    console.log(`🍍 [ Splits ] fetchSplit(${id})`)
     // Return from cache if exists
     if (splits.value[id]) {
       return splits.value[id]
@@ -144,12 +144,12 @@ export const useSplitsStore = defineStore('splits', () => {
     try {
       const data = await $fetch(`/api/splits/${id}`)
       splits.value[id] = data
-      console.log(`✅ Fetched split: ${id}`)
+      console.log(`✅ [ Splits ] Fetched split: ${id}`)
       return data
     }
     catch (err) {
       errors.value[id] = err
-      console.error(`❌ Failed to fetch split ${id}:`, err)
+      console.error(`❌ [ Splits ] Failed to fetch split ${id}:`, err)
       throw err
     }
     finally {
@@ -188,14 +188,14 @@ export const useSplitsStore = defineStore('splits', () => {
         splits.value[id] = result.updated
       }
 
-      console.log(`✅ Updated split: ${id}`)
+      console.log(`✅ [ Splits ] Updated split: ${id}`)
       return result.updated
     }
     catch (err) {
       // Rollback optimistic update on error
       splits.value[id] = originalSplit
       errors.value[id] = err
-      console.error(`❌ Failed to update split ${id}:`, err)
+      console.error(`❌ [ Splits ] Failed to update split ${id}:`, err)
       throw err
     }
     finally {
@@ -210,7 +210,7 @@ export const useSplitsStore = defineStore('splits', () => {
    * @returns {Promise<Object>} Updated split
    */
   async function updateSplit (id, updates) {
-    console.log(`🍍 updateSplit(${id})`, updates)
+    console.log(`🍍 [ Splits ] updateSplit(${id})`, updates)
 
     // Validate with zod
     const result = splitUpdateSchema.safeParse(updates)
@@ -253,13 +253,13 @@ export const useSplitsStore = defineStore('splits', () => {
    * @returns {Promise<Object>} Result with updatedCount
    */
   async function markMonthAsSettled (year, month) {
-    console.log(`🍍 markMonthAsSettled(${year}, ${month})`)
+    console.log(`🍍 [ Splits ] markMonthAsSettled(${year}, ${month})`)
 
     // 1. Get affected splits
     const monthSplits = getSplitsByMonth.value(year, month)
 
     if (monthSplits.length === 0) {
-      console.log('⚠️ No splits to settle for this month')
+      console.log('⚠️ [ Splits ] No splits to settle for this month')
       return { success: true, updatedCount: 0 }
     }
 
@@ -284,7 +284,7 @@ export const useSplitsStore = defineStore('splits', () => {
         method: 'PUT',
         body: { year, month },
       })
-      console.log(`✅ Marked ${result.updatedCount} splits as settled`)
+      console.log(`✅ [ Splits ] Marked ${result.updatedCount} splits as settled`)
       return result
     }
     catch (err) {
@@ -292,7 +292,7 @@ export const useSplitsStore = defineStore('splits', () => {
       for (const id in originals) {
         splits.value[id] = originals[id]
       }
-      console.error('❌ Failed to mark month as settled:', err)
+      console.error('❌ [ Splits ] Failed to mark month as settled:', err)
       throw err
     }
   }
