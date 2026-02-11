@@ -41,7 +41,7 @@ const breadcrumbItems = [
 <template>
   <NuxtLayout>
     <UContainer class="pt-5">
-      <div class="mb-5">
+      <!-- <div class="mb-5">
         <UButton
           color="neutral"
           variant="outline"
@@ -50,7 +50,7 @@ const breadcrumbItems = [
         >
           Reset Local Storage
         </UButton>
-      </div>
+      </div> -->
       <div class="ml-4">
         <UBreadcrumb :items="breadcrumbItems" />
       </div>
