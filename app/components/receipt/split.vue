@@ -11,6 +11,7 @@ const props = defineProps({
 
 const toast = useToast()
 const splitsStore = useSplitsStore()
+splitsStore.debug = true
 
 // Temporary until Auth implemented
 const config = useRuntimeConfig()

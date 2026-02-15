@@ -5,16 +5,26 @@ const route = useRoute()
 const id = parseInt(route.params.id)
 
 const receiptsStore = useReceiptsStore()
+receiptsStore.debug = true
 
-// Use callOnce for SSR + navigation optimization
-await callOnce(() => receiptsStore.fetchReceipt(id), { mode: 'navigation' })
-// Fetch all receipts for prev/next navigation (cached if already loaded)
-await callOnce(() => receiptsStore.fetchReceipts(), { mode: 'navigation' })
+// TODO - works, but not sure optimal
+// on SSR - pinia always fetches all,
+// even if loading individual [id] page
+await callOnce(async () => {
+  const cachedCount = receiptsStore.totalReceipts
+  if (cachedCount <= 1) {
+    await receiptsStore.fetchReceipts()
+  }
+  else {
+    await receiptsStore.fetchReceiptById(id)
+  }
+}, { mode: 'navigation' })
 
 // Get reactive refs from store
 const receipt = computed(() => receiptsStore.getReceiptById(id))
 const pending = computed(() => receiptsStore.isReceiptLoading(id))
 const error = computed(() => receiptsStore.getReceiptError(id))
+
 // Set page title reactively after receipt is fetched
 useHead({
   title: () => {
