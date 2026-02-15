@@ -9,7 +9,7 @@ const toast = useToast()
 const receiptsStore = useReceiptsStore()
 
 // Use callOnce for SSR + navigation optimization
-await callOnce(() => receiptsStore.fetchReceipt(id), { mode: 'navigation' })
+await callOnce(() => receiptsStore.fetchReceiptById(id), { mode: 'navigation' })
 
 // Get reactive refs from store
 const receipt = computed(() => receiptsStore.getReceiptById(id))

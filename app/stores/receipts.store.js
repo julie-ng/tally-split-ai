@@ -43,6 +43,8 @@ export const useReceiptsStore = defineStore('receipts', () => {
   /**
    * Get all receipts as array (for table listing)
    * Only returns receipts that have data (not empty cache entries)
+   *
+   * @returns Array
    */
   const allReceipts = computed(() => {
     return Object.values(receiptsById.value)
@@ -117,7 +119,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
     if (_isCacheFresh(id)) {
       return receiptsById.value[id].data
     }
-    return await fetchReceipt(id)
+    return await fetchReceiptById(id)
   }
 
   // -------- ACTIONS --------
@@ -174,8 +176,8 @@ export const useReceiptsStore = defineStore('receipts', () => {
    * @param {boolean} force - Force fetch even if cache is fresh
    * @returns {Promise<Object>} The receipt object with uploads relation
    */
-  async function fetchReceipt (id, force = false) {
-    _log(`[ReceiptsStore] fetchReceipt(${id}, force=${force})`)
+  async function fetchReceiptById (id, force = false) {
+    _log(`[ReceiptsStore] fetchReceiptById(${id}, force=${force})`)
 
     // Return from cache if fresh and not forced
     if (!force && _isCacheFresh(id)) {
@@ -334,7 +336,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
     // Actions
     configure,
     fetchReceipts,
-    fetchReceipt,
+    fetchReceiptById,
     updateReceipt,
     deleteReceipt,
     clearReceiptError,
