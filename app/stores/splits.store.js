@@ -8,6 +8,7 @@ import { splitUpdateSchema } from '~~/shared/utils/zod-schemas/split.schema.js'
 export const useSplitsStore = defineStore('splits', () => {
   // -------- STATE --------
 
+  const debug = ref(false) // Debug logging flag
   const splits = ref({}) // Map: { [splitId]: splitObject }
   const loading = ref({}) // Map: { [splitId]: boolean }
   const saving = ref({}) // Map: { [splitId]: boolean }
@@ -64,11 +65,21 @@ export const useSplitsStore = defineStore('splits', () => {
     const sum = split.userAShare + split.userBShare
     const tolerance = 0.01 // Account for floating point precision
     const doesIt = Math.abs(sum - split.splitAmount) <= tolerance
-    // console.log(`🍍 doesSplitAddUp(${id})`, doesIt)
+    // console.log(`[SplitsStore] doesSplitAddUp(${id})`, doesIt)
     return doesIt
   })
 
   // -------- INTERNAL HELPERS --------
+
+  /**
+   * Internal logger helper - only logs when debug flag is enabled
+   * @private
+   */
+  function _log (...args) {
+    if (debug.value) {
+      console.log(...args)
+    }
+  }
 
   /**
    * Get split from state, throw if not found (DRY helper)
@@ -90,12 +101,23 @@ export const useSplitsStore = defineStore('splits', () => {
   // -------- ACTIONS --------
 
   /**
+   * Configure store options
+   * @param {Object} options - Configuration options
+   * @param {boolean} options.debug - Enable debug logging
+   */
+  function configure ({ debug: debugFlag } = {}) {
+    if (debugFlag !== undefined) {
+      debug.value = debugFlag
+    }
+  }
+
+  /**
    * Fetch all splits for the current user
    * @param {Object} filters - Optional filters { year, month }
    * @returns {Promise<Array>} Array of split objects
    */
   async function fetchAllSplits (filters = {}) {
-    console.log('🍍 [ Splits ] fetchAllSplits()', filters)
+    _log('[SplitsStore] fetchAllSplits()', filters)
     loading.value.all = true
     errors.value.all = null
 
@@ -113,12 +135,12 @@ export const useSplitsStore = defineStore('splits', () => {
         newSplits[split.id] = split
       }
       splits.value = newSplits
-      console.log(`✅ [ Splits ] Fetched ${data.length} splits`)
+      _log(`[SplitsStore] ✅ fetched ${data.length} splits`)
       return data
     }
     catch (err) {
       errors.value.all = err
-      console.error('❌ [ Splits ] Failed to fetch all splits:', err)
+      console.error('[SplitsStore] ❌ failed to fetch all splits:', err)
       throw err
     }
     finally {
@@ -132,7 +154,7 @@ export const useSplitsStore = defineStore('splits', () => {
    * @returns {Promise<Object>} The split object
    */
   async function fetchSplit (id) {
-    console.log(`🍍 [ Splits ] fetchSplit(${id})`)
+    _log(`[SplitsStore] fetchSplit(${id})`)
     // Return from cache if exists
     if (splits.value[id]) {
       return splits.value[id]
@@ -144,12 +166,12 @@ export const useSplitsStore = defineStore('splits', () => {
     try {
       const data = await $fetch(`/api/splits/${id}`)
       splits.value[id] = data
-      console.log(`✅ [ Splits ] Fetched split: ${id}`)
+      _log(`[SplitsStore] fetched split: ${id}`)
       return data
     }
     catch (err) {
       errors.value[id] = err
-      console.error(`❌ [ Splits ] Failed to fetch split ${id}:`, err)
+      console.error(`[SplitsStore] ❌ failed to fetch split ${id}:`, err)
       throw err
     }
     finally {
@@ -188,14 +210,14 @@ export const useSplitsStore = defineStore('splits', () => {
         splits.value[id] = result.updated
       }
 
-      console.log(`✅ [ Splits ] Updated split: ${id}`)
+      _log(`[SplitsStore] ✅ updated split: ${id}`)
       return result.updated
     }
     catch (err) {
       // Rollback optimistic update on error
       splits.value[id] = originalSplit
       errors.value[id] = err
-      console.error(`❌ [ Splits ] Failed to update split ${id}:`, err)
+      console.error(`[SplitsStore] ❌ Failed to update split ${id}:`, err)
       throw err
     }
     finally {
@@ -210,7 +232,7 @@ export const useSplitsStore = defineStore('splits', () => {
    * @returns {Promise<Object>} Updated split
    */
   async function updateSplit (id, updates) {
-    console.log(`🍍 [ Splits ] updateSplit(${id})`, updates)
+    _log(`[SplitsStore] updateSplit(${id})`, updates)
 
     // Validate with zod
     const result = splitUpdateSchema.safeParse(updates)
@@ -253,13 +275,13 @@ export const useSplitsStore = defineStore('splits', () => {
    * @returns {Promise<Object>} Result with updatedCount
    */
   async function markMonthAsSettled (year, month) {
-    console.log(`🍍 [ Splits ] markMonthAsSettled(${year}, ${month})`)
+    _log(`[SplitsStore] markMonthAsSettled(${year}, ${month})`)
 
     // 1. Get affected splits
     const monthSplits = getSplitsByMonth.value(year, month)
 
     if (monthSplits.length === 0) {
-      console.log('⚠️ [ Splits ] No splits to settle for this month')
+      _log('[SplitsStore] ℹ No splits to settle for this month')
       return { success: true, updatedCount: 0 }
     }
 
@@ -284,7 +306,7 @@ export const useSplitsStore = defineStore('splits', () => {
         method: 'PUT',
         body: { year, month },
       })
-      console.log(`✅ [ Splits ] Marked ${result.updatedCount} splits as settled`)
+      _log(`[SplitsStore] ✅ marked ${result.updatedCount} splits as settled`)
       return result
     }
     catch (err) {
@@ -292,13 +314,14 @@ export const useSplitsStore = defineStore('splits', () => {
       for (const id in originals) {
         splits.value[id] = originals[id]
       }
-      console.error('❌ [ Splits ] Failed to mark month as settled:', err)
+      console.error('[SplitsStore] ❌ failed to mark month as settled:', err)
       throw err
     }
   }
 
   return {
     // State
+    debug,
     splits,
     loading,
     saving,
@@ -314,6 +337,7 @@ export const useSplitsStore = defineStore('splits', () => {
     doesSplitAddUp,
 
     // Actions
+    configure,
     fetchAllSplits,
     fetchSplit,
     updateSplit,
