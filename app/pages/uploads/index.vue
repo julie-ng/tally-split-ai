@@ -9,6 +9,7 @@ useHead({
 
 const userStore = useUserStore()
 const uploadsStore = useUploadsStore()
+uploadsStore.debug = true
 
 // Fetch uploads on mount
 await uploadsStore.fetchUploads()

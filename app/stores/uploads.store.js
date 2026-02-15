@@ -10,6 +10,7 @@ export const useUploadsStore = defineStore('uploads', () => {
   const uploads = ref([])
   const loading = ref(false)
   const error = ref(null)
+  const debug = ref(false) // Debug logging flag
 
   // -------- GETTERS --------
 
@@ -28,11 +29,11 @@ export const useUploadsStore = defineStore('uploads', () => {
     try {
       const data = await $fetch('/api/uploads')
       uploads.value = data
-      console.log(`✅ Fetched ${data.length} uploads`)
+      _log(`[UploadsStore] ✅ fetched ${data.length} uploads`)
     }
     catch (err) {
       error.value = err
-      console.error('❌ Failed to fetch uploads:', err)
+      console.error('[UploadsStore] ❌ failed to fetch uploads:', err)
       throw err
     }
     finally {
@@ -58,13 +59,23 @@ export const useUploadsStore = defineStore('uploads', () => {
       if (index !== -1) {
         uploads.value.splice(index, 1)
       }
-      console.log(`✅ Deleted upload: ${hashId}`)
+      _log(`[UploadsStore] ✅ deleted upload: ${hashId}`)
       return true
     }
     catch (err) {
-      console.error(`❌ Failed to delete upload ${hashId}:`, err)
+      console.error(`[UploadsStore] ❌ failed to delete upload ${hashId}:`, err)
       error.value = err
       throw err
+    }
+  }
+
+  /**
+   * Internal logger helper - only logs when debug flag is enabled
+   * @private
+   */
+  function _log (...args) {
+    if (debug.value) {
+      _log(...args)
     }
   }
 
@@ -73,6 +84,7 @@ export const useUploadsStore = defineStore('uploads', () => {
     uploads,
     loading,
     error,
+    debug,
 
     // Getters
     totalUploads,
