@@ -7,6 +7,8 @@ import { defineStore } from 'pinia'
 export const useReceiptsStore = defineStore('receipts', () => {
   // -------- STATE --------
 
+  const debug = ref(false) // Debug logging flag
+
   // Cache structure: { [id]: { data: receiptObject, fetchedAt: timestamp } }
   const receiptsById = ref({})
   const loading = ref({}) // Per-ID loading: { [id]: boolean, all: boolean }
@@ -76,6 +78,16 @@ export const useReceiptsStore = defineStore('receipts', () => {
   // -------- INTERNAL HELPERS --------
 
   /**
+   * Internal logger helper - only logs when debug flag is enabled
+   * @private
+   */
+  function _log (...args) {
+    if (debug.value) {
+      console.log(...args)
+    }
+  }
+
+  /**
    * Check if receipt cache is fresh (< 5 minutes old)
    * @private
    */
@@ -111,12 +123,23 @@ export const useReceiptsStore = defineStore('receipts', () => {
   // -------- ACTIONS --------
 
   /**
+   * Configure store options
+   * @param {Object} options - Configuration options
+   * @param {boolean} options.debug - Enable debug logging
+   */
+  function configure ({ debug: debugFlag } = {}) {
+    if (debugFlag !== undefined) {
+      debug.value = debugFlag
+    }
+  }
+
+  /**
    * Fetch all receipts and populate cache
    * Updates cache for all returned receipts
    * @returns {Promise<Array>} Array of receipt objects
    */
   async function fetchReceipts () {
-    console.log('🍍 fetchReceipts()')
+    _log('[ReceiptsStore] fetchReceipts() - fetches ALL receipts')
     loading.value.all = true
     errors.value.all = null
 
@@ -128,7 +151,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
         _cacheReceipt(receipt)
       }
 
-      console.log(`✅ Fetched and cached ${data.length} receipts`)
+      _log(`[ReceiptsStore] ✅ Fetched and cached ${data.length} receipts`)
       return data
     }
     catch (err) {
@@ -152,11 +175,11 @@ export const useReceiptsStore = defineStore('receipts', () => {
    * @returns {Promise<Object>} The receipt object with uploads relation
    */
   async function fetchReceipt (id, force = false) {
-    console.log(`🍍 [ Receipts ] fetchReceipt(${id}, force=${force})`)
+    _log(`[ReceiptsStore] fetchReceipt(${id}, force=${force})`)
 
     // Return from cache if fresh and not forced
     if (!force && _isCacheFresh(id)) {
-      console.log(`⚡️[ Receipts ] Using cached receipt: ${id}`)
+      _log(`[ReceiptsStore] ⚡️ using cached receipt: ${id}`)
       return receiptsById.value[id].data
     }
 
@@ -166,12 +189,12 @@ export const useReceiptsStore = defineStore('receipts', () => {
     try {
       const data = await $fetch(`/api/receipts/${id}`)
       _cacheReceipt(data)
-      console.log(`✅ [ Receipts ] Fetched and cached receipt: ${id}`)
+      _log(`[ReceiptsStore] ✅ fetched and cached receipt: ${id}`)
       return data
     }
     catch (err) {
       errors.value[id] = err
-      console.error(`❌ [ Receipts ] Failed to fetch receipt ${id}:`, err)
+      console.error(`[ReceiptsStore] ❌ Failed to fetch receipt ${id}:`, err)
       throw createError({
         statusCode: err.statusCode || 404,
         message: err.message || `Receipt ${id} not found`,
@@ -189,7 +212,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
    * @returns {Promise<Object>} Updated receipt
    */
   async function updateReceipt (id, updates) {
-    console.log(`🍍 updateReceipt(${id})`, updates)
+    _log(`[ReceiptsStore] updateReceipt(${id})`, updates)
 
     // Ensure receipt is in cache (fetch if needed)
     const currentReceipt = await _ensureReceipt(id)
@@ -217,14 +240,14 @@ export const useReceiptsStore = defineStore('receipts', () => {
         _cacheReceipt(result.updated)
       }
 
-      console.log(`✅ Updated receipt: ${id}`)
+      _log(`[ReceiptsStore] ✅ updated receipt: ${id}`)
       return result.updated
     }
     catch (err) {
       // Rollback optimistic update on error
       receiptsById.value[id] = originalEntry
       errors.value[id] = err
-      console.error(`❌ Failed to update receipt ${id}:`, err)
+      console.error(`[ReceiptsStore] ❌ Failed to update receipt ${id}:`, err)
       throw err
     }
     finally {
@@ -238,7 +261,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
    * @returns {Promise<boolean>} True if deletion succeeded
    */
   async function deleteReceipt (id) {
-    console.log(`🍍 deleteReceipt(${id})`)
+    _log(`[ReceiptsStore] deleteReceipt(${id})`)
 
     // Store reference for potential rollback
     const originalEntry = receiptsById.value[id]
@@ -251,7 +274,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
         method: 'DELETE',
       })
 
-      console.log(`✅ Deleted receipt: ${id}`)
+      _log(`[ReceiptsStore] ✅ deleted receipt: ${id}`)
       return true
     }
     catch (err) {
@@ -260,7 +283,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
         receiptsById.value[id] = originalEntry
       }
       errors.value[id] = err
-      console.error(`❌ Failed to delete receipt ${id}:`, err)
+      console.error(`[ReceiptsStore] ❌ failed to delete receipt ${id}:`, err)
       throw err
     }
   }
@@ -293,6 +316,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
 
   return {
     // State
+    debug,
     receiptsById,
     loading,
     saving,
@@ -308,6 +332,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
     getAdjacentReceiptIds,
 
     // Actions
+    configure,
     fetchReceipts,
     fetchReceipt,
     updateReceipt,
