@@ -214,7 +214,12 @@ const paginationInfo = computed(() => {
             </template>
             <template #title-cell="{ row }">
               <div class="mb-1 text-slate-800 font-medium">
-                {{ row.original.title }}
+                <NuxtLink
+                  :to="`/uploads/${row.original.hashId}`"
+                  class=" hover:text-blue-800 hover:underline"
+                >
+                  {{ row.original.title }}
+                </NuxtLink>
               </div>
               <a :href="row.original.blobUrl" class="font-xs text-slate-400 hover:underline" target="_blank">
                 {{ row.original.originalFilename }}
