@@ -75,7 +75,7 @@ export const useUploadsStore = defineStore('uploads', () => {
    */
   function _log (...args) {
     if (debug.value) {
-      _log(...args)
+      console.log(...args)
     }
   }
 
