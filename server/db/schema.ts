@@ -1,5 +1,6 @@
 import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'
 import { sql, relations } from 'drizzle-orm'
+import { RECEIPT_ANALYSIS_STATUSES } from '../../shared/enums/receipt-analysis-status.js'
 
 /**
  * Receipts table - stores business/finance data extracted from receipt uploads
@@ -32,7 +33,7 @@ export const receipts = sqliteTable('receipts', {
 
   // Status tracking
   // isAnalyzed: integer('is_analyzed', { mode: 'boolean' }).notNull().default(false), // TODO - remove
-  analysisStatus: text('analysis_status').notNull().default('unanalyzed'),
+  analysisStatus: text('analysis_status', { enum: RECEIPT_ANALYSIS_STATUSES }).notNull().default('unanalyzed'),
 
   // Metadata
   userId: text('user_id').notNull(),
