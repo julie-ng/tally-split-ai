@@ -258,13 +258,11 @@ export const useReceiptsStore = defineStore('receipts', () => {
         body: updates,
       })
 
-      // Update cache with server response (source of truth)
-      if (result.updated) {
-        _cacheReceipt(result.updated)
-      }
+      // Force refetch to get complete data with relations (uploads, split)
+      const freshReceipt = await fetchReceiptById(id, true)
 
       _log(`[ReceiptsStore] ✅ updated receipt: ${id}`)
-      return result.updated
+      return freshReceipt
     }
     catch (err) {
       // Rollback optimistic update on error

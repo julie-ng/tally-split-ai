@@ -94,7 +94,7 @@ if (!schemaCheck.success) {
       </div>
       <div id="side-col" class="mt-12">
         <receipt-upload-column
-          v-if="props.receipt.uploads.length > 0"
+          v-if="props.receipt.uploads?.length > 0"
           :upload="props.receipt.uploads[0]"
         />
       </div>
