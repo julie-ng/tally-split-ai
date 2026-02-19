@@ -113,6 +113,13 @@
       "when": 1769088977310,
       "tag": "0015_free_dragon_lord",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1771509695332,
+      "tag": "0016_nifty_thunderball",
+      "breakpoints": true
     }
   ]
 }

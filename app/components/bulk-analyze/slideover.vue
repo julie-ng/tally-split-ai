@@ -5,10 +5,11 @@ import { useReceiptsStore } from '~/stores/receipts.store'
 const open = defineModel('open', { type: Boolean, default: false })
 
 const receiptsStore = useReceiptsStore()
+const toast = useToast()
 const UCheckbox = resolveComponent('UCheckbox')
 
 const unanalyzedReceipts = computed(() =>
-  receiptsStore.allReceipts.filter(r => !r.isAnalyzed),
+  receiptsStore.allReceipts.filter(r => r.analysisStatus !== 'analyzed'),
 )
 
 const columns = [
@@ -75,6 +76,39 @@ watch(open, (isOpen) => {
 function onSelect (evt, row) {
   row.toggleSelected(!row.getIsSelected())
 }
+
+async function handleBulkAnalyze () {
+  const selected = selectedReceipts.value
+  const ids = selected.map(r => r.id)
+  const nameById = Object.fromEntries(selected.map(r => [r.id, r.filename]))
+  open.value = false
+  toast.add({
+    title: `Analyzing ${ids.length} receipt${ids.length > 1 ? 's' : ''}`,
+    description: 'Results will appear as each analysis completes.',
+    color: 'info',
+    icon: 'i-lucide-focus',
+  })
+  await receiptsStore.analyzeBulk(ids, {
+    onEach: (id, err) => {
+      if (err) {
+        toast.add({
+          title: 'Analysis failed',
+          description: nameById[id],
+          color: 'error',
+          icon: 'i-lucide-circle-x',
+        })
+      }
+      else {
+        toast.add({
+          title: 'Analysis complete',
+          description: nameById[id],
+          color: 'success',
+          icon: 'i-lucide-focus',
+        })
+      }
+    },
+  })
+}
 </script>
 
 <template>
@@ -100,7 +134,7 @@ function onSelect (evt, row) {
           @select="onSelect"
         />
 
-        <pre><code>{{ selectedReceipts }}</code></pre>
+        <!-- <pre><code>{{ selectedReceipts }}</code></pre> -->
       </template>
 
       <template #footer>
@@ -114,7 +148,10 @@ function onSelect (evt, row) {
         <UButton
           label="Analyze"
           color="primary"
-          :disabled="selectedReceipts.length === 0"
+          :disabled="selectedReceipts.length === 0 || receiptsStore.bulkAnalyzing"
+          :loading="receiptsStore.bulkAnalyzing"
+          class="cursor-pointer"
+          @click="handleBulkAnalyze"
         />
       </template>
     </USlideover>

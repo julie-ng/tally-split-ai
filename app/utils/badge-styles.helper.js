@@ -14,16 +14,17 @@ function statusBadgeVariant (status) {
   return 'soft'
 }
 
-function analysisBadgeColor (isAnalyzed) {
-  return isAnalyzed
-    ? 'info'
-    : 'neutral'
+function analysisBadgeColor (status) {
+  if (status === 'analyzed') return 'info'
+  if (status === 'error') return 'error'
+  if (status === 'inprogress' || status === 'queued') return 'warning'
+  return 'neutral'
 }
 
-function analysisBadgeVariant (isAnalyzed) {
-  return isAnalyzed
-    ? 'subtle'
-    : 'subtle'
+function analysisBadgeVariant (status) {
+  if (status === 'error') return 'subtle'
+  if (status === 'inprogress' || status === 'queued') return 'subtle'
+  return 'subtle'
 }
 
 export const badgeStyleHelpers = {

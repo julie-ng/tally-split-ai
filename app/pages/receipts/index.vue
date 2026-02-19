@@ -50,7 +50,7 @@ const columns = [
     header: 'ID',
   },
   {
-    accessorKey: 'isAnalyzed',
+    accessorKey: 'analysisStatus',
     header: 'Status',
   },
   {
@@ -322,12 +322,12 @@ const paginationInfo = computed(() => {
             </template>
 
             <!-- Analysis Status -->
-            <template #isAnalyzed-cell="{ row }">
+            <template #analysisStatus-cell="{ row }">
               <UBadge
-                :color="row.original.isAnalyzed ? 'info' : 'neutral'"
-                variant="subtle"
+                :color="badgeStyleHelpers.analysisBadgeColor(row.original.analysisStatus)"
+                :variant="badgeStyleHelpers.analysisBadgeVariant(row.original.analysisStatus)"
               >
-                {{ row.original.isAnalyzed ? 'Analyzed' : 'Not Analyzed' }}
+                {{ row.original.analysisStatus }}
               </UBadge>
             </template>
           </UTable>

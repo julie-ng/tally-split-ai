@@ -97,7 +97,7 @@ export default defineEventHandler(async (event) => {
       total: fields.Total?.valueCurrency?.amount || null,
       currency: fields.Total?.valueCurrency?.currencyCode || null,
       tax: fields.TotalTax?.valueCurrency?.amount || null,
-      isAnalyzed: true,
+      analysisStatus: 'analyzed',
     }
 
     // 10. Get upload with receipt relation to check if receipt exists

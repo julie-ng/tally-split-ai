@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { asyncUtils } from '~~/shared/utils/async.utils.js'
 
 /**
  * Store for managing receipts with map-based caching and freshness tracking
@@ -14,6 +15,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
   const loading = ref({}) // Per-ID loading: { [id]: boolean, all: boolean }
   const saving = ref({}) // Per-ID saving: { [id]: boolean }
   const analyzing = ref({}) // Per-ID analyzing: { [id]: boolean }
+  const bulkAnalyzing = ref(false) // True while a bulk analyze operation is in progress
   const errors = ref({}) // Per-ID errors: { [id]: error, all: error }
 
   const CACHE_TTL = 300000 // 5 minutes in milliseconds
@@ -40,6 +42,14 @@ export const useReceiptsStore = defineStore('receipts', () => {
    * Check if a receipt is being analyzed
    */
   const isReceiptAnalyzing = computed(() => id => analyzing.value[id] || false)
+
+  /**
+   * Check if a receipt has been analyzed
+   */
+  const isReceiptAnalyzed = computed(() => (id) => {
+    const receipt = receiptsById.value[id]?.data
+    return receipt?.analysisStatus === 'analyzed'
+  })
 
   /**
    * Get the upload hashId for a receipt's first upload
@@ -330,6 +340,31 @@ export const useReceiptsStore = defineStore('receipts', () => {
   }
 
   /**
+   * Analyze multiple receipts sequentially with a 100ms delay between each
+   * to stay well under Azure Document Intelligence's 15/sec rate limit.
+   * Does not stop on individual errors — each failure is tracked in errors[id].
+   * @param {number[]} ids - Array of receipt IDs to analyze
+   */
+  async function analyzeBulk (ids, { onEach } = {}) {
+    bulkAnalyzing.value = true
+    try {
+      for (const id of ids) {
+        try {
+          await analyzeReceipt(id)
+          if (onEach) onEach(id, null)
+        }
+        catch (err) {
+          if (onEach) onEach(id, err)
+        }
+        await asyncUtils.sleep(100)
+      }
+    }
+    finally {
+      bulkAnalyzing.value = false
+    }
+  }
+
+  /**
    * Clear error for a specific receipt
    */
   function clearReceiptError (id) {
@@ -362,6 +397,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
     loading,
     saving,
     analyzing,
+    bulkAnalyzing,
     errors,
 
     // Getters
@@ -369,6 +405,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
     isReceiptLoading,
     isReceiptSaving,
     isReceiptAnalyzing,
+    isReceiptAnalyzed,
     getUploadHashId,
     getReceiptError,
     allReceipts,
@@ -382,6 +419,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
     updateReceipt,
     deleteReceipt,
     analyzeReceipt,
+    analyzeBulk,
     clearReceiptError,
     invalidateReceipt,
     clearAllCaches,

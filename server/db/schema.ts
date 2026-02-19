@@ -31,7 +31,8 @@ export const receipts = sqliteTable('receipts', {
   splitId: integer('split_id').references(() => splits.id, { onDelete: 'set null' }),
 
   // Status tracking
-  isAnalyzed: integer('is_analyzed', { mode: 'boolean' }).notNull().default(false),
+  // isAnalyzed: integer('is_analyzed', { mode: 'boolean' }).notNull().default(false), // TODO - remove
+  analysisStatus: text('analysis_status').notNull().default('unanalyzed'),
 
   // Metadata
   userId: text('user_id').notNull(),

@@ -49,7 +49,7 @@ if (!schemaCheck.success) {
     <receipt-detail-title
       :id="props.receipt.id"
       :title="props.receipt.title"
-      :is-analyzed="props.receipt.isAnalyzed"
+      :is-analyzed="props.receipt.analysisStatus === 'analyzed'"
       :has-uploads="props.receipt.uploads?.length > 0"
     />
 
