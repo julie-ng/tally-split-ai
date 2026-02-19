@@ -19,48 +19,7 @@ const props = defineProps({
   },
 })
 
-const toast = useToast()
-
-/**
- * Analysize Receipt
- */
-const isAnalyzing = ref(false)
 const canAnalyze = computed(() => props.hasUploads && !props.isAnalyzed)
-
-const analyzeReceipt = async () => {
-  const hashId = props.receipt.uploads?.[0]?.hashId
-  if (!hashId) {
-    console.error('No upload hashId found for receipt')
-    return
-  }
-
-  isAnalyzing.value = true
-  try {
-    await $fetch(`/api/analysis/${hashId}`, {
-      method: 'POST',
-    })
-
-    toast.add({
-      title: 'Analysis complete',
-      description: 'Receipt has been successfully analyzed.',
-      color: 'success',
-      icon: 'i-lucide-focus',
-    })
-
-    // Reload page to show updated analysis data
-    setTimeout(() => window.location.reload(), 1000) // TODO: refetch data instead of reload
-  }
-  catch (error) {
-    console.error('Failed to analyze receipt:', error)
-    toast.add({
-      title: 'Analysis failed',
-      description: 'Please try again.',
-      color: 'error',
-      icon: 'i-lucide-circle-x',
-    })
-    isAnalyzing.value = false
-  }
-}
 </script>
 
 <template>
@@ -84,18 +43,12 @@ const analyzeReceipt = async () => {
       </UBadge>
     </h1>
     <div class="flex items-center gap-2">
-      <UButton
+      <!-- TODO: show disabled status for button if already analyzed -->
+      <receipt-analyze-button
         v-if="!isAnalyzed"
-        color="primary"
-        variant="solid"
-        icon="i-lucide-focus"
-        :disabled="!canAnalyze || isAnalyzing"
-        :loading="isAnalyzing"
-        class="hover:cursor-pointer"
-        @click="analyzeReceipt"
-      >
-        Analyze
-      </UButton>
+        :id="props.id"
+        :can-analyze="canAnalyze"
+      />
       <UButton
         :to="`/receipts/${props.id}/edit`"
         icon="i-lucide-pencil"

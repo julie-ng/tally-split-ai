@@ -13,6 +13,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
   const receiptsById = ref({})
   const loading = ref({}) // Per-ID loading: { [id]: boolean, all: boolean }
   const saving = ref({}) // Per-ID saving: { [id]: boolean }
+  const analyzing = ref({}) // Per-ID analyzing: { [id]: boolean }
   const errors = ref({}) // Per-ID errors: { [id]: error, all: error }
 
   const CACHE_TTL = 300000 // 5 minutes in milliseconds
@@ -34,6 +35,16 @@ export const useReceiptsStore = defineStore('receipts', () => {
    * Check if a receipt is saving
    */
   const isReceiptSaving = computed(() => id => saving.value[id] || false)
+
+  /**
+   * Check if a receipt is being analyzed
+   */
+  const isReceiptAnalyzing = computed(() => id => analyzing.value[id] || false)
+
+  /**
+   * Get the upload hashId for a receipt's first upload
+   */
+  const getUploadHashId = computed(() => id => receiptsById.value[id]?.data?.uploads?.[0]?.hashId)
 
   /**
    * Get error for a receipt
@@ -291,6 +302,34 @@ export const useReceiptsStore = defineStore('receipts', () => {
   }
 
   /**
+   * Trigger Azure Document Intelligence analysis for a receipt
+   * Fetches hashId from cached receipt, calls analysis API, then force-refetches receipt
+   * @param {number} id - Receipt ID
+   */
+  async function analyzeReceipt (id) {
+    await _ensureReceipt(id)
+    const hashId = getUploadHashId.value(id)
+    if (!hashId) {
+      throw createError({ statusCode: 400, message: 'No upload found for this receipt' })
+    }
+
+    analyzing.value[id] = true
+    errors.value[id] = null
+
+    try {
+      await $fetch(`/api/analysis/${hashId}`, { method: 'POST' })
+      await fetchReceiptById(id, true)
+    }
+    catch (err) {
+      errors.value[id] = err
+      throw err
+    }
+    finally {
+      analyzing.value[id] = false
+    }
+  }
+
+  /**
    * Clear error for a specific receipt
    */
   function clearReceiptError (id) {
@@ -322,12 +361,15 @@ export const useReceiptsStore = defineStore('receipts', () => {
     receiptsById,
     loading,
     saving,
+    analyzing,
     errors,
 
     // Getters
     getReceiptById,
     isReceiptLoading,
     isReceiptSaving,
+    isReceiptAnalyzing,
+    getUploadHashId,
     getReceiptError,
     allReceipts,
     totalReceipts,
@@ -339,6 +381,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
     fetchReceiptById,
     updateReceipt,
     deleteReceipt,
+    analyzeReceipt,
     clearReceiptError,
     invalidateReceipt,
     clearAllCaches,
