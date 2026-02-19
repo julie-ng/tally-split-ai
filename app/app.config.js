@@ -37,5 +37,14 @@ export default defineAppConfig({
         },
       ],
     },
+    slideover: {
+      variants: {
+        side: {
+          right: {
+            content: 'max-w-xl',
+          },
+        },
+      },
+    },
   },
 })

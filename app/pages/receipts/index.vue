@@ -203,9 +203,18 @@ const paginationInfo = computed(() => {
             {{ userStore.userId }}
           </p>
         </div>
-        <UButton class="px-4 py-2 cursor-pointer" @click="receiptsStore.fetchReceipts()">
-          Refresh
-        </UButton>
+        <div class="flex gap-2">
+          <bulk-analyze-button />
+          <UButton
+            color="neutral"
+            variant="subtle"
+            class="cursor-pointer"
+            icon="i-lucide-refresh-cw"
+            @click="receiptsStore.fetchReceipts()"
+          >
+            Refresh
+          </UButton>
+        </div>
       </div>
 
       <div class="my-2">
