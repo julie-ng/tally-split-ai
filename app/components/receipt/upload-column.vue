@@ -1,6 +1,10 @@
 <script setup>
 const props = defineProps({
   upload: Object,
+  uploadHashId: {
+    type: String,
+    default: null,
+  },
 })
 
 const hasBlobImage = computed(() => props.upload.status === 'uploaded')
@@ -10,6 +14,20 @@ const altText = computed(() => {
     ? `${props.upload.title} (${props.upload.blobName})`
     : props.upload.blobName
 })
+
+// Fetch bounding polygons for overlay (only if hashId provided)
+const { data: polygonsData } = await useFetch(
+  () => `/api/analysis/polygons/${props.uploadHashId}`,
+  {
+    key: `polygons-${props.uploadHashId}`,
+    immediate: !!props.uploadHashId,
+  },
+)
+
+const hasPolygons = computed(() =>
+  polygonsData.value?.success
+  && polygonsData.value?.data?.polygons?.length > 0,
+)
 </script>
 
 <template>
@@ -19,7 +37,16 @@ const altText = computed(() => {
       :blob-name="upload.blobName"
       :blob-url="upload.blobUrl"
     >
+      <blob-image-with-overlay
+        v-if="hasPolygons"
+        :blob-name="props.upload.blobName"
+        :alt="altText"
+        :polygons="polygonsData.data.polygons"
+        :page-width="polygonsData.data.page.width"
+        :page-height="polygonsData.data.page.height"
+      />
       <blob-image
+        v-else
         :blob-name="props.upload.blobName"
         :alt="altText"
       />
