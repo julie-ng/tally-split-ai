@@ -20,6 +20,11 @@ Analyze scans (photos) of receipts, which also have handwritten adjustments for 
 | [`.claude/skills/`](./.claude/skills) | Loaded on Demand |
 | [`CLAUDE.md`](./CLAUDE.md) | General agent instructions |
 
+## Azure
+
+- Region: `eastus`
+- Resource group: `ai-expenses-rg`
+
 ---
 
 ## App Progress
