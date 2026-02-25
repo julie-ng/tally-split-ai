@@ -1,5 +1,15 @@
 # Azure APIs Reference
 
+## CLI Commands
+
+#### List Containers
+
+List containers in `jngaiexpenses` storage account.
+
+```
+az storage container list --auth-mode login --account-name jngaiexpenses -o table
+```
+
 ## Azure Blob Storage API Reference
 
 - **Blob Service**
