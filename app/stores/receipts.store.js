@@ -253,6 +253,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
     errors.value[id] = null
 
     try {
+      // eslint-disable-next-line no-unused-vars
       const result = await $fetch(`/api/receipts/${id}`, {
         method: 'PUT',
         body: updates,
