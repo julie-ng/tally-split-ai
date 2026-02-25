@@ -140,5 +140,3 @@ Detailed coding conventions and workflow guides live in `.claude/`:
   - `/add-api-endpoint` — step-by-step new API route creation
   - `/add-vue-component` — step-by-step new component creation
   - `/add-pinia-store` — store structure, caching, optimistic updates
-
-@ARCHITECTURE.md

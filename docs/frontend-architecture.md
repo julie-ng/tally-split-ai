@@ -1,0 +1,35 @@
+# Frontend Architecture
+
+Note: "chunks" (generic) and "blocks" (Azure specific) are used interchangeably.
+
+- SAS URLs/tokens always fetched from backend for security purposes, i.e. account access keys are never exposed to frontend
+- **Frontend** (page or component): splits file(s) into chunks
+- **Chunk Component**: might be empty UI, but tracks block upload progress
+- **Pinia Store**: used to share data across Nuxt components and pages
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Frontend
+    participant Nuxt Server
+    participant Pinia
+    User->>Frontend: Drop files
+    Frontend->>+Nuxt Server: New file upload request
+    Nuxt Server-->>Nuxt Server: Generate upload SAS URL
+    Nuxt Server-->>-Frontend: Return file name and Azure SAS URL
+    create participant Chunks Component(s)
+    Frontend->>Chunks Component(s): Split file into chunks
+    Frontend->>+Pinia: Store file metadata, incl. chunk IDs
+    Chunks Component(s)->>Chunks Component(s): Upload chunk to Azure SAS URL
+    destroy Chunks Component(s)
+    Chunks Component(s)->>Pinia: [@emit] upload status
+    Pinia-->>-Frontend: Listen to chunks
+    Note over Frontend, Pinia: After all chunks uploaded
+    Frontend->>Frontend: Commit Azure Blob Block List
+    Frontend->>+Pinia: Update file status to 'uploaded'
+    User->>+Frontend: Show image
+    Frontend->>+Nuxt Server: New file read URL
+    Nuxt Server-->>Nuxt Server: Generate read-only SAS URL
+    Nuxt Server-->>-Frontend: Return read-only file URL
+    Frontend-->>-User: Preview Image
+```
