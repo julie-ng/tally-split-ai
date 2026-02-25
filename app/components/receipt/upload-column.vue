@@ -28,6 +28,8 @@ const hasPolygons = computed(() =>
   polygonsData.value?.success
   && polygonsData.value?.data?.polygons?.length > 0,
 )
+
+const highlightedLabel = inject('highlightedLabel', ref(null))
 </script>
 
 <template>
@@ -44,6 +46,8 @@ const hasPolygons = computed(() =>
         :polygons="polygonsData.data.polygons"
         :page-width="polygonsData.data.page.width"
         :page-height="polygonsData.data.page.height"
+        :highlighted-label="highlightedLabel"
+        @update:highlighted-label="highlightedLabel = $event"
       />
       <blob-image
         v-else

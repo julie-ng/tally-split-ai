@@ -10,6 +10,13 @@ defineProps({
     required: false,
   },
 })
+
+const highlightedLabel = inject('highlightedLabel', ref(null))
+
+const itemLabel = (index) => `Items[${index}].Description`
+
+const isRowHighlighted = (index) =>
+  highlightedLabel.value === itemLabel(index)
 </script>
 
 <template>
@@ -29,7 +36,14 @@ defineProps({
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item, id in items" :key="id">
+        <tr
+          v-for="item, id in items"
+          :key="id"
+          :class="{ 'bg-blue-50': isRowHighlighted(id) }"
+          class="transition-colors duration-150"
+          @mouseenter="highlightedLabel = itemLabel(id)"
+          @mouseleave="highlightedLabel = null"
+        >
           <td v-if="hasQuantity" class="pr-2 py-2 pl-0 border-b border-slate-200 text-center">
             <!-- Quantity: doesn't always exist -->
             <template v-if="item.quantity">

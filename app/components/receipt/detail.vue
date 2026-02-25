@@ -41,6 +41,10 @@ const schemaCheck = zodSchemas.receiptSchema.safeParse(props.receipt)
 if (!schemaCheck.success) {
   console.error('Receipt schema validation failed:', schemaCheck.error)
 }
+
+// Shared highlight state for cross-highlighting between image overlay and analysis table
+const { highlightedLabel } = useHighlightedLabel()
+provide('highlightedLabel', highlightedLabel)
 </script>
 
 <template>
