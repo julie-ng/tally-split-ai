@@ -1,11 +1,11 @@
 ---
-name: add-vue-component
-description: Step-by-step guide to create a new Vue component following project conventions. Use when creating a new component file in app/components/.
+name: vue-components
+description: Vue component conventions, structure, and patterns for this project. Use when creating or modifying Vue components in app/components/.
 ---
 
-# Add a Vue Component
+# Vue Components
 
-## 1. Choose the Directory
+## 1. File - Directory Placement
 
 Components are organized by feature domain in `app/components/`:
 
@@ -22,7 +22,7 @@ Components are organized by feature domain in `app/components/`:
 | `analysis/` | Analysis result display |
 | `data/` | Data display utilities |
 
-## 2. Name the File
+## 2. File - Naming
 
 - Kebab-case, multi-word, `.vue` extension
 - ✅ `receipt/edit-form.vue`, `blob/sas-link.vue`
@@ -60,6 +60,7 @@ const receipt = computed(() => receiptsStore.getReceiptById(props.receiptId))
 - **Do NOT prevent** empty/null values from reaching Pinia — the store handles validation
 - Components are **only responsible for displaying errors** surfaced by the store
 - Attributes on components use kebab-case: `<my-component my-prop="value" />`
+- Avoid directly fetching data from APIs from components, e.g. via `useFetch()` and `$fetch()`. Instead, use the appropriate Pinia store to read/update/delete data.
 
 ## 5. Reference Components
 

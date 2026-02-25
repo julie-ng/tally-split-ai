@@ -66,7 +66,10 @@ Reference: `server/api/uploads/[hashId].put.js`
 ## 4. SQLite Gotchas
 
 - Serialize complex fields before storing: `JSON.stringify(updates.azureTags)`
-- Always add `updatedAt: sql\`(unixepoch())\`` on updates
+- Always set `updatedAt` manually on updates — the schema only defines a `default` (applied on insert); SQLite has no `onUpdate` trigger so it won't auto-update:
+  ```js
+  updatedAt: sql`(unixepoch())`
+  ```
 
 ## 5. Response Shape Convention
 

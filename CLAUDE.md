@@ -138,5 +138,5 @@ Detailed coding conventions and workflow guides live in `.claude/`:
   - `/azure-blob-storage` — SAS tokens, direct uploads, filename conventions
   - `/azure-document-intelligence` — model details, response structure, optional fields
   - `/add-api-endpoint` — step-by-step new API route creation
-  - `/add-vue-component` — step-by-step new component creation
-  - `/add-pinia-store` — store structure, caching, optimistic updates
+  - `/vue-components` — component conventions, structure, patterns
+  - `/pinia-stores` — store structure, caching, optimistic updates

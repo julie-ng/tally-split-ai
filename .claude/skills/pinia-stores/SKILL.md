@@ -1,9 +1,11 @@
 ---
-name: add-pinia-store
-description: Step-by-step guide to create or extend a Pinia store following project patterns. Use when adding state management, creating a new store, or extending an existing store with new actions or state.
+name: pinia-stores
+description: Pinia store conventions, structure, and patterns for this project. Use when creating a new store or modifying an existing store in app/stores/.
 ---
 
-# Add a Pinia Store
+A store is a data management layer between frontend and backend that is scoped to a particular domain or model, e.g. "receipts". It's a single source of truth for interacting with backend APIs, includ. validation and API routes.
+
+# Pinia Stores
 
 ## 1. File Placement
 
