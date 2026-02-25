@@ -57,4 +57,15 @@ Tags are stored as Azure Blob index tags (key-value pairs). They come back from 
 | `server/api/tokens/read.post.js` | Generate read SAS token |
 | `server/api/blobs/index.get.js` | List blobs |
 | `server/api/blobs/new.post.js` | Register new blob |
-| `ARCHITECTURE.md` | Sequence diagrams for upload flow |
+| `docs/blob-storage-architecture.md` | Security model and upload sequence diagrams |
+
+## References
+
+- [Blob Storage REST API](https://learn.microsoft.com/en-us/rest/api/storageservices/blob-service-rest-api)
+  - [Put Blob](https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob?tabs=microsoft-entra-id)
+  - [Put Block](https://learn.microsoft.com/en-us/rest/api/storageservices/put-block?tabs=microsoft-entra-id)
+  - [Put Block List](https://learn.microsoft.com/en-us/rest/api/storageservices/put-block-list?tabs=microsoft-entra-id)
+  - [Request Headers](https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob?tabs=microsoft-entra-id#request-headers-all-blob-types)
+- [Create a service SAS](https://learn.microsoft.com/en-us/rest/api/storageservices/create-service-sas) — params, permissions, how SAS generation works
+- [API Versions](https://learn.microsoft.com/en-us/rest/api/storageservices/versioning-for-the-azure-storage-services)
+- [Understanding block blobs, append blobs, and page blobs](https://learn.microsoft.com/en-us/rest/api/storageservices/understanding-block-blobs--append-blobs--and-page-blobs)
