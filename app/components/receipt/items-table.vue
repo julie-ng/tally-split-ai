@@ -40,14 +40,16 @@ const isCellHighlighted = (index, key) =>
           <td
             v-if="hasQuantity"
             class="pr-2 py-2 pl-0 border-b border-slate-200 text-center transition-colors duration-150 cursor-default"
-            :class="{ 'bg-blue-50': isCellHighlighted(id, 'Quantity') }"
-            @mouseenter="highlightedLabel = itemLabel(id, 'Quantity')"
-            @mouseleave="highlightedLabel = null"
           >
             <!-- Quantity: doesn't always exist -->
-            <template v-if="item.quantity">
+            <div
+              v-if="item.quantity"
+              :class="{ 'bg-blue-50': isCellHighlighted(id, 'Quantity') }"
+              @mouseenter="highlightedLabel = itemLabel(id, 'Quantity')"
+              @mouseleave="highlightedLabel = null"
+            >
               {{ item.quantity.value }}
-            </template>
+            </div>
           </td>
           <td
             class="py-2 border-b border-slate-200 text-left transition-colors duration-150 cursor-default"
@@ -57,16 +59,16 @@ const isCellHighlighted = (index, key) =>
           >
             {{ item.description.value }}
           </td>
-          <td
-            class="py-2 pl-10 border-b border-slate-200 text-right transition-colors duration-150 cursor-default"
-            :class="{ 'bg-blue-50': isCellHighlighted(id, 'TotalPrice') }"
-            @mouseenter="highlightedLabel = itemLabel(id, 'TotalPrice')"
-            @mouseleave="highlightedLabel = null"
-          >
+          <td class="py-2 pl-10 border-b border-slate-200 text-right transition-colors duration-150 cursor-default">
             <!-- Total Price: doesn't always exist -->
-            <template v-if="item.totalPrice">
+            <div
+              v-if="item.totalPrice"
+              :class="{ 'bg-blue-50': isCellHighlighted(id, 'TotalPrice') }"
+              @mouseenter="highlightedLabel = itemLabel(id, 'TotalPrice')"
+              @mouseleave="highlightedLabel = null"
+            >
               {{ receiptUtils.formatCurrency(item.totalPrice.value) }}
-            </template>
+            </div>
           </td>
         </tr>
         <tr v-if="subtotal">
