@@ -79,8 +79,8 @@ This is a [**Nuxt 4** application](https://nuxt.com/docs/4.x/getting-started/int
 - Users upload receipt photos via drag-and-drop; uploads are queued and sent directly to Azure Blob Storage
 - Filenames encode pre-curated data: `(41.95)` for total in EUR, `#tip` for tags, `YYYY-MM-DD` for dates
 - Azure Document Intelligence analyzes receipts to extract merchant info, line items, and totals
-- **TODO**: each upload should create a separate Receipt entry in the database (separation of blob storage from business domain)
-- **TODO**: use filename tags to compare with AI analysis results and flag receipts for human review
+- Each upload should create a separate Receipt entry in the database (separation of blob storage from business domain)
+- Flag mismatched totals for human review (frontend only)
 
 ---
 
