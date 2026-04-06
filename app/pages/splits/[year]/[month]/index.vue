@@ -155,6 +155,8 @@ const allSettled = computed(() =>
   splits.value.length > 0 && splits.value.every(s => s.isSettled),
 )
 
+const hasSplits = computed(() => splits.value.length > 0)
+
 /**
  * Handle marking all splits for the month as settled
  */
@@ -178,7 +180,7 @@ async function handleMarkAllSettled () {
 
 <template>
   <UContainer>
-    <div class="my-5">
+    <div v-if="hasSplits" class="my-5">
       <!-- Breadcrumb -->
       <div class="mb-3">
         <NuxtLink to="/splits" class="text-sm text-blue-600 hover:underline">
@@ -368,6 +370,21 @@ async function handleMarkAllSettled () {
           </div>
         </div>
       </ClientOnly>
+    </div>
+    <div v-else class="my-6">
+      <h1 class="mb-1 font-bold text-xl">
+        No splits for {{ monthName }} {{ year }}
+      </h1>
+      <p class="mb-4">
+        Please upload receipts to get some data.
+      </p>
+      <UButton
+        color="primary"
+        variant="soft"
+        to="/uploads/new"
+      >
+        Upload Receipts
+      </UButton>
     </div>
   </UContainer>
 </template>
