@@ -58,9 +58,7 @@ export default defineNuxtConfig({
     '~~/shared/**/*',
   ],
   compatibilityDate: '2025-07-15',
-  hub: {
-    db: 'sqlite',
-  },
+  hub: {},
   vite: {
     optimizeDeps: {
       include: [

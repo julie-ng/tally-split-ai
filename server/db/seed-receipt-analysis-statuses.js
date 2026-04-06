@@ -11,18 +11,19 @@
 
 import fs from 'fs'
 import path from 'path'
-import Database from 'better-sqlite3'
-import { drizzle } from 'drizzle-orm/better-sqlite3'
+import pg from 'pg'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { eq } from 'drizzle-orm'
 import * as schema from './schema.ts'
 
 const TMP_DIR = './tmp'
 
 // Initialize database connection
-const databaseUrl = process.env.DATABASE_URL || './.data/db/sqlite.db'
-const sqlite = new Database(databaseUrl)
-sqlite.pragma('journal_mode = WAL')
-const db = drizzle(sqlite, { schema })
+const connectionString = process.env.NUXT_DATABASE_URL
+  || process.env.DATABASE_URL
+  || 'postgresql://receipts:localdev@localhost:5432/ai_receipts'
+const pool = new pg.Pool({ connectionString })
+const db = drizzle(pool, { schema })
 
 function hasAnalysisFile (hashId) {
   return fs.existsSync(path.join(TMP_DIR, `${hashId}.json`))
@@ -33,7 +34,7 @@ function hasAnalysisFile (hashId) {
  */
 async function seedReceiptAnalysisStatuses () {
   console.log('Starting seed: Populate analysisStatus from tmp analysis files\n')
-  console.log(`Database: ${databaseUrl}`)
+  console.log(`Database: ${connectionString}`)
   console.log(`Tmp dir:  ${TMP_DIR}\n`)
 
   // Fetch all receipts with their linked uploads
@@ -71,12 +72,12 @@ async function seedReceiptAnalysisStatuses () {
   console.log(`Unanalyzed: ${unanalyzedCount}`)
   console.log(`Total:      ${receipts.length}`)
 
-  sqlite.close()
+  await pool.end()
 }
 
 // Run the seed
 seedReceiptAnalysisStatuses().catch((error) => {
   console.error('Seed failed:', error)
-  sqlite.close()
+  await pool.end()
   process.exit(1)
 })

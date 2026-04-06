@@ -1,11 +1,11 @@
-import { db, schema } from 'hub:db'
-import { eq, sql } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import DocumentIntelligence, { getLongRunningPoller, isUnexpected } from '@azure-rest/ai-document-intelligence'
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 // import { azureStorageUtils } from '~/server/utils/azure-storage-utils.helper.js'
 
 export default defineEventHandler(async (event) => {
+  const db = useDB()
   requireUserId(event)
   requireHashIdParam(event, 'uploadHashId')
 
@@ -112,7 +112,7 @@ export default defineEventHandler(async (event) => {
       // Update existing receipt
       await db
         .update(schema.receipts)
-        .set({ ...receiptData, updatedAt: sql`(unixepoch())` })
+        .set({ ...receiptData, updatedAt: new Date() })
         .where(eq(schema.receipts.id, receiptId))
       console.log(`✅ Updated existing receipt ${receiptId}`)
     }
@@ -131,7 +131,7 @@ export default defineEventHandler(async (event) => {
       .update(schema.uploads)
       .set({
         analysisStatus: 'completed',
-        analyzedAt: sql`(unixepoch())`,
+        analyzedAt: new Date(),
         analysisOcrResult: analyzeResult.content || null,
         receiptId: receiptId,
       })

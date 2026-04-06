@@ -1,9 +1,9 @@
-import { db, schema } from 'hub:db'
 import { eq } from 'drizzle-orm'
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 export default defineEventHandler(async (event) => {
+  const db = useDB()
   requireUserId(event)
   requireHashIdParam(event, 'uploadHashId')
 

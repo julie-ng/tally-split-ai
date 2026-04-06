@@ -1,13 +1,13 @@
 /**
- * Takes JSON string (how they are stored in DB)
- * and returns array of key-value objects for output
+ * Takes blob tags (object or JSON string) and returns array of key-value objects
  *
+ * @param {Object|string} tags - Tags as object (jsonb) or JSON string
  * @returns Array
  */
 
-function blobTagsJsonToObject (jsonString) {
-  if (!jsonString) return [] // shouldn't this be an object?
-  const data = JSON.parse(jsonString)
+function blobTagsJsonToObject (tags) {
+  if (!tags) return []
+  const data = typeof tags === 'string' ? JSON.parse(tags) : tags
   return Object.entries(data).map(([key, value]) => ({ key, value }))
 }
 

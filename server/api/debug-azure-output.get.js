@@ -1,6 +1,5 @@
 import fs from 'fs/promises'
 import path from 'path'
-import { db, schema } from 'hub:db'
 import { inArray } from 'drizzle-orm'
 
 const analyzedUploads = [
@@ -15,6 +14,7 @@ const analyzedUploads = [
 ]
 
 export default defineEventHandler(async (event) => {
+  const db = useDB()
   const uploads = await db.select({
     hashId: schema.uploads.hashId,
     originalFilename: schema.uploads.originalFilename,

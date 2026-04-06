@@ -1,7 +1,7 @@
-import { db, schema } from 'hub:db'
 import { eq, and } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
+  const db = useDB()
   requireUserId(event)
   requireIdParam(event)
 

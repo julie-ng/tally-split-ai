@@ -9,9 +9,9 @@ paths:
 
 ```js
 import { z } from 'zod'
-import { db, schema } from 'hub:db'
 
 export default defineEventHandler(async (event) => {
+  const db = useDB()             // auto-imported via server/utils/db.utils.js
   requireUserId(event)           // always first — validates auth
   requireHashIdParam(event)      // or requireIdParam() for numeric IDs
 
@@ -47,7 +47,8 @@ Reference implementation: `server/api/uploads/[hashId].put.js`
 - Use `createError()` for all thrown errors (Nuxt-aware, works across server and client)
 - Use `setResponseStatus(event, 400)` for validation errors (don't throw — return structured error)
 - **Never manually check field types** — use zod schemas (see `rules/zod-validation.md`)
-- SQLite note: serialize complex fields before storing: `JSON.stringify(updates.azureTags)`
+- `schema` is auto-imported — no import needed in handlers
+- `jsonb` columns (e.g., `azureTags`) store native JSON — do NOT `JSON.stringify`
 
 ## File Naming
 

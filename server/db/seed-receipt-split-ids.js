@@ -9,23 +9,24 @@
  * Run with: npx tsx server/db/seed-receipt-split-ids.js
  */
 
-import Database from 'better-sqlite3'
-import { drizzle } from 'drizzle-orm/better-sqlite3'
+import pg from 'pg'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { eq, isNull } from 'drizzle-orm'
 import * as schema from './schema.ts'
 
 // Initialize database connection
-const databaseUrl = process.env.DATABASE_URL || './.data/db/sqlite.db'
-const sqlite = new Database(databaseUrl)
-sqlite.pragma('journal_mode = WAL')
-const db = drizzle(sqlite, { schema })
+const connectionString = process.env.NUXT_DATABASE_URL
+  || process.env.DATABASE_URL
+  || 'postgresql://receipts:localdev@localhost:5432/ai_receipts'
+const pool = new pg.Pool({ connectionString })
+const db = drizzle(pool, { schema })
 
 /**
  * Main seeding function
  */
 async function seedReceiptSplitIds () {
   console.log('Starting seed: Populate receipt splitId from associated splits\n')
-  console.log(`Database: ${databaseUrl}\n`)
+  console.log(`Database: ${connectionString}\n`)
 
   // Get all receipts without a splitId
   const receiptsWithoutSplitId = await db
@@ -37,7 +38,7 @@ async function seedReceiptSplitIds () {
 
   if (receiptsWithoutSplitId.length === 0) {
     console.log('No receipts to update.')
-    sqlite.close()
+    await pool.end()
     return
   }
 
@@ -74,12 +75,12 @@ async function seedReceiptSplitIds () {
   console.log(`Skipped: ${skippedCount}`)
   console.log(`Total processed: ${receiptsWithoutSplitId.length}`)
 
-  sqlite.close()
+  await pool.end()
 }
 
 // Run the seed
 seedReceiptSplitIds().catch((error) => {
   console.error('Seed failed:', error)
-  sqlite.close()
+  await pool.end()
   process.exit(1)
 })

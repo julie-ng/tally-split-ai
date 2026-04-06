@@ -9,23 +9,24 @@
  * Run with: npx tsx server/db/seed-splits.js
  */
 
-import Database from 'better-sqlite3'
-import { drizzle } from 'drizzle-orm/better-sqlite3'
+import pg from 'pg'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { eq, isNotNull } from 'drizzle-orm'
 import * as schema from './schema.ts'
 
 // Initialize database connection
-const databaseUrl = process.env.DATABASE_URL || './.data/db/sqlite.db'
-const sqlite = new Database(databaseUrl)
-sqlite.pragma('journal_mode = WAL')
-const db = drizzle(sqlite, { schema })
+const connectionString = process.env.NUXT_DATABASE_URL
+  || process.env.DATABASE_URL
+  || 'postgresql://receipts:localdev@localhost:5432/ai_receipts'
+const pool = new pg.Pool({ connectionString })
+const db = drizzle(pool, { schema })
 
 /**
  * Main seeding function
  */
 async function seedSplits () {
   console.log('Starting seed: Create splits from receipts with totals\n')
-  console.log(`Database: ${databaseUrl}\n`)
+  console.log(`Database: ${connectionString}\n`)
 
   // Get all receipts that have a total
   const receiptsWithTotals = await db
@@ -37,7 +38,7 @@ async function seedSplits () {
 
   if (receiptsWithTotals.length === 0) {
     console.log('No receipts with totals found.')
-    sqlite.close()
+    await pool.end()
     return
   }
 
@@ -81,12 +82,12 @@ async function seedSplits () {
   console.log(`Skipped: ${skippedCount}`)
   console.log(`Total processed: ${receiptsWithTotals.length}`)
 
-  sqlite.close()
+  await pool.end()
 }
 
 // Run the seed
 seedSplits().catch((error) => {
   console.error('Seed failed:', error)
-  sqlite.close()
+  await pool.end()
   process.exit(1)
 })

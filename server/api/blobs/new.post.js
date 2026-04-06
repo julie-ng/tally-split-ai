@@ -1,7 +1,7 @@
-import { db, schema } from 'hub:db'
 import { z } from 'zod'
 
 export default defineEventHandler(async (event) => {
+  const db = useDB()
   requireUserId(event)
   const userId = event.context.userId
 

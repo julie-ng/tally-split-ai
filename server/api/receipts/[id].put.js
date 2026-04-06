@@ -1,8 +1,8 @@
 import { z } from 'zod'
-import { db, schema } from 'hub:db'
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
+  const db = useDB()
   requireUserId(event)
   requireIdParam(event)
 
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
 
   const updates = {
     ...result.data,
-    updatedAt: sql`(unixepoch())`,
+    updatedAt: new Date(),
   }
 
   // Update the record (filtering by both id and userId for security)

@@ -1,8 +1,8 @@
-import { db, schema } from 'hub:db'
 import { z } from 'zod'
 import { splitInputSchema } from '~~/shared/utils/zod-schemas/split.schema.js'
 
 export default defineEventHandler(async (event) => {
+  const db = useDB()
   requireUserId(event)
   const userId = event.context.userId
 

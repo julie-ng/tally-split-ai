@@ -1,9 +1,9 @@
 import { z } from 'zod'
-import { db, schema } from 'hub:db'
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { splitUpdateSchema } from '~~/shared/utils/zod-schemas/split.schema.js'
 
 export default defineEventHandler(async (event) => {
+  const db = useDB()
   requireUserId(event)
   requireIdParam(event)
 
@@ -23,12 +23,12 @@ export default defineEventHandler(async (event) => {
 
   const updates = {
     ...result.data,
-    updatedAt: sql`(unixepoch())`,
+    updatedAt: new Date(),
   }
 
   // Set settledAt timestamp when marking as settled
   if (result.data.isSettled === true) {
-    updates.settledAt = sql`(unixepoch())`
+    updates.settledAt = new Date()
   }
   else if (result.data.isSettled === false) {
     updates.settledAt = null

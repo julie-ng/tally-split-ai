@@ -1,7 +1,7 @@
-import { db, schema } from 'hub:db'
 import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
+  const db = useDB()
   requireUserId(event)
   const userId = event.context.userId
 
@@ -14,15 +14,15 @@ export default defineEventHandler(async (event) => {
 
   // Aggregate azureTags from uploads for each receipt
   const receiptsWithAggregatedTags = receipts.map((receipt) => {
-    // Collect all unique azureTags from uploads, filtering out internal tags
+    // Merge all azureTags from uploads into a single object, filtering out internal tags
     const allTags = receipt.uploads
       .filter(upload => upload.azureTags)
       .map(upload => azureUtils.excludeInternalBlobTags(upload.azureTags))
-      .join(',')
+      .reduce((acc, tags) => ({ ...acc, ...tags }), {})
 
     return {
       ...receipt,
-      azureTags: allTags || null,
+      azureTags: Object.keys(allTags).length > 0 ? allTags : null,
     }
   })
 

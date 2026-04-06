@@ -1,8 +1,8 @@
 import { z } from 'zod'
-import { db, schema } from 'hub:db'
-import { eq, sql } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
+  const db = useDB()
   requireUserId(event)
   requireHashIdParam(event)
 
@@ -20,12 +20,7 @@ export default defineEventHandler(async (event) => {
 
   const updates = {
     ...result.data,
-    updatedAt: sql`(unixepoch())`,
-  }
-
-  // Serialize azureTags object to JSON string for SQLite
-  if (updates.azureTags) {
-    updates.azureTags = JSON.stringify(updates.azureTags)
+    updatedAt: new Date(),
   }
 
   const dbResult = await db

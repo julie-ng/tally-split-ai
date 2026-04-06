@@ -1,6 +1,6 @@
 ---
 name: database-operations
-description: Database workflows for this project — schema changes, migrations, and seed scripts using Drizzle ORM + SQLite. Use when the user asks to add a table, modify a schema, create a migration, or seed the database.
+description: Database workflows for this project — schema changes, migrations, and seed scripts using Drizzle ORM + PostgreSQL. Use when the user asks to add a table, modify a schema, create a migration, or seed the database.
 ---
 
 # Database Operations
@@ -10,27 +10,34 @@ description: Database workflows for this project — schema changes, migrations,
 | Item | Path |
 |:--|:--|
 | Schema | `server/db/schema.ts` |
-| DB file | `.data/db/sqlite.db` (NOT `./data/`) |
-| Migrations | `server/db/migrations/` |
+| DB connection | `server/db/connection.ts` |
+| Migrations | `server/db/migrations/postgres/` |
 | Seed files | `server/db/seed-*.js` |
+
+## Database
+
+PostgreSQL 17 running in Docker:
+```bash
+docker compose -f docker-compose.dev.yaml up -d
+```
+
+Connection string via env var: `NUXT_DATABASE_URL`
 
 ## Current Tables
 
-- `uploads` — Azure Blob metadata (hashId, blobPath, contentType, azureTags, etc.)
+- `uploads` — Azure Blob metadata (hashId, blobPath, contentType, azureTags as jsonb, etc.)
 - `receipts` — Receipt business data (merchant, total, date, analysisStatus, etc.)
 - `splits` — Expense split records (receiptId, amount, person, settled, etc.)
 
 ## Adding/Changing Schema
 
 1. Edit `server/db/schema.ts`
-2. Generate migration: `npx nuxt db generate`
-3. Apply migration: `npx nuxt db migrate`
-
-> **Never** use `npx drizzle-kit ...` commands — use the Nuxt-specific commands above.
+2. Generate migration: `npm run db:generate`
+3. Apply migration: `npm run db:migrate`
 
 ## Seed Scripts
 
-Because Drizzle + Nuxt use TypeScript, use `npx tsx` to run seed files (not `node`):
+Use `npx tsx` to run seed files:
 
 ```bash
 npx tsx ./server/db/seed-receipts.js
@@ -45,21 +52,24 @@ Existing seed files:
 
 ## Drizzle Query Patterns
 
+`db` and `schema` are auto-imported in server handlers via `server/utils/db.utils.js`.
+
 ```js
-import { db, schema } from 'hub:db'
-import { eq, sql } from 'drizzle-orm'
+export default defineEventHandler(async (event) => {
+  const db = useDB()
 
-// Select
-const rows = await db.select().from(schema.receipts).where(eq(schema.receipts.id, id))
+  // Select
+  const rows = await db.select().from(schema.receipts).where(eq(schema.receipts.id, id))
 
-// Insert
-const result = await db.insert(schema.receipts).values({ ... }).returning()
+  // Insert
+  const result = await db.insert(schema.receipts).values({ ... }).returning()
 
-// Update
-const result = await db.update(schema.receipts).set({ updatedAt: sql`(unixepoch())` }).where(eq(schema.receipts.id, id)).returning()
+  // Update
+  const result = await db.update(schema.receipts).set({ updatedAt: new Date() }).where(eq(schema.receipts.id, id)).returning()
 
-// Delete
-await db.delete(schema.receipts).where(eq(schema.receipts.id, id))
+  // Delete
+  await db.delete(schema.receipts).where(eq(schema.receipts.id, id))
+})
 ```
 
-SQLite note: complex fields (e.g., JSON objects) must be serialized: `JSON.stringify(value)` before storing, `JSON.parse(value)` after reading.
+Note: `jsonb` columns (e.g., `azureTags`) accept plain JS objects — do NOT `JSON.stringify`.

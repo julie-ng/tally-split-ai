@@ -69,7 +69,7 @@ This is a [**Nuxt 4** application](https://nuxt.com/docs/4.x/getting-started/int
 - **File-based routing**: Pages directory maps to routes automatically
 - **API routes**: Server API endpoints are auto-registered from `server/api/`
 - **State management**: Pinia stores for reactive state (uploads, user)
-- **Database**: SQLite with Drizzle ORM for local development
+- **Database**: PostgreSQL 17 (Docker) + Drizzle ORM
 - **Client-side uploads**: Direct-to-Azure uploads using SAS tokens (no server proxy)
 
 ---
@@ -87,7 +87,7 @@ This is a [**Nuxt 4** application](https://nuxt.com/docs/4.x/getting-started/int
 ## Technology Stack
 
 - **Framework**: Nuxt 4 full-stack app with hybrid SSR (server + client rendering)
-- **Database**: SQLite + Drizzle ORM — file at `.data/db/sqlite.db`
+- **Database**: PostgreSQL 17 + Drizzle ORM — Docker via `docker compose -f docker-compose.dev.yaml up -d`
 - **Storage**: Azure Blob Storage (direct client uploads via SAS tokens — never through server)
 - **AI/OCR**: Azure Document Intelligence (`prebuilt-receipt` model, API version 2024-11-30)
 - **Frontend**: Vue 3, Pinia stores, NuxtUI, Tailwind CSS

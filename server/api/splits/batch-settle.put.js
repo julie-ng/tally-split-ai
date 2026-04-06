@@ -1,4 +1,3 @@
-import { db, schema } from 'hub:db'
 import { eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
@@ -9,6 +8,7 @@ const batchSettleSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
+  const db = useDB()
   requireUserId(event)
   const userId = event.context.userId
 
@@ -36,8 +36,8 @@ export default defineEventHandler(async (event) => {
         and(
           eq(schema.splits.userId, userId),
           // Filter by year and month using SQL date functions
-          sql`strftime('%Y', ${schema.receipts.date}) = ${year.toString()}`,
-          sql`strftime('%m', ${schema.receipts.date}) = ${month.toString().padStart(2, '0')}`,
+          sql`EXTRACT(YEAR FROM ${schema.receipts.date}::date)::int = ${year}`,
+          sql`EXTRACT(MONTH FROM ${schema.receipts.date}::date)::int = ${month}`,
         ),
       )
 
@@ -57,8 +57,8 @@ export default defineEventHandler(async (event) => {
       .update(schema.splits)
       .set({
         isSettled: true,
-        settledAt: sql`(unixepoch())`,
-        updatedAt: sql`(unixepoch())`,
+        settledAt: new Date(),
+        updatedAt: new Date(),
       })
       .where(
         and(

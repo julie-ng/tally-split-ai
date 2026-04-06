@@ -9,23 +9,24 @@
  * Run with: npx tsx server/db/seed-receipt-titles.js
  */
 
-import Database from 'better-sqlite3'
-import { drizzle } from 'drizzle-orm/better-sqlite3'
+import pg from 'pg'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { eq, or, isNull } from 'drizzle-orm'
 import * as schema from './schema.ts'
 
 // Initialize database connection
-const databaseUrl = process.env.DATABASE_URL || './.data/db/sqlite.db'
-const sqlite = new Database(databaseUrl)
-sqlite.pragma('journal_mode = WAL')
-const db = drizzle(sqlite, { schema })
+const connectionString = process.env.NUXT_DATABASE_URL
+  || process.env.DATABASE_URL
+  || 'postgresql://receipts:localdev@localhost:5432/ai_receipts'
+const pool = new pg.Pool({ connectionString })
+const db = drizzle(pool, { schema })
 
 /**
  * Main seeding function
  */
 async function seedReceiptTitles () {
   console.log('Starting seed: Populate receipt titles from uploads\n')
-  console.log(`Database: ${databaseUrl}\n`)
+  console.log(`Database: ${connectionString}\n`)
 
   // Get all receipts that need titles (null or 'Untitled')
   const receiptsNeedingTitles = await db
@@ -40,7 +41,7 @@ async function seedReceiptTitles () {
 
   if (receiptsNeedingTitles.length === 0) {
     console.log('No receipts to update.')
-    sqlite.close()
+    await pool.end()
     return
   }
 
@@ -84,12 +85,12 @@ async function seedReceiptTitles () {
   console.log(`Skipped: ${skippedCount}`)
   console.log(`Total processed: ${receiptsNeedingTitles.length}`)
 
-  sqlite.close()
+  await pool.end()
 }
 
 // Run the seed
 seedReceiptTitles().catch((error) => {
   console.error('Seed failed:', error)
-  sqlite.close()
+  await pool.end()
   process.exit(1)
 })

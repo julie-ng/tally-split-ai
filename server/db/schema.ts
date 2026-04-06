@@ -1,13 +1,13 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'
-import { sql, relations } from 'drizzle-orm'
+import { pgTable, text, integer, serial, real, boolean, timestamp, jsonb } from 'drizzle-orm/pg-core'
+import { relations } from 'drizzle-orm'
 import { RECEIPT_ANALYSIS_STATUSES } from '../../shared/enums/receipt-analysis-status.js'
 
 /**
  * Receipts table - stores business/finance data extracted from receipt uploads
  */
 // @ts-expect-error implicit return type any
-export const receipts = sqliteTable('receipts', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const receipts = pgTable('receipts', {
+  id: serial('id').primaryKey(),
 
   // User-facing fields
   title: text('title').default('Untitled'),
@@ -32,22 +32,21 @@ export const receipts = sqliteTable('receipts', {
   splitId: integer('split_id').references(() => splits.id, { onDelete: 'set null' }),
 
   // Status tracking
-  // isAnalyzed: integer('is_analyzed', { mode: 'boolean' }).notNull().default(false), // TODO - remove
   analysisStatus: text('analysis_status', { enum: RECEIPT_ANALYSIS_STATUSES }).notNull().default('unanalyzed'),
 
   // Metadata
   userId: text('user_id').notNull(),
 
   // Timestamps
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
 /**
  * Uploads table - stores file/blob metadata for uploaded receipt images
  */
-export const uploads = sqliteTable('uploads', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const uploads = pgTable('uploads', {
+  id: serial('id').primaryKey(),
   hashId: text('hash_id').notNull().unique(),
   userId: text('user_id').notNull().default('local-dev-user'),
   title: text('title').notNull().default('Untitled'),
@@ -64,25 +63,25 @@ export const uploads = sqliteTable('uploads', {
   originalFilename: text('original_filename').notNull(),
   contentType: text('content_type'),
   size: integer('size'),
-  azureTags: text('azure_tags'), // JSON string of Azure blob tags
+  azureTags: jsonb('azure_tags'), // Azure blob tags as JSON
 
   // OCR/Analysis status
   analysisStatus: text('analysis_status').default('pending'), // pending, processing, completed, failed
-  analyzedAt: integer('analyzed_at', { mode: 'timestamp' }),
+  analyzedAt: timestamp('analyzed_at'),
   analysisOcrResult: text('analysis_ocr_result'),
 
   // Timestamps
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
-  uploadedAt: integer('uploaded_at', { mode: 'timestamp' }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  uploadedAt: timestamp('uploaded_at'),
 })
 
 /**
  * Splits table - tracks expense splitting between two people
  */
 // @ts-expect-error implicit type any
-export const splits = sqliteTable('splits', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const splits = pgTable('splits', {
+  id: serial('id').primaryKey(),
 
   // Optional receipt association (null for standalone splits)
   // @ts-expect-error implicit return type any
@@ -95,16 +94,16 @@ export const splits = sqliteTable('splits', {
   userBShare: real('user_b_share'), // Amount userB's share
 
   // Settlement tracking
-  isSettled: integer('is_settled', { mode: 'boolean' }).notNull().default(false),
-  settledAt: integer('settled_at', { mode: 'timestamp' }),
+  isSettled: boolean('is_settled').notNull().default(false),
+  settledAt: timestamp('settled_at'),
 
   // Metadata
   notes: text('notes'),
   userId: text('user_id').notNull(),
 
   // Timestamps
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
 /**

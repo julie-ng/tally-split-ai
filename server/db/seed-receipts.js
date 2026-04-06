@@ -16,8 +16,8 @@
 
 import fs from 'fs'
 import path from 'path'
-import Database from 'better-sqlite3'
-import { drizzle } from 'drizzle-orm/better-sqlite3'
+import pg from 'pg'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { eq, isNull } from 'drizzle-orm'
 import * as schema from './schema.ts'
 import {
@@ -31,10 +31,11 @@ const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000'
 const TMP_DIR = './tmp'
 
 // Initialize database connection
-const databaseUrl = process.env.DATABASE_URL || './.data/db/sqlite.db'
-const sqlite = new Database(databaseUrl)
-sqlite.pragma('journal_mode = WAL')
-const db = drizzle(sqlite, { schema })
+const connectionString = process.env.NUXT_DATABASE_URL
+  || process.env.DATABASE_URL
+  || 'postgresql://receipts:localdev@localhost:5432/ai_receipts'
+const pool = new pg.Pool({ connectionString })
+const db = drizzle(pool, { schema })
 
 /**
  * Check if an analysis file exists for a given hashId
@@ -169,7 +170,7 @@ function buildNotesString (inferred, hasAnalysis) {
  */
 async function migrateUploadsToReceipts () {
   console.log('Starting migration: Create receipts from existing uploads\n')
-  console.log(`Database: ${databaseUrl}`)
+  console.log(`Database: ${connectionString}`)
   console.log(`API Base URL: ${API_BASE_URL}`)
   console.log(`Temp Directory: ${TMP_DIR}\n`)
 
@@ -183,7 +184,7 @@ async function migrateUploadsToReceipts () {
 
   if (uploadsWithoutReceipts.length === 0) {
     console.log('Nothing to migrate. All uploads already have receipts.')
-    sqlite.close()
+    await pool.end()
     return
   }
 
@@ -268,12 +269,12 @@ async function migrateUploadsToReceipts () {
   console.log(`Errors: ${errorCount}`)
   console.log(`Total processed: ${uploadsWithoutReceipts.length}`)
 
-  sqlite.close()
+  await pool.end()
 }
 
 // Run the migration
 migrateUploadsToReceipts().catch((error) => {
   console.error('Migration failed:', error)
-  sqlite.close()
+  await pool.end()
   process.exit(1)
 })
