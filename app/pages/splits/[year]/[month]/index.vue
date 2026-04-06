@@ -16,11 +16,7 @@ if (!year.value || !month.value || month.value < 1 || month.value > 12) {
   })
 }
 
-// Helper for month name
-const monthName = computed(() => {
-  const date = new Date(year.value, month.value - 1, 1)
-  return date.toLocaleDateString('en-US', { month: 'long' })
-})
+const monthName = computed(() => dateUtils.getMonthName(month.value))
 
 useHead({
   title: `Splits - ${monthName.value} ${year.value}`,

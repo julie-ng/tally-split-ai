@@ -68,6 +68,28 @@ describe('formatISODate()', () => {
   })
 })
 
+describe('getMonthName()', () => {
+  it('should return correct name for each month', () => {
+    expect(dateUtils.getMonthName(1)).toBe('January')
+    expect(dateUtils.getMonthName(2)).toBe('February')
+    expect(dateUtils.getMonthName(3)).toBe('March')
+    expect(dateUtils.getMonthName(4)).toBe('April')
+    expect(dateUtils.getMonthName(5)).toBe('May')
+    expect(dateUtils.getMonthName(6)).toBe('June')
+    expect(dateUtils.getMonthName(7)).toBe('July')
+    expect(dateUtils.getMonthName(8)).toBe('August')
+    expect(dateUtils.getMonthName(9)).toBe('September')
+    expect(dateUtils.getMonthName(10)).toBe('October')
+    expect(dateUtils.getMonthName(11)).toBe('November')
+    expect(dateUtils.getMonthName(12)).toBe('December')
+  })
+
+  it('should return undefined for out-of-range values', () => {
+    expect(dateUtils.getMonthName(0)).toBeUndefined()
+    expect(dateUtils.getMonthName(13)).toBeUndefined()
+  })
+})
+
 describe('timeWithoutSeconds()', () => {
   it('should remove seconds from time string', () => {
     const result = dateUtils.timeWithoutSeconds('11:59:34')

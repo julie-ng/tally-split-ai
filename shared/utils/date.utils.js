@@ -43,8 +43,23 @@ function timeWithoutSeconds (time) {
   return `${parts[0]}:${parts[1]}`
 }
 
+const monthNames = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+]
+
+/**
+ * Get the full month name from a month number
+ * @param {number} month - Month number (1-12)
+ * @returns {string} - Full month name (e.g., "January")
+ */
+function getMonthName (month) {
+  return monthNames[month - 1]
+}
+
 export const dateUtils = {
   formatDate,
   formatISODate,
+  getMonthName,
   timeWithoutSeconds,
 }
