@@ -60,6 +60,15 @@ export default defineNuxtConfig({
   hub: {
     db: 'sqlite',
   },
+  vite: {
+    optimizeDeps: {
+      include: [
+        '@vue/devtools-core',
+        '@vue/devtools-kit',
+        'vue-json-pretty',
+      ],
+    },
+  },
   eslint: {
     config: {
       stylistic: true,
