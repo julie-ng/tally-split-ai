@@ -68,6 +68,7 @@ export default defineNuxtConfig({
         'vue-json-pretty',
         '@vueuse/core',
         'zod',
+        '@tanstack/vue-table',
       ],
     },
   },
