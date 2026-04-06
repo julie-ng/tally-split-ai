@@ -2,6 +2,14 @@
 
 A proof of concept app for learning purposes.
 
+### Frontend-only Features (not persisted in DB)
+
+- **Mismatch detection** — compares filename-encoded total with OCR result, flags mismatches with red badge
+- **Split validation** — checks if user shares sum to the split total (with floating-point tolerance)
+- **Monthly split filtering** — filters splits by receipt date, no "split month" column in DB
+- **Monthly settlement status** — derives whether all splits in a month are settled
+- **Upload concurrency control** — enforces max 3 concurrent uploads client-side
+
 ## Use Case
 
 Analyze scans (photos) of receipts, which also have handwritten adjustments for purpose of splitting expenses.
