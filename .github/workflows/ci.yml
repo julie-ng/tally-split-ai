@@ -24,11 +24,8 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        # Remove lock file for native bindings bug
-        # https://github.com/npm/cli/issues/4828
         run: |
-          rm package-lock.json
-          npm install
+          npm ci
 
       - name: Run ESLint
         run: npm run lint
@@ -50,15 +47,8 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        # Remove lock file for native bindings bug
-        # https://github.com/npm/cli/issues/4828
         run: |
-          rm package-lock.json
-          npm install
-
-      # Missing in runner
-      - name: install sass
-        run: npm install -D sass-embedded
+          npm ci
 
       - name: Build Nuxt app
         run: npm run build
