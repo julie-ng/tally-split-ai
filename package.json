@@ -49,6 +49,7 @@
     "@stylistic/eslint-plugin": "^5.7.0",
     "@types/better-sqlite3": "^7.6.13",
     "drizzle-kit": "^0.31.8",
+    "sass-embedded": "^1.99.0",
     "vitest": "^4.0.15"
   }
 }
