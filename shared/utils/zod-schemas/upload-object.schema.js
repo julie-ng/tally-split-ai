@@ -14,7 +14,7 @@ export const uploadObject = z.object({
   originalFilename: z.string(),
   contentType: z.string(),
   size: z.number(),
-  azureTags: z.string(),
+  azureTags: z.union([z.object(), z.string()]).nullable(),
 
   analysisStatus: z.string(), // TODO: pending, etc.
   analysisOcrResult: z.string().nullable(),
@@ -22,7 +22,7 @@ export const uploadObject = z.object({
   analyzedAt: z.iso.datetime().nullable(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
-  uploadedAt: z.iso.datetime(),
+  uploadedAt: z.iso.datetime().nullable(),
 })
 
 // const validStatus = z.stringFormat("cool-id", ()=>{

@@ -23,6 +23,11 @@ export default defineEventHandler(async (event) => {
     updatedAt: new Date(),
   }
 
+  // Drizzle's timestamp column expects a Date object, not an ISO string
+  if (updates.uploadedAt) {
+    updates.uploadedAt = new Date(updates.uploadedAt)
+  }
+
   const dbResult = await db
     .update(schema.uploads)
     .set(updates)

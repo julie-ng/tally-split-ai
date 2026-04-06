@@ -117,10 +117,15 @@ export default defineEventHandler(async (event) => {
       console.log(`✅ Updated existing receipt ${receiptId}`)
     }
     else {
-      // Create new receipt
+      // Create new receipt, carrying over title and tags from the upload
       const [newReceipt] = await db
         .insert(schema.receipts)
-        .values({ ...receiptData, userId: upload.userId })
+        .values({
+          ...receiptData,
+          userId: upload.userId,
+          title: upload.title || 'Untitled',
+          tags: upload.azureTags?.['receipt-tags']?.replace(/\+/g, ', ') || null,
+        })
         .returning()
       receiptId = newReceipt.id
       console.log(`✅ Created new receipt ${receiptId}`)

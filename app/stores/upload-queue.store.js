@@ -376,7 +376,7 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
                 contentType: upload.file.type || 'application/octet-stream',
                 size: upload.file.size,
                 status: 'uploaded',
-                uploadedAt: true,
+                uploadedAt: new Date().toISOString(),
                 azureTags: upload.azureTags,
                 title: extractReceiptTitle(upload.originalFilename),
               },
