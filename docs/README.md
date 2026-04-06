@@ -38,3 +38,39 @@ Julie written for human understanding.
 - [Documentation: Receipt Model](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/prebuilt/receipt?view=doc-intel-4.0.0)
   - [Receipt Model Schema](https://github.com/Azure-Samples/document-intelligence-code-samples/blob/main/schema/2024-11-30-ga/receipt.md)
 - [API Reference: Document Models - Analyze Document](https://learn.microsoft.com/en-us/rest/api/aiservices/document-models/analyze-document?view=rest-aiservices-v4.0%20(2024-11-30)&tabs=HTTP)
+
+---
+
+## Mistral Document AI
+
+**Status: Not suitable for handwriting detection (2026-04-06)**
+
+Evaluated Mistral OCR for combined printed text + handwriting detection with bounding boxes. Would have replaced the two-model approach (Document Intelligence + GPT-4o).
+
+#### Conclusion: Mistral OCR is not the right tool
+
+Mistral OCR is a document-to-markdown extractor. It does not:
+- Detect or distinguish handwritten text from printed text
+- Return per-text bounding boxes (only returns bounding boxes for embedded images like QR codes)
+- Recognize handwritten annotations (initials, circles, strikethroughs)
+
+The `bboxAnnotationFormat` parameter only annotates detected **image regions** (QR codes, logos), not text regions. Text is returned as markdown with no positional data.
+
+#### Azure deployment issues (also encountered)
+
+1. **MSFT Foundry** — no API documentation for Mistral OCR, cryptic error messages, couldn't determine correct endpoint path
+2. **Azure AI Foundry** — provides a Mistral-specific endpoint (e.g. `.../providers/mistral/azure/ocr`) with working sample curl, but **only supports base64-encoded images, not URLs**:
+   ```
+   "Only base64 data is supported. URL for a document or image is not supported."
+   ```
+3. **Mistral direct API** (`api.mistral.ai`) — works with image URLs via `@mistralai/mistralai` SDK, but the model itself lacks the needed capabilities
+
+#### Recommendation
+
+Use a multimodal LLM (e.g. GPT-4o) for handwriting detection. Send the receipt image + existing OCR JSON from Document Intelligence, and ask the LLM to identify handwritten annotations and map them to line items. The LLM handles semantic understanding that OCR models cannot.
+
+#### References
+
+- [Documentation: Basic OCR](https://docs.mistral.ai/capabilities/document_ai/basic_ocr)
+- [API Reference: OCR Endpoint](https://docs.mistral.ai/api/endpoint/ocr)
+- [Azure Sample: ARGUS Mistral integration](https://github.com/Azure-Samples/ARGUS/blob/main/src/containerapp/ai_ocr/azure/mistral_doc_intelligence.py) — uses base64, confirming Azure limitation

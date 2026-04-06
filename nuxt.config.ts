@@ -40,6 +40,7 @@ export default defineNuxtConfig({
     '~/assets/css/main.css',
   ],
   runtimeConfig: {
+    mistralOcrModel: 'mistral-document-ai-2512',
     public: {
       environment: 'development',
       // TODO: remove after auth implementation
