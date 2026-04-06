@@ -66,6 +66,8 @@ export default defineNuxtConfig({
         '@vue/devtools-core',
         '@vue/devtools-kit',
         'vue-json-pretty',
+        '@vueuse/core',
+        'zod',
       ],
     },
   },
