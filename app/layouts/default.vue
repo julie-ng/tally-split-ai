@@ -131,8 +131,8 @@ const links = computed(() => [
       <!-- Header -->
       <template #header="{ collapsed }">
         <NuxtLink class="flex items-center" :class="{ 'py-1 px-1 bg-blue-600 rounded-sm': collapsed }" to="/">
-          <UIcon name="i-lucide-scan-barcode" class="size-6" :class="{ 'bg-white': collapsed, 'bg-blue-600 ml-2': !collapsed }" />
-          <div v-if="!collapsed" class="px-2 font-semibold text-slate-700">
+          <UIcon name="i-lucide-scan-barcode" class="size-5" :class="{ 'bg-white': collapsed, 'bg-blue-600 ml-2': !collapsed }" />
+          <div v-if="!collapsed" class="text-sm px-2 font-semibold text-slate-700">
             Receipts AI
           </div>
         </NuxtLink>
