@@ -52,6 +52,36 @@ describe('azureUtils.blobTagsJsonToObject', () => {
       { key: 'currency', value: '€' },
     ])
   })
+
+  describe('object input (jsonb from Postgres)', () => {
+    it('should convert object to array of key-value objects', () => {
+      const tags = {
+        'user-id': 'julie-ng',
+        'receipt-date': '2025-11-18',
+        'receipt-total': '7.75',
+        'receipt-tags': 'special+initals',
+      }
+      const result = azureUtils.blobTagsJsonToObject(tags)
+      expect(result).toEqual([
+        { key: 'user-id', value: 'julie-ng' },
+        { key: 'receipt-date', value: '2025-11-18' },
+        { key: 'receipt-total', value: '7.75' },
+        { key: 'receipt-tags', value: 'special+initals' },
+      ])
+    })
+
+    it('should handle empty object', () => {
+      const result = azureUtils.blobTagsJsonToObject({})
+      expect(result).toEqual([])
+    })
+
+    it('should handle single tag object', () => {
+      const result = azureUtils.blobTagsJsonToObject({ 'user-id': 'julie-ng' })
+      expect(result).toEqual([
+        { key: 'user-id', value: 'julie-ng' },
+      ])
+    })
+  })
 })
 
 describe('azureUtils.getReceiptTotalBlobTag', () => {
@@ -88,6 +118,30 @@ describe('azureUtils.getReceiptTotalBlobTag', () => {
   it('should return null for empty string', () => {
     const result = azureUtils.getReceiptTotalBlobTag('')
     expect(result).toBeNull()
+  })
+
+  describe('object input (jsonb from Postgres)', () => {
+    it('should return receipt-total value from object', () => {
+      const tags = {
+        'user-id': 'julie-ng',
+        'receipt-date': '2025-11-18',
+        'receipt-total': '7.75',
+        'receipt-tags': 'special+initals',
+      }
+      const result = azureUtils.getReceiptTotalBlobTag(tags)
+      expect(result).toBe('7.75')
+    })
+
+    it('should return null when receipt-total not in object', () => {
+      const tags = { 'user-id': 'julie-ng', 'receipt-date': '2025-11-18' }
+      const result = azureUtils.getReceiptTotalBlobTag(tags)
+      expect(result).toBeNull()
+    })
+
+    it('should return null for empty object', () => {
+      const result = azureUtils.getReceiptTotalBlobTag({})
+      expect(result).toBeNull()
+    })
   })
 })
 
