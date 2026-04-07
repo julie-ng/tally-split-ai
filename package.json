@@ -13,6 +13,7 @@
     "preview": "nuxt preview",
     "predev": "nuxt prepare",
     "postinstall": "nuxt prepare",
+    "trigger:dev": "npx trigger.dev@latest dev",
     "db:generate": "npx drizzle-kit generate",
     "db:migrate": "npx drizzle-kit migrate",
     "db:studio": "npx drizzle-kit studio"

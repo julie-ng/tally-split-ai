@@ -50,6 +50,27 @@ Unit tests live alongside their source files (e.g., `shared/utils/azure.utils.te
 
 ---
 
+## Workflow Architecture
+
+Receipt analysis runs as an async Trigger.dev workflow (`trigger/receipt-workflow.ts`) that orchestrates three tasks:
+
+```
+receiptWorkflow
+  → analyzeOcr          (Azure Document Intelligence)
+  → analyzeAnnotations   (GPT-4o)
+  → createSplit          (from receipt total)
+```
+
+**Triggered by:** `POST /api/workflow/[uploadHashId]` (called automatically after upload completes)
+
+**Tracking:** The `workflow_runs` table tracks per-step status (`ocrStatus`, `annotationsStatus`, `splitStatus`). The `uploads.analysisStatus` field is a convenience summary updated by the orchestrator.
+
+**Data retention:** Deleting an upload cascades to its `workflow_runs` rows in Postgres. Run history is still available in the Trigger.dev dashboard independently.
+
+**Duplicate guard:** The workflow endpoint rejects duplicate triggers — if a `queued` or `processing` run already exists for the upload, it returns the existing run instead of creating a new one.
+
+---
+
 ## Azure Blob Storage
 
 - [blob-storage-architecture.md](./blob-storage-architecture.md)  

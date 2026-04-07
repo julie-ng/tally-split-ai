@@ -326,7 +326,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
     errors.value[id] = null
 
     try {
-      await $fetch(`/api/analysis/${hashId}`, { method: 'POST' })
+      await $fetch(`/api/analysis/ocr/${hashId}`, { method: 'POST' })
       await fetchReceiptById(id, true)
     }
     catch (err) {

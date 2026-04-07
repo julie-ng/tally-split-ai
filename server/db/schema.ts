@@ -1,6 +1,8 @@
 import { pgTable, text, integer, serial, real, boolean, timestamp, jsonb } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 import { RECEIPT_ANALYSIS_STATUSES } from '../../shared/enums/receipt-analysis-status.js'
+import { UPLOAD_ANALYSIS_STATUSES } from '../../shared/enums/upload-analysis-status.js'
+import { WORKFLOW_STATUSES, WORKFLOW_STEP_STATUSES } from '../../shared/enums/workflow-status.js'
 
 /**
  * Receipts table - stores business/finance data extracted from receipt uploads
@@ -65,10 +67,16 @@ export const uploads = pgTable('uploads', {
   size: integer('size'),
   azureTags: jsonb('azure_tags'), // Azure blob tags as JSON
 
-  // OCR/Analysis status
-  analysisStatus: text('analysis_status').default('pending'), // pending, processing, completed, failed
-  analyzedAt: timestamp('analyzed_at'),
-  analysisOcrResult: text('analysis_ocr_result'),
+  // Analysis status (updated by workflow orchestrator)
+  analysisStatus: text('analysis_status').default('pending'), // pending, queued, processing, completed, failed
+  analyzedAt: timestamp('analyzed_at'), // set when full workflow completes
+
+  // OCR results (Azure Document Intelligence)
+  ocrText: text('ocr_text'), // plain text OCR output
+  ocrJson: jsonb('ocr_json'), // full structured DI response
+
+  // Annotation results (GPT-4o)
+  annotationsJson: jsonb('annotations_json'), // handwriting, circles, strikethroughs, etc.
 
   // Timestamps
   createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -107,6 +115,34 @@ export const splits = pgTable('splits', {
 })
 
 /**
+ * Workflow runs table - tracks analysis workflow orchestration
+ */
+export const workflowRuns = pgTable('workflow_runs', {
+  id: serial('id').primaryKey(),
+
+  // Link to upload that triggered this workflow
+  uploadId: integer('upload_id').references(() => uploads.id, { onDelete: 'cascade' }).notNull(),
+
+  // Trigger.dev run ID for dashboard linking
+  triggerRunId: text('trigger_run_id'),
+
+  // Overall workflow status
+  status: text('status').notNull().default('queued'), // queued, processing, completed, failed
+
+  // Per-step statuses
+  ocrStatus: text('ocr_status').notNull().default('pending'), // pending, processing, completed, failed
+  annotationsStatus: text('annotations_status').notNull().default('pending'),
+  splitStatus: text('split_status').notNull().default('pending'),
+
+  // Error tracking
+  error: text('error'),
+
+  // Timestamps
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  completedAt: timestamp('completed_at'),
+})
+
+/**
  * Relations
  */
 
@@ -119,12 +155,13 @@ export const receiptsRelations = relations(receipts, ({ many, one }) => ({
   }),
 }))
 
-// Upload belongs to one receipt
-export const uploadsRelations = relations(uploads, ({ one }) => ({
+// Upload belongs to one receipt, has many workflow runs
+export const uploadsRelations = relations(uploads, ({ one, many }) => ({
   receipt: one(receipts, {
     fields: [uploads.receiptId],
     references: [receipts.id],
   }),
+  workflowRuns: many(workflowRuns),
 }))
 
 // Split belongs to one receipt (optional)
@@ -132,5 +169,13 @@ export const splitsRelations = relations(splits, ({ one }) => ({
   receipt: one(receipts, {
     fields: [splits.receiptId],
     references: [receipts.id],
+  }),
+}))
+
+// Workflow run belongs to one upload
+export const workflowRunsRelations = relations(workflowRuns, ({ one }) => ({
+  upload: one(uploads, {
+    fields: [workflowRuns.uploadId],
+    references: [uploads.id],
   }),
 }))

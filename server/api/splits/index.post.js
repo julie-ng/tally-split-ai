@@ -1,12 +1,12 @@
 import { z } from 'zod'
-import { splitInputSchema } from '~~/shared/utils/zod-schemas/split.schema.js'
+import { splitRequestSchema } from '~~/shared/utils/zod-schemas/split.schema.js'
 
 export default defineEventHandler(async (event) => {
   const db = useDB()
   requireUserId(event)
   const userId = event.context.userId
 
-  const result = await readValidatedBody(event, body => splitInputSchema.safeParse(body))
+  const result = await readValidatedBody(event, body => splitRequestSchema.safeParse(body))
   if (!result.success) {
     setResponseStatus(event, 400)
     return {

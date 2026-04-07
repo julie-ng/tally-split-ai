@@ -382,6 +382,15 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
               },
             })
             console.log(`💾 Database updated for (${hashId})`)
+
+            // Trigger analysis workflow (fire and forget)
+            try {
+              await $fetch(`/api/workflow/${hashId}`, { method: 'POST' })
+              console.log(`🚀 Workflow triggered for (${hashId})`)
+            }
+            catch (workflowError) {
+              console.error(`❌ Failed to trigger workflow for (${hashId}):`, workflowError)
+            }
           }
           catch (error) {
             console.error(`❌ Failed to update database for (${hashId}):`, error)

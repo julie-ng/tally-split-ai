@@ -24,7 +24,7 @@ function getGpt4oConfig () {
  * @param {Object[]} ocrLineItems - Line items extracted by Document Intelligence
  * @returns {Promise<Object>} GPT-4o response with annotation data
  */
-async function analyzeHandwriting (imageUrl, ocrLineItems) {
+async function analyzeAnnotations (imageUrl, ocrLineItems) {
   const { endpoint, key } = getGpt4oConfig()
 
   const systemPrompt = `You are analyzing a receipt photo that has handwritten annotations.
@@ -61,7 +61,7 @@ Important:
 
   const userMessage = `Here are the line items from OCR:\n${JSON.stringify(ocrLineItems, null, 2)}\n\nPlease analyze the receipt image for handwritten annotations.`
 
-  console.log(`🔍 Calling GPT-4o for handwriting analysis`)
+  console.log(`🔍 Calling GPT-4o for handwritten annotations analysis`)
   console.log(`   Image URL: ${imageUrl}`)
 
   const response = await fetch(endpoint, {
@@ -90,10 +90,7 @@ Important:
 
   if (!response.ok) {
     console.error(`❌ GPT-4o error (${response.status}):`, responseText)
-    throw createError({
-      statusCode: response.status,
-      message: `GPT-4o handwriting analysis failed: ${responseText}`,
-    })
+    throw new Error(`GPT-4o annotations analysis failed (${response.status}): ${responseText}`)
   }
 
   const result = JSON.parse(responseText)
@@ -106,5 +103,5 @@ Important:
 }
 
 export const gpt4oUtils = {
-  analyzeHandwriting,
+  analyzeAnnotations,
 }

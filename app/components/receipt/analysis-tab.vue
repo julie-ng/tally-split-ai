@@ -203,9 +203,9 @@ const upload = computed(() => props.receipt.uploads?.[0])
               </template>
               <ui-file-property label="Status" :text="upload?.analysisStatus" />
               <ui-file-property v-if="upload?.analyzedAt" label="Analyzed At" :text="timestampUtils.toShortDate(upload.analyzedAt)" />
-              <ui-file-property v-if="upload?.analysisOcrResult" label="OCR Result">
+              <ui-file-property v-if="upload?.ocrText" label="OCR Result">
                 <ClientOnly>
-                  <pre class="w-fit mt-1 p-5 bg-slate-100 rounded-lg font-mono text-sm">{{ upload.analysisOcrResult }}</pre>
+                  <pre class="w-fit mt-1 p-5 bg-slate-100 rounded-lg font-mono text-sm">{{ upload.ocrText }}</pre>
                 </ClientOnly>
               </ui-file-property>
             </ui-collapsible-property-group>

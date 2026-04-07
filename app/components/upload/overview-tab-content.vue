@@ -43,7 +43,7 @@ const props = defineProps({
         <ui-file-property v-if="upload.analyzedAt" label="OCR Result">
           <ClientOnly>
             <pre class="w-fit mt-1 p-5 bg-slate-100 rounded-lg font-mono text-xs">
-            {{ upload.analysisOcrResult }}
+            {{ upload.ocrText }}
           </pre>
           </ClientOnly>
         </ui-file-property>

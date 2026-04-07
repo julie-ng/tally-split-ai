@@ -114,7 +114,7 @@ const deleteUpload = async (hashId, title, blobName) => {
 
 const analyzeReceipt = async (hashId) => {
   try {
-    await $fetch(`/api/analysis/${hashId}`, {
+    await $fetch(`/api/analysis/ocr/${hashId}`, {
       method: 'POST',
     })
 
@@ -129,6 +129,7 @@ const analyzeReceipt = async (hashId) => {
 
 const getAnalyzeButtonText = (status) => {
   switch (status) {
+    case 'queued': return 'Queued...'
     case 'processing': return 'Analyzing...'
     case 'completed': return 'Analyzed'
     case 'failed': return 'Retry'
@@ -265,7 +266,7 @@ const paginationInfo = computed(() => {
                 icon="i-lucide-focus"
                 loading-icon="i-lucide-loader"
                 loading-auto
-                :disabled="row.original.analysisStatus === 'processing' || row.original.analysisStatus === 'completed'"
+                :disabled="['queued', 'processing', 'completed'].includes(row.original.analysisStatus)"
                 color="info"
                 variant="solid"
                 class="px-3 py-1 text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed mr-2 cursor-pointer"

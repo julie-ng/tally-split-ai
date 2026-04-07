@@ -1,12 +1,36 @@
 <script setup>
+import { useIntervalFn } from '@vueuse/core'
+
 const route = useRoute()
 const hashId = route.params.hashId
 
 // Fetch upload details
-const { data: upload, pending, error } = await useFetch(`/api/uploads/${hashId}`)
+const { data: upload, pending, error, refresh } = await useFetch(`/api/uploads/${hashId}`)
 
 // Fetch analysis data
 const { data: analysisData, pending: analysisPending, error: analysisError } = await useFetch(`/api/analysis/summary/${hashId}`)
+
+// TODO: Evaluate where polling belongs — currently dies on page navigation.
+// Consider moving to a Pinia store or app-level composable so workflow status
+// updates survive navigation (e.g., user goes to /receipts while OCR is running).
+const isProcessing = computed(() => {
+  const status = upload.value?.analysisStatus
+  return status === 'queued' || status === 'processing'
+})
+
+const { pause, resume } = useIntervalFn(async () => {
+  if (isProcessing.value) {
+    await refresh()
+  }
+  else {
+    pause()
+  }
+}, 3000, { immediate: false })
+
+watch(isProcessing, (val) => {
+  if (val) resume()
+  else pause()
+}, { immediate: true })
 
 // Set page title reactively after upload is fetched
 useHead({

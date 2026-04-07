@@ -19,14 +19,28 @@ export const splitSchema = z.object({
 })
 
 /**
- * Split Input Schema - for creating/updating splits via API
+ * Split Request Schema - validates HTTP request body for POST /api/splits
  */
-export const splitInputSchema = z.object({
+export const splitRequestSchema = z.object({
   receiptId: z.number().nullable().optional(),
   splitAmount: z.number(),
-  paidBy: z.string().nullable().optional(), // optional - set when settling
+  paidBy: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
   isSettled: z.boolean().optional(),
+})
+
+/**
+ * Split Insert Schema - validates the full object before DB insert
+ */
+export const splitInsertSchema = z.object({
+  receiptId: z.number().nullable(),
+  splitAmount: z.number(),
+  userId: z.string(),
+  userAShare: z.number().nullable(),
+  userBShare: z.number().nullable(),
+  paidBy: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  isSettled: z.boolean(),
 })
 
 /**

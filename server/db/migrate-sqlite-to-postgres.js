@@ -142,7 +142,7 @@ async function migrate () {
       azureTags,
       analysisStatus: row.analysis_status,
       analyzedAt: unixToDate(row.analyzed_at),
-      analysisOcrResult: row.analysis_ocr_result,
+      ocrText: row.analysis_ocr_result,
       createdAt: unixToDate(row.created_at),
       updatedAt: unixToDate(row.updated_at),
       uploadedAt: unixToDate(row.uploaded_at),
