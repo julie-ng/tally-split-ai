@@ -21,10 +21,10 @@ Files in `server/api/` are auto-registered as routes by Nuxt:
 
 ```js
 import { z } from 'zod'
-import { db, schema } from 'hub:db'
-import { eq, sql } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
+  const db = useDB()             // auto-imported via server/utils/db.utils.js
   requireUserId(event)           // validates auth — always first
   requireHashIdParam(event)      // use requireIdParam() for numeric IDs
 
@@ -44,7 +44,7 @@ export default defineEventHandler(async (event) => {
   // Drizzle query
   const dbResult = await db
     .update(schema.myTable)
-    .set({ ...result.data, updatedAt: sql`(unixepoch())` })
+    .set({ ...result.data, updatedAt: new Date() })
     .where(eq(schema.myTable.hashId, hashId))
     .returning()
 
@@ -63,12 +63,12 @@ Reference: `server/api/uploads/[hashId].put.js`
 1. Create schema in `shared/utils/zod-schemas/my-resource.schema.js`
 2. Export it from `shared/utils/zod-schemas/index.js` as `zodSchemas.mySchema`
 
-## 4. SQLite Gotchas
+## 4. PostgreSQL Notes
 
-- Serialize complex fields before storing: `JSON.stringify(updates.azureTags)`
-- Always set `updatedAt` manually on updates — the schema only defines a `default` (applied on insert); SQLite has no `onUpdate` trigger so it won't auto-update:
+- `jsonb` columns (e.g., `azureTags`) accept plain JS objects — do NOT `JSON.stringify`
+- Always set `updatedAt` manually on updates — the schema only defines a `default` (applied on insert); PostgreSQL has no auto-update trigger:
   ```js
-  updatedAt: sql`(unixepoch())`
+  updatedAt: new Date()
   ```
 
 ## 5. Response Shape Convention

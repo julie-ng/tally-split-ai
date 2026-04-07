@@ -10,14 +10,25 @@ description: Azure Document Intelligence receipt analysis — model details, API
 - **Model ID**: `prebuilt-receipt`
 - **API version**: `2024-11-30`
 - **Input**: Azure Blob Storage URL (the service fetches the image directly)
-- **Results**: Currently saved as JSON files in `./tmp/{hashId}.json`
+- **Results**: Stored in `uploads.ocrJson` (jsonb) and `uploads.ocrText` (text). Legacy data may exist in `./tmp/{hashId}.json`.
 
 ## Required Environment Variables
 
 ```bash
-AZ_FORM_RECOGNIZER_ENDPOINT=""
-AZ_FORM_RECOGNIZER_KEY=""
+AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=""
+AZURE_DOCUMENT_INTELLIGENCE_KEY=""
 ```
+
+## Workflow Integration
+
+OCR analysis runs as a Trigger.dev task (`trigger/analyze-ocr.ts`), triggered by the `receiptWorkflow` orchestrator. Can also be triggered individually via `POST /api/analysis/ocr/[uploadHashId]`.
+
+The task:
+1. Generates a read-only SAS token for the blob
+2. Calls Azure Document Intelligence with the SAS URL
+3. Stores the full response in `uploads.ocrJson` and plain text in `uploads.ocrText`
+4. Creates or updates a receipt record with extracted data
+5. Updates `workflow_runs` step status
 
 ## API Response Structure
 
@@ -43,7 +54,7 @@ analyzeResult
         └── Total              → { valueCurrency: { amount, currencyCode } }
 ```
 
-All fields include `boundingRegions[]` — the server **strips these** before sending to frontend.
+All fields include `boundingRegions[]` — used by `GET /api/analysis/polygons/[uploadHashId]` for bounding box overlays.
 
 ## Optional Field Challenge
 
@@ -58,21 +69,21 @@ Handle this in **both** the zod schemas (`shared/utils/zod-schemas/`) and the UI
 
 | File | Purpose |
 |:--|:--|
-| `server/utils/azure-document-intelligence.js` | Azure SDK wrapper |
-| `server/api/analysis/[uploadHashId].post.js` | Trigger analysis endpoint |
-| `server/api/analysis/summary/` | Summary endpoint |
+| `trigger/analyze-ocr.ts` | Trigger.dev task — runs OCR analysis |
+| `server/utils/azure-document-intelligence.js` | Azure SDK config wrapper |
+| `server/api/analysis/ocr/[uploadHashId].post.js` | API endpoint — triggers OCR task |
+| `server/api/analysis/summary/[uploadHashId].get.js` | Summary endpoint (read-only) |
+| `server/api/analysis/polygons/[uploadHashId].get.js` | Bounding box polygons (reads from DB, falls back to tmp file) |
 | `shared/utils/azure-receipt-model.utils.js` | Parse Azure response fields |
-| `shared/utils/zod-schemas/analysis-summary.schema.js` | Analysis result schema |
-| `samples/responses/` | Sample API responses for local testing |
+| `shared/utils/zod-schemas/receipt.schema.js` | Receipt schemas (receiptSchema, receiptInputSchema) |
 
 ## Known Limitations
 
 The `prebuilt-receipt` model does **not** handle:
 - Handwriting analysis (initials, annotations)
 - Circled or highlighted items
-- Custom expense-splitting logic
 
-These features would require a custom trained model.
+Annotation detection uses GPT-4o via a separate task (`trigger/analyze-annotations.ts`).
 
 ## References
 
