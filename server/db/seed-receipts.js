@@ -273,7 +273,7 @@ async function migrateUploadsToReceipts () {
 }
 
 // Run the migration
-migrateUploadsToReceipts().catch((error) => {
+migrateUploadsToReceipts().catch(async (error) => {
   console.error('Migration failed:', error)
   await pool.end()
   process.exit(1)

@@ -79,7 +79,7 @@ async function seedReceiptSplitIds () {
 }
 
 // Run the seed
-seedReceiptSplitIds().catch((error) => {
+seedReceiptSplitIds().catch(async (error) => {
   console.error('Seed failed:', error)
   await pool.end()
   process.exit(1)

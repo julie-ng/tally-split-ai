@@ -76,7 +76,7 @@ async function seedReceiptAnalysisStatuses () {
 }
 
 // Run the seed
-seedReceiptAnalysisStatuses().catch((error) => {
+seedReceiptAnalysisStatuses().catch(async (error) => {
   console.error('Seed failed:', error)
   await pool.end()
   process.exit(1)

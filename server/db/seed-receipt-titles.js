@@ -89,7 +89,7 @@ async function seedReceiptTitles () {
 }
 
 // Run the seed
-seedReceiptTitles().catch((error) => {
+seedReceiptTitles().catch(async (error) => {
   console.error('Seed failed:', error)
   await pool.end()
   process.exit(1)

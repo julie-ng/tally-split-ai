@@ -86,7 +86,7 @@ async function seedSplits () {
 }
 
 // Run the seed
-seedSplits().catch((error) => {
+seedSplits().catch(async (error) => {
   console.error('Seed failed:', error)
   await pool.end()
   process.exit(1)
