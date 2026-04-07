@@ -52,6 +52,7 @@ export default withNuxt(
       }],
       'vue/multi-word-component-names': ['error'],
       '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
       '@stylistic/brace-style': ['error', 'stroustrup'],
       '@stylistic/jsx-indent-props': ['warn', 2],
       '@stylistic/jsx-max-props-per-line': ['warn', { maximum: 3 }],
