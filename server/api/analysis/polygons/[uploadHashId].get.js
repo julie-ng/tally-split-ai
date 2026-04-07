@@ -1,16 +1,33 @@
+import { eq } from 'drizzle-orm'
+
+// Extracts bounding box polygons from Document Intelligence analysis results
+// for rendering overlays on the receipt image.
 export default defineEventHandler(async (event) => {
+  const db = useDB()
   requireUserId(event)
   requireHashIdParam(event, 'uploadHashId')
 
   const hashId = getRouterParam(event, 'uploadHashId')
 
-  const contents = await readAnalysisFile(hashId)
-  if (contents.error) {
-    setResponseStatus(event, contents.error.status)
-    return contents.error
+  // Try DB first (new workflow stores ocrJson), fall back to tmp file (legacy)
+  let analysisData = null
+
+  const upload = await db.query.uploads.findFirst({
+    where: eq(schema.uploads.hashId, hashId),
+  })
+
+  if (upload?.ocrJson) {
+    analysisData = upload.ocrJson
+  }
+  else {
+    const contents = await readAnalysisFile(hashId)
+    if (contents.error) {
+      setResponseStatus(event, contents.error.status)
+      return contents.error
+    }
+    analysisData = contents.data
   }
 
-  const analysisData = contents.data
   const page = analysisData.analyzeResult?.pages?.[0]
   const fields = analysisData.analyzeResult?.documents?.[0]?.fields
 
