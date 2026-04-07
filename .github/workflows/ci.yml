@@ -30,8 +30,11 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
-      - name: Run Tests
-        run: npm test
+      - name: Run Unit Tests
+        run: npm run test:unit
+
+      - name: Run Integration Tests
+        run: npm run test:integration
 
   build:
     name: Nuxt Build

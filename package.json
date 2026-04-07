@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "POC for analyzing receipt scans with handwritten expense splitting",
   "scripts": {
-    "test": "vitest",
+    "test": "vitest run",
+    "test:unit": "vitest run --exclude 'tests/**'",
+    "test:integration": "vitest run tests/",
     "build": "nuxt build",
     "dev": "nuxt dev",
     "lint": "eslint .",

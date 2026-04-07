@@ -124,7 +124,7 @@ export default defineEventHandler(async (event) => {
           ...receiptData,
           userId: upload.userId,
           title: upload.title || 'Untitled',
-          tags: upload.azureTags?.['receipt-tags']?.replace(/\+/g, ', ') || null,
+          tags: receiptUtils.azureTagsToReceiptTags(upload.azureTags),
         })
         .returning()
       receiptId = newReceipt.id

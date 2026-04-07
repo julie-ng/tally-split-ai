@@ -16,6 +16,40 @@ Julie written for human understanding.
 
 ---
 
+## Testing
+
+### Tags Pipeline Tests
+
+`tests/integration/tags-pipeline.test.js` tests the full data transformation chain for receipt tags across all layers:
+
+```
+filename (#special #initals)
+  → extractHashtagsForAzureBlobs()        → "special+initals"
+  → azureTags object                       → { "receipt-tags": "special+initals" }
+  → uploads.azure_tags (jsonb)             → stored as native JSON in Postgres
+  → receiptUtils.azureTagsToReceiptTags()  → "special, initals"
+  → receipts.tags (text)                   → comma-separated string
+  → receiptUtils.receiptTagsToDisplayArray() → ['special', 'initals'] as badges
+```
+
+**Why this exists:** During the SQLite→Postgres migration (2026-04-06), changing `azure_tags` from `text` (JSON string) to `jsonb` (native object) caused cascading failures across Zod schemas, utility functions, and API responses. These tests ensure format consistency between layers and catch type mismatches early.
+
+**Key utility functions** (in `shared/utils/receipt.utils.js`):
+- `azureTagsToReceiptTags(azureTags)` — converts `azureTags['receipt-tags']` plus-separated string to comma-separated receipt tags
+- `receiptTagsToDisplayArray(tags)` — splits comma-separated string into trimmed array for UI display
+
+### Running Tests
+
+```bash
+npm test                 # Run all tests (unit + integration)
+npm run test:unit        # Unit tests only (co-located with source files)
+npm run test:integration # Integration tests only (tests/ directory)
+```
+
+Unit tests live alongside their source files (e.g., `shared/utils/azure.utils.test.js`). Integration tests live in `tests/integration/` and appear as a separate step in the CI workflow.
+
+---
+
 ## Azure Blob Storage
 
 - [blob-storage-architecture.md](./blob-storage-architecture.md)  

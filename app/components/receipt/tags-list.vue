@@ -1,5 +1,5 @@
 <script setup>
-defineProps({
+const props = defineProps({
   tags: {
     type: String,
     required: true,
@@ -15,18 +15,20 @@ defineProps({
     default: 'soft',
   },
 })
+
+const tagList = computed(() => receiptUtils.receiptTagsToDisplayArray(props.tags))
 </script>
 
 <template>
   <div>
     <UBadge
-      v-for="(tag, i) in tags.split(',')"
+      v-for="(tag, i) in tagList"
       :key="`tag-${i}`"
       class="text-slate-500 m"
       :color="color"
       :variant="variant"
     >
-      {{ tag.trim() }}
+      {{ tag }}
     </UBadge>
   </div>
 </template>
