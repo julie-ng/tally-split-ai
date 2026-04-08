@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 export default defineEventHandler(async (event) => {
   const db = useDB()
+  requireLocalDev(event)
   requireUserId(event)
   const userId = event.context.userId
 

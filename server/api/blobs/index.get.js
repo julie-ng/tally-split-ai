@@ -1,4 +1,5 @@
 export default defineEventHandler(async (event) => {
+  requireLocalDev(event)
   requireUserId(event)
   const userId = event.context.userId
 
