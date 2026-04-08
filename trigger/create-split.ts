@@ -7,8 +7,8 @@ import { splitInsertSchema } from '../shared/utils/zod-schemas/split.schema.js'
 export const createSplit = task({
   id: 'create-split',
   maxDuration: 10,
-  run: async (payload: { receiptId: number, userId: string, workflowRunId: number }) => {
-    const { receiptId, userId, workflowRunId } = payload
+  run: async (payload: { receiptId: number, workflowRunId: number }) => {
+    const { receiptId, workflowRunId } = payload
     const db = useDB()
 
     // Update workflow step status
@@ -46,7 +46,7 @@ export const createSplit = task({
     // 4. Validate and insert split
     const insertData = splitInsertSchema.parse({
       receiptId,
-      userId,
+      userId: receipt.userId,
       splitAmount: receipt.total,
       userAShare: halfAmount,
       userBShare: halfAmount,

@@ -10,8 +10,8 @@ import { createSplit } from './create-split'
 export const receiptWorkflow = task({
   id: 'receipt-workflow',
   maxDuration: 600,
-  run: async (payload: { uploadHashId: string, userId: string, workflowRunId: number }) => {
-    const { uploadHashId, userId, workflowRunId } = payload
+  run: async (payload: { uploadHashId: string, workflowRunId: number }) => {
+    const { uploadHashId, workflowRunId } = payload
     const db = useDB()
 
     logger.log(`Starting receipt workflow for ${uploadHashId}`)
@@ -51,7 +51,7 @@ export const receiptWorkflow = task({
     let splitId = null
 
     const splitResult = await createSplit.triggerAndWait(
-      { receiptId, userId, workflowRunId },
+      { receiptId, workflowRunId },
     )
 
     if (splitResult.ok) {

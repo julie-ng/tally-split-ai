@@ -10,7 +10,6 @@ export default defineEventHandler(async (event) => {
   requireHashIdParam(event, 'uploadHashId')
 
   const hashId = getRouterParam(event, 'uploadHashId')
-  const userId = event.context.userId
   await requireUploadByHashId(event)
   const upload = event.context.upload
 
@@ -59,7 +58,6 @@ export default defineEventHandler(async (event) => {
   console.log(`🚀 [workflow] Triggering receipt-workflow for upload (${hashId}), workflowRunId: ${workflowRun.id}`)
   const handle = await tasks.trigger('receipt-workflow', {
     uploadHashId: hashId,
-    userId,
     workflowRunId: workflowRun.id,
   })
   console.log(`✅ [workflow] Triggered receipt-workflow for upload (${hashId}), triggerRunId: ${handle.id}`)
