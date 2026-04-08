@@ -29,7 +29,6 @@
   "dependencies": {
     "@azure-rest/ai-document-intelligence": "^1.0.0",
     "@azure/storage-blob": "^12.25.0",
-    "@mistralai/mistralai": "^2.1.2",
     "@nuxt/eslint": "^1.12.1",
     "@nuxt/ui": "^4.3.0",
     "@nuxthub/core": "^0.10.4",
