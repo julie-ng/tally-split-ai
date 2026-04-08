@@ -66,7 +66,7 @@ async function getContainerClient ({ checkExists = true } = {}) {
  * Generate SAS token for Azure Blob Storage
  * @param {string} blobName - The blob name/path
  * @param {Object} options - SAS token options
- * @param {string} options.permissions - Permissions: 'read', 'create', or 'write'
+ * @param {string} options.permissions - Permissions: 'read' or 'create'
  * @param {number} options.expiresInMinutes - Token validity duration in minutes
  * @returns {Object} Object containing sasToken, blobUrl, uploadUrl, and expiresAt
  */
@@ -85,14 +85,10 @@ function generateBlobSasToken (blobName, { permissions = 'read', expiresInMinute
       break
     case 'create':
       sasPermissions.create = true
-      break
-    case 'write':
-      sasPermissions.create = true
-      sasPermissions.write = true
-      sasPermissions.tag = true // Add tags permission for write
+      sasPermissions.tag = true
       break
     default:
-      throw new Error(`Invalid permission: ${permissions}. Must be 'read', 'create', or 'write'`)
+      throw new Error(`Invalid permission: ${permissions}. Must be 'read' or 'create'`)
   }
 
   // Set expiration time

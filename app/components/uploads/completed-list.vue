@@ -7,6 +7,17 @@ const uploadsStore = useUploadQueueStore()
 <template>
   <div>
     <section>
+      <UButton
+        v-if="uploadsStore.hasCompleted"
+        color="neutral"
+        variant="subtle"
+        active-variant="solid"
+        class="cursor-pointer"
+        icon="i-lucide-brush-cleaning"
+        @click="uploadsStore.clearCompleted()"
+      >
+        Clear Completed
+      </UButton>
       <uploads-completed-item
         v-for="item in uploadsStore.completed"
         :key="`completed-${item.hashId}`"

@@ -1,61 +1,23 @@
 import { defineStore, skipHydrate } from 'pinia'
 import { useLocalStorage } from '@vueuse/core'
+import { useUserStore } from '~/stores/user.store'
+import { fileStripSerializer } from '~/utils/local-storage-serializer.utils'
+import { uploadBlobToAzure } from '~/utils/azure-upload.utils'
+import { generateThumbnail, uploadThumbnailToAzure } from '~/utils/thumbnail.utils'
 
 export const useUploadQueueStore = defineStore('upload-queue', () => {
   // -------- STATE --------
-  const MAX_CONCURRENT_UPLOADS = 3
-
-  /**
-   * Persist uploads to localStorage
-   *
-   * Note: Custom serializer required because File objects cannot be serialized to JSON.
-   * On save: File objects are stripped before storing
-   * On load: File property is set to null (can't restore files after page refresh)
-   */
-  const uploads = useLocalStorage('ai-receipts:upload-queue', [], {
-    serializer: {
-      read: (v) => {
-        try {
-          const parsed = JSON.parse(v)
-          // Remove File objects on deserialization (can't be restored)
-          return parsed.map(upload => ({
-            ...upload,
-            file: null,
-          }))
-        }
-        catch {
-          return []
-        }
-      },
-      write: (v) => {
-        // Remove File objects before serialization (can't be stored)
-        const serializable = v.map((upload) => {
-          /* eslint-disable-next-line no-unused-vars */
-          const { file, ...rest } = upload
-          return rest
-        })
-        return JSON.stringify(serializable)
-      },
-    },
-  })
+  const {
+    uploadMaxConcurrent,
+    uploadAutoIntervalMs,
+    uploadAutoEnabled } = useRuntimeConfig().public
 
   const autoUploadTimer = ref(null)
-  const AUTO_UPLOAD_INTERVAL = 1000 // 10 seconds
-  const autoUploadFromQueue = ref(false)
+  const autoUploadFromQueue = ref(uploadAutoEnabled)
 
-  // Handle page refresh - mark queued/in-progress uploads as interrupted
-  if (import.meta.client) {
-    onMounted(() => {
-      if (performance.getEntriesByType('navigation')[0]?.type === 'reload') {
-        console.log('🔄 Page was refreshed - marking active uploads as interrupted')
-        uploads.value.forEach((upload) => {
-          if (upload.status === 'queued' || upload.status === 'in-progress') {
-            upload.status = 'interrupted'
-          }
-        })
-      }
-    })
-  }
+  const uploads = useLocalStorage('ai-receipts:upload-queue', [], {
+    serializer: fileStripSerializer,
+  })
 
   // -------- GETTERS --------
 
@@ -114,111 +76,12 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
    * Concurrent Upload Limits
    */
   const availableSlots = computed(() =>
-    MAX_CONCURRENT_UPLOADS - totalInProgress.value,
+    uploadMaxConcurrent - totalInProgress.value,
   )
 
   const canStartUpload = computed(() => availableSlots.value > 0)
 
   // -------- ACTIONS --------
-
-  /**
-   * Generate a thumbnail from a file using Canvas API
-   *
-   * @param {File} file - The original image file
-   * @param {number} maxWidth - Maximum width in pixels (default: 100)
-   * @returns {Promise<Blob>} Thumbnail as a Blob
-   */
-  function generateThumbnail (file, maxWidth = 100) {
-    return new Promise((resolve, reject) => {
-      const img = new Image()
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')
-
-      img.onload = () => {
-        // Calculate dimensions maintaining aspect ratio
-        const scale = maxWidth / img.width
-        canvas.width = maxWidth
-        canvas.height = img.height * scale
-
-        // Draw resized image
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-
-        // Convert to blob with quality adjustment for size
-        canvas.toBlob(
-          (blob) => {
-            if (blob.size > 30000) {
-              // If still too large, reduce quality
-              canvas.toBlob(
-                blob => resolve(blob),
-                'image/jpeg',
-                0.7, // Lower quality
-              )
-            }
-            else {
-              resolve(blob)
-            }
-          },
-          'image/jpeg',
-          0.85, // Initial quality
-        )
-      }
-
-      img.onerror = reject
-      img.src = URL.createObjectURL(file)
-    })
-  }
-
-  /**
-   * Upload thumbnail to Azure Blob Storage
-   *
-   * @param {Blob} thumbnailBlob - The thumbnail blob to upload
-   * @param {string} blobName - The blob name (path) for the thumbnail
-   * @returns {Promise<boolean>} True if upload succeeded
-   */
-  async function uploadThumbnailToAzure (thumbnailBlob, blobName) {
-    try {
-      // Get SAS token for thumbnail upload
-      const tokenResponse = await $fetch('/api/tokens/upload', {
-        method: 'POST',
-        body: {
-          action: 'create',
-          blobName,
-        },
-      })
-
-      // Upload thumbnail using XHR
-      return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest()
-
-        xhr.addEventListener('load', () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            console.log(`✅ Thumbnail upload complete: ${blobName}`)
-            resolve(true)
-          }
-          else {
-            console.error(`❌ Thumbnail upload failed: ${xhr.status} ${xhr.statusText}`)
-            reject(new Error(`Thumbnail upload failed: ${xhr.status}`))
-          }
-        })
-
-        xhr.addEventListener('error', () => {
-          console.error('❌ Thumbnail upload failed due to network error')
-          reject(new Error('Thumbnail upload network error'))
-        })
-
-        xhr.open('PUT', tokenResponse.upload.url)
-        xhr.setRequestHeader('x-ms-blob-type', 'BlockBlob')
-        xhr.setRequestHeader('Content-Type', 'image/jpeg')
-
-        console.log(`🚀 Starting thumbnail upload: ${blobName}`)
-        xhr.send(thumbnailBlob)
-      })
-    }
-    catch (error) {
-      console.error('❌ Failed to upload thumbnail:', error)
-      throw error
-    }
-  }
 
   /**
    * Get the name of an upload by its hash ID
@@ -260,23 +123,10 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
    */
   async function generateAndUploadThumbnail (uploadObj) {
     try {
-      console.log(`🖼️  Generating thumbnail for ${uploadObj.originalFilename}`)
-
-      // Generate thumbnail blob
       const thumbnailBlob = await generateThumbnail(uploadObj.file)
-
-      console.log(`📏 Thumbnail size: ${(thumbnailBlob.size / 1024).toFixed(2)}KB`)
-
-      // Create thumbnail filename
       const thumbnailFilename = createThumbnailFilename(uploadObj.azureFilename)
-
-      // Construct blob path with userId directory
-      const thumbnailBlobPath = `${uploadObj.blobPath}/${thumbnailFilename}`
-
-      // Upload thumbnail to Azure
+      const thumbnailBlobPath = `${uploadObj.userId}/${thumbnailFilename}`
       await uploadThumbnailToAzure(thumbnailBlob, thumbnailBlobPath)
-
-      console.log(`✅ Thumbnail uploaded successfully: ${thumbnailFilename}`)
     }
     catch (error) {
       console.error(`❌ Thumbnail generation/upload failed:`, error)
@@ -324,6 +174,13 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
   }
 
   /**
+   * Remove all completed uploads from the queue
+   */
+  function clearCompleted () {
+    uploads.value = uploads.value.filter(u => u.status !== 'completed')
+  }
+
+  /**
    * Remove all uploads from the queue
    */
   async function removeAll () {
@@ -333,119 +190,70 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
     uploads.value.splice(0, total)
   }
 
+  async function updateUploadRecord (upload) {
+    try {
+      await $fetch(`/api/uploads/${upload.hashId}`, {
+        method: 'PUT',
+        body: {
+          contentType: upload.file.type || 'application/octet-stream',
+          size: upload.file.size,
+          status: 'uploaded',
+          uploadedAt: new Date().toISOString(),
+          azureTags: upload.azureTags,
+          title: extractReceiptTitle(upload.originalFilename),
+        },
+      })
+    }
+    catch (error) {
+      console.error(`❌ Failed to update database for (${upload.hashId}):`, error)
+    }
+  }
+
   /**
-   * Upload a file to Azure Blob Storage with progress tracking
+   * Fetch a fresh SAS token and upload a file to Azure Blob Storage
    *
    * @param {string} hashId - The unique hash identifier for the upload
-   * @returns {Promise<boolean>} True if upload succeeded, false otherwise
+   * @returns {Promise<void>}
    */
-  function uploadToAzure (hashId) {
-    return new Promise((resolve, reject) => {
-      const index = uploads.value.findIndex(u => u.hashId === hashId)
+  async function uploadToAzure (hashId) {
+    const index = uploads.value.findIndex(u => u.hashId === hashId)
 
-      if (index === -1) {
-        console.error(`Cannot find upload ${hashId}`)
-        reject(new Error(`Upload ${hashId} not found`))
-        return
-      }
+    if (index === -1) {
+      throw new Error(`Upload ${hashId} not found`)
+    }
 
-      const upload = uploads.value[index]
-      const xhr = new XMLHttpRequest()
+    const upload = uploads.value[index]
 
-      // Track upload progress
-      xhr.upload.addEventListener('progress', (evt) => {
-        if (evt.lengthComputable) {
-          const percentComplete = Math.round((evt.loaded / evt.total) * 100)
-          uploads.value[index].upload.progress = percentComplete
-          console.log(`📊 Upload progress (${hashId}): ${percentComplete}%`)
-        }
-      })
-
-      // Handle successful upload
-      xhr.addEventListener('load', async () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          console.log(`✅ Upload complete (${hashId})`)
-          uploads.value[index].status = 'completed'
-          uploads.value[index].upload.progress = 100
-
-          // Update database record
-          try {
-            await $fetch(`/api/uploads/${hashId}`, {
-              method: 'PUT',
-              body: {
-                contentType: upload.file.type || 'application/octet-stream',
-                size: upload.file.size,
-                status: 'uploaded',
-                uploadedAt: new Date().toISOString(),
-                azureTags: upload.azureTags,
-                title: extractReceiptTitle(upload.originalFilename),
-              },
-            })
-            console.log(`💾 Database updated for (${hashId})`)
-
-            // Trigger analysis workflow (fire and forget)
-            try {
-              await $fetch(`/api/workflow/${hashId}`, { method: 'POST' })
-              console.log(`🚀 Workflow triggered for (${hashId})`)
-            }
-            catch (workflowError) {
-              console.error(`❌ Failed to trigger workflow for (${hashId}):`, workflowError)
-            }
-          }
-          catch (error) {
-            console.error(`❌ Failed to update database for (${hashId}):`, error)
-            // Don't fail the upload if database update fails
-          }
-
-          resolve(true)
-        }
-        else {
-          const errorMsg = `Upload failed: ${xhr.status} ${xhr.statusText}`
-          console.error(`❌ ${errorMsg} (${hashId})`)
-          uploads.value[index].status = 'failed'
-          uploads.value[index].errors.push(errorMsg)
-          reject(new Error(errorMsg))
-        }
-      })
-
-      // Handle upload errors
-      xhr.addEventListener('error', () => {
-        const errorMsg = 'Upload failed due to network error'
-        console.error(`❌ ${errorMsg} (${hashId})`)
-        uploads.value[index].status = 'failed'
-        uploads.value[index].errors.push(errorMsg)
-        reject(new Error(errorMsg))
-      })
-
-      // Handle upload abort
-      xhr.addEventListener('abort', () => {
-        console.warn(`⚠️ Upload aborted (${hashId})`)
-        uploads.value[index].status = 'queued'
-        uploads.value[index].upload.progress = 0
-        uploads.value[index].errors = []
-        reject(new Error('Upload aborted'))
-      })
-
-      // Configure and send the request
-      xhr.open('PUT', upload.upload.url)
-      xhr.setRequestHeader('x-ms-blob-type', 'BlockBlob')
-      xhr.setRequestHeader('Content-Type', upload.file.type || 'application/octet-stream')
-
-      // Set Azure blob index tags if available
-      if (upload.azureTags && Object.keys(upload.azureTags).length > 0) {
-        // Encode tag values to preserve special characters (+ becomes %2B, space becomes +)
-        const tagPairs = Object.entries(upload.azureTags).map(([key, value]) => {
-          const encodedValue = encodeURIComponent(value).replace(/%20/g, '+')
-          return `${key}=${encodedValue}`
-        })
-        const tagsHeader = tagPairs.join('&')
-        xhr.setRequestHeader('x-ms-tags', tagsHeader)
-        console.log(`🏷️  Setting tags for (${hashId}): ${tagsHeader}`)
-      }
-
-      console.log(`🚀 Starting upload (${hashId}): ${upload.originalFilename}`)
-      xhr.send(upload.file)
+    // Fetch fresh SAS token just-in-time
+    const tokenResponse = await $fetch('/api/tokens/upload', {
+      method: 'POST',
+      body: {
+        action: 'create',
+        blobPath: upload.blobPath,
+      },
     })
+
+    try {
+      await uploadBlobToAzure({
+        url: tokenResponse.upload.url,
+        file: upload.file,
+        tags: upload.azureTags,
+        onProgress: (percent) => {
+          uploads.value[index].upload.progress = percent
+        },
+      })
+
+      uploads.value[index].status = 'completed'
+      uploads.value[index].upload.progress = 100
+
+      await updateUploadRecord(upload)
+      triggerAnalysisWorkflow(hashId)
+    }
+    catch (error) {
+      uploads.value[index].status = 'failed'
+      uploads.value[index].errors.push(error.message)
+      throw error
+    }
   }
 
   /**
@@ -457,7 +265,7 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
   async function startUpload (hashId) {
     // Check concurrent upload limit
     if (!canStartUpload.value) {
-      console.warn(`⚠️ Max concurrent uploads (${MAX_CONCURRENT_UPLOADS}) reached`)
+      console.warn(`⚠️ Max concurrent uploads (${uploadMaxConcurrent}) reached`)
       return false
     }
 
@@ -520,17 +328,17 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
    * Called automatically by the timer every 30 seconds
    */
   async function processQueue () {
-    console.log('⏰ [Auto-upload] Checking queue...')
+    // console.log('⏰ [Auto-upload] Checking queue...')
 
     if (!autoUploadFromQueue.value) {
       console.log('⏰ [Auto-upload] Auto-upload is disabled ℹ️')
       return
     }
 
-    if (!hasQueued.value) {
-      console.log('⏰ [Auto-upload] Queue is empty')
-      return
-    }
+    // if (!hasQueued.value) {
+    //   console.log('⏰ [Auto-upload] Queue is empty')
+    //   return
+    // }
 
     if (!canStartUpload.value) {
       console.log('⏰ [Auto-upload] No available slots')
@@ -541,7 +349,7 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
     const slotsToFill = availableSlots.value
     const itemsToUpload = queued.value.slice(0, slotsToFill)
 
-    console.log(`⏰ [Auto-upload] Starting ${itemsToUpload.length} upload(s)`)
+    // console.log(`⏰ [Auto-upload] Starting ${itemsToUpload.length} upload(s)`)
 
     for (const upload of itemsToUpload) {
       await startUpload(upload.hashId)
@@ -559,7 +367,7 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
     }
 
     console.log('⏰ [Auto-upload] Starting timer (30s interval)')
-    autoUploadTimer.value = setInterval(processQueue, AUTO_UPLOAD_INTERVAL)
+    autoUploadTimer.value = setInterval(processQueue, uploadAutoIntervalMs)
   }
 
   /**
@@ -573,19 +381,54 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
     }
   }
 
-  // Cleanup timer when store is disposed
-  if (import.meta.client) {
-    onUnmounted(() => {
-      stopAutoUpload()
+  /**
+   * Mark in-flight uploads as interrupted (call after page reload)
+   */
+  function markInterrupted () {
+    uploads.value.forEach((upload) => {
+      if (upload.status === 'queued' || upload.status === 'in-progress') {
+        upload.status = 'interrupted'
+      }
     })
   }
 
+  /**
+   * Add files to the upload queue. Handles blob registration and upload object creation.
+   *
+   * @param {File[]} files - Array of File objects from the drop zone
+   */
+  async function addFiles (files) {
+    const userStore = useUserStore()
+    const { createUploadObject } = useUploadObject()
+
+    for (const file of files) {
+      try {
+        const result = await $fetch('/api/blobs/new', {
+          method: 'POST',
+          body: {
+            userId: userStore.userId,
+            filename: file.name,
+          },
+        })
+
+        const uploadObject = await createUploadObject(file, result)
+        await add(uploadObject)
+      }
+      catch (error) {
+        console.error(`❗️ Unable to initialize upload for ${file.name}:`, error)
+      }
+    }
+  }
+
   return {
+    addFiles,
     add,
+    markInterrupted,
     autoUploadFromQueue,
     availableSlots,
     canStartUpload,
     completed,
+    clearCompleted,
     emptyQueue,
     failed,
     getName,
@@ -597,7 +440,7 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
     hasQueued,
     inProgress,
     interrupted,
-    maxConcurrentUploads: MAX_CONCURRENT_UPLOADS,
+    uploadMaxConcurrent,
     processQueue,
     queued,
     remove,

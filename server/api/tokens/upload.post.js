@@ -3,7 +3,7 @@ import { z } from 'zod'
 const requestSchema = (userId) => {
   return z.object({
     action: z.string().refine(value => value === 'create', { error: 'Invalid action' }),
-    blobName: z.string().includes(userId, { error: 'Blob name must include user Id' }),
+    blobPath: z.string().refine(value => value.startsWith(userId), { error: 'Blob path must start with user Id' }),
   })
 }
 
@@ -26,20 +26,20 @@ export default defineEventHandler(async (event) => {
       errors: z.flattenError(result.error).fieldErrors,
     }
   }
-  const { blobName } = result.data
+  const { blobPath } = result.data
 
   /**
    * Generate SAS token
    * Valid: 1 minute
    */
-  const { blobUrl, uploadUrl, expiresAt } = azureStorageUtils.generateBlobSasToken(blobName, {
+  const { blobUrl, uploadUrl, expiresAt } = azureStorageUtils.generateBlobSasToken(blobPath, {
     permissions: 'create',
     expiresInMinutes: 1,
   })
 
   return {
     blob: {
-      name: blobName,
+      path: blobPath,
       url: blobUrl,
     },
     upload: {

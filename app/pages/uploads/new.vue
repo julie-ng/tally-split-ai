@@ -1,42 +1,14 @@
 <script setup>
-import { useUserStore } from '~/stores/user.store'
 import { useUploadQueueStore } from '~/stores/upload-queue.store'
-import { useUploadObject } from '~/composables/useUploadObject'
 
 useHead({
   title: 'Upload',
 })
 
-const userStore = useUserStore()
-const userId = userStore.userId
 const uploadsStore = useUploadQueueStore()
-const { createUploadObject } = useUploadObject()
-
-// uploadsStore.startAutoUpload()
 
 async function onFilesUpdate (files) {
-  for (const file of files) {
-    // Generate Blob Url & SAS token for each file
-    try {
-      const result = await $fetch('/api/blobs/new', {
-        method: 'POST',
-        body: {
-          userId,
-          filename: file.name,
-        },
-      })
-
-      // DEBUG: remove later
-      // console.table(result)
-
-      const uploadObject = await createUploadObject(file, result)
-      uploadsStore.add(uploadObject)
-    }
-    catch (error) {
-      console.error('❗️ Unable to initialize new blob request')
-      console.error(error)
-    }
-  }
+  await uploadsStore.addFiles(files)
 }
 </script>
 

@@ -42,6 +42,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       environment: 'development',
+      uploadMaxConcurrent: 3,
+      uploadAutoIntervalMs: 1000,
+      uploadAutoEnabled: true,
       // TODO: remove after auth implementation
       demoUserFirstName: '',
       demoUserLastName: '',

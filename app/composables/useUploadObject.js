@@ -42,7 +42,7 @@ function extractAzureBlobTags (filename, userId) {
  * @typedef {Object} UploadObject
  * @property {string} hashId - Unique hash identifier
  * @property {string} userId - User ID (blob path prefix)
- * @property {string} blobPath - Azure blob path prefix (same as userId)
+ * @property {string} blobPath - Azure blob path (e.g. userId/filename)
  * @property {string} originalFilename - Original file name
  * @property {string} azureFilename - Azure blob filename
  * @property {number} size - File size in bytes
@@ -57,8 +57,6 @@ function extractAzureBlobTags (filename, userId) {
 
 /**
  * @typedef {Object} UploadDetails
- * @property {string} url - Upload URL with SAS token
- * @property {string} expiresAt - SAS token expiration timestamp
  * @property {number} progress - Upload progress percentage (0-100)
  * @property {number} retries - Number of retry attempts
  */
@@ -73,9 +71,8 @@ export function useUploadObject () {
    * @param {Object} blobResult - Result from /api/blobs/new endpoint
    * @param {string} blobResult.filename - Azure filename
    * @param {Object} blobResult.blob - Blob details
-   * @param {string} blobResult.blob.url - Blob URL
-   * @param {string} blobResult.blob.uploadUrl - Upload URL with SAS token
-   * @param {string} blobResult.blob.uploadExpiresAt - SAS token expiration
+   * @param {string} blobResult.blob.path - Azure blob path
+   * @param {string} blobResult.blob.url - Blob URL (no SAS token)
    * @param {string} blobResult.hashId - Unique hash identifier from server
    * @returns {Promise<UploadObject>} Standardized upload object with 'queued' status
    */
@@ -85,15 +82,13 @@ export function useUploadObject () {
     return {
       hashId: blobResult.hashId,
       userId: userStore.userId,
-      blobPath: userStore.userId,
+      blobPath: blobResult.blob.path,
       originalFilename: file.name,
       azureFilename: blobResult.filename,
       size: file.size,
       blobUrl: blobResult.blob.url,
       azureTags,
       upload: {
-        url: blobResult.blob.uploadUrl,
-        expiresAt: blobResult.blob.uploadExpiresAt,
         progress: 0,
         retries: 0,
       },
