@@ -1,7 +1,5 @@
 import { z } from 'zod'
-
-const WORKFLOW_STATUSES = /** @type {const} */ (['queued', 'processing', 'completed', 'failed'])
-const STEP_STATUSES = /** @type {const} */ (['pending', 'processing', 'completed', 'failed'])
+import { WORKFLOW_STATUSES, WORKFLOW_STEP_STATUSES } from '../../enums/workflow-status.js'
 
 /**
  * Workflow Run Object - full workflow run record
@@ -11,9 +9,9 @@ export const workflowRunSchema = z.object({
   uploadId: z.number(),
   triggerRunId: z.string().nullable(),
   status: z.enum(WORKFLOW_STATUSES),
-  ocrStatus: z.enum(STEP_STATUSES),
-  annotationsStatus: z.enum(STEP_STATUSES),
-  splitStatus: z.enum(STEP_STATUSES),
+  ocrStatus: z.enum(WORKFLOW_STEP_STATUSES),
+  annotationsStatus: z.enum(WORKFLOW_STEP_STATUSES),
+  splitStatus: z.enum(WORKFLOW_STEP_STATUSES),
   error: z.string().nullable(),
   createdAt: z.iso.datetime(),
   completedAt: z.iso.datetime().nullable(),
@@ -25,7 +23,7 @@ export const workflowRunSchema = z.object({
 export const workflowRunInsertSchema = z.object({
   uploadId: z.number(),
   status: z.enum(WORKFLOW_STATUSES).default('queued'),
-  ocrStatus: z.enum(STEP_STATUSES).default('pending'),
-  annotationsStatus: z.enum(STEP_STATUSES).default('pending'),
-  splitStatus: z.enum(STEP_STATUSES).default('pending'),
+  ocrStatus: z.enum(WORKFLOW_STEP_STATUSES).default('pending'),
+  annotationsStatus: z.enum(WORKFLOW_STEP_STATUSES).default('pending'),
+  splitStatus: z.enum(WORKFLOW_STEP_STATUSES).default('pending'),
 })

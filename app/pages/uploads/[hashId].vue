@@ -1,5 +1,6 @@
 <script setup>
 import { useIntervalFn } from '@vueuse/core'
+import { UPLOAD_ANALYSIS_STATUS } from '~~/shared/enums/upload-analysis-status.js'
 
 const route = useRoute()
 const hashId = route.params.hashId
@@ -15,7 +16,7 @@ const { data: analysisData, pending: analysisPending, error: analysisError } = a
 // updates survive navigation (e.g., user goes to /receipts while OCR is running).
 const isProcessing = computed(() => {
   const status = upload.value?.analysisStatus
-  return status === 'queued' || status === 'processing'
+  return status === UPLOAD_ANALYSIS_STATUS.QUEUED || status === UPLOAD_ANALYSIS_STATUS.PROCESSING
 })
 
 const { pause, resume } = useIntervalFn(async () => {

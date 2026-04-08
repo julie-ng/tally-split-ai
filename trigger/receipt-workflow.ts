@@ -1,6 +1,8 @@
 import { task, logger } from '@trigger.dev/sdk/v3'
 import { eq } from 'drizzle-orm'
 import { useDB, schema } from '../server/db/connection'
+import { WORKFLOW_STATUS } from '../shared/enums/workflow-status.js'
+import { UPLOAD_ANALYSIS_STATUS } from '../shared/enums/upload-analysis-status.js'
 import { analyzeOcr } from './analyze-ocr'
 import { analyzeAnnotations } from './analyze-annotations'
 import { createSplit } from './create-split'
@@ -17,7 +19,7 @@ export const receiptWorkflow = task({
     // Update workflow status
     await db
       .update(schema.workflowRuns)
-      .set({ status: 'processing' })
+      .set({ status: WORKFLOW_STATUS.PROCESSING })
       .where(eq(schema.workflowRuns.id, workflowRunId))
 
     // Step 1: OCR — FATAL on failure
@@ -28,7 +30,7 @@ export const receiptWorkflow = task({
     if (!ocrResult.ok) {
       await db
         .update(schema.workflowRuns)
-        .set({ status: 'failed', error: `OCR failed: ${ocrResult.error}` })
+        .set({ status: WORKFLOW_STATUS.FAILED, error: `OCR failed: ${ocrResult.error}` })
         .where(eq(schema.workflowRuns.id, workflowRunId))
 
       throw new Error(`OCR analysis failed: ${ocrResult.error}`)
@@ -62,13 +64,13 @@ export const receiptWorkflow = task({
     // Finalize: update workflow first, then upload (prevents false positives)
     await db
       .update(schema.workflowRuns)
-      .set({ status: 'completed', completedAt: new Date() })
+      .set({ status: WORKFLOW_STATUS.COMPLETED, completedAt: new Date() })
       .where(eq(schema.workflowRuns.id, workflowRunId))
 
     await db
       .update(schema.uploads)
       .set({
-        analysisStatus: 'completed',
+        analysisStatus: UPLOAD_ANALYSIS_STATUS.COMPLETED,
         analyzedAt: new Date(),
       })
       .where(eq(schema.uploads.hashId, uploadHashId))

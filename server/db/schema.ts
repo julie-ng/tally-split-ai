@@ -68,7 +68,7 @@ export const uploads = pgTable('uploads', {
   azureTags: jsonb('azure_tags'), // Azure blob tags as JSON
 
   // Analysis status (updated by workflow orchestrator)
-  analysisStatus: text('analysis_status').default('pending'), // pending, queued, processing, completed, failed
+  analysisStatus: text('analysis_status', { enum: UPLOAD_ANALYSIS_STATUSES }).default('pending'),
   analyzedAt: timestamp('analyzed_at'), // set when full workflow completes
 
   // OCR results (Azure Document Intelligence)
@@ -127,12 +127,12 @@ export const workflowRuns = pgTable('workflow_runs', {
   triggerRunId: text('trigger_run_id'),
 
   // Overall workflow status
-  status: text('status').notNull().default('queued'), // queued, processing, completed, failed
+  status: text('status', { enum: WORKFLOW_STATUSES }).notNull().default('queued'),
 
   // Per-step statuses
-  ocrStatus: text('ocr_status').notNull().default('pending'), // pending, processing, completed, failed
-  annotationsStatus: text('annotations_status').notNull().default('pending'),
-  splitStatus: text('split_status').notNull().default('pending'),
+  ocrStatus: text('ocr_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
+  annotationsStatus: text('annotations_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
+  splitStatus: text('split_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
 
   // Error tracking
   error: text('error'),

@@ -1,6 +1,7 @@
 import { task, logger } from '@trigger.dev/sdk/v3'
 import { eq } from 'drizzle-orm'
 import { useDB, schema } from '../server/db/connection'
+import { WORKFLOW_STEP_STATUS } from '../shared/enums/workflow-status.js'
 import { azureStorageUtils } from '../server/utils/azure-storage.utils.js'
 import { gpt4oUtils } from '../server/utils/azure-gpt4o.utils.js'
 
@@ -14,7 +15,7 @@ export const analyzeAnnotations = task({
     // Update workflow step status
     await db
       .update(schema.workflowRuns)
-      .set({ annotationsStatus: 'processing' })
+      .set({ annotationsStatus: WORKFLOW_STEP_STATUS.PROCESSING })
       .where(eq(schema.workflowRuns.id, workflowRunId))
 
     // 1. Fetch upload record (includes ocrJson from OCR step)
@@ -60,7 +61,7 @@ export const analyzeAnnotations = task({
     // 6. Update workflow step status
     await db
       .update(schema.workflowRuns)
-      .set({ annotationsStatus: 'completed' })
+      .set({ annotationsStatus: WORKFLOW_STEP_STATUS.COMPLETED })
       .where(eq(schema.workflowRuns.id, workflowRunId))
 
     logger.log(`Annotations analysis complete for ${uploadHashId}`)

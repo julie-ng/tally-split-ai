@@ -2,6 +2,7 @@ import { task, logger } from '@trigger.dev/sdk/v3'
 import { eq } from 'drizzle-orm'
 import DocumentIntelligence, { getLongRunningPoller, isUnexpected } from '@azure-rest/ai-document-intelligence'
 import { useDB, schema } from '../server/db/connection'
+import { WORKFLOW_STEP_STATUS } from '../shared/enums/workflow-status.js'
 import { azureStorageUtils } from '../server/utils/azure-storage.utils.js'
 import { getAzureDocumentIntelligenceConfig } from '../server/utils/azure-document-intelligence.js'
 import { receiptUtils } from '../shared/utils/receipt.utils.js'
@@ -17,7 +18,7 @@ export const analyzeOcr = task({
     // Update workflow step status
     await db
       .update(schema.workflowRuns)
-      .set({ ocrStatus: 'processing' })
+      .set({ ocrStatus: WORKFLOW_STEP_STATUS.PROCESSING })
       .where(eq(schema.workflowRuns.id, workflowRunId))
 
     // 1. Fetch upload record
@@ -123,7 +124,7 @@ export const analyzeOcr = task({
     // 7. Update workflow step status
     await db
       .update(schema.workflowRuns)
-      .set({ ocrStatus: 'completed' })
+      .set({ ocrStatus: WORKFLOW_STEP_STATUS.COMPLETED })
       .where(eq(schema.workflowRuns.id, workflowRunId))
 
     logger.log(`OCR analysis complete for ${uploadHashId}`, { receiptId })

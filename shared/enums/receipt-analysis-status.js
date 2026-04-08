@@ -1,7 +1,7 @@
-export const RECEIPT_ANALYSIS_STATUSES = /** @type {const} */ ([
-  'unanalyzed',
-  'queued',
-  'inprogress',
-  'analyzed',
-  'error',
-])
+export const RECEIPT_ANALYSIS_STATUS = {
+  UNANALYZED: 'unanalyzed',
+  ANALYZED: 'analyzed',
+}
+
+// Array form for Drizzle enum columns and Zod z.enum()
+export const RECEIPT_ANALYSIS_STATUSES = /** @type {const} */ (Object.values(RECEIPT_ANALYSIS_STATUS))

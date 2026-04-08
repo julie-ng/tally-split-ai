@@ -50,36 +50,12 @@ describe('badgeStyleHelpers.analysisBadgeColor', () => {
     expect(badgeStyleHelpers.analysisBadgeColor('analyzed')).toBe('info')
   })
 
-  it('should return "error" for error', () => {
-    expect(badgeStyleHelpers.analysisBadgeColor('error')).toBe('error')
-  })
-
-  it('should return "warning" for inprogress', () => {
-    expect(badgeStyleHelpers.analysisBadgeColor('inprogress')).toBe('warning')
-  })
-
-  it('should return "warning" for queued', () => {
-    expect(badgeStyleHelpers.analysisBadgeColor('queued')).toBe('warning')
-  })
-
   it('should return "neutral" for unknown status', () => {
     expect(badgeStyleHelpers.analysisBadgeColor('unknown')).toBe('neutral')
   })
 })
 
 describe('badgeStyleHelpers.analysisBadgeVariant', () => {
-  it('should return "subtle" for error', () => {
-    expect(badgeStyleHelpers.analysisBadgeVariant('error')).toBe('subtle')
-  })
-
-  it('should return "subtle" for inprogress', () => {
-    expect(badgeStyleHelpers.analysisBadgeVariant('inprogress')).toBe('subtle')
-  })
-
-  it('should return "subtle" for queued', () => {
-    expect(badgeStyleHelpers.analysisBadgeVariant('queued')).toBe('subtle')
-  })
-
   it('should return "subtle" for analyzed', () => {
     expect(badgeStyleHelpers.analysisBadgeVariant('analyzed')).toBe('subtle')
   })

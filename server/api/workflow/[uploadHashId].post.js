@@ -1,6 +1,8 @@
 import { tasks } from '@trigger.dev/sdk/v3'
 import { eq, and, inArray } from 'drizzle-orm'
 import { workflowRunInsertSchema } from '~~/shared/utils/zod-schemas/workflow-run.schema.js'
+import { WORKFLOW_STATUS } from '~~/shared/enums/workflow-status.js'
+import { UPLOAD_ANALYSIS_STATUS } from '~~/shared/enums/upload-analysis-status.js'
 
 export default defineEventHandler(async (event) => {
   const db = useDB()
@@ -30,7 +32,7 @@ export default defineEventHandler(async (event) => {
   const existingRun = await db.query.workflowRuns.findFirst({
     where: and(
       eq(schema.workflowRuns.uploadId, upload.id),
-      inArray(schema.workflowRuns.status, ['queued', 'processing']),
+      inArray(schema.workflowRuns.status, [WORKFLOW_STATUS.QUEUED, WORKFLOW_STATUS.PROCESSING]),
     ),
   })
 
@@ -57,7 +59,7 @@ export default defineEventHandler(async (event) => {
   // Update upload status
   await db
     .update(schema.uploads)
-    .set({ analysisStatus: 'queued' })
+    .set({ analysisStatus: UPLOAD_ANALYSIS_STATUS.QUEUED })
     .where(eq(schema.uploads.hashId, hashId))
 
   // Trigger the workflow (fire and forget)

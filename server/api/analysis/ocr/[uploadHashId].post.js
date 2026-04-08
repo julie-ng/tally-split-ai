@@ -1,5 +1,6 @@
 import { tasks } from '@trigger.dev/sdk/v3'
 import { eq } from 'drizzle-orm'
+import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '~~/shared/enums/workflow-status.js'
 
 export default defineEventHandler(async (event) => {
   const db = useDB()
@@ -22,10 +23,10 @@ export default defineEventHandler(async (event) => {
     .insert(schema.workflowRuns)
     .values({
       uploadId: upload.id,
-      status: 'processing',
-      ocrStatus: 'pending',
-      annotationsStatus: 'pending',
-      splitStatus: 'pending',
+      status: WORKFLOW_STATUS.PROCESSING,
+      ocrStatus: WORKFLOW_STEP_STATUS.PENDING,
+      annotationsStatus: WORKFLOW_STEP_STATUS.PENDING,
+      splitStatus: WORKFLOW_STEP_STATUS.PENDING,
     })
     .returning()
 

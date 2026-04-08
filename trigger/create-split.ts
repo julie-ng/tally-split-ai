@@ -1,6 +1,7 @@
 import { task, logger } from '@trigger.dev/sdk/v3'
 import { eq } from 'drizzle-orm'
 import { useDB, schema } from '../server/db/connection'
+import { WORKFLOW_STEP_STATUS } from '../shared/enums/workflow-status.js'
 import { splitInsertSchema } from '../shared/utils/zod-schemas/split.schema.js'
 
 export const createSplit = task({
@@ -13,7 +14,7 @@ export const createSplit = task({
     // Update workflow step status
     await db
       .update(schema.workflowRuns)
-      .set({ splitStatus: 'processing' })
+      .set({ splitStatus: WORKFLOW_STEP_STATUS.PROCESSING })
       .where(eq(schema.workflowRuns.id, workflowRunId))
 
     // 1. Fetch receipt to get total
@@ -32,7 +33,7 @@ export const createSplit = task({
     if (receipt.total === null || receipt.total === undefined) {
       await db
         .update(schema.workflowRuns)
-        .set({ splitStatus: 'completed' })
+        .set({ splitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
         .where(eq(schema.workflowRuns.id, workflowRunId))
 
       logger.log(`Skipped split creation for receipt ${receiptId} — no total`)
@@ -66,7 +67,7 @@ export const createSplit = task({
     // 6. Update workflow step status
     await db
       .update(schema.workflowRuns)
-      .set({ splitStatus: 'completed' })
+      .set({ splitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
       .where(eq(schema.workflowRuns.id, workflowRunId))
 
     logger.log(`Split created for receipt ${receiptId}`, { splitId: split.id, amount: receipt.total })

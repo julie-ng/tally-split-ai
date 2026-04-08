@@ -2,6 +2,7 @@
 import { getPaginationRowModel } from '@tanstack/vue-table'
 import { useUserStore } from '~/stores/user.store'
 import { useUploadsStore } from '~/stores/uploads.store'
+import { UPLOAD_ANALYSIS_STATUS } from '~~/shared/enums/upload-analysis-status.js'
 
 useHead({
   title: 'Uploads',
@@ -129,10 +130,10 @@ const analyzeReceipt = async (hashId) => {
 
 const getAnalyzeButtonText = (status) => {
   switch (status) {
-    case 'queued': return 'Queued...'
-    case 'processing': return 'Analyzing...'
-    case 'completed': return 'Analyzed'
-    case 'failed': return 'Retry'
+    case UPLOAD_ANALYSIS_STATUS.QUEUED: return 'Queued...'
+    case UPLOAD_ANALYSIS_STATUS.PROCESSING: return 'Analyzing...'
+    case UPLOAD_ANALYSIS_STATUS.COMPLETED: return 'Analyzed'
+    case UPLOAD_ANALYSIS_STATUS.FAILED: return 'Retry'
     default: return 'Analyze'
   }
 }
@@ -266,7 +267,7 @@ const paginationInfo = computed(() => {
                 icon="i-lucide-focus"
                 loading-icon="i-lucide-loader"
                 loading-auto
-                :disabled="['queued', 'processing', 'completed'].includes(row.original.analysisStatus)"
+                :disabled="[UPLOAD_ANALYSIS_STATUS.QUEUED, UPLOAD_ANALYSIS_STATUS.PROCESSING, UPLOAD_ANALYSIS_STATUS.COMPLETED].includes(row.original.analysisStatus)"
                 color="info"
                 variant="solid"
                 class="px-3 py-1 text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed mr-2 cursor-pointer"

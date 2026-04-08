@@ -16,14 +16,11 @@ function statusBadgeVariant (status) {
 
 function analysisBadgeColor (status) {
   if (status === 'analyzed') return 'info'
-  if (status === 'error') return 'error'
-  if (status === 'inprogress' || status === 'queued') return 'warning'
   return 'neutral'
 }
 
 function analysisBadgeVariant (status) {
-  if (status === 'error') return 'subtle'
-  if (status === 'inprogress' || status === 'queued') return 'subtle'
+  if (status === 'analyzed') return 'subtle'
   return 'subtle'
 }
 
