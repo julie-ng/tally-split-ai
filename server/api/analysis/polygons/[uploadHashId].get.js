@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
 
   const hashId = getRouterParam(event, 'uploadHashId')
 
-  // Try DB first (new workflow stores ocrJson), fall back to tmp file (legacy)
+  // TODO: Remove tmp file fallback once all uploads have ocrJson in DB
   let analysisData = null
 
   const upload = await db.query.uploads.findFirst({

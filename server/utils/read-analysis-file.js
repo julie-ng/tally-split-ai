@@ -1,6 +1,8 @@
 import fs from 'fs/promises'
 import path from 'path'
 
+// TODO: This entire util is legacy — analysis results now live in uploads.ocrJson (DB).
+// Remove once all endpoints read from DB first (summary endpoint still depends on this).
 const ANALYSIS_DIR_NAME = 'tmp'
 
 export async function readAnalysisFile (hashId) {

@@ -32,10 +32,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Read analysis JSON file
-  // const filePath = path.join(process.cwd(), 'tmp', `${hashId}.json`)
-  // const fileContent = await fs.readFile(filePath, 'utf-8')
-  // const analysisData = JSON.parse(fileContent)
+  // TODO: Read from upload.ocrJson (DB) first, fall back to tmp file — same pattern as polygons endpoint
   const contents = await readAnalysisFile(hashId)
   if (contents.error) {
     setResponseStatus(event, contents.error.status)
