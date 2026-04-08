@@ -152,6 +152,19 @@ export function createAzureFilename (filename) {
   // Remove extension for processing
   let processedName = filename.slice(0, -extension.length)
 
+  // Normalize Unicode (e.g. combining diaeresis → precomposed) before replacing
+  processedName = processedName.normalize('NFC')
+
+  // Replace German umlauts and eszett
+  processedName = processedName
+    .replace(/ä/g, 'ae')
+    .replace(/ö/g, 'oe')
+    .replace(/ü/g, 'ue')
+    .replace(/Ä/g, 'Ae')
+    .replace(/Ö/g, 'Oe')
+    .replace(/Ü/g, 'Ue')
+    .replace(/ß/g, 'ss')
+
   // Remove parentheses but keep the price value
   processedName = processedName.replace(/[()]/g, '-')
 

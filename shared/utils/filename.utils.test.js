@@ -344,6 +344,35 @@ describe('createAzureFilename()', () => {
     expect(result).toMatch(/^2025-12-08-Coffee-Shop-5\.50-breakfast-special-[a-f0-9]{6}\.png$/)
   })
 
+  it('should replace German umlauts with ASCII equivalents', () => {
+    expect(createAzureFilename('Müller.jpg')).toMatch(/^Mueller-[a-f0-9]{6}\.jpg$/)
+    expect(createAzureFilename('Größe.jpg')).toMatch(/^Groesse-[a-f0-9]{6}\.jpg$/)
+    expect(createAzureFilename('Ärzte.jpg')).toMatch(/^Aerzte-[a-f0-9]{6}\.jpg$/)
+    expect(createAzureFilename('Öl.jpg')).toMatch(/^Oel-[a-f0-9]{6}\.jpg$/)
+    expect(createAzureFilename('Übung.jpg')).toMatch(/^Uebung-[a-f0-9]{6}\.jpg$/)
+  })
+
+  it('should replace ß with ss', () => {
+    expect(createAzureFilename('Straße.jpg')).toMatch(/^Strasse-[a-f0-9]{6}\.jpg$/)
+  })
+
+  it('should handle filenames with mixed German characters', () => {
+    expect(createAzureFilename('2026-01-21-Müller-9.49.jpg')).toMatch(/^2026-01-21-Mueller-9\.49-[a-f0-9]{6}\.jpg$/)
+  })
+
+  it('should handle decomposed Unicode (combining diaeresis from macOS keyboard)', () => {
+    // Decomposed: base letter + U+0308 combining diaeresis (what macOS Option+u produces)
+    const decomposedU = 'u\u0308' // ü as two code points
+    const decomposedO = 'o\u0308' // ö as two code points
+    const decomposedA = 'a\u0308' // ä as two code points
+    const decomposedUpper = 'U\u0308' // Ü as two code points
+
+    expect(createAzureFilename(`M${decomposedU}ller.jpg`)).toMatch(/^Mueller-[a-f0-9]{6}\.jpg$/)
+    expect(createAzureFilename(`Gr${decomposedO}sse.jpg`)).toMatch(/^Groesse-[a-f0-9]{6}\.jpg$/)
+    expect(createAzureFilename(`${decomposedA}rzte.jpg`)).toMatch(/^aerzte-[a-f0-9]{6}\.jpg$/)
+    expect(createAzureFilename(`${decomposedUpper}bung.jpg`)).toMatch(/^Uebung-[a-f0-9]{6}\.jpg$/)
+  })
+
   it('should throw error for filenames without proper image extension', () => {
     expect(() => createAzureFilename('Receipt (10.00) #test')).toThrow()
     expect(() => createAzureFilename('receipt.txt')).toThrow()

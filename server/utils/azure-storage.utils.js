@@ -31,7 +31,8 @@ function useAzureStorageConfig () {
  */
 function generateBlobUrl (blobName) {
   const { account, container } = useAzureStorageConfig()
-  return `https://${account}.blob.core.windows.net/${container}/${blobName}`
+  const encodedPath = blobName.split('/').map(segment => encodeURIComponent(segment)).join('/')
+  return `https://${account}.blob.core.windows.net/${container}/${encodedPath}`
 }
 
 /**
