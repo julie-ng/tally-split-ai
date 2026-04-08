@@ -1,22 +1,17 @@
-import { eq } from 'drizzle-orm'
-
 // Extracts bounding box polygons from Document Intelligence analysis results
 // for rendering overlays on the receipt image.
 export default defineEventHandler(async (event) => {
-  const db = useDB()
   requireUserId(event)
   requireHashIdParam(event, 'uploadHashId')
 
   const hashId = getRouterParam(event, 'uploadHashId')
+  await requireUploadByHashId(event)
+  const upload = event.context.upload
 
   // TODO: Remove tmp file fallback once all uploads have ocrJson in DB
   let analysisData = null
 
-  const upload = await db.query.uploads.findFirst({
-    where: eq(schema.uploads.hashId, hashId),
-  })
-
-  if (upload?.ocrJson) {
+  if (upload.ocrJson) {
     analysisData = upload.ocrJson
   }
   else {

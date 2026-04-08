@@ -11,15 +11,8 @@ export default defineEventHandler(async (event) => {
 
   const hashId = getRouterParam(event, 'uploadHashId')
   const userId = event.context.userId
-
-  // Validate upload exists and is ready
-  const upload = await db.query.uploads.findFirst({
-    where: eq(schema.uploads.hashId, hashId),
-  })
-
-  if (!upload) {
-    throw createError({ statusCode: 404, message: 'Upload not found' })
-  }
+  await requireUploadByHashId(event)
+  const upload = event.context.upload
 
   if (upload.status !== 'uploaded') {
     throw createError({
