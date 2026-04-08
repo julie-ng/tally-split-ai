@@ -18,6 +18,7 @@ export default defineEventHandler(async (event) => {
       createdAt: true,
       analyzedAt: true,
       azureTags: true,
+      ocrJson: true,
     },
     with: {
       receipt: true,
@@ -32,14 +33,20 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // TODO: Read from upload.ocrJson (DB) first, fall back to tmp file — same pattern as polygons endpoint
-  const contents = await readAnalysisFile(hashId)
-  if (contents.error) {
-    setResponseStatus(event, contents.error.status)
-    return contents.error // includes error message
+  // Try DB first (new workflow stores ocrJson), fall back to tmp file (legacy)
+  let analysisData = null
+
+  if (upload.ocrJson) {
+    analysisData = upload.ocrJson
   }
-  // console.log(contents)
-  const analysisData = contents.data
+  else {
+    const contents = await readAnalysisFile(hashId)
+    if (contents.error) {
+      setResponseStatus(event, contents.error.status)
+      return contents.error
+    }
+    analysisData = contents.data
+  }
 
   // Helper function to deep clone and remove specific keys
   const removeKeys = (obj, keysToRemove = ['boundingRegions', 'spans']) => {
