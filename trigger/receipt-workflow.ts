@@ -2,16 +2,18 @@ import { task, logger } from '@trigger.dev/sdk/v3'
 import { eq } from 'drizzle-orm'
 import { useDB, schema } from '../server/db/connection'
 import { WORKFLOW_STATUS } from '../shared/enums/workflow-status.js'
+import { WORKFLOW_STEP } from '../shared/enums/workflow-step.js'
 import { UPLOAD_ANALYSIS_STATUS } from '../shared/enums/upload-analysis-status.js'
 import { analyzeOcr } from './analyze-ocr'
 import { analyzeAnnotations } from './analyze-annotations'
 import { createSplit } from './create-split'
+import { notifyStatus } from './utils/notify-status.js'
 
 export const receiptWorkflow = task({
   id: 'receipt-workflow',
   maxDuration: 600,
-  run: async (payload: { uploadHashId: string, workflowRunId: number }) => {
-    const { uploadHashId, workflowRunId } = payload
+  run: async (payload: { uploadHashId: string, workflowRunId: number, runUuid: string, callbackToken: string }) => {
+    const { uploadHashId, workflowRunId, runUuid, callbackToken } = payload
     const db = useDB()
 
     logger.log(`Starting receipt workflow for ${uploadHashId}`)
@@ -24,7 +26,7 @@ export const receiptWorkflow = task({
 
     // Step 1: OCR — FATAL on failure
     const ocrResult = await analyzeOcr.triggerAndWait(
-      { uploadHashId, workflowRunId },
+      { uploadHashId, workflowRunId, runUuid, callbackToken },
     )
 
     if (!ocrResult.ok) {
@@ -42,7 +44,7 @@ export const receiptWorkflow = task({
     let hasStepErrors = false
 
     const annotationsResult = await analyzeAnnotations.triggerAndWait(
-      { uploadHashId, workflowRunId },
+      { uploadHashId, workflowRunId, runUuid, callbackToken },
     )
 
     if (!annotationsResult.ok) {
@@ -54,7 +56,7 @@ export const receiptWorkflow = task({
     let splitId = null
 
     const splitResult = await createSplit.triggerAndWait(
-      { receiptId, workflowRunId },
+      { receiptId, workflowRunId, runUuid, callbackToken },
     )
 
     if (splitResult.ok) {
@@ -80,6 +82,8 @@ export const receiptWorkflow = task({
         analyzedAt: new Date(),
       })
       .where(eq(schema.uploads.hashId, uploadHashId))
+
+    await notifyStatus(runUuid, WORKFLOW_STEP.WORKFLOW, finalStatus, callbackToken)
 
     logger.log(`Receipt workflow ${finalStatus} for ${uploadHashId}`, { receiptId, splitId })
 

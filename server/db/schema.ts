@@ -1,4 +1,4 @@
-import { pgTable, text, integer, serial, real, boolean, timestamp, jsonb } from 'drizzle-orm/pg-core'
+import { pgTable, text, integer, serial, real, boolean, timestamp, jsonb, uuid } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 import { RECEIPT_ANALYSIS_STATUSES } from '../../shared/enums/receipt-analysis-status.js'
 import { UPLOAD_ANALYSIS_STATUSES } from '../../shared/enums/upload-analysis-status.js'
@@ -123,6 +123,9 @@ export const workflowRuns = pgTable('workflow_runs', {
 
   // Link to upload that triggered this workflow
   uploadId: integer('upload_id').references(() => uploads.id, { onDelete: 'cascade' }).notNull(),
+
+  // UUID for secure callback endpoint (opaque, unguessable)
+  uuid: uuid('uuid').defaultRandom().notNull(),
 
   // Trigger.dev run ID for dashboard linking
   triggerRunId: text('trigger_run_id'),

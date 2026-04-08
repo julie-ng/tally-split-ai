@@ -3,16 +3,18 @@ import { eq } from 'drizzle-orm'
 import DocumentIntelligence, { getLongRunningPoller, isUnexpected } from '@azure-rest/ai-document-intelligence'
 import { useDB, schema } from '../server/db/connection'
 import { WORKFLOW_STEP_STATUS } from '../shared/enums/workflow-status.js'
+import { WORKFLOW_STEP } from '../shared/enums/workflow-step.js'
 import { azureStorageUtils } from '../server/utils/azure-storage.utils.js'
 import { getAzureDocumentIntelligenceConfig } from '../server/utils/azure-document-intelligence.js'
 import { receiptUtils } from '../shared/utils/receipt.utils.js'
 import { receiptInputSchema } from '../shared/utils/zod-schemas/receipt.schema.js'
+import { notifyStatus } from './utils/notify-status.js'
 
 export const analyzeOcr = task({
   id: 'analyze-ocr',
   maxDuration: 300,
-  run: async (payload: { uploadHashId: string, workflowRunId: number }) => {
-    const { uploadHashId, workflowRunId } = payload
+  run: async (payload: { uploadHashId: string, workflowRunId: number, runUuid: string, callbackToken: string }) => {
+    const { uploadHashId, workflowRunId, runUuid, callbackToken } = payload
     const db = useDB()
 
     // Update workflow step status
@@ -127,6 +129,8 @@ export const analyzeOcr = task({
         .update(schema.workflowRuns)
         .set({ ocrStatus: WORKFLOW_STEP_STATUS.COMPLETED })
         .where(eq(schema.workflowRuns.id, workflowRunId))
+
+      await notifyStatus(runUuid, WORKFLOW_STEP.OCR, 'completed', callbackToken)
 
       logger.log(`OCR analysis complete for ${uploadHashId}`, { receiptId })
 

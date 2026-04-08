@@ -54,11 +54,20 @@ export default defineEventHandler(async (event) => {
     .set({ analysisStatus: UPLOAD_ANALYSIS_STATUS.QUEUED })
     .where(eq(schema.uploads.hashId, hashId))
 
+  // Generate HMAC callback token for secure status callbacks
+  const callbackToken = generateCallbackToken({
+    runUuid: workflowRun.uuid,
+    runCreatedAt: workflowRun.createdAt.toISOString(),
+    blobUrl: upload.blobUrl,
+  })
+
   // Trigger the workflow (fire and forget)
   console.log(`🚀 [workflow] Triggering receipt-workflow for upload (${hashId}), workflowRunId: ${workflowRun.id}`)
   const handle = await tasks.trigger('receipt-workflow', {
     uploadHashId: hashId,
     workflowRunId: workflowRun.id,
+    runUuid: workflowRun.uuid,
+    callbackToken,
   })
   console.log(`✅ [workflow] Triggered receipt-workflow for upload (${hashId}), triggerRunId: ${handle.id}`)
 
