@@ -2,6 +2,7 @@ import { tasks } from '@trigger.dev/sdk/v3'
 import { eq } from 'drizzle-orm'
 import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '~~/shared/enums/workflow-status.js'
 
+// TODO: Add dev/admin-only guard — this endpoint is for manual testing of individual tasks
 export default defineEventHandler(async (event) => {
   const db = useDB()
   requireUserId(event)
