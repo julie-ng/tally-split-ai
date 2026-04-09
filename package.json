@@ -1,6 +1,7 @@
 {
   "name": "ai-receipts-poc",
   "version": "1.0.0",
+  "type": "module",
   "description": "POC for analyzing receipt scans with handwritten expense splitting",
   "scripts": {
     "test": "vitest run",

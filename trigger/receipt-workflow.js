@@ -1,18 +1,18 @@
 import { task, logger } from '@trigger.dev/sdk/v3'
 import { eq } from 'drizzle-orm'
-import { useDB, schema } from '../server/db/connection'
+import { useDB, schema } from '../server/db/connection.js'
 import { WORKFLOW_STATUS } from '../shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '../shared/enums/workflow-step.js'
 import { UPLOAD_ANALYSIS_STATUS } from '../shared/enums/upload-analysis-status.js'
-import { analyzeOcr } from './analyze-ocr'
-import { analyzeAnnotations } from './analyze-annotations'
-import { createSplit } from './create-split'
+import { analyzeOcr } from './analyze-ocr.js'
+import { analyzeAnnotations } from './analyze-annotations.js'
+import { createSplit } from './create-split.js'
 import { notifyStatus } from './utils/notify-status.js'
 
 export const receiptWorkflow = task({
   id: 'receipt-workflow',
   maxDuration: 600,
-  run: async (payload: { uploadHashId: string, workflowRunId: number, runUuid: string, callbackToken: string }) => {
+  run: async (payload) => {
     const { uploadHashId, workflowRunId, runUuid, callbackToken } = payload
     const db = useDB()
 

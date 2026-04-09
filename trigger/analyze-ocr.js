@@ -1,7 +1,7 @@
 import { task, logger } from '@trigger.dev/sdk/v3'
 import { eq } from 'drizzle-orm'
 import DocumentIntelligence, { getLongRunningPoller, isUnexpected } from '@azure-rest/ai-document-intelligence'
-import { useDB, schema } from '../server/db/connection'
+import { useDB, schema } from '../server/db/connection.js'
 import { WORKFLOW_STEP_STATUS } from '../shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '../shared/enums/workflow-step.js'
 import { azureStorageUtils } from '../server/utils/azure-storage.utils.js'
@@ -13,7 +13,7 @@ import { notifyStatus } from './utils/notify-status.js'
 export const analyzeOcr = task({
   id: 'analyze-ocr',
   maxDuration: 300,
-  run: async (payload: { uploadHashId: string, workflowRunId: number, runUuid: string, callbackToken: string }) => {
+  run: async (payload) => {
     const { uploadHashId, workflowRunId, runUuid, callbackToken } = payload
     const db = useDB()
 

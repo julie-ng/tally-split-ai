@@ -1,6 +1,6 @@
 import { task, logger } from '@trigger.dev/sdk/v3'
 import { eq } from 'drizzle-orm'
-import { useDB, schema } from '../server/db/connection'
+import { useDB, schema } from '../server/db/connection.js'
 import { WORKFLOW_STEP_STATUS } from '../shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '../shared/enums/workflow-step.js'
 import { azureStorageUtils } from '../server/utils/azure-storage.utils.js'
@@ -10,7 +10,7 @@ import { notifyStatus } from './utils/notify-status.js'
 export const analyzeAnnotations = task({
   id: 'analyze-annotations',
   maxDuration: 120,
-  run: async (payload: { uploadHashId: string, workflowRunId: number, runUuid: string, callbackToken: string }) => {
+  run: async (payload) => {
     const { uploadHashId, workflowRunId, runUuid, callbackToken } = payload
     const db = useDB()
 
@@ -40,12 +40,12 @@ export const analyzeAnnotations = task({
       })
 
       // 3. Extract line items from ocrJson (stored by analyzeOcr task)
-      let ocrLineItems: any[] = []
+      let ocrLineItems = []
 
       if (upload.ocrJson) {
-        const fields = (upload.ocrJson as any)?.analyzeResult?.documents?.[0]?.fields
+        const fields = upload.ocrJson?.analyzeResult?.documents?.[0]?.fields
         const items = fields?.Items?.valueArray || []
-        ocrLineItems = items.map((item: any) => ({
+        ocrLineItems = items.map((item) => ({
           description: item.valueObject?.Description?.content || null,
           quantity: item.valueObject?.Quantity?.valueNumber || null,
           totalPrice: item.valueObject?.TotalPrice?.valueCurrency?.amount || null,

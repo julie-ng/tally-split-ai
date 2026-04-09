@@ -1,6 +1,6 @@
 import { task, logger } from '@trigger.dev/sdk/v3'
 import { eq } from 'drizzle-orm'
-import { useDB, schema } from '../server/db/connection'
+import { useDB, schema } from '../server/db/connection.js'
 import { WORKFLOW_STEP_STATUS } from '../shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '../shared/enums/workflow-step.js'
 import { splitInsertSchema } from '../shared/utils/zod-schemas/split.schema.js'
@@ -9,7 +9,7 @@ import { notifyStatus } from './utils/notify-status.js'
 export const createSplit = task({
   id: 'create-split',
   maxDuration: 10,
-  run: async (payload: { receiptId: number, workflowRunId: number, runUuid: string, callbackToken: string }) => {
+  run: async (payload) => {
     const { receiptId, workflowRunId, runUuid, callbackToken } = payload
     const db = useDB()
 
