@@ -7,4 +7,4 @@ export const UPLOAD_ANALYSIS_STATUS = {
 }
 
 // Array form for Drizzle enum columns and Zod z.enum()
-export const UPLOAD_ANALYSIS_STATUSES = /** @type {const} */ (Object.values(UPLOAD_ANALYSIS_STATUS))
+export const UPLOAD_ANALYSIS_STATUSES = /** @type {['pending', 'queued', 'processing', 'completed', 'failed']} */ (Object.values(UPLOAD_ANALYSIS_STATUS))

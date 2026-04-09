@@ -21,5 +21,5 @@ export const WORKFLOW_STEP_STATUS = {
 /*
  * Generate array variants for Drizzle and Zod consumers
  */
-export const WORKFLOW_STATUSES = /** @type {const} */ (Object.values(WORKFLOW_STATUS))
-export const WORKFLOW_STEP_STATUSES = /** @type {const} */ (Object.values(WORKFLOW_STEP_STATUS))
+export const WORKFLOW_STATUSES = /** @type {['queued', 'processing', 'completed', 'failed']} */ (Object.values(WORKFLOW_STATUS))
+export const WORKFLOW_STEP_STATUSES = /** @type {['pending', 'processing', 'completed', 'failed']} */ (Object.values(WORKFLOW_STEP_STATUS))
