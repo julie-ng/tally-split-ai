@@ -24,6 +24,7 @@ describe('timestampUtils', () => {
       expect(formatted).toContain('Dec')
       expect(formatted).toContain('2025')
       expect(formatted).toContain('11:39')
+      expect(formatted).toMatch(/AM|PM/)
     })
 
     it('should return "-" for null timestamp', () => {

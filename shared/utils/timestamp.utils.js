@@ -1,11 +1,12 @@
 function toShortDatetime (timestamp) {
   if (!timestamp) return '-'
-  return new Date(timestamp).toLocaleDateString('en-GB', {
+  return new Date(timestamp).toLocaleDateString('en-US', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
-    hour: '2-digit',
+    hour: 'numeric',
     minute: '2-digit',
+    hour12: true,
   })
 }
 
