@@ -45,7 +45,7 @@ export const analyzeAnnotations = task({
       if (upload.ocrJson) {
         const fields = upload.ocrJson?.analyzeResult?.documents?.[0]?.fields
         const items = fields?.Items?.valueArray || []
-        ocrLineItems = items.map((item) => ({
+        ocrLineItems = items.map(item => ({
           description: item.valueObject?.Description?.content || null,
           quantity: item.valueObject?.Quantity?.valueNumber || null,
           totalPrice: item.valueObject?.TotalPrice?.valueCurrency?.amount || null,
