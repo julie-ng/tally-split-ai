@@ -29,7 +29,7 @@ npm run trigger:dev
 The orchestrator can be triggered via the API:
 
 ```bash
-curl -X POST http://localhost:3000/api/workflow/{uploadHashId}
+curl -X POST http://localhost:3000/api/workflows/{uploadHashId}
 ```
 
 This creates a `workflow_runs` record and triggers the full pipeline.

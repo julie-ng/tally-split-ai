@@ -2,6 +2,7 @@
 import { getPaginationRowModel } from '@tanstack/vue-table'
 import { useUserStore } from '~/stores/user.store'
 import { useUploadsStore } from '~/stores/uploads.store'
+import { useWorkflowStore } from '~/stores/workflow.store'
 import { UPLOAD_ANALYSIS_STATUS } from '~~/shared/enums/upload-analysis-status.js'
 
 useHead({
@@ -10,10 +11,15 @@ useHead({
 
 const userStore = useUserStore()
 const uploadsStore = useUploadsStore()
+const workflowStore = useWorkflowStore()
 uploadsStore.debug = true
+workflowStore.debug = true
 
-// Fetch uploads on mount
-await uploadsStore.fetchUploads()
+// Fetch uploads and workflows on mount
+await Promise.all([
+  uploadsStore.fetchUploads(),
+  workflowStore.fetchAll(),
+])
 
 // Get reactive refs from store (preserves reactivity without creating new computed)
 // eslint-disable-next-line no-unused-vars
@@ -63,7 +69,7 @@ const tableStyles = {
   base: 'min-w-full',
   th: 'text-slate-600 font-semibold',
   td: 'p-3 align-middle',
-  tr: 'data-[expanded=true]:bg-elevated/50',
+  tr: 'hover:bg-elevated/50',
 }
 
 const deleteUpload = async (hashId, title, blobName) => {
@@ -128,7 +134,7 @@ const paginationInfo = computed(() => {
             {{ userStore.userId }}
           </p>
         </div>
-        <UButton class="px-4 py-2 cursor-pointer" @click="uploadsStore.fetchUploads()">
+        <UButton class="px-4 py-2 cursor-pointer" @click="uploadsStore.fetchUploads(); workflowStore.fetchAll()">
           Refresh
         </UButton>
       </div>
@@ -156,7 +162,7 @@ const paginationInfo = computed(() => {
                 :to="`/uploads/${row.original.hashId}`"
                 class="text-slate-400 hover:text-blue-800 hover:underline font-mono"
               >
-                {{ row.original.hashId.slice(0, 6) }}
+                {{ row.original.hashId }}
               </NuxtLink>
             </template>
 
@@ -194,7 +200,7 @@ const paginationInfo = computed(() => {
             <template #workflow-cell="{ row }">
               <uploads-workflow-steps
                 :upload-status="row.original.status"
-                :workflow="uploadsStore.latestWorkflowById(row.original.hashId)"
+                :hash-id="row.original.hashId"
               />
             </template>
 

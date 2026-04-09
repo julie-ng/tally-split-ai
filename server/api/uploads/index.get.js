@@ -30,23 +30,8 @@ export default defineEventHandler(async (event) => {
           title: true,
         },
       },
-      workflowRuns: {
-        columns: {
-          id: true,
-          status: true,
-          ocrStatus: true,
-          annotationsStatus: true,
-          splitStatus: true,
-          createdAt: true,
-          completedAt: true,
-        },
-        orderBy: [desc(schema.workflowRuns.createdAt)],
-      },
     },
   })
 
-  return uploads.map(upload => ({
-    ...upload,
-    workflowRunCount: upload.workflowRuns.length,
-  }))
+  return uploads
 })

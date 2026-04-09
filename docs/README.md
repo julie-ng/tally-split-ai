@@ -61,7 +61,7 @@ receiptWorkflow
   → createSplit          (from receipt total)
 ```
 
-**Triggered by:** `POST /api/workflow/[uploadHashId]` (called automatically after upload completes)
+**Triggered by:** `POST /api/workflows/[uploadHashId]` (called automatically after upload completes)
 
 **Tracking:** The `workflow_runs` table tracks per-step status (`ocrStatus`, `annotationsStatus`, `splitStatus`). The `uploads.analysisStatus` field is a convenience summary updated by the orchestrator.
 

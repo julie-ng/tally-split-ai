@@ -6,7 +6,7 @@ const NUXT_PUBLIC_URL = process.env.NUXT_PUBLIC_URL || 'http://localhost:3000'
  */
 export async function notifyStatus (runUuid, step, status, callbackToken) {
   try {
-    await fetch(`${NUXT_PUBLIC_URL}/api/workflow/callback/${runUuid}`, {
+    await fetch(`${NUXT_PUBLIC_URL}/api/workflows/callback/${runUuid}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ step, status, callbackToken }),

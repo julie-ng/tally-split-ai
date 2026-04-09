@@ -5,10 +5,11 @@ useHead({
   title: 'Receipts AI POC',
 })
 
-if (import.meta.client) {
-  const realtimeStore = useRealtimeStore()
+const realtimeStore = useRealtimeStore()
+
+onMounted(() => {
   realtimeStore.connect()
-}
+})
 </script>
 
 <template>

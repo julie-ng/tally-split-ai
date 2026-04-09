@@ -91,4 +91,4 @@ const output = await childTask.triggerAndWait({ data: "value" }).unwrap()
 | `analyze-annotations` | `trigger/analyze-annotations.ts` | GPT-4o annotation detection |
 | `create-split` | `trigger/create-split.ts` | Creates split from receipt total |
 
-Workflow is triggered via `POST /api/workflow/[uploadHashId]`.
+Workflow is triggered via `POST /api/workflows/[uploadHashId]`.

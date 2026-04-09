@@ -1,17 +1,20 @@
 <script setup>
 import { UPLOAD_STATUS } from '~~/shared/enums/upload-status.js'
 import { WORKFLOW_STEP_STATUS } from '~~/shared/enums/workflow-status.js'
+import { useWorkflowStore } from '~/stores/workflow.store'
 
 const props = defineProps({
   uploadStatus: {
     type: String,
     required: true,
   },
-  workflow: {
-    type: Object,
-    default: null,
+  hashId: {
+    type: String,
+    required: true,
   },
 })
+
+const workflowStore = useWorkflowStore()
 
 /**
  * Map upload status to a step-like status for the first circle
@@ -26,11 +29,13 @@ function uploadStepStatus (status) {
   }
 }
 
+const stepStatuses = computed(() => workflowStore.stepStatusesByHashId(props.hashId))
+
 const steps = computed(() => [
   { label: 'Upload', status: uploadStepStatus(props.uploadStatus) },
-  { label: 'OCR', status: props.workflow?.ocrStatus ?? WORKFLOW_STEP_STATUS.PENDING },
-  { label: 'Annotations', status: props.workflow?.annotationsStatus ?? WORKFLOW_STEP_STATUS.PENDING },
-  { label: 'Split', status: props.workflow?.splitStatus ?? WORKFLOW_STEP_STATUS.PENDING },
+  { label: 'OCR', status: stepStatuses.value.ocrStatus },
+  { label: 'Annotations', status: stepStatuses.value.annotationsStatus },
+  { label: 'Split', status: stepStatuses.value.splitStatus },
 ])
 
 function stepIcon (status) {

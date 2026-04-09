@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { useUploadQueueStore } from '~/stores/upload-queue.store'
+import { useWorkflowStore } from '~/stores/workflow.store'
 
 export const useRealtimeStore = defineStore('realtime', () => {
   const eventSource = ref(null)
@@ -12,14 +13,17 @@ export const useRealtimeStore = defineStore('realtime', () => {
 
     sse.addEventListener('workflow-update', (event) => {
       const data = JSON.parse(event.data)
+      console.log('[RealtimeStore] SSE event received:', data)
       handleWorkflowUpdate(data)
     })
 
     sse.addEventListener('open', () => {
+      console.log('[RealtimeStore] SSE connected')
       isConnected.value = true
     })
 
-    sse.addEventListener('error', () => {
+    sse.addEventListener('error', (err) => {
+      console.warn('[RealtimeStore] SSE error:', err)
       isConnected.value = false
     })
 
@@ -35,17 +39,21 @@ export const useRealtimeStore = defineStore('realtime', () => {
   }
 
   function handleWorkflowUpdate (data) {
-    const uploadsStore = useUploadQueueStore()
     const { uploadHashId, step, status } = data
 
-    const upload = uploadsStore.uploads.find(u => u.hashId === uploadHashId)
-    if (!upload) return
-
-    if (!upload.workflowStatus) {
-      upload.workflowStatus = {}
+    // Update upload queue (client-side uploads on /uploads/new)
+    const uploadQueueStore = useUploadQueueStore()
+    const queueItem = uploadQueueStore.uploads.find(u => u.hashId === uploadHashId)
+    if (queueItem) {
+      if (!queueItem.workflowStatus) {
+        queueItem.workflowStatus = {}
+      }
+      queueItem.workflowStatus[step] = status
     }
 
-    upload.workflowStatus[step] = status
+    // Update workflow store (DB-backed workflow data)
+    const workflowStore = useWorkflowStore()
+    workflowStore.updateStepStatus(uploadHashId, step, status)
   }
 
   return {
