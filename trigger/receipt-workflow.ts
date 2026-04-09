@@ -39,11 +39,14 @@ export const receiptWorkflow = task({
     const { receiptId } = ocrResult.output
 
     // Step 2: Annotations — NON-FATAL
+    let hasStepErrors = false
+
     const annotationsResult = await analyzeAnnotations.triggerAndWait(
       { uploadHashId, workflowRunId },
     )
 
     if (!annotationsResult.ok) {
+      hasStepErrors = true
       logger.warn(`Annotations analysis failed, continuing`, { error: annotationsResult.error })
     }
 
@@ -58,13 +61,16 @@ export const receiptWorkflow = task({
       splitId = splitResult.output.splitId
     }
     else {
+      hasStepErrors = true
       logger.warn(`Split creation failed`, { error: splitResult.error })
     }
 
     // Finalize: update workflow first, then upload (prevents false positives)
+    const finalStatus = hasStepErrors ? WORKFLOW_STATUS.PARTIAL : WORKFLOW_STATUS.COMPLETED
+
     await db
       .update(schema.workflowRuns)
-      .set({ status: WORKFLOW_STATUS.COMPLETED, completedAt: new Date() })
+      .set({ status: finalStatus, completedAt: new Date() })
       .where(eq(schema.workflowRuns.id, workflowRunId))
 
     await db
@@ -75,7 +81,7 @@ export const receiptWorkflow = task({
       })
       .where(eq(schema.uploads.hashId, uploadHashId))
 
-    logger.log(`Receipt workflow complete for ${uploadHashId}`, { receiptId, splitId })
+    logger.log(`Receipt workflow ${finalStatus} for ${uploadHashId}`, { receiptId, splitId })
 
     return { receiptId, splitId }
   },

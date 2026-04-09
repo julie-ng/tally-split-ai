@@ -26,7 +26,7 @@ if (upload.analysisStatus !== UPLOAD_ANALYSIS_STATUS.COMPLETED) { ... }
 | `upload-status.js` | `UPLOAD_STATUS` | `INITIALIZED`, `UPLOADED`, `FAILED` |
 | `upload-analysis-status.js` | `UPLOAD_ANALYSIS_STATUS` | `PENDING`, `QUEUED`, `PROCESSING`, `COMPLETED`, `FAILED` |
 | `receipt-analysis-status.js` | `RECEIPT_ANALYSIS_STATUS` | `UNANALYZED`, `ANALYZED` |
-| `workflow-status.js` | `WORKFLOW_STATUS` | `QUEUED`, `PROCESSING`, `COMPLETED`, `FAILED` |
+| `workflow-status.js` | `WORKFLOW_STATUS` | `QUEUED`, `PROCESSING`, `COMPLETED`, `PARTIAL`, `FAILED` |
 | `workflow-status.js` | `WORKFLOW_STEP_STATUS` | `PENDING`, `PROCESSING`, `COMPLETED`, `FAILED` |
 
 Each file also exports an array variant (e.g., `UPLOAD_STATUSES`) typed as a tuple for use in Drizzle `enum` columns and Zod `z.enum()`.

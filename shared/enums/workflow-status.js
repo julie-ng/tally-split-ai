@@ -5,6 +5,7 @@ export const WORKFLOW_STATUS = {
   QUEUED: 'queued',
   PROCESSING: 'processing',
   COMPLETED: 'completed',
+  PARTIAL: 'partial',
   FAILED: 'failed',
 }
 
@@ -21,5 +22,5 @@ export const WORKFLOW_STEP_STATUS = {
 /*
  * Generate array variants for Drizzle and Zod consumers
  */
-export const WORKFLOW_STATUSES = /** @type {['queued', 'processing', 'completed', 'failed']} */ (Object.values(WORKFLOW_STATUS))
+export const WORKFLOW_STATUSES = /** @type {['queued', 'processing', 'completed', 'partial', 'failed']} */ (Object.values(WORKFLOW_STATUS))
 export const WORKFLOW_STEP_STATUSES = /** @type {['pending', 'processing', 'completed', 'failed']} */ (Object.values(WORKFLOW_STEP_STATUS))

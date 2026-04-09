@@ -21,114 +21,124 @@ export const analyzeOcr = task({
       .set({ ocrStatus: WORKFLOW_STEP_STATUS.PROCESSING })
       .where(eq(schema.workflowRuns.id, workflowRunId))
 
-    // 1. Fetch upload record
-    const uploads = await db
-      .select()
-      .from(schema.uploads)
-      .where(eq(schema.uploads.hashId, uploadHashId))
+    try {
+      // 1. Fetch upload record
+      const uploads = await db
+        .select()
+        .from(schema.uploads)
+        .where(eq(schema.uploads.hashId, uploadHashId))
 
-    if (uploads.length === 0) {
-      throw new Error(`Upload with hashId '${uploadHashId}' not found`)
-    }
+      if (uploads.length === 0) {
+        throw new Error(`Upload with hashId '${uploadHashId}' not found`)
+      }
 
-    const upload = uploads[0]
+      const upload = uploads[0]
 
-    // 2. Generate read-only SAS token
-    const { uploadUrl: blobUrlWithSas } = azureStorageUtils.generateBlobSasToken(upload.blobName, {
-      permissions: 'read',
-      expiresInMinutes: 5,
-    })
-
-    // 3. Call Azure Document Intelligence
-    const { endpoint, key } = getAzureDocumentIntelligenceConfig()
-    const client = DocumentIntelligence(endpoint, { key })
-
-    const initialResponse = await client
-      .path('/documentModels/{modelId}:analyze', 'prebuilt-receipt')
-      .post({
-        contentType: 'application/json',
-        body: { urlSource: blobUrlWithSas },
+      // 2. Generate read-only SAS token
+      const { uploadUrl: blobUrlWithSas } = azureStorageUtils.generateBlobSasToken(upload.blobName, {
+        permissions: 'read',
+        expiresInMinutes: 5,
       })
 
-    if (isUnexpected(initialResponse)) {
-      throw new Error(`Document Intelligence unexpected response: ${JSON.stringify(initialResponse.body)}`)
-    }
+      // 3. Call Azure Document Intelligence
+      const { endpoint, key } = getAzureDocumentIntelligenceConfig()
+      const client = DocumentIntelligence(endpoint, { key })
 
-    const poller = getLongRunningPoller(client, initialResponse)
-    const result = await poller.pollUntilDone()
-    const analyzeResult = result.body.analyzeResult
-
-    // 4. Extract and validate receipt data
-    const documents = analyzeResult?.documents
-    const document = documents && documents[0]
-
-    if (!document) {
-      throw new Error('No receipt document found in analysis result')
-    }
-
-    const fields = document.fields
-
-    const receiptData = receiptInputSchema.parse({
-      merchantName: fields.MerchantName?.content || null,
-      merchantAddress: fields.MerchantAddress?.content || null,
-      merchantPhone: fields.MerchantPhoneNumber?.content || null,
-      date: fields.TransactionDate?.valueDate || null,
-      subtotal: fields.Subtotal?.valueCurrency?.amount
-        || fields.TaxDetails?.valueArray?.[0]?.valueObject?.NetAmount?.valueCurrency?.amount
-        || null,
-      total: fields.Total?.valueCurrency?.amount || null,
-      currency: fields.Total?.valueCurrency?.currencyCode || null,
-      tax: fields.TotalTax?.valueCurrency?.amount || null,
-      analysisStatus: 'analyzed',
-    })
-
-    // 5. Create or update receipt
-    const uploadWithReceipt = await db.query.uploads.findFirst({
-      where: eq(schema.uploads.hashId, uploadHashId),
-      with: { receipt: true },
-    })
-
-    let receiptId = uploadWithReceipt?.receiptId
-
-    if (receiptId) {
-      await db
-        .update(schema.receipts)
-        .set({ ...receiptData, updatedAt: new Date() })
-        .where(eq(schema.receipts.id, receiptId))
-      logger.log(`Updated existing receipt ${receiptId}`)
-    }
-    else {
-      const [newReceipt] = await db
-        .insert(schema.receipts)
-        .values({
-          ...receiptData,
-          userId: upload.userId,
-          title: upload.title || 'Untitled',
-          tags: receiptUtils.azureTagsToReceiptTags(upload.azureTags),
+      const initialResponse = await client
+        .path('/documentModels/{modelId}:analyze', 'prebuilt-receipt')
+        .post({
+          contentType: 'application/json',
+          body: { urlSource: blobUrlWithSas },
         })
-        .returning()
-      receiptId = newReceipt.id
-      logger.log(`Created new receipt ${receiptId}`)
-    }
 
-    // 6. Update upload with OCR results
-    await db
-      .update(schema.uploads)
-      .set({
-        ocrText: analyzeResult.content || null,
-        ocrJson: result.body,
-        receiptId,
+      if (isUnexpected(initialResponse)) {
+        throw new Error(`Document Intelligence unexpected response: ${JSON.stringify(initialResponse.body)}`)
+      }
+
+      const poller = getLongRunningPoller(client, initialResponse)
+      const result = await poller.pollUntilDone()
+      const analyzeResult = result.body.analyzeResult
+
+      // 4. Extract and validate receipt data
+      const documents = analyzeResult?.documents
+      const document = documents && documents[0]
+
+      if (!document) {
+        throw new Error('No receipt document found in analysis result')
+      }
+
+      const fields = document.fields
+
+      const receiptData = receiptInputSchema.parse({
+        merchantName: fields.MerchantName?.content || null,
+        merchantAddress: fields.MerchantAddress?.content || null,
+        merchantPhone: fields.MerchantPhoneNumber?.content || null,
+        date: fields.TransactionDate?.valueDate || null,
+        subtotal: fields.Subtotal?.valueCurrency?.amount
+          || fields.TaxDetails?.valueArray?.[0]?.valueObject?.NetAmount?.valueCurrency?.amount
+          || null,
+        total: fields.Total?.valueCurrency?.amount || null,
+        currency: fields.Total?.valueCurrency?.currencyCode || null,
+        tax: fields.TotalTax?.valueCurrency?.amount || null,
+        analysisStatus: 'analyzed',
       })
-      .where(eq(schema.uploads.hashId, uploadHashId))
 
-    // 7. Update workflow step status
-    await db
-      .update(schema.workflowRuns)
-      .set({ ocrStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-      .where(eq(schema.workflowRuns.id, workflowRunId))
+      // 5. Create or update receipt
+      const uploadWithReceipt = await db.query.uploads.findFirst({
+        where: eq(schema.uploads.hashId, uploadHashId),
+        with: { receipt: true },
+      })
 
-    logger.log(`OCR analysis complete for ${uploadHashId}`, { receiptId })
+      let receiptId = uploadWithReceipt?.receiptId
 
-    return { receiptId, receiptData }
+      if (receiptId) {
+        await db
+          .update(schema.receipts)
+          .set({ ...receiptData, updatedAt: new Date() })
+          .where(eq(schema.receipts.id, receiptId))
+        logger.log(`Updated existing receipt ${receiptId}`)
+      }
+      else {
+        const [newReceipt] = await db
+          .insert(schema.receipts)
+          .values({
+            ...receiptData,
+            userId: upload.userId,
+            title: upload.title || 'Untitled',
+            tags: receiptUtils.azureTagsToReceiptTags(upload.azureTags),
+          })
+          .returning()
+        receiptId = newReceipt.id
+        logger.log(`Created new receipt ${receiptId}`)
+      }
+
+      // 6. Update upload with OCR results
+      await db
+        .update(schema.uploads)
+        .set({
+          ocrText: analyzeResult.content || null,
+          ocrJson: result.body,
+          receiptId,
+        })
+        .where(eq(schema.uploads.hashId, uploadHashId))
+
+      // 7. Update workflow step status
+      await db
+        .update(schema.workflowRuns)
+        .set({ ocrStatus: WORKFLOW_STEP_STATUS.COMPLETED })
+        .where(eq(schema.workflowRuns.id, workflowRunId))
+
+      logger.log(`OCR analysis complete for ${uploadHashId}`, { receiptId })
+
+      return { receiptId, receiptData }
+    }
+    catch (err) {
+      await db
+        .update(schema.workflowRuns)
+        .set({ ocrStatus: WORKFLOW_STEP_STATUS.FAILED })
+        .where(eq(schema.workflowRuns.id, workflowRunId))
+
+      throw err
+    }
   },
 })
