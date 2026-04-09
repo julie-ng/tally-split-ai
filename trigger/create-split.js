@@ -18,6 +18,7 @@ export const createSplit = task({
       .update(schema.workflowRuns)
       .set({ splitStatus: WORKFLOW_STEP_STATUS.PROCESSING })
       .where(eq(schema.workflowRuns.id, workflowRunId))
+    await notifyStatus(runUuid, WORKFLOW_STEP.SPLIT, 'processing', callbackToken)
 
     try {
       // 1. Fetch receipt to get total

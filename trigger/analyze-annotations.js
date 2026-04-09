@@ -19,6 +19,7 @@ export const analyzeAnnotations = task({
       .update(schema.workflowRuns)
       .set({ annotationsStatus: WORKFLOW_STEP_STATUS.PROCESSING })
       .where(eq(schema.workflowRuns.id, workflowRunId))
+    await notifyStatus(runUuid, WORKFLOW_STEP.ANNOTATIONS, 'processing', callbackToken)
 
     try {
       // 1. Fetch upload record (includes ocrJson from OCR step)

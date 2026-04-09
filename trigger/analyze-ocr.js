@@ -22,6 +22,7 @@ export const analyzeOcr = task({
       .update(schema.workflowRuns)
       .set({ ocrStatus: WORKFLOW_STEP_STATUS.PROCESSING })
       .where(eq(schema.workflowRuns.id, workflowRunId))
+    await notifyStatus(runUuid, WORKFLOW_STEP.OCR, 'processing', callbackToken)
 
     try {
       // 1. Fetch upload record
