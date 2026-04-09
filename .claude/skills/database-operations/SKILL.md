@@ -12,7 +12,7 @@ description: Database workflows for this project — schema changes, migrations,
 | Schema | `server/db/schema.ts` |
 | DB connection | `server/db/connection.ts` |
 | Migrations | `server/db/migrations/postgres/` |
-| Seed files | `server/db/seed-*.js` |
+| Seed files | `server/db/seeds/` |
 
 ## Database
 
@@ -40,10 +40,10 @@ Connection string via env var: `NUXT_DATABASE_URL`
 Use `npx tsx` to run seed files:
 
 ```bash
-npx tsx ./server/db/seed-receipts.js
+npx tsx ./server/db/seeds/seed-receipts.js
 ```
 
-Existing seed files:
+Existing seed files (in `server/db/seeds/`):
 - `seed-receipts.js` — Receipt data
 - `seed-splits.js` — Split records
 - `seed-receipt-titles.js` — Receipt title updates
