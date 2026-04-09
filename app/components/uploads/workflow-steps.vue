@@ -63,6 +63,7 @@ function stepColor (status) {
       v-for="step in steps"
       :key="step.label"
       :text="`${step.label}: ${step.status}`"
+      arrow
     >
       <span
         class="size-5 text-center rounded-full"
