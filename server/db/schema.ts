@@ -2,6 +2,7 @@ import { pgTable, text, integer, serial, real, boolean, timestamp, jsonb } from 
 import { relations } from 'drizzle-orm'
 import { RECEIPT_ANALYSIS_STATUSES } from '../../shared/enums/receipt-analysis-status.js'
 import { UPLOAD_ANALYSIS_STATUSES } from '../../shared/enums/upload-analysis-status.js'
+import { UPLOAD_STATUSES } from '../../shared/enums/upload-status.js'
 import { WORKFLOW_STATUSES, WORKFLOW_STEP_STATUSES } from '../../shared/enums/workflow-status.js'
 
 /**
@@ -57,7 +58,7 @@ export const uploads = pgTable('uploads', {
   receiptId: integer('receipt_id').references(() => receipts.id, { onDelete: 'cascade' }),
 
   // Azure Blob Storage info
-  status: text('status').notNull().default('initialized'),
+  status: text('status', { enum: UPLOAD_STATUSES }).notNull().default('initialized'),
   blobName: text('blob_name').notNull().unique(),
   blobUrl: text('blob_url').notNull().unique(),
   thumbnailName: text('thumbnail_name'),
