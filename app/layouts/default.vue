@@ -6,10 +6,7 @@ const store = useUserStore()
 const userId = store.userId
 
 const route = useRoute()
-// const toast = useToast()
-const open = ref(false)
-
-const collapsed = ref(false)
+const open = ref(true)
 
 function isActive (path: string) {
   return route.path === path || route.path.startsWith(path + '/')
@@ -50,157 +47,122 @@ const splitMonths = [
   },
 ]
 
-const links = computed(() => [
-  [
-    {
-      label: 'Blobs',
-      icon: 'i-lucide-blocks',
-      to: '/blobs',
-    },
-  ],
-  [
-    {
-      label: 'Receipts',
-      icon: 'i-lucide-receipt-euro',
-      to: '/receipts',
-      active: isActive('/receipts'),
-    },
-    {
-      label: 'Splits',
-      icon: 'i-lucide-coins',
-      to: '/splits',
-      active: isActive('/splits'),
-      children: splitMonths,
-      defaultOpen: true,
-    },
-    {
-      label: 'Uploads',
-      icon: 'i-lucide-upload-cloud',
-      to: '/uploads',
-      active: isActive('/uploads'),
-      defaultOpen: true,
-      children: [
-        {
-          label: 'List',
-          to: '/uploads',
-          icon: 'i-lucide-list',
-          onSelect: () => {
-            open.value = false
-          },
-        },
-      ],
-    },
-  ],
-  [
-    {
-      label: 'JSON APIs',
-      icon: 'i-lucide-braces',
-      // to: '/',
-      defaultOpen: false,
-      active: false,
-      children: [
-        {
-          label: 'blobs/',
-          to: '/api/blobs/',
-          external: true,
-          target: '_blank',
-        },
-        {
-          label: 'receipts/',
-          to: '/api/receipts/',
-          external: true,
-          target: '_blank',
-        },
-        {
-          label: 'receipts/[id]',
-          to: '/api/receipts/1',
-          external: true,
-          target: '_blank',
-        },
-        {
-          label: 'tokens/read',
-          to: '/api/tokens/read',
-          external: true,
-          target: '_blank',
-        },
-        {
-          label: 'tokens/upload',
-          to: '/api/tokens/upload',
-          external: true,
-          target: '_blank',
-        },
-        {
-          label: 'uploads/',
-          to: '/api/uploads/',
-          external: true,
-          target: '_blank',
-        },
-        {
-          label: 'uploads/[hashId]',
-          to: '/api/uploads/7aaaa195168e',
-          external: true,
-          target: '_blank',
-        },
-      ],
-    },
-  ],
-])
+function getLinks (state: 'collapsed' | 'expanded') {
+  const expanded = state === 'expanded'
+  return [
+    [
+      {
+        label: 'Blobs',
+        icon: 'i-lucide-blocks',
+        to: '/blobs',
+      },
+    ],
+    [
+      {
+        label: 'Receipts',
+        icon: 'i-lucide-receipt-euro',
+        to: '/receipts',
+        active: isActive('/receipts'),
+      },
+      {
+        label: 'Splits',
+        icon: 'i-lucide-coins',
+        to: '/splits',
+        active: isActive('/splits'),
+        defaultOpen: true,
+        children: expanded ? splitMonths : [],
+      },
+      {
+        label: 'Uploads',
+        icon: 'i-lucide-upload-cloud',
+        to: '/uploads',
+        active: isActive('/uploads'),
+      },
+    ],
+    [
+      {
+        label: 'JSON APIs',
+        icon: 'i-lucide-braces',
+        defaultOpen: false,
+        active: false,
+        children: expanded
+          ? [
+              { label: 'blobs/', to: '/api/blobs/', external: true, target: '_blank' },
+              { label: 'receipts/', to: '/api/receipts/', external: true, target: '_blank' },
+              { label: 'receipts/[id]', to: '/api/receipts/1', external: true, target: '_blank' },
+              { label: 'tokens/read', to: '/api/tokens/read', external: true, target: '_blank' },
+              { label: 'tokens/upload', to: '/api/tokens/upload', external: true, target: '_blank' },
+              { label: 'uploads/', to: '/api/uploads/', external: true, target: '_blank' },
+              { label: 'uploads/[hashId]', to: '/api/uploads/7aaaa195168e', external: true, target: '_blank' },
+            ]
+          : [],
+      },
+    ],
+  ]
+}
 </script>
 
 <template>
-  <UDashboardGroup>
-    <UDashboardSidebar
-      id="default"
-      v-model:collapsed="collapsed"
-      :default-size="12"
-      :min-size="12"
-      :max-size="15"
-      collapsible
-      resizable
-      class="bg-elevated/25"
-      :ui="{ header: 'lg:border-b lg:border-default', footer: 'lg:border-t lg:border-default' }"
+  <div class="flex flex-1">
+    <USidebar
+      v-model:open="open"
+      collapsible="icon"
+      :ui="{
+        inner: 'bg-elevated/25',
+      }"
     >
-      <!-- Header -->
-      <template #header="{ collapsed }">
-        <NuxtLink class="flex items-center" :class="{ 'py-1 px-1 bg-blue-600 rounded-sm': collapsed }" to="/">
-          <UIcon name="i-lucide-scan-barcode" class="size-5" :class="{ 'bg-white': collapsed, 'bg-blue-600 ml-2': !collapsed }" />
-          <div v-if="!collapsed" class="text-sm px-2 font-semibold text-slate-700">
-            TallySplit AI
-          </div>
-        </NuxtLink>
+      <template #header>
+        <UButton
+          to="/"
+          icon="i-lucide-scan-barcode"
+          label="TallySplit AI"
+          color="neutral"
+          variant="ghost"
+          square
+          class="w-full overflow-hidden"
+          :ui="{ leadingIcon: 'text-blue-600' }"
+        />
       </template>
 
-      <!-- Navigation Menu -->
-      <template #default="{ collapsed }">
-        <UNavigationMenu :collapsed="collapsed" :items="links" orientation="vertical" />
+      <template #default="{ state }">
+        <UNavigationMenu
+          :key="state"
+          :items="getLinks(state)"
+          orientation="vertical"
+          :ui="{ link: 'p-1.5 overflow-hidden' }"
+        />
       </template>
 
-      <!-- User Icon -->
-      <template #footer="{ collapsed }">
-        <div class="flex items-center py-1" :class="{ 'px-1': collapsed }">
-          <div class="inline-flex p-1 items-center justify-center rounded-full bg-slate-200">
-            <UIcon name="i-lucide-user-round" class="size-4 text-slate-400 bg-slate-500" />
-          </div>
-          <div v-if="!collapsed" class="pl-2 text-sm text-slate-500">
-            {{ userId }}
-          </div>
-        </div>
+      <template #footer>
+        <UButton
+          icon="i-lucide-user-round"
+          :label="userId"
+          color="neutral"
+          variant="ghost"
+          square
+          class="w-full overflow-hidden"
+        />
       </template>
-    </UDashboardSidebar>
+    </USidebar>
 
-    <UDashboardPanel id="main" class="overflow-scroll">
-      <template #body>
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <div class="h-(--ui-header-height) shrink-0 flex items-center px-4 border-b border-default">
+        <UButton
+          icon="i-lucide-panel-left"
+          color="neutral"
+          variant="ghost"
+          aria-label="Toggle sidebar"
+          @click="open = !open"
+        />
+      </div>
+
+      <div class="flex-1 overflow-auto">
         <slot />
-      </template>
+      </div>
 
-      <template v-if="$slots['panel-footer']" #footer>
-        <!-- Set manual height because of 1px diff. -->
-        <div class="border-t py-2 border-t-slate-200 bg-slate-100">
-          <slot name="panel-footer" />
-        </div>
-      </template>
-    </UDashboardPanel>
-
-    <!-- <NotificationsSlideover /> -->
-  </UDashboardGroup>
+      <div v-if="$slots['panel-footer']" class="py-1 bg-slate-100 border-0">
+        <slot name="panel-footer" />
+      </div>
+    </div>
+  </div>
 </template>
