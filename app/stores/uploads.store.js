@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { WORKFLOW_STATUS } from '~~/shared/enums/workflow-status.js'
 
 /**
  * Store for managing uploads list data from the database
@@ -15,6 +16,44 @@ export const useUploadsStore = defineStore('uploads', () => {
   // -------- GETTERS --------
 
   const totalUploads = computed(() => uploads.value.length)
+
+  const getUploadByHashId = computed(() => hashId => uploads.value.find(u => u.hashId === hashId))
+
+  /**
+   * Get the latest workflow run for an upload by hashId
+   * @param {string} hashId
+   * @returns {object|null}
+   */
+  function latestWorkflowById (hashId) {
+    return getUploadByHashId.value(hashId)?.workflowRuns?.[0] ?? null
+  }
+
+  /**
+   * Check if an upload has any workflow runs
+   * @param {string} hashId
+   * @returns {boolean}
+   */
+  function hasWorkflowsById (hashId) {
+    return (getUploadByHashId.value(hashId)?.workflowRunCount ?? 0) > 0
+  }
+
+  /**
+   * Check if an upload's latest workflow has errors
+   * True when: workflow explicitly failed, or required retries (2+ runs)
+   * @param {string} hashId
+   * @returns {boolean}
+   */
+  function hasWorkflowErrorsById (hashId) {
+    const upload = getUploadByHashId.value(hashId)
+    if (!upload) return false
+
+    const runCount = upload.workflowRunCount ?? 0
+    if (runCount >= 2) return true
+
+    const workflow = upload.workflowRuns?.[0]
+    return workflow?.status === WORKFLOW_STATUS.FAILED
+      || workflow?.status === WORKFLOW_STATUS.PARTIAL
+  }
 
   // -------- ACTIONS --------
 
@@ -88,6 +127,10 @@ export const useUploadsStore = defineStore('uploads', () => {
 
     // Getters
     totalUploads,
+    getUploadByHashId,
+    latestWorkflowById,
+    hasWorkflowsById,
+    hasWorkflowErrorsById,
 
     // Actions
     fetchUploads,

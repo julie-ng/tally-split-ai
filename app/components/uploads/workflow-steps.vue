@@ -1,0 +1,76 @@
+<script setup>
+import { UPLOAD_STATUS } from '~~/shared/enums/upload-status.js'
+import { WORKFLOW_STEP_STATUS } from '~~/shared/enums/workflow-status.js'
+
+const props = defineProps({
+  uploadStatus: {
+    type: String,
+    required: true,
+  },
+  workflow: {
+    type: Object,
+    default: null,
+  },
+})
+
+/**
+ * Map upload status to a step-like status for the first circle
+ * TODO: Add processing status + spin animation for upload step
+ *       once uploads store and uploadQueue store are combined.
+ */
+function uploadStepStatus (status) {
+  switch (status) {
+    case UPLOAD_STATUS.UPLOADED: return WORKFLOW_STEP_STATUS.COMPLETED
+    case UPLOAD_STATUS.FAILED: return WORKFLOW_STEP_STATUS.FAILED
+    default: return WORKFLOW_STEP_STATUS.PENDING
+  }
+}
+
+const steps = computed(() => [
+  { label: 'Upload', status: uploadStepStatus(props.uploadStatus) },
+  { label: 'OCR', status: props.workflow?.ocrStatus ?? WORKFLOW_STEP_STATUS.PENDING },
+  { label: 'Annotations', status: props.workflow?.annotationsStatus ?? WORKFLOW_STEP_STATUS.PENDING },
+  { label: 'Split', status: props.workflow?.splitStatus ?? WORKFLOW_STEP_STATUS.PENDING },
+])
+
+function stepIcon (status) {
+  switch (status) {
+    case WORKFLOW_STEP_STATUS.COMPLETED: return 'i-lucide-circle-check'
+    case WORKFLOW_STEP_STATUS.FAILED: return 'i-lucide-circle-alert'
+    case WORKFLOW_STEP_STATUS.PROCESSING: return 'i-lucide-loader-circle'
+    default: return 'i-lucide-circle'
+  }
+}
+
+function stepColor (status) {
+  switch (status) {
+    case WORKFLOW_STEP_STATUS.COMPLETED: return 'text-green-500'
+    case WORKFLOW_STEP_STATUS.FAILED: return 'text-amber-500'
+    case WORKFLOW_STEP_STATUS.PROCESSING: return 'text-blue-500'
+    default: return 'text-neutral-300'
+  }
+}
+</script>
+
+<template>
+  <div class="flex items-center gap-1">
+    <UTooltip
+      v-for="step in steps"
+      :key="step.label"
+      :text="`${step.label}: ${step.status}`"
+    >
+      <span
+        class="size-5 text-center rounded-full"
+        :class="stepColor(step.status)"
+      >
+        <UIcon
+          :name="stepIcon(step.status)"
+          class="size-4 align-middle"
+          :class="[
+            step.status === WORKFLOW_STEP_STATUS.PROCESSING && 'animate-spin',
+          ]"
+        />
+      </span>
+    </UTooltip>
+  </div>
+</template>

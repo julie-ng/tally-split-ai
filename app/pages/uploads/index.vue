@@ -26,76 +26,43 @@ const pagination = ref({
 })
 
 const columns = [
-  // {
-  //   accessorKey: 'id',
-  //   header: '#',
-  //   cell: ({row}) => `${row.getValue('id')}`
-  // },
-  {
-    id: 'expand',
-    cell: ({ row }) =>
-      h(UButton, {
-        'color': 'neutral',
-        'variant': 'ghost',
-        'icon': 'i-lucide-chevron-down',
-        'square': true,
-        'aria-label': 'Expand',
-        'ui': {
-          leadingIcon: [
-            'transition-transform',
-            row.getIsExpanded() ? 'duration-200 rotate-180' : '',
-          ],
-        },
-        'onClick': () => row.toggleExpanded(),
-      }),
-  }, //
   {
     accessorKey: 'hashId',
-    header: 'Hash ID',
+    header: 'ID',
   },
-  // {
-  //   accessorKey: 'receiptDate',
-  //   header: 'Receipt Date',
-  // },
   {
-    accessorKey: 'status',
-    header: 'Status',
-    cell: ({ row }) => `${row.getValue('status')}`,
+    accessorKey: 'originalFilename',
+    header: 'File',
   },
-  // {
-  //   accessorKey: 'uploadedAt',
-  //   header: 'Uploaded',
-  // },
-  {
-    accessorKey: 'title',
-    header: 'Title',
-  },
-  // {
-  //   accessorKey: 'blobName',
-  //   header: 'Blob Name',
-  // },
   {
     accessorKey: 'size',
     header: 'Size',
     cell: ({ row }) => `${formatBytes(row.getValue('size'))}`,
   },
+  // {
+  //   accessorKey: 'status',
+  //   header: 'Upload Status',
+  // },
   {
-    accessorKey: 'azureTags',
-    header: 'Blob Tags',
+    accessorKey: 'uploadedAt',
+    header: 'Uploaded',
+  },
+  {
+    accessorKey: 'workflow',
+    header: 'Progress',
   },
   {
     accessorKey: 'actions',
-    header: 'Actions',
+    header: '',
   },
 ]
 
-const expanded = ref({})
+// const expanded = ref({})
 
 const tableStyles = {
   base: 'min-w-full',
-  thead: 'bg-slate-50',
-  th: 'text-slate-700',
-  td: 'align-top',
+  th: 'text-slate-600 font-semibold',
+  td: 'p-3 align-middle',
   tr: 'data-[expanded=true]:bg-elevated/50',
 }
 
@@ -113,29 +80,27 @@ const deleteUpload = async (hashId, title, blobName) => {
   }
 }
 
-const analyzeReceipt = async (hashId) => {
-  try {
-    await $fetch(`/api/analysis/ocr/${hashId}`, {
-      method: 'POST',
-    })
-
-    // Refresh table to show updated status
-    await uploadsStore.fetchUploads()
-  }
-  catch (error) {
-    console.error('Failed to analyze receipt:', error)
-    alert('Failed to analyze receipt. Please try again.')
-  }
-}
-
-const getAnalyzeButtonText = (status) => {
-  switch (status) {
-    case UPLOAD_ANALYSIS_STATUS.QUEUED: return 'Queued...'
-    case UPLOAD_ANALYSIS_STATUS.PROCESSING: return 'Analyzing...'
-    case UPLOAD_ANALYSIS_STATUS.COMPLETED: return 'Analyzed'
-    case UPLOAD_ANALYSIS_STATUS.FAILED: return 'Retry'
-    default: return 'Analyze'
-  }
+function getRowActions (row) {
+  return [
+    [
+      { label: 'Actions', type: 'label' },
+      {
+        label: 'Details',
+        onSelect: () => navigateTo(`/uploads/${row.original.hashId}`),
+      },
+      {
+        label: 'View Receipt',
+        disabled: !row.original.receipt,
+        onSelect: () => row.original.receipt && navigateTo(`/receipts/${row.original.receipt.id}`),
+      },
+    ],
+    [
+      {
+        label: 'Delete',
+        onSelect: () => deleteUpload(row.original.hashId, row.original.title, row.original.blobName),
+      },
+    ],
+  ]
 }
 
 const paginationInfo = computed(() => {
@@ -169,11 +134,10 @@ const paginationInfo = computed(() => {
       </div>
 
       <ClientOnly>
-        <div class="border bg-white border-slate-200 rounded-lg overflow-hidden">
+        <div class="border bg-white border-slate-200 overflow-hidden">
           <!-- TODO: autoResetPageIndex configuration works now to keep page when deleting items. But it will break as soon as we try to use filters -->
           <UTable
             ref="table"
-            v-model:expanded="expanded"
             v-model:pagination="pagination"
             :pagination-options="{
               getPaginationRowModel: getPaginationRowModel(),
@@ -187,105 +151,65 @@ const paginationInfo = computed(() => {
             loading-animation="carousel"
             class="flex-1"
           >
-            <template #expanded="{ row }">
-              <div class="bg-slate-50 p-4">
-                <vue-json-pretty
-                  :data="row.original"
-                  :indent="2"
-                  :deep="4"
-                  :show-icon="true"
-                  :show-length="true"
-                />
-              </div>
-            </template>
             <template #hashId-cell="{ row }">
               <NuxtLink
                 :to="`/uploads/${row.original.hashId}`"
                 class="text-slate-400 hover:text-blue-800 hover:underline font-mono"
               >
-                {{ row.original.hashId }}
+                {{ row.original.hashId.slice(0, 6) }}
               </NuxtLink>
             </template>
-            <template #status-cell="{ row }">
-              <UBadge
-                :color="badgeStyleHelpers.statusBadgeColor(row.original.status)"
-                :variant="badgeStyleHelpers.statusBadgeVariant(row.original.status)"
-              >
-                {{ row.original.status }}
-              </UBadge>
-            </template>
-            <template #title-cell="{ row }">
-              <div class="mb-1 text-slate-800 font-medium">
-                <NuxtLink
-                  :to="`/uploads/${row.original.hashId}`"
-                  class=" hover:text-blue-800 hover:underline"
+
+            <!-- <template #status-cell="{ row }">
+              <uploads-status-text :status="row.original.status" />
+            </template> -->
+
+            <template #originalFilename-cell="{ row }">
+              <span class="inline-flex items-center gap-1.5">
+                <UTooltip
+                  v-if="row.original.receipt"
+                  text="View Receipt"
+                  :content="{ side: 'top' }"
+                  :delay-duration="0"
+                  arrow
                 >
-                  {{ row.original.title }}
-                </NuxtLink>
-              </div>
-              <a :href="row.original.blobUrl" class="font-xs text-slate-400 hover:underline" target="_blank">
+                  <UButton
+                    :to="`/receipts/${row.original.receipt.id}`"
+                    icon="i-lucide-receipt-euro"
+                    size="xs"
+                    color="primary"
+                    variant="ghost"
+                  />
+                </UTooltip>
                 {{ row.original.originalFilename }}
-              </a>
+              </span>
             </template>
-            <!--
-          <template #blobName-cell="{ row }">
-            <a
-              :href="row.original.blobUrl"
-              class="text-slate-700 hover:underline"
-              target="_blank">
-                {{ row.original.originalFilename }}
-            </a>
-          </template>
-          -->
-            <!--
-          <template #receiptDate-cell="{ row }">
-            <time :datetime="row.original.receiptDate" :title="row.original.receiptDate">
-              {{ timestampUtils.toShortDate(row.original.receiptDate) }}
-            </time>
-          </template>
-          -->
+
             <template #uploadedAt-cell="{ row }">
               <time :datetime="row.original.uploadedAt" :title="row.original.uploadedAt">
                 {{ timestampUtils.toShortDatetime(row.original.uploadedAt) }}
               </time>
             </template>
-            <template #azureTags-cell="{ row }">
-              <div v-if="row.original.azureTags != null">
-                <div v-for="tag, i in azureUtils.blobTagsJsonToObject(row.original.azureTags)" :key="`${row.original.hashId}-tag-${tag.key}-${i}`">
-                  <UBadge
-                    color="info"
-                    variant="soft"
-                    class="my-1 mr-1 text-slate-400"
-                  >
-                    {{ tag.key }}: {{ tag.value }}
-                  </UBadge>
-                </div>
-              </div>
+
+            <template #workflow-cell="{ row }">
+              <uploads-workflow-steps
+                :upload-status="row.original.status"
+                :workflow="uploadsStore.latestWorkflowById(row.original.hashId)"
+              />
             </template>
+
             <template #actions-cell="{ row }">
-              <UButton
-                icon="i-lucide-focus"
-                loading-icon="i-lucide-loader"
-                loading-auto
-                :disabled="[UPLOAD_ANALYSIS_STATUS.QUEUED, UPLOAD_ANALYSIS_STATUS.PROCESSING, UPLOAD_ANALYSIS_STATUS.COMPLETED].includes(row.original.analysisStatus)"
-                color="info"
-                variant="solid"
-                class="px-3 py-1 text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed mr-2 cursor-pointer"
-                @click="analyzeReceipt(row.original.hashId)"
-              >
-                {{ getAnalyzeButtonText(row.original.analysisStatus) }}
-              </UButton>
-              <UButton
-                icon="i-lucide-x"
-                color="neutral"
-                variant="outline"
-                class="px-3 py-1 rounded transition-colors cursor-pointer"
-                @click="deleteUpload(row.original.hashId, row.original.title, row.original.blobName)"
-              >
-                Delete
-              </UButton>
+              <UDropdownMenu :items="getRowActions(row)">
+                <UButton
+                  icon="i-lucide-ellipsis-vertical"
+                  color="neutral"
+                  variant="ghost"
+                  class="cursor-pointer"
+                />
+              </UDropdownMenu>
             </template>
           </UTable>
+
           <div class="flex justify-between items-center border-t border-default py-4 px-4">
             <div class="text-sm text-slate-600">
               Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }}
@@ -302,12 +226,3 @@ const paginationInfo = computed(() => {
     </div>
   </UContainer>
 </template>
-
-<style scoped>
-pre {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  overflow-x: auto;
-  max-width: 100%;
-}
-</style>
