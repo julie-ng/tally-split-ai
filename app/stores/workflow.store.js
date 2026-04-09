@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
-import { WORKFLOW_STATUS } from '~~/shared/enums/workflow-status.js'
-import { WORKFLOW_STEP_STATUS } from '~~/shared/enums/workflow-status.js'
+import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '~~/shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '~~/shared/enums/workflow-step.js'
 
 /**
@@ -22,7 +21,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
   const runCountByHashId = computed(() => hashId => runs.value[hashId]?.length ?? 0)
 
-  const hasErrorsByHashId = computed(() => hashId => {
+  const hasErrorsByHashId = computed(() => (hashId) => {
     const count = runs.value[hashId]?.length ?? 0
     if (count >= 2) return true
 
@@ -39,7 +38,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     splitStatus: WORKFLOW_STEP_STATUS.PENDING,
   }
 
-  const stepStatusesByHashId = computed(() => hashId => {
+  const stepStatusesByHashId = computed(() => (hashId) => {
     const latest = runs.value[hashId]?.[0]
     if (!latest) return { ...DEFAULT_STEP_STATUSES }
 
