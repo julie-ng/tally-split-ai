@@ -10,6 +10,7 @@ const callbackSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger('workflow')
   const db = useDB()
   const runUuid = getRouterParam(event, 'runUuid')
 
@@ -48,8 +49,11 @@ export default defineEventHandler(async (event) => {
   })
 
   if (!isValid) {
+    log.warn({ runUuid }, 'Invalid callback token')
     throw createError({ statusCode: 401, message: 'Invalid callback token' })
   }
+
+  log.info({ runUuid, hashId: workflowRun.upload.hashId, step, status }, 'Callback received')
 
   // Emit to event bus keyed by userId
   workflowBus.emit(workflowRun.upload.userId, {

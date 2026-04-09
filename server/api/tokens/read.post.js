@@ -8,6 +8,7 @@ const requestSchema = (userId) => {
 }
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger('token')
   // ⚠️ TODO - implement security.
   requireUserId(event)
   const userId = event.context.userId
@@ -45,6 +46,8 @@ export default defineEventHandler(async (event) => {
       permissions: 'read',
       expiresInMinutes: 5,
     })
+
+  log.info({ permissions: 'read', blobUrl, expiresAt }, 'SAS token generated')
 
   return {
     success: true,

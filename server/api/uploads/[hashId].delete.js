@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger('upload')
   const db = useDB()
   requireUserId(event)
   requireHashIdParam(event)
@@ -37,7 +38,6 @@ export default defineEventHandler(async (event) => {
       if (upload.blobName) {
         await azureStorageUtils.deleteBlob(upload.blobName)
         deletionResults.originalBlob = true
-        console.log(`✅ Deleted blob: ${upload.blobName}`)
       }
 
       // Delete thumbnail if it exists
@@ -45,17 +45,15 @@ export default defineEventHandler(async (event) => {
         try {
           await azureStorageUtils.deleteBlob(upload.thumbnailName)
           deletionResults.thumbnail = true
-          console.log(`✅ Deleted thumbnail: ${upload.thumbnailName}`)
         }
+        // eslint-disable-next-line no-unused-vars
         catch (thumbnailError) {
-          // Thumbnail might not exist yet (upload interrupted before thumbnail created)
-          console.warn(`⚠️ Thumbnail not found or already deleted: ${upload.thumbnailName}`)
-          console.warn(thumbnailError)
+          log.warn({ hashId, blob: upload.thumbnailName }, 'Thumbnail not found or already deleted')
         }
       }
     }
     catch (error) {
-      console.error('❌ Error deleting blobs from Azure:', error)
+      log.error({ hashId, blob: upload.blobName, err: error }, 'Failed to delete blobs from Azure')
       throw createError({
         statusCode: 500,
         message: 'Failed to delete blobs from Azure Storage',
@@ -63,15 +61,14 @@ export default defineEventHandler(async (event) => {
       })
     }
   }
-  else {
-    console.log(`ℹ️ Skipping blob deletion - upload status is '${upload.status}', not 'uploaded'`)
-  }
 
   // Delete the database record
   const result = await db
     .delete(schema.uploads)
     .where(eq(schema.uploads.hashId, hashId))
     .returning()
+
+  log.info({ hashId, blobUrl: upload.blobUrl, thumbnailUrl: upload.thumbnailUrl || undefined }, 'Upload deleted')
 
   return {
     success: true,

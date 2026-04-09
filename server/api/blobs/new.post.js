@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger('upload')
   const db = useDB()
   requireLocalDev(event)
   requireUserId(event)
@@ -58,6 +59,8 @@ export default defineEventHandler(async (event) => {
     receiptDate,
     receiptTotal: receiptTotal ? parseFloat(receiptTotal) : null,
   }).returning()
+
+  log.info({ hashId, blobUrl }, 'Upload record created')
 
   return {
     originalFilename: filename,

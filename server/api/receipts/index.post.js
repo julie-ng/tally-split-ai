@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { receiptInputSchema } from '~~/shared/utils/zod-schemas/receipt.schema.js'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger('receipt')
   const db = useDB()
   requireUserId(event)
   const userId = event.context.userId
@@ -25,6 +26,8 @@ export default defineEventHandler(async (event) => {
     .insert(schema.receipts)
     .values(insertData)
     .returning()
+
+  log.info({ receiptId: dbResult[0].id }, 'Receipt created')
 
   return {
     success: true,

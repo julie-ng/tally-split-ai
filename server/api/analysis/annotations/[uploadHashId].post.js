@@ -2,6 +2,7 @@ import { tasks } from '@trigger.dev/sdk/v3'
 import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '~~/shared/enums/workflow-status.js'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger('analysis')
   const db = useDB()
   requireLocalDev(event)
   requireUserId(event)
@@ -10,8 +11,6 @@ export default defineEventHandler(async (event) => {
   const hashId = getRouterParam(event, 'uploadHashId')
   await requireUploadByHashId(event)
   const upload = event.context.upload
-
-  console.log(`🚀 [analysis/annotations] Triggering analyze-annotations for upload (${hashId})`)
 
   const [workflowRun] = await db
     .insert(schema.workflowRuns)
@@ -28,7 +27,7 @@ export default defineEventHandler(async (event) => {
     uploadHashId: hashId,
     workflowRunId: workflowRun.id,
   })
-  console.log(`✅ [analysis/annotations] Triggered analyze-annotations for upload (${hashId}), triggerRunId: ${handle.id}`)
+  log.info({ hashId, task: 'analyze-annotations', triggerRunId: handle.id }, 'Task triggered')
 
   return {
     success: true,

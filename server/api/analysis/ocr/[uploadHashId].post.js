@@ -2,6 +2,7 @@ import { tasks } from '@trigger.dev/sdk/v3'
 import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '~~/shared/enums/workflow-status.js'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger('analysis')
   const db = useDB()
   requireLocalDev(event)
   requireUserId(event)
@@ -22,12 +23,11 @@ export default defineEventHandler(async (event) => {
     })
     .returning()
 
-  console.log(`🚀 [analysis/ocr] Triggering analyze-ocr for upload (${hashId}), workflowRunId: ${workflowRun.id}`)
   const handle = await tasks.trigger('analyze-ocr', {
     uploadHashId: hashId,
     workflowRunId: workflowRun.id,
   })
-  console.log(`✅ [analysis/ocr] Triggered analyze-ocr for upload (${hashId}), triggerRunId: ${handle.id}`)
+  log.info({ hashId, task: 'analyze-ocr', triggerRunId: handle.id }, 'Task triggered')
 
   return {
     success: true,

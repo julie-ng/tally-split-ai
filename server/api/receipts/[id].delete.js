@@ -1,6 +1,7 @@
 import { eq, and } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger('receipt')
   const db = useDB()
   requireUserId(event)
   requireIdParam(event)
@@ -39,6 +40,8 @@ export default defineEventHandler(async (event) => {
       eq(schema.receipts.userId, userId),
     ))
     .returning()
+
+  log.info({ receiptId }, 'Receipt deleted')
 
   return {
     success: true,

@@ -5,6 +5,7 @@ import { WORKFLOW_STATUS } from '~~/shared/enums/workflow-status.js'
 import { UPLOAD_ANALYSIS_STATUS } from '~~/shared/enums/upload-analysis-status.js'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger('workflow')
   const db = useDB()
   requireUserId(event)
   requireHashIdParam(event, 'uploadHashId')
@@ -29,7 +30,7 @@ export default defineEventHandler(async (event) => {
   })
 
   if (existingRun) {
-    console.log(`⚠️ [workflow] Workflow already active for upload (${hashId}), workflowRunId: ${existingRun.id}`)
+    log.warn({ hashId, workflowRunId: existingRun.id }, 'Workflow already active')
     return {
       success: true,
       message: 'Workflow already in progress',
@@ -62,14 +63,14 @@ export default defineEventHandler(async (event) => {
   })
 
   // Trigger the workflow (fire and forget)
-  console.log(`🚀 [workflow] Triggering receipt-workflow for upload (${hashId}), workflowRunId: ${workflowRun.id}`)
+  log.info({ hashId, workflowRunId: workflowRun.id }, 'Triggering receipt-workflow')
   const handle = await tasks.trigger('receipt-workflow', {
     uploadHashId: hashId,
     workflowRunId: workflowRun.id,
     runUuid: workflowRun.uuid,
     callbackToken,
   })
-  console.log(`✅ [workflow] Triggered receipt-workflow for upload (${hashId}), triggerRunId: ${handle.id}`)
+  log.info({ hashId, triggerRunId: handle.id }, 'Workflow triggered')
 
   // Store the Trigger.dev run ID
   await db

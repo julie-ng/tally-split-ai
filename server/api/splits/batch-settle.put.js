@@ -8,6 +8,7 @@ const batchSettleSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger('split')
   const db = useDB()
   requireUserId(event)
   const userId = event.context.userId
@@ -68,7 +69,7 @@ export default defineEventHandler(async (event) => {
       )
       .returning()
 
-    console.log(`✅ Marked ${updated.length} splits as settled for ${year}-${month}`)
+    log.info({ year, month, count: updated.length }, 'Batch settled')
 
     return {
       success: true,
@@ -77,7 +78,7 @@ export default defineEventHandler(async (event) => {
     }
   }
   catch (err) {
-    console.error('❌ Failed to batch settle splits:', err)
+    log.error({ year, month, err }, 'Failed to batch settle')
     throw createError({
       statusCode: 500,
       message: 'Failed to mark splits as settled',

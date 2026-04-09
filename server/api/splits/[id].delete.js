@@ -1,6 +1,7 @@
 import { eq, and } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger('split')
   const db = useDB()
   requireUserId(event)
   requireIdParam(event)
@@ -22,6 +23,8 @@ export default defineEventHandler(async (event) => {
       message: `Split with ID '${splitId}' not found`,
     })
   }
+
+  log.info({ splitId }, 'Split deleted')
 
   return {
     success: true,

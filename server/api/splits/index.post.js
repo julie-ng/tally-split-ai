@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { splitRequestSchema } from '~~/shared/utils/zod-schemas/split.schema.js'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger('split')
   const db = useDB()
   requireUserId(event)
   const userId = event.context.userId
@@ -33,6 +34,8 @@ export default defineEventHandler(async (event) => {
     .insert(schema.splits)
     .values(insertData)
     .returning()
+
+  log.info({ splitId: dbResult[0].id }, 'Split created')
 
   return {
     success: true,
