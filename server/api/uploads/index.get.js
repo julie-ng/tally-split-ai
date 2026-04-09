@@ -1,30 +1,47 @@
-import { eq } from 'drizzle-orm'
-
-// const delay = (durationMs) => {
-//   console.log('delay', durationMs)
-//   return new Promise(resolve => setTimeout(resolve, durationMs))
-// }
+import { eq, desc } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const db = useDB()
   requireUserId(event)
   const userId = event.context.userId
 
-  // Disable caching for this endpoint
-  // setResponseHeader(event, 'Cache-Control', 'no-cache, no-store, must-revalidate')
+  const uploads = await db.query.uploads.findMany({
+    where: eq(schema.uploads.userId, userId),
+    orderBy: [desc(schema.uploads.createdAt)],
+    columns: {
+      id: true,
+      hashId: true,
+      title: true,
+      status: true,
+      analysisStatus: true,
+      originalFilename: true,
+      thumbnailUrl: true,
+      receiptId: true,
+      blobUrl: true,
+      contentType: true,
+      size: true,
+      createdAt: true,
+      uploadedAt: true,
+      analyzedAt: true,
+    },
+    with: {
+      workflowRuns: {
+        columns: {
+          id: true,
+          status: true,
+          ocrStatus: true,
+          annotationsStatus: true,
+          splitStatus: true,
+          createdAt: true,
+          completedAt: true,
+        },
+        orderBy: [desc(schema.workflowRuns.createdAt)],
+      },
+    },
+  })
 
-  const uploads = await db.select()
-    .from(schema.uploads)
-    .where(eq(schema.uploads.userId, userId))
-
-  // Artificial delay for testing loading states
-  // await delay(1500)
-
-  // Filter out internal blob tags from azureTags
-  const uploadsWithFilteredTags = uploads.map(upload => ({
+  return uploads.map(upload => ({
     ...upload,
-    azureTags: upload.azureTags ? azureUtils.excludeInternalBlobTags(upload.azureTags) : upload.azureTags,
+    workflowRunCount: upload.workflowRuns.length,
   }))
-
-  return uploadsWithFilteredTags
 })
