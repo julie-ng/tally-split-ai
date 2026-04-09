@@ -16,7 +16,6 @@ export default defineEventHandler(async (event) => {
       analysisStatus: true,
       originalFilename: true,
       thumbnailUrl: true,
-      receiptId: true,
       blobUrl: true,
       contentType: true,
       size: true,
@@ -25,6 +24,12 @@ export default defineEventHandler(async (event) => {
       analyzedAt: true,
     },
     with: {
+      receipt: {
+        columns: {
+          id: true,
+          title: true,
+        },
+      },
       workflowRuns: {
         columns: {
           id: true,
