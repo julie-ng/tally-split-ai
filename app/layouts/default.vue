@@ -112,16 +112,27 @@ function getLinks (state: 'collapsed' | 'expanded') {
       }"
     >
       <template #header>
-        <UButton
-          to="/"
-          icon="i-lucide-scan-barcode"
-          label="TallySplit AI"
-          color="neutral"
-          variant="ghost"
-          square
-          class="w-full overflow-hidden"
-          :ui="{ leadingIcon: 'text-blue-600' }"
-        />
+        <div class="flex items-center justify-between w-full overflow-hidden">
+          <UButton
+            to="/"
+            icon="i-lucide-scan-barcode"
+            label="TallySplit AI"
+            color="neutral"
+            variant="ghost"
+            square
+            class="overflow-hidden"
+            :ui="{ leadingIcon: 'text-blue-600' }"
+          />
+          <UButton
+            icon="i-lucide-panel-left"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            aria-label="Toggle sidebar"
+            class="shrink-0"
+            @click="open = !open"
+          />
+        </div>
       </template>
 
       <template #default="{ state }">
@@ -146,16 +157,6 @@ function getLinks (state: 'collapsed' | 'expanded') {
     </USidebar>
 
     <div class="flex-1 flex flex-col overflow-hidden">
-      <div class="h-(--ui-header-height) shrink-0 flex items-center px-4 border-b border-default">
-        <UButton
-          icon="i-lucide-panel-left"
-          color="neutral"
-          variant="ghost"
-          aria-label="Toggle sidebar"
-          @click="open = !open"
-        />
-      </div>
-
       <div class="flex-1 overflow-auto">
         <slot />
       </div>
