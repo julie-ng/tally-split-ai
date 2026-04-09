@@ -16,6 +16,7 @@ export default defineEventHandler(async (event) => {
     ),
     with: {
       receipt: true,
+      workflowRuns: true,
     },
   })
 
