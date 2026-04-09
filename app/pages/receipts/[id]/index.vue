@@ -49,51 +49,38 @@ const breadcrumbItems = [
 </script>
 
 <template>
-  <NuxtLayout>
-    <UContainer class="pt-5">
-      <!-- <div class="mb-5">
-        <UButton
-          color="neutral"
-          variant="outline"
-          class="cursor-pointer"
-          @click="receiptsStore.clearAllCaches()"
-        >
-          Reset Local Storage
-        </UButton>
-      </div> -->
-      <div class="ml-4">
-        <UBreadcrumb :items="breadcrumbItems" />
-      </div>
+  <UContainer class="pt-5">
+    <div class="ml-4">
+      <UBreadcrumb :items="breadcrumbItems" />
+    </div>
 
-      <!-- Loading -->
-      <loading-placeholder v-if="pending" title="Loading Receipt" :hash-id="id" />
+    <!-- Loading -->
+    <loading-placeholder v-if="pending" title="Loading Receipt" :hash-id="id" />
 
-      <!-- Error -->
-      <UAlert
-        v-else-if="error"
-        title="Unable to Load Receipt"
-        :description="error.message"
-        class="my-5"
-        color="error"
-        variant="subtle"
-        icon="i-lucide-triangle-alert"
-      />
+    <!-- Error -->
+    <UAlert
+      v-else-if="error"
+      title="Unable to Load Receipt"
+      :description="error.message"
+      class="my-5"
+      color="error"
+      variant="subtle"
+      icon="i-lucide-triangle-alert"
+    />
 
-      <!-- Receipt Details -->
-      <div v-else-if="receipt" class="mr-4">
-        <receipt-detail :receipt="receipt" />
-      </div>
+    <!-- Receipt Details -->
+    <div v-else-if="receipt" class="mr-4">
+      <receipt-detail :receipt="receipt" />
+    </div>
 
-      <!-- Not found state -->
-      <div v-else>
-        <not-found :title="`Receipt Not Found`" :hash-id="id" />
-      </div>
-    </UContainer>
+    <!-- Not found state -->
+    <div v-else>
+      <not-found :title="`Receipt Not Found`" :hash-id="id" />
+    </div>
 
-    <template #panel-footer>
-      <receipt-next-prev-nav :receipt-id="id" />
-    </template>
-  </NuxtLayout>
+    <!-- Prev/Next Navigation -->
+    <receipt-next-prev-nav :receipt-id="id" class="mt-5 border-t border-default pt-4" />
+  </UContainer>
 </template>
 
 <style scoped>
