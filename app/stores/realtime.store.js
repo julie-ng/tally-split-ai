@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { useUploadQueueStore } from '~/stores/upload-queue.store'
+import { useUploadsStore } from '~/stores/uploads.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
 
 export const useRealtimeStore = defineStore('realtime', () => {
@@ -41,7 +42,7 @@ export const useRealtimeStore = defineStore('realtime', () => {
   function handleWorkflowUpdate (data) {
     const { uploadHashId, step, status } = data
 
-    // Update upload queue (client-side uploads on /uploads/new)
+    // Update upload queue (client-side upload progress)
     const uploadQueueStore = useUploadQueueStore()
     const queueItem = uploadQueueStore.uploads.find(u => u.hashId === uploadHashId)
     if (queueItem) {
@@ -54,6 +55,10 @@ export const useRealtimeStore = defineStore('realtime', () => {
     // Update workflow store (DB-backed workflow data)
     const workflowStore = useWorkflowStore()
     workflowStore.updateStepStatus(uploadHashId, step, status)
+
+    // Refresh upload record (pulls new rows into table if they don't exist yet)
+    const uploadsStore = useUploadsStore()
+    uploadsStore.refreshUploadByHashId(uploadHashId)
   }
 
   return {

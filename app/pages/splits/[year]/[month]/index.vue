@@ -378,10 +378,11 @@ async function handleMarkAllSettled () {
       <p class="mb-4">
         Please upload receipts to get some data.
       </p>
+      <!-- TODO: open upload modal instead of navigating -->
       <UButton
         color="primary"
         variant="soft"
-        to="/uploads/new"
+        disabled
       >
         Upload Receipts
       </UButton>

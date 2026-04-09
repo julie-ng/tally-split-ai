@@ -88,11 +88,6 @@ const links = computed(() => [
             open.value = false
           },
         },
-        {
-          label: 'New Upload',
-          icon: 'i-lucide-upload',
-          to: '/uploads/new',
-        },
       ],
     },
   ],

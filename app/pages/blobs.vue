@@ -45,9 +45,10 @@ const { data, pending, error } = await useFetch('/api/blobs', {
         <p class="text-slate-400 text-lg mb-4">
           No uploads yet
         </p>
-        <NuxtLink to="/uploads/new" class="text-blue-600 hover:text-blue-800 underline">
+        <!-- TODO: open upload modal instead of navigating -->
+        <span class="text-slate-400">
           Upload your first receipt
-        </NuxtLink>
+        </span>
       </div>
 
       <!-- Display Blobs -->
