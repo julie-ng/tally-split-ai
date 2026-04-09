@@ -123,11 +123,10 @@ export function simpleHash (str) {
 export function createThumbnailFilename (filename) {
   const lastDotIndex = filename.lastIndexOf('.')
   if (lastDotIndex === -1) {
-    return `${filename}-thumbnail`
+    return `${filename}-thumbnail.jpg`
   }
   const name = filename.substring(0, lastDotIndex)
-  const extension = filename.substring(lastDotIndex)
-  return `${name}-thumbnail${extension}`
+  return `${name}-thumbnail.jpg`
 }
 
 /**

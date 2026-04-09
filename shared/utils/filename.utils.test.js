@@ -381,20 +381,20 @@ describe('createAzureFilename()', () => {
 })
 
 describe('createThumbnailFilename()', () => {
-  it('should add -thumbnail suffix before extension', () => {
+  it('should add -thumbnail suffix and always use .jpg extension', () => {
     expect(createThumbnailFilename('receipt.jpg')).toBe('receipt-thumbnail.jpg')
-    expect(createThumbnailFilename('image.png')).toBe('image-thumbnail.png')
-    expect(createThumbnailFilename('photo.jpeg')).toBe('photo-thumbnail.jpeg')
+    expect(createThumbnailFilename('image.png')).toBe('image-thumbnail.jpg')
+    expect(createThumbnailFilename('photo.jpeg')).toBe('photo-thumbnail.jpg')
   })
 
   it('should handle filenames with multiple dots', () => {
     expect(createThumbnailFilename('my.receipt.jpg')).toBe('my.receipt-thumbnail.jpg')
-    expect(createThumbnailFilename('file.name.with.dots.png')).toBe('file.name.with.dots-thumbnail.png')
+    expect(createThumbnailFilename('file.name.with.dots.png')).toBe('file.name.with.dots-thumbnail.jpg')
   })
 
   it('should handle filenames without extension', () => {
-    expect(createThumbnailFilename('receipt')).toBe('receipt-thumbnail')
-    expect(createThumbnailFilename('noextension')).toBe('noextension-thumbnail')
+    expect(createThumbnailFilename('receipt')).toBe('receipt-thumbnail.jpg')
+    expect(createThumbnailFilename('noextension')).toBe('noextension-thumbnail.jpg')
   })
 
   it('should handle long Azure-style filenames', () => {
@@ -402,8 +402,8 @@ describe('createThumbnailFilename()', () => {
       .toBe('2025-10-08-DM-7.90-circled-initials-8e8354-thumbnail.jpg')
   })
 
-  it('should preserve original filename structure', () => {
+  it('should preserve original filename structure but use .jpg', () => {
     expect(createThumbnailFilename('2025-01-01-Store-15.00-abc123.png'))
-      .toBe('2025-01-01-Store-15.00-abc123-thumbnail.png')
+      .toBe('2025-01-01-Store-15.00-abc123-thumbnail.jpg')
   })
 })
