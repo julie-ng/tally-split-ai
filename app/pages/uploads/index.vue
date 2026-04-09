@@ -3,7 +3,7 @@ import { getPaginationRowModel } from '@tanstack/vue-table'
 import { useUserStore } from '~/stores/user.store'
 import { useUploadsStore } from '~/stores/uploads.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
-import { UPLOAD_ANALYSIS_STATUS } from '~~/shared/enums/upload-analysis-status.js'
+import { UPLOAD_STATUS } from '~~/shared/enums/upload-status.js'
 
 useHead({
   title: 'Uploads',
@@ -86,6 +86,11 @@ const deleteUpload = async (hashId, title, blobName) => {
   }
 }
 
+function canAnalyze (upload) {
+  return upload.status === UPLOAD_STATUS.UPLOADED
+    && !workflowStore.isProcessingByHashId(upload.hashId)
+}
+
 function getRowActions (row) {
   return [
     [
@@ -98,6 +103,11 @@ function getRowActions (row) {
         label: 'View Receipt',
         disabled: !row.original.receipt,
         onSelect: () => row.original.receipt && navigateTo(`/receipts/${row.original.receipt.id}`),
+      },
+      {
+        label: 'Analyze',
+        disabled: !canAnalyze(row.original),
+        onSelect: () => workflowStore.triggerWorkflow(row.original.hashId),
       },
     ],
     [

@@ -49,6 +49,13 @@ export const useWorkflowStore = defineStore('workflow', () => {
     }
   })
 
+  const isProcessingByHashId = computed(() => (hashId) => {
+    const latest = runs.value[hashId]?.[0]
+    if (!latest) return false
+    return latest.status === WORKFLOW_STATUS.QUEUED
+      || latest.status === WORKFLOW_STATUS.PROCESSING
+  })
+
   // -------- ACTIONS --------
 
   /**
@@ -111,6 +118,22 @@ export const useWorkflowStore = defineStore('workflow', () => {
   }
 
   /**
+   * Trigger the analysis workflow for an upload
+   * @param {string} hashId
+   */
+  async function triggerWorkflow (hashId) {
+    try {
+      await $fetch(`/api/workflows/${hashId}`, { method: 'POST' })
+      _log(`[WorkflowStore] ✅ triggered workflow for ${hashId}`)
+      await fetchByUploadHashId(hashId)
+    }
+    catch (err) {
+      console.error(`[WorkflowStore] ❌ failed to trigger workflow for ${hashId}:`, err)
+      throw err
+    }
+  }
+
+  /**
    * Remove workflow data for an upload
    * @param {string} hashId
    */
@@ -138,11 +161,13 @@ export const useWorkflowStore = defineStore('workflow', () => {
     latestRunByHashId,
     runCountByHashId,
     hasErrorsByHashId,
+    isProcessingByHashId,
     stepStatusesByHashId,
 
     // Actions
     fetchAll,
     fetchByUploadHashId,
+    triggerWorkflow,
     updateStepStatus,
     removeByHashId,
   }
