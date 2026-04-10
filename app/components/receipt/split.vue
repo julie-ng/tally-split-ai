@@ -35,9 +35,10 @@ const users = [
 // splitsStore.testErrors()
 
 /**
- * Fetch split data - runs once during SSR/navigation
+ * Fetch split data — self-managed, works in both SSR and client-side navigation
  */
-await callOnce(() => splitsStore.fetchSplit(props.splitId), { mode: 'navigation' })
+const splitLoading = computed(() => splitsStore.isSplitLoading(props.splitId))
+splitsStore.fetchSplit(props.splitId)
 
 /**
  * UI Functionality
@@ -161,88 +162,99 @@ function showToast (err) {
 </script>
 
 <template>
-  <div>
-    <!-- Split Amount -->
-    <receipt-split-input
-      v-model="splitAmount"
-      :sums-up="sumsUp"
-      label="Split Amount"
-      input-name="splitAmount"
-      :highlight-on-success="true"
-    >
-      <template v-if="sumsUp" #success>
-        Shares add up
-      </template>
-      <template v-if="!sumsUp" #warn>
-        Shares do not add up
-      </template>
-    </receipt-split-input>
+  <ClientOnly>
+    <!-- Loading state -->
+    <template v-if="splitLoading || !split">
+      <div class="space-y-3 animate-pulse">
+        <div class="h-8 bg-slate-100 rounded" />
+        <div class="h-8 bg-slate-100 rounded" />
+        <div class="h-8 bg-slate-100 rounded" />
+        <div class="h-8 bg-slate-100 rounded" />
+      </div>
+    </template>
 
-    <!-- Paid by -->
-    <section class="flex justify-between items-center my-2 text-sm">
-      <div class="font-medium">
-        Paid By
+    <div v-else>
+      <!-- Split Amount -->
+      <receipt-split-input
+        v-model="splitAmount"
+        :sums-up="sumsUp"
+        label="Split Amount"
+        input-name="splitAmount"
+        :highlight-on-success="true"
+      >
+        <template v-if="sumsUp" #success>
+          Shares add up
+        </template>
+        <template v-if="!sumsUp" #warn>
+          Shares do not add up
+        </template>
+      </receipt-split-input>
+
+      <!-- Paid by -->
+      <section class="flex justify-between items-center my-2 text-sm">
+        <div class="font-medium">
+          Paid By
         <!-- <ui-saved-inline-alert /> -->
-      </div>
-      <div class="text-right">
-        <receipt-split-paid-by
-          v-model="paidBy"
-          :users="users"
-        />
-      </div>
-    </section>
+        </div>
+        <div class="text-right">
+          <receipt-split-paid-by
+            v-model="paidBy"
+            :users="users"
+          />
+        </div>
+      </section>
 
-    <!-- User A Share -->
-    <receipt-split-input
-      v-model="userAShare"
-      :label="`${user1Name}'s Share`"
-      :sums-up="sumsUp"
-      input-name="userAShare"
-    />
+      <!-- User A Share -->
+      <receipt-split-input
+        v-model="userAShare"
+        :label="`${user1Name}'s Share`"
+        :sums-up="sumsUp"
+        input-name="userAShare"
+      />
 
-    <!-- User B Share -->
-    <receipt-split-input
-      v-model="userBShare"
-      :label="`${user2Name}'s Share`"
-      :sums-up="sumsUp"
-      input-name="userBShare"
-    />
+      <!-- User B Share -->
+      <receipt-split-input
+        v-model="userBShare"
+        :label="`${user2Name}'s Share`"
+        :sums-up="sumsUp"
+        input-name="userBShare"
+      />
 
-    <!-- Settle Button -->
-    <div class="mt-4 border rounded-md p-3 grid grid-cols-2 cursor-pointer hover:bg-slate-50" :class="settledClass" @click="toggleSettle">
-      <div class="text-left">
-        <div class="text-sm">
-          {{ settledText }}
+      <!-- Settle Button -->
+      <div class="mt-4 border rounded-md p-3 grid grid-cols-2 cursor-pointer hover:bg-slate-50" :class="settledClass" @click="toggleSettle">
+        <div class="text-left">
+          <div class="text-sm">
+            {{ settledText }}
+          </div>
+        </div>
+        <div class="flex justify-end">
+          <UCheckbox v-model="isSettled" class="cursor-pointer" />
         </div>
       </div>
-      <div class="flex justify-end">
-        <UCheckbox v-model="isSettled" class="cursor-pointer" />
-      </div>
-    </div>
 
-    <div class="flex justify-between items-center mt-3 text-sm">
-      <div>Reset</div>
-      <div>
-        <UButton
-          variant="solid"
-          color="neutral"
-          class="mr-2 cursor-pointer"
-          icon="i-lucide-zap"
-          @click="splitHalf"
-        >
-          Split 50/50
-        </UButton>
-        <UButton
-          variant="solid"
-          color="neutral"
-          class="cursor-pointer"
-          icon="i-lucide-eraser"
-          @click="zeroOut"
-        >
-          Reset to zero
-        </UButton>
+      <div class="flex justify-between items-center mt-3 text-sm">
+        <div>Reset</div>
+        <div>
+          <UButton
+            variant="solid"
+            color="neutral"
+            class="mr-2 cursor-pointer"
+            icon="i-lucide-zap"
+            @click="splitHalf"
+          >
+            Split 50/50
+          </UButton>
+          <UButton
+            variant="solid"
+            color="neutral"
+            class="cursor-pointer"
+            icon="i-lucide-eraser"
+            @click="zeroOut"
+          >
+            Reset to zero
+          </UButton>
+        </div>
       </div>
-    </div>
 
     <!-- <div class="text-right">
       <UButton
@@ -253,5 +265,6 @@ function showToast (err) {
         Update Split
       </UButton>
     </div> -->
-  </div>
+    </div>
+  </ClientOnly>
 </template>

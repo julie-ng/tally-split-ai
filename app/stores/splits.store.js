@@ -62,10 +62,10 @@ export const useSplitsStore = defineStore('splits', () => {
    */
   const doesSplitAddUp = computed(() => (id) => {
     const split = _getSplit(id)
+    if (!split) return false
     const sum = split.userAShare + split.userBShare
     const tolerance = 0.01 // Account for floating point precision
     const doesIt = Math.abs(sum - split.splitAmount) <= tolerance
-    // console.log(`[SplitsStore] doesSplitAddUp(${id})`, doesIt)
     return doesIt
   })
 
