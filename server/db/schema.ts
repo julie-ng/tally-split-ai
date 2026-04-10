@@ -147,6 +147,46 @@ export const workflowRuns = pgTable('workflow_runs', {
 })
 
 /**
+ * Changes table - tracks who/what made a mutation (one row per operation)
+ */
+export const changes = pgTable('changes', {
+  id: serial('id').primaryKey(),
+  source: text('source').notNull(), // 'user:<userId>' or 'task:<taskName>'
+  sourceVersion: text('source_version'), // e.g. 'gpt-4o:2024-11-20', trigger task version, or null
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+/**
+ * Receipt history - per-field change tracking for receipts
+ */
+// @ts-expect-error implicit return type any
+export const receiptHistory = pgTable('receipt_history', {
+  id: serial('id').primaryKey(),
+  // @ts-expect-error implicit return type any
+  changeId: integer('change_id').notNull().references(() => changes.id, { onDelete: 'cascade' }),
+  // @ts-expect-error implicit return type any
+  receiptId: integer('receipt_id').notNull().references(() => receipts.id, { onDelete: 'cascade' }),
+  field: text('field').notNull(),
+  oldValue: text('old_value'),
+  newValue: text('new_value'),
+})
+
+/**
+ * Split history - per-field change tracking for splits
+ */
+// @ts-expect-error implicit return type any
+export const splitHistory = pgTable('split_history', {
+  id: serial('id').primaryKey(),
+  // @ts-expect-error implicit return type any
+  changeId: integer('change_id').notNull().references(() => changes.id, { onDelete: 'cascade' }),
+  // @ts-expect-error implicit return type any
+  splitId: integer('split_id').notNull().references(() => splits.id, { onDelete: 'cascade' }),
+  field: text('field').notNull(),
+  oldValue: text('old_value'),
+  newValue: text('new_value'),
+})
+
+/**
  * Relations
  */
 
@@ -181,5 +221,35 @@ export const workflowRunsRelations = relations(workflowRuns, ({ one }) => ({
   upload: one(uploads, {
     fields: [workflowRuns.uploadId],
     references: [uploads.id],
+  }),
+}))
+
+// Change has many receipt history and split history entries
+export const changesRelations = relations(changes, ({ many }) => ({
+  receiptHistory: many(receiptHistory),
+  splitHistory: many(splitHistory),
+}))
+
+// Receipt history belongs to a change and a receipt
+export const receiptHistoryRelations = relations(receiptHistory, ({ one }) => ({
+  change: one(changes, {
+    fields: [receiptHistory.changeId],
+    references: [changes.id],
+  }),
+  receipt: one(receipts, {
+    fields: [receiptHistory.receiptId],
+    references: [receipts.id],
+  }),
+}))
+
+// Split history belongs to a change and a split
+export const splitHistoryRelations = relations(splitHistory, ({ one }) => ({
+  change: one(changes, {
+    fields: [splitHistory.changeId],
+    references: [changes.id],
+  }),
+  split: one(splits, {
+    fields: [splitHistory.splitId],
+    references: [splits.id],
   }),
 }))

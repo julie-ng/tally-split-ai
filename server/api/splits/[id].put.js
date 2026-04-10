@@ -3,6 +3,7 @@ import { eq, and } from 'drizzle-orm'
 import { splitUpdateSchema } from '~~/shared/utils/zod-schemas/split.schema.js'
 
 export default defineEventHandler(async (event) => {
+  const log = useLogger('split')
   const db = useDB()
   requireUserId(event)
   requireIdParam(event)
@@ -34,24 +35,46 @@ export default defineEventHandler(async (event) => {
     updates.settledAt = null
   }
 
-  const dbResult = await db
-    .update(schema.splits)
-    .set(updates)
-    .where(and(
-      eq(schema.splits.id, splitId),
-      eq(schema.splits.userId, userId),
-    ))
-    .returning()
+  const after = await db.transaction(async (tx) => {
+    // Lock + read current state
+    const [before] = await tx
+      .select()
+      .from(schema.splits)
+      .where(and(
+        eq(schema.splits.id, splitId),
+        eq(schema.splits.userId, userId),
+      ))
+      .for('update')
 
-  if (dbResult.length === 0) {
-    throw createError({
-      statusCode: 404,
-      message: `Split with ID '${splitId}' not found`,
-    })
-  }
+    if (!before) {
+      throw createError({
+        statusCode: 404,
+        message: `Split with ID '${splitId}' not found`,
+      })
+    }
+
+    // Apply update
+    const [updated] = await tx
+      .update(schema.splits)
+      .set(updates)
+      .where(eq(schema.splits.id, splitId))
+      .returning()
+
+    // Track history
+    await trackChanges(tx, {
+      historyTable: schema.splitHistory,
+      entityId: splitId,
+      entityIdColumn: 'splitId',
+      source: `user:${userId}`,
+    }, before, updated)
+
+    return updated
+  })
+
+  log.info({ splitId }, 'Updated split')
 
   return {
     success: true,
-    updated: dbResult[0],
+    updated: after,
   }
 })

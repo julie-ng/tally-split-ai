@@ -27,47 +27,57 @@ export default defineEventHandler(async (event) => {
   const { year, month } = result.data
 
   try {
-    // Get all split IDs for this user in the given month
-    // Need to join with receipts to filter by receipt.date
-    const splitsToUpdate = await db
-      .select({ id: schema.splits.id })
-      .from(schema.splits)
-      .innerJoin(schema.receipts, eq(schema.splits.receiptId, schema.receipts.id))
-      .where(
-        and(
-          eq(schema.splits.userId, userId),
-          // Filter by year and month using SQL date functions
-          sql`EXTRACT(YEAR FROM ${schema.receipts.date}::date)::int = ${year}`,
-          sql`EXTRACT(MONTH FROM ${schema.receipts.date}::date)::int = ${month}`,
-        ),
-      )
+    const updated = await db.transaction(async (tx) => {
+      // Lock + read full rows for before state
+      const beforeRows = await tx
+        .select({ splits: schema.splits })
+        .from(schema.splits)
+        .innerJoin(schema.receipts, eq(schema.splits.receiptId, schema.receipts.id))
+        .where(
+          and(
+            eq(schema.splits.userId, userId),
+            sql`EXTRACT(YEAR FROM ${schema.receipts.date}::date)::int = ${year}`,
+            sql`EXTRACT(MONTH FROM ${schema.receipts.date}::date)::int = ${month}`,
+          ),
+        )
+        .for('update')
 
-    if (splitsToUpdate.length === 0) {
-      return {
-        success: true,
-        updatedCount: 0,
-        message: 'No splits found for the specified month',
-      }
-    }
+      if (beforeRows.length === 0) return []
 
-    // Extract IDs for the update
-    const splitIds = splitsToUpdate.map(s => s.id)
+      const splitIds = beforeRows.map(r => r.splits.id)
 
-    // Batch update all splits to mark as settled
-    const updated = await db
-      .update(schema.splits)
-      .set({
-        isSettled: true,
-        settledAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(schema.splits.userId, userId),
-          sql`${schema.splits.id} IN ${splitIds}`,
-        ),
-      )
-      .returning()
+      // Batch update all splits to mark as settled
+      const afterRows = await tx
+        .update(schema.splits)
+        .set({
+          isSettled: true,
+          settledAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(schema.splits.userId, userId),
+            sql`${schema.splits.id} IN ${splitIds}`,
+          ),
+        )
+        .returning()
+
+      // Match before → after by ID for diffing
+      const afterById = Object.fromEntries(afterRows.map(r => [r.id, r]))
+      const entities = beforeRows.map(r => ({
+        entityId: r.splits.id,
+        before: r.splits,
+        after: afterById[r.splits.id],
+      }))
+
+      await trackBatchChanges(tx, {
+        historyTable: schema.splitHistory,
+        entityIdColumn: 'splitId',
+        source: `user:${userId}`,
+      }, entities)
+
+      return afterRows
+    })
 
     log.info({ year, month, count: updated.length }, 'Batch settled')
 
