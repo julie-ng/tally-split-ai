@@ -12,10 +12,6 @@ const dates = computed(() => {
       key: 'Receipt Date',
       value: dateUtils.formatISODate(props.receipt.date),
     },
-    {
-      key: 'Receipt Time',
-      value: '(TBD)', // TODO: requires migration
-    },
   ]
 })
 </script>
