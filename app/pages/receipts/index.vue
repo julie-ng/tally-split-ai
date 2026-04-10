@@ -21,12 +21,30 @@ const pending = computed(() => loading.value.all || false)
 // const error = computed(() => errors.value.all || null) //  ⚠️ TODO: Error handling
 
 const table = useTemplateRef('table')
+const rowSelection = ref({})
 const pagination = ref({
   pageIndex: 0,
   pageSize: 50,
 })
 
+const selectedCount = computed(() => {
+  return Object.keys(rowSelection.value).length
+})
+
 const columns = [
+  {
+    id: 'select',
+    header: ({ table }) => h(UCheckbox, {
+      'modelValue': table.getIsSomePageRowsSelected() ? 'indeterminate' : table.getIsAllPageRowsSelected(),
+      'onUpdate:modelValue': value => table.toggleAllPageRowsSelected(!!value),
+      'ariaLabel': 'Select all',
+    }),
+    cell: ({ row }) => h(UCheckbox, {
+      'modelValue': row.getIsSelected(),
+      'onUpdate:modelValue': value => row.toggleSelected(!!value),
+      'ariaLabel': 'Select row',
+    }),
+  },
   {
     accessorKey: 'id',
     header: 'ID',
@@ -139,6 +157,33 @@ const deleteReceipt = async (id, title, merchantName) => {
   }
 }
 
+async function bulkDelete () {
+  const selectedRows = table.value?.tableApi?.getFilteredSelectedRowModel().rows || []
+  if (selectedRows.length === 0) return
+
+  if (!confirm(`Are you sure you want to delete ${selectedRows.length} receipt(s)?`)) return
+
+  let deleted = 0
+  for (const row of selectedRows) {
+    try {
+      await receiptsStore.deleteReceipt(row.original.id)
+      deleted++
+    }
+    catch (error) {
+      console.error(`Failed to delete receipt #${row.original.id}:`, error)
+    }
+  }
+
+  rowSelection.value = {}
+  toast.add({
+    title: 'Bulk delete complete',
+    description: `Deleted ${deleted} of ${selectedRows.length} receipt(s)`,
+    icon: 'i-lucide-trash-2',
+    color: deleted === selectedRows.length ? 'success' : 'warning',
+    duration: 2000,
+  })
+}
+
 function totalsMatch (blobTagsString, total) {
   const tagValue = azureUtils.getReceiptTotalBlobTag(blobTagsString)
   if (total === null || tagValue === null) {
@@ -185,6 +230,16 @@ const paginationInfo = computed(() => {
           </p>
         </div>
         <div class="flex gap-2">
+          <UButton
+            v-if="selectedCount > 0"
+            color="error"
+            variant="subtle"
+            class="cursor-pointer"
+            icon="i-lucide-trash-2"
+            @click="bulkDelete"
+          >
+            Delete ({{ selectedCount }})
+          </UButton>
           <bulk-analyze-button />
           <UButton
             color="neutral"
@@ -206,6 +261,7 @@ const paginationInfo = computed(() => {
         <div class="border bg-white border-slate-200 overflow-hidden">
           <UTable
             ref="table"
+            v-model:row-selection="rowSelection"
             v-model:expanded="expanded"
             v-model:pagination="pagination"
             :pagination-options="{
@@ -316,6 +372,7 @@ const paginationInfo = computed(() => {
           <!-- Pagination -->
           <div class="flex justify-between items-center border-t border-default py-4 px-4">
             <div class="text-sm text-slate-600">
+              <span v-if="selectedCount > 0">{{ selectedCount }} selected &middot; </span>
               Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }}
             </div>
             <UPagination
