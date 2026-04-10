@@ -23,6 +23,11 @@ const tabItems = [
     value: 'raw-json',
     slot: 'rawJson',
   },
+  {
+    label: 'History',
+    value: 'history',
+    slot: 'history',
+  },
 ]
 
 const activeTab = computed({
@@ -93,6 +98,11 @@ provide('highlightedLabel', highlightedLabel)
           <!-- eslint-disable-next-line vue/no-unused-vars -->
           <template #rawJson="{ item }">
             <receipt-raw-json-tab :receipt="receipt" />
+          </template>
+
+          <!-- eslint-disable-next-line vue/no-unused-vars -->
+          <template #history="{ item }">
+            <receipt-history-tab :receipt="receipt" />
           </template>
         </UTabs>
       </div>
