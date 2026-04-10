@@ -84,19 +84,27 @@ provide('highlightedLabel', highlightedLabel)
       <!-- Notes -->
       <receipt-notes :receipt="receipt" />
 
-      <!-- Full View Link -->
-      <UButton
-        :to="`/receipts/${receipt.id}`"
-        icon="i-lucide-external-link"
-        variant="subtle"
-        color="neutral"
-      >
-        Full Details
-      </UButton>
+      <!-- Actions -->
+      <div class="flex gap-2">
+        <UButton
+          :to="`/receipts/${receipt.id}`"
+          variant="subtle"
+          color="neutral"
+        >
+          Full Details
+        </UButton>
+        <UButton
+          :to="`/receipts/${receipt.id}/edit`"
+          variant="subtle"
+          color="neutral"
+        >
+          Edit
+        </UButton>
+      </div>
     </div>
 
     <!-- Right column: Receipt image with overlay -->
-    <div>
+    <div class="max-w-xs">
       <receipt-upload-column
         v-if="upload"
         :upload="upload"
