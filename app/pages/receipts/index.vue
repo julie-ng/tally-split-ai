@@ -28,24 +28,6 @@ const pagination = ref({
 
 const columns = [
   {
-    id: 'expand',
-    cell: ({ row }) =>
-      h(UButton, {
-        'color': 'neutral',
-        'variant': 'ghost',
-        'icon': 'i-lucide-chevron-down',
-        'square': true,
-        'aria-label': 'Expand',
-        'ui': {
-          leadingIcon: [
-            'transition-transform',
-            row.getIsExpanded() ? 'duration-200 rotate-180' : '',
-          ],
-        },
-        'onClick': () => row.toggleExpanded(),
-      }),
-  },
-  {
     accessorKey: 'id',
     header: 'ID',
   },
@@ -59,7 +41,7 @@ const columns = [
   },
   {
     accessorKey: 'date',
-    header: 'Date',
+    header: 'Receipt Date',
   },
   {
     accessorKey: 'total',
@@ -128,10 +110,9 @@ const expanded = ref({})
 
 const tableStyles = {
   base: 'min-w-full',
-  thead: 'bg-slate-50',
   th: 'text-slate-700',
   td: 'align-top',
-  tr: 'data-[expanded=true]:bg-elevated/50',
+  tr: 'hover:bg-elevated/50',
 }
 
 const deleteReceipt = async (id, title, merchantName) => {
@@ -222,7 +203,7 @@ const paginationInfo = computed(() => {
       </div>
 
       <ClientOnly>
-        <div class="border bg-white border-slate-200 rounded-lg overflow-hidden">
+        <div class="border bg-white border-slate-200 overflow-hidden">
           <UTable
             ref="table"
             v-model:expanded="expanded"
@@ -240,7 +221,7 @@ const paginationInfo = computed(() => {
             class="flex-1"
           >
             <!-- JSON view -->
-            <template #expanded="{ row }">
+            <!-- <template #expanded="{ row }">
               <div class="bg-slate-50 p-4">
                 <vue-json-pretty
                   :data="row.original"
@@ -250,7 +231,7 @@ const paginationInfo = computed(() => {
                   :show-length="true"
                 />
               </div>
-            </template>
+            </template> -->
 
             <!-- Receipt ID w/ Link -->
             <template #id-cell="{ row }">
