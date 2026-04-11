@@ -35,10 +35,19 @@ export default defineEventHandler(async (event) => {
     .values(insertData)
     .returning()
 
-  log.info({ splitId: dbResult[0].id }, 'Split created')
+  const created = dbResult[0]
+
+  await trackCreate(db, {
+    historyTable: schema.splitHistory,
+    entityId: created.id,
+    entityIdColumn: 'splitId',
+    source: `user:${userId}`,
+  }, created)
+
+  log.info({ splitId: created.id }, 'Split created')
 
   return {
     success: true,
-    created: dbResult[0],
+    created,
   }
 })

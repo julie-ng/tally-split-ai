@@ -26,3 +26,23 @@ export function diffFields (before, after) {
   }
   return diffs
 }
+
+/**
+ * Snapshot all fields of a row for create/delete tracking.
+ * For creates: direction='create' → oldValue=null, newValue=value
+ * For deletes: direction='delete' → oldValue=value, newValue=null
+ */
+export function snapshotFields (row, direction) {
+  const fields = []
+  for (const field of Object.keys(row)) {
+    if (SKIP_FIELDS.has(field)) continue
+    const val = toText(row[field])
+    if (val === null) continue
+    fields.push({
+      field,
+      oldValue: direction === 'delete' ? val : null,
+      newValue: direction === 'create' ? val : null,
+    })
+  }
+  return fields
+}

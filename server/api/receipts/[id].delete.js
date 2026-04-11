@@ -26,8 +26,15 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Manually delete associated uploads first
-  // (SQLite cascade delete may not be enabled at runtime)
+  // Track deletion history before deleting
+  await trackDelete(db, {
+    historyTable: schema.receiptHistory,
+    entityId: receiptId,
+    entityIdColumn: 'receiptId',
+    source: `user:${userId}`,
+  }, receipt[0])
+
+  // Delete associated uploads first
   await db
     .delete(schema.uploads)
     .where(eq(schema.uploads.receiptId, receiptId))

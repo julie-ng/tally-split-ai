@@ -9,20 +9,35 @@ export default defineEventHandler(async (event) => {
   const userId = event.context.userId
   const splitId = parseInt(getRouterParam(event, 'id'), 10)
 
-  const dbResult = await db
-    .delete(schema.splits)
+  // Fetch split before deleting for history tracking
+  const split = await db
+    .select()
+    .from(schema.splits)
     .where(and(
       eq(schema.splits.id, splitId),
       eq(schema.splits.userId, userId),
     ))
-    .returning()
+    .limit(1)
 
-  if (dbResult.length === 0) {
+  if (split.length === 0) {
     throw createError({
       statusCode: 404,
       message: `Split with ID '${splitId}' not found`,
     })
   }
+
+  // Track deletion history before deleting
+  await trackDelete(db, {
+    historyTable: schema.splitHistory,
+    entityId: splitId,
+    entityIdColumn: 'splitId',
+    source: `user:${userId}`,
+  }, split[0])
+
+  const dbResult = await db
+    .delete(schema.splits)
+    .where(eq(schema.splits.id, splitId))
+    .returning()
 
   log.info({ splitId }, 'Split deleted')
 

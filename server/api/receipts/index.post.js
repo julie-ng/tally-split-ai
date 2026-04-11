@@ -27,10 +27,19 @@ export default defineEventHandler(async (event) => {
     .values(insertData)
     .returning()
 
-  log.info({ receiptId: dbResult[0].id }, 'Receipt created')
+  const created = dbResult[0]
+
+  await trackCreate(db, {
+    historyTable: schema.receiptHistory,
+    entityId: created.id,
+    entityIdColumn: 'receiptId',
+    source: `user:${userId}`,
+  }, created)
+
+  log.info({ receiptId: created.id }, 'Receipt created')
 
   return {
     success: true,
-    created: dbResult[0],
+    created,
   }
 })

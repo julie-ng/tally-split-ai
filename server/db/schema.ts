@@ -165,7 +165,7 @@ export const receiptHistory = pgTable('receipt_history', {
   // @ts-expect-error implicit return type any
   changeId: integer('change_id').notNull().references(() => changes.id, { onDelete: 'cascade' }),
   // @ts-expect-error implicit return type any
-  receiptId: integer('receipt_id').notNull().references(() => receipts.id, { onDelete: 'cascade' }),
+  receiptId: integer('receipt_id').references(() => receipts.id, { onDelete: 'set null' }),
   field: text('field').notNull(),
   oldValue: text('old_value'),
   newValue: text('new_value'),
@@ -180,7 +180,7 @@ export const splitHistory = pgTable('split_history', {
   // @ts-expect-error implicit return type any
   changeId: integer('change_id').notNull().references(() => changes.id, { onDelete: 'cascade' }),
   // @ts-expect-error implicit return type any
-  splitId: integer('split_id').notNull().references(() => splits.id, { onDelete: 'cascade' }),
+  splitId: integer('split_id').references(() => splits.id, { onDelete: 'set null' }),
   field: text('field').notNull(),
   oldValue: text('old_value'),
   newValue: text('new_value'),
