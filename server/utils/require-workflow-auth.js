@@ -42,7 +42,7 @@ export async function requireWorkflowAuth (event) {
   const isValid = verifyCallbackToken(token, {
     runUuid: workflowRun.uuid,
     runCreatedAt: workflowRun.createdAt.toISOString(),
-    blobUrl: workflowRun.upload.blobUrl,
+    scope: `upload:${workflowRun.upload.hashId}`,
   })
 
   if (!isValid) {

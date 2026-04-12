@@ -29,7 +29,7 @@ export async function requireAuthorization (event, { uploadHashId, receiptId, sp
     await authorizeUser(db, event, { userId: event.context.userId, uploadHashId, receiptId, splitId })
   }
   else {
-    authorizeTask(event, { workflowRun: event.context.workflowRun, taskId: event.context.taskId, uploadHashId, receiptId, splitId })
+    await authorizeTask(db, event, { workflowRun: event.context.workflowRun, taskId: event.context.taskId, uploadHashId, receiptId, splitId })
   }
 }
 
@@ -82,7 +82,7 @@ async function authorizeUser (db, event, { userId, uploadHashId, receiptId, spli
  * Task AuthZ — verify resource belongs to this workflow run's upload.
  * Throws 403 on mismatch — tasks know their own scope, so no need to hide resource existence.
  */
-function authorizeTask (event, { workflowRun, taskId, uploadHashId, receiptId, splitId }) {
+async function authorizeTask (db, event, { workflowRun, taskId, uploadHashId, receiptId, splitId }) {
   const upload = workflowRun.upload
 
   if (uploadHashId && uploadHashId !== upload.hashId) {
@@ -96,8 +96,16 @@ function authorizeTask (event, { workflowRun, taskId, uploadHashId, receiptId, s
   }
 
   if (splitId) {
-    // TODO: implement split scope check — need to join through upload → receipt → split
-    // For now, log and allow (split is always created in context of a receipt)
-    logSecurityEvent(event, 'info', { taskId, splitId, reason: 'split_scope_check_deferred' }, 'Split scope check not yet implemented')
+    // Verify split belongs to this workflow run's upload → receipt → split chain
+    const [receipt] = await db
+      .select({ splitId: schema.receipts.splitId })
+      .from(schema.receipts)
+      .where(eq(schema.receipts.id, upload.receiptId))
+      .limit(1)
+
+    if (!receipt || receipt.splitId !== splitId) {
+      logSecurityEvent(event, 'warn', { taskId, splitId, expected: receipt?.splitId, reason: 'split_scope_mismatch' }, 'Authorization denied')
+      throw createError({ statusCode: 403, message: 'Forbidden' })
+    }
   }
 }

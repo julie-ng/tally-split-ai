@@ -55,11 +55,11 @@ export default defineEventHandler(async (event) => {
     .set({ analysisStatus: UPLOAD_ANALYSIS_STATUS.QUEUED })
     .where(eq(schema.uploads.hashId, hashId))
 
-  // Generate HMAC callback token for secure status callbacks
+  // Generate HMAC callback token scoped to this upload
   const callbackToken = generateCallbackToken({
     runUuid: workflowRun.uuid,
     runCreatedAt: workflowRun.createdAt.toISOString(),
-    blobUrl: upload.blobUrl,
+    scope: `upload:${upload.hashId}`,
   })
 
   // Trigger the workflow (fire and forget)

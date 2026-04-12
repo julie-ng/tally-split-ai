@@ -9,7 +9,7 @@ import { globSync } from 'glob'
  * Static analysis tests that enforce architectural security boundaries:
  * 1. Trigger tasks must NOT have direct DB access (no server/db/connection imports)
  * 2. API endpoints must use requireAuthentication (not the old requireUserId)
- * 3. Trigger tasks must use the API client, not direct DB imports
+ * 3. Resource-specific endpoints must call requireAuthorization
  *
  * Known limitation: regex-based, can be bypassed by commented-out code.
  */
@@ -59,5 +59,48 @@ describe('Security boundaries: no requireUserId in API endpoints', () => {
     it(`${relative} should not use requireUserId`, () => {
       expect(fileContains(filePath, /requireUserId/)).toBe(false)
     })
+  }
+})
+
+describe('Security boundaries: resource-specific endpoints call requireAuthorization', () => {
+  // Endpoints that handle a specific resource ID (param in brackets) must authorize
+  const resourceEndpoints = [
+    ...getFiles('server/api/receipts', '\\[*\\].*.js'),
+    ...getFiles('server/api/splits', '\\[*\\].*.js'),
+    ...getFiles('server/api/uploads', '\\[*\\].*.js'),
+  ]
+
+  it('should have resource endpoints to test', () => {
+    expect(resourceEndpoints.length).toBeGreaterThan(0)
+  })
+
+  for (const filePath of resourceEndpoints) {
+    const relative = filePath.split('server/api/').pop()
+    it(`${relative} should call requireAuthorization`, () => {
+      expect(fileContains(filePath, /requireAuthorization\(/)).toBe(true)
+    })
+  }
+})
+
+describe('Security boundaries: requireAuthorization uses correct resource parameter', () => {
+  // Each resource type must pass the correct parameter name to requireAuthorization.
+  // This catches bugs like passing {} or the wrong resource ID.
+  const resourceTypes = [
+    { dir: 'server/api/receipts', pattern: '\\[*\\].*.js', expectedParam: 'receiptId' },
+    { dir: 'server/api/splits', pattern: '\\[*\\].*.js', expectedParam: 'splitId' },
+    { dir: 'server/api/uploads', pattern: '\\[*\\].*.js', expectedParam: 'uploadHashId' },
+  ]
+
+  for (const { dir, pattern, expectedParam } of resourceTypes) {
+    const files = getFiles(dir, pattern)
+
+    for (const filePath of files) {
+      const relative = filePath.split('server/api/').pop()
+      it(`${relative} should pass { ${expectedParam} } to requireAuthorization`, () => {
+        const content = readFileSync(filePath, 'utf-8')
+        const authzCallRegex = new RegExp(`requireAuthorization\\(event,\\s*\\{[^}]*${expectedParam}`)
+        expect(authzCallRegex.test(content)).toBe(true)
+      })
+    }
   }
 })

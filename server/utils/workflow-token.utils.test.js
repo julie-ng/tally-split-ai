@@ -8,7 +8,7 @@ beforeAll(() => {
 const sampleParams = {
   runUuid: '550e8400-e29b-41d4-a716-446655440000',
   runCreatedAt: '2026-04-11T10:00:00.000Z',
-  blobUrl: 'https://storage.blob.core.windows.net/receipts/test.jpg',
+  scope: 'upload:abc123',
 }
 
 describe('generateCallbackToken', () => {
@@ -23,15 +23,15 @@ describe('generateCallbackToken', () => {
     expect(a).toBe(b)
   })
 
-  it('should produce different tokens for different inputs', () => {
+  it('should produce different tokens for different runUuid', () => {
     const a = generateCallbackToken(sampleParams)
     const b = generateCallbackToken({ ...sampleParams, runUuid: 'different-uuid' })
     expect(a).not.toBe(b)
   })
 
-  it('should produce different tokens for different blobUrls', () => {
+  it('should produce different tokens for different scope', () => {
     const a = generateCallbackToken(sampleParams)
-    const b = generateCallbackToken({ ...sampleParams, blobUrl: 'https://other.blob/test.jpg' })
+    const b = generateCallbackToken({ ...sampleParams, scope: 'receipt:456' })
     expect(a).not.toBe(b)
   })
 
@@ -39,6 +39,15 @@ describe('generateCallbackToken', () => {
     const a = generateCallbackToken(sampleParams)
     const b = generateCallbackToken({ ...sampleParams, runCreatedAt: '2026-04-12T10:00:00.000Z' })
     expect(a).not.toBe(b)
+  })
+
+  it('should throw if scope is missing', () => {
+    expect(() => generateCallbackToken({ runUuid: 'x', runCreatedAt: 'y' })).toThrow('scope is required')
+  })
+
+  it('should handle scope with colons (e.g. receipt:123)', () => {
+    const token = generateCallbackToken({ ...sampleParams, scope: 'receipt:123' })
+    expect(token).toMatch(/^[a-f0-9]{64}$/)
   })
 })
 
@@ -59,9 +68,9 @@ describe('verifyCallbackToken', () => {
     expect(verifyCallbackToken(token, { ...sampleParams, runUuid: 'wrong-uuid' })).toBe(false)
   })
 
-  it('should return false for wrong blobUrl', () => {
+  it('should return false for wrong scope', () => {
     const token = generateCallbackToken(sampleParams)
-    expect(verifyCallbackToken(token, { ...sampleParams, blobUrl: 'https://wrong.blob/x.jpg' })).toBe(false)
+    expect(verifyCallbackToken(token, { ...sampleParams, scope: 'receipt:999' })).toBe(false)
   })
 
   it('should return false for wrong createdAt', () => {

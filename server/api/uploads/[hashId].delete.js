@@ -7,6 +7,7 @@ export default defineEventHandler(async (event) => {
   requireHashIdParam(event)
 
   const hashId = getRouterParam(event, 'hashId')
+  await requireAuthorization(event, { uploadHashId: hashId })
 
   azureStorageUtils.useAzureStorageConfig()
 
