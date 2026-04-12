@@ -11,7 +11,6 @@ import { eq } from 'drizzle-orm'
  * @returns {Promise<boolean>} true if workflow auth succeeded
  */
 export async function requireWorkflowAuth (event) {
-  const log = useLogger('security')
   const db = useDB()
 
   const authHeader = getHeader(event, 'authorization')
@@ -21,8 +20,6 @@ export async function requireWorkflowAuth (event) {
 
   if (!token || !runUuid || !taskId) return false
 
-  const ip = getRequestIP(event, { xForwardedFor: true })
-
   // Look up workflow run by UUID (join upload)
   const workflowRun = await db.query.workflowRuns.findFirst({
     where: eq(schema.workflowRuns.uuid, runUuid),
@@ -30,14 +27,14 @@ export async function requireWorkflowAuth (event) {
   })
 
   if (!workflowRun) {
-    log.warn({ runUuid, taskId, ip, reason: 'run_not_found' }, 'Workflow auth rejected')
+    logSecurityEvent(event, 'warn', { runUuid, taskId, reason: 'run_not_found' }, 'Workflow auth rejected')
     return false
   }
 
   // Expiry check (uses testable utility)
   const { expired, expiredAt } = isTokenExpired(workflowRun.createdAt)
   if (expired) {
-    log.warn({ runUuid, taskId, ip, reason: 'token_expired', expiredAt: expiredAt.toISOString() }, 'Workflow auth rejected')
+    logSecurityEvent(event, 'warn', { runUuid, taskId, reason: 'token_expired', expiredAt: expiredAt.toISOString() }, 'Workflow auth rejected')
     return false
   }
 
@@ -49,7 +46,7 @@ export async function requireWorkflowAuth (event) {
   })
 
   if (!isValid) {
-    log.warn({ runUuid, taskId, ip, reason: 'invalid_hmac' }, 'Workflow auth rejected')
+    logSecurityEvent(event, 'warn', { runUuid, taskId, reason: 'invalid_hmac' }, 'Workflow auth rejected')
     return false
   }
 

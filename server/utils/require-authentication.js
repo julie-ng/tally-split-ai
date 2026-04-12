@@ -12,7 +12,19 @@
  * @param {H3Event} event
  */
 export async function requireAuthentication (event) {
-  const log = useLogger('security')
+  // If workflow auth headers are present, use task path exclusively.
+  // Do NOT fall through to user auth if headers are present but invalid —
+  // that would be identity blending (a task pretending to be a user on failure).
+  const hasWorkflowHeaders = getHeader(event, 'authorization')?.startsWith('Bearer ')
+    && getHeader(event, 'x-workflow-run-uuid')
+
+  if (hasWorkflowHeaders) {
+    const workflowAuthed = await requireWorkflowAuth(event)
+    if (workflowAuthed) return
+
+    logSecurityEvent(event, 'warn', { reason: 'workflow_auth_failed' }, 'Authentication failed')
+    throw createError({ statusCode: 401, message: 'Unauthorized' })
+  }
 
   // User auth path (session-based)
   // TODO: Replace with nuxt-auth-utils module for proper session auth.
@@ -28,13 +40,8 @@ export async function requireAuthentication (event) {
     return
   }
 
-  // Workflow auth path (HMAC token-based)
-  const workflowAuthed = await requireWorkflowAuth(event)
-  if (workflowAuthed) return
-
   // Neither auth path succeeded
-  const ip = getRequestIP(event, { xForwardedFor: true })
-  log.warn({ ip, reason: 'no_credentials' }, 'Authentication failed')
+  logSecurityEvent(event, 'warn', { reason: 'no_credentials' }, 'Authentication failed')
 
   throw createError({
     statusCode: 401,

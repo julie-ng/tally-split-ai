@@ -16,9 +16,7 @@ import { eq } from 'drizzle-orm'
  * @param {number} [resource.splitId] - Split ID to verify
  */
 export async function requireAuthorization (event, { uploadHashId, receiptId, splitId } = {}) {
-  const log = useLogger('security')
   const db = useDB()
-  const ip = getRequestIP(event, { xForwardedFor: true })
 
   const isUserRequest = !!event.context.userId
   const isTaskRequest = !!event.context.workflowRun
@@ -28,10 +26,10 @@ export async function requireAuthorization (event, { uploadHashId, receiptId, sp
   }
 
   if (isUserRequest) {
-    await authorizeUser(db, log, { ip, userId: event.context.userId, uploadHashId, receiptId, splitId })
+    await authorizeUser(db, event, { userId: event.context.userId, uploadHashId, receiptId, splitId })
   }
   else {
-    authorizeTask(log, { ip, workflowRun: event.context.workflowRun, taskId: event.context.taskId, uploadHashId, receiptId, splitId })
+    authorizeTask(event, { workflowRun: event.context.workflowRun, taskId: event.context.taskId, uploadHashId, receiptId, splitId })
   }
 }
 
@@ -39,7 +37,7 @@ export async function requireAuthorization (event, { uploadHashId, receiptId, sp
  * User AuthZ — verify resource belongs to this user.
  * Throws 404 on mismatch to avoid revealing resource existence.
  */
-async function authorizeUser (db, log, { ip, userId, uploadHashId, receiptId, splitId }) {
+async function authorizeUser (db, event, { userId, uploadHashId, receiptId, splitId }) {
   if (receiptId) {
     const [receipt] = await db
       .select({ userId: schema.receipts.userId })
@@ -48,7 +46,7 @@ async function authorizeUser (db, log, { ip, userId, uploadHashId, receiptId, sp
       .limit(1)
 
     if (!receipt || receipt.userId !== userId) {
-      log.warn({ ip, userId, receiptId, reason: 'receipt_not_owned' }, 'Authorization denied')
+      logSecurityEvent(event, 'warn', { userId, receiptId, reason: 'receipt_not_owned' }, 'Authorization denied')
       throw createError({ statusCode: 404, message: 'Not found' })
     }
   }
@@ -61,7 +59,7 @@ async function authorizeUser (db, log, { ip, userId, uploadHashId, receiptId, sp
       .limit(1)
 
     if (!split || split.userId !== userId) {
-      log.warn({ ip, userId, splitId, reason: 'split_not_owned' }, 'Authorization denied')
+      logSecurityEvent(event, 'warn', { userId, splitId, reason: 'split_not_owned' }, 'Authorization denied')
       throw createError({ statusCode: 404, message: 'Not found' })
     }
   }
@@ -74,7 +72,7 @@ async function authorizeUser (db, log, { ip, userId, uploadHashId, receiptId, sp
       .limit(1)
 
     if (!upload || upload.userId !== userId) {
-      log.warn({ ip, userId, uploadHashId, reason: 'upload_not_owned' }, 'Authorization denied')
+      logSecurityEvent(event, 'warn', { userId, uploadHashId, reason: 'upload_not_owned' }, 'Authorization denied')
       throw createError({ statusCode: 404, message: 'Not found' })
     }
   }
@@ -84,22 +82,22 @@ async function authorizeUser (db, log, { ip, userId, uploadHashId, receiptId, sp
  * Task AuthZ — verify resource belongs to this workflow run's upload.
  * Throws 403 on mismatch — tasks know their own scope, so no need to hide resource existence.
  */
-function authorizeTask (log, { ip, workflowRun, taskId, uploadHashId, receiptId, splitId }) {
+function authorizeTask (event, { workflowRun, taskId, uploadHashId, receiptId, splitId }) {
   const upload = workflowRun.upload
 
   if (uploadHashId && uploadHashId !== upload.hashId) {
-    log.warn({ ip, taskId, uploadHashId, expected: upload.hashId, reason: 'upload_scope_mismatch' }, 'Authorization denied')
+    logSecurityEvent(event, 'warn', { taskId, uploadHashId, expected: upload.hashId, reason: 'upload_scope_mismatch' }, 'Authorization denied')
     throw createError({ statusCode: 403, message: 'Forbidden' })
   }
 
   if (receiptId && receiptId !== upload.receiptId) {
-    log.warn({ ip, taskId, receiptId, expected: upload.receiptId, reason: 'receipt_scope_mismatch' }, 'Authorization denied')
+    logSecurityEvent(event, 'warn', { taskId, receiptId, expected: upload.receiptId, reason: 'receipt_scope_mismatch' }, 'Authorization denied')
     throw createError({ statusCode: 403, message: 'Forbidden' })
   }
 
   if (splitId) {
     // TODO: implement split scope check — need to join through upload → receipt → split
     // For now, log and allow (split is always created in context of a receipt)
-    log.info({ ip, taskId, splitId, reason: 'split_scope_check_deferred' }, 'Split scope check not yet implemented')
+    logSecurityEvent(event, 'info', { taskId, splitId, reason: 'split_scope_check_deferred' }, 'Split scope check not yet implemented')
   }
 }

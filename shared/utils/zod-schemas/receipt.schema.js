@@ -42,4 +42,5 @@ export const receiptInputSchema = z.object({
   currency: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
   analysisStatus: z.enum(RECEIPT_ANALYSIS_STATUSES).optional(),
+  splitId: z.number().int().positive().nullable().optional(),
 })
