@@ -37,3 +37,19 @@ export function verifyCallbackToken (token, { runUuid, runCreatedAt, blobUrl }) 
   const expected = generateCallbackToken({ runUuid, runCreatedAt, blobUrl })
   return crypto.timingSafeEqual(Buffer.from(token, 'hex'), Buffer.from(expected, 'hex'))
 }
+
+/**
+ * Check whether a workflow token has expired based on the workflow run's createdAt.
+ *
+ * @param {Date} createdAt - Workflow run created_at timestamp
+ * @param {number} [expiryMinutes] - Validity window in minutes (defaults to WORKFLOW_TOKEN_EXPIRY_MINUTES env var, or 15)
+ * @returns {{ expired: boolean, expiredAt: Date }} Whether the token is expired and when it expires/expired
+ */
+export function isTokenExpired (createdAt, expiryMinutes) {
+  const minutes = expiryMinutes ?? parseInt(process.env.WORKFLOW_TOKEN_EXPIRY_MINUTES ?? '15', 10)
+  const expiredAt = new Date(createdAt.getTime() + minutes * 60 * 1000)
+  return {
+    expired: Date.now() > expiredAt.getTime(),
+    expiredAt,
+  }
+}

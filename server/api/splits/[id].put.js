@@ -1,15 +1,15 @@
 import { z } from 'zod'
-import { eq, and } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { splitUpdateSchema } from '~~/shared/utils/zod-schemas/split.schema.js'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger('split')
   const db = useDB()
-  requireUserId(event)
+  await requireAuthentication(event)
   requireIdParam(event)
 
-  const userId = event.context.userId
   const splitId = parseInt(getRouterParam(event, 'id'), 10)
+  await requireAuthorization(event, { splitId })
 
   const result = await readValidatedBody(event, body => splitUpdateSchema.safeParse(body))
 
@@ -40,10 +40,7 @@ export default defineEventHandler(async (event) => {
     const [before] = await tx
       .select()
       .from(schema.splits)
-      .where(and(
-        eq(schema.splits.id, splitId),
-        eq(schema.splits.userId, userId),
-      ))
+      .where(eq(schema.splits.id, splitId))
       .for('update')
 
     if (!before) {
@@ -65,7 +62,7 @@ export default defineEventHandler(async (event) => {
       historyTable: schema.splitHistory,
       entityId: splitId,
       entityIdColumn: 'splitId',
-      source: `user:${userId}`,
+      source: event.context.securityPrincipal,
     }, before, updated)
 
     return updated

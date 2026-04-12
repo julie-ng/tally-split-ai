@@ -1,6 +1,6 @@
 export default defineEventHandler(async (event) => {
   const log = useLogger('workflow')
-  requireUserId(event)
+  await requireAuthentication(event)
   const userId = event.context.userId
 
   const eventStream = createEventStream(event)

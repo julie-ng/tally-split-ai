@@ -2,7 +2,7 @@ import { eq, and } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const db = useDB()
-  requireUserId(event)
+  await requireAuthentication(event)
   const userId = event.context.userId
 
   // Get optional year/month filter from query params

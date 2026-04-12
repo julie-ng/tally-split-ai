@@ -1,22 +1,19 @@
-import { eq, and } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger('receipt')
   const db = useDB()
-  requireUserId(event)
+  await requireAuthentication(event)
   requireIdParam(event)
 
-  const userId = event.context.userId
   const receiptId = parseInt(getRouterParam(event, 'id'), 10)
+  await requireAuthorization(event, { receiptId })
 
-  // First, check if receipt exists and belongs to user
+  // Fetch receipt for history tracking
   const receipt = await db
     .select()
     .from(schema.receipts)
-    .where(and(
-      eq(schema.receipts.id, receiptId),
-      eq(schema.receipts.userId, userId),
-    ))
+    .where(eq(schema.receipts.id, receiptId))
     .limit(1)
 
   if (receipt.length === 0) {
@@ -31,7 +28,7 @@ export default defineEventHandler(async (event) => {
     historyTable: schema.receiptHistory,
     entityId: receiptId,
     entityIdColumn: 'receiptId',
-    source: `user:${userId}`,
+    source: event.context.securityPrincipal,
   }, receipt[0])
 
   // Delete associated uploads first
@@ -42,10 +39,7 @@ export default defineEventHandler(async (event) => {
   // Now delete the receipt
   const result = await db
     .delete(schema.receipts)
-    .where(and(
-      eq(schema.receipts.id, receiptId),
-      eq(schema.receipts.userId, userId),
-    ))
+    .where(eq(schema.receipts.id, receiptId))
     .returning()
 
   log.info({ receiptId }, 'Receipt deleted')

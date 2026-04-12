@@ -7,7 +7,7 @@ import { UPLOAD_ANALYSIS_STATUS } from '~~/shared/enums/upload-analysis-status.j
 export default defineEventHandler(async (event) => {
   const log = useLogger('workflow')
   const db = useDB()
-  requireUserId(event)
+  await requireAuthentication(event)
   requireHashIdParam(event, 'uploadHashId')
 
   const hashId = getRouterParam(event, 'uploadHashId')

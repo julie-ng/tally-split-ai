@@ -10,7 +10,7 @@ const requestSchema = (userId) => {
 export default defineEventHandler(async (event) => {
   const log = useLogger('token')
   // ⚠️ TODO - implement security.
-  requireUserId(event)
+  await requireAuthentication(event)
   const userId = event.context.userId
 
   azureStorageUtils.useAzureStorageConfig()
