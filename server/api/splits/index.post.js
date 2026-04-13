@@ -20,6 +20,11 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // AuthZ: if linking to a receipt, verify principal owns it
+  if (result.data.receiptId) {
+    await requireAuthorization(event, { receiptId: result.data.receiptId })
+  }
+
   // Calculate both user shares (equal split for now)
   const halfAmount = Math.floor(result.data.splitAmount / 2 * 100) / 100
   const userAShare = result.data.paidBy ? halfAmount : null

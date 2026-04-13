@@ -24,7 +24,7 @@ function fileContains (filePath, pattern) {
 }
 
 describe('Security boundaries: trigger tasks have no direct DB access', () => {
-  const taskFiles = getFiles('trigger', '*.js')
+  const taskFiles = getFiles('trigger', '**/*.js')
 
   it('should have task files to test', () => {
     expect(taskFiles.length).toBeGreaterThan(0)

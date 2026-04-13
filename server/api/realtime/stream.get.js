@@ -3,6 +3,10 @@ export default defineEventHandler(async (event) => {
   await requireAuthentication(event)
   const userId = event.context.userId
 
+  if (!userId) {
+    throw createError({ statusCode: 403, message: 'User authentication required' })
+  }
+
   const eventStream = createEventStream(event)
   log.info({ userId }, 'SSE stream connected')
 

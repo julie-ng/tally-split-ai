@@ -19,6 +19,11 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // AuthZ: if relinking to a different receipt, verify principal owns it
+  if (result.data.receiptId) {
+    await requireAuthorization(event, { receiptId: result.data.receiptId })
+  }
+
   const updates = {
     ...result.data,
     updatedAt: new Date(),
