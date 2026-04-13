@@ -15,10 +15,11 @@ export const VALID_RESOURCES = ['upload', 'receipt', 'split', 'workflow']
 export const VALID_PERMISSIONS = ['read', 'write', 'delete']
 
 export const TASK_PERMISSIONS = {
-  'receipt-workflow': ['workflow:read', 'workflow:write'],
-  'analyze-ocr': ['receipt:read', 'receipt:write', 'upload:read', 'upload:write', 'workflow:read', 'workflow:write'],
+  'receipt-workflow': ['receipt:read', 'receipt:write', 'upload:read', 'upload:write', 'workflow:read', 'workflow:write'],
+  'analyze-ocr': ['upload:read', 'upload:write', 'workflow:read', 'workflow:write'],
   'analyze-annotations': ['upload:read', 'upload:write', 'workflow:read', 'workflow:write'],
   'create-split': ['receipt:read', 'receipt:write', 'split:write', 'workflow:read', 'workflow:write'],
+  'normalize-receipt': ['receipt:read', 'receipt:write', 'upload:read', 'workflow:read', 'workflow:write'],
 }
 
 /**
@@ -26,7 +27,7 @@ export const TASK_PERMISSIONS = {
  * generate tokens for via POST /api/workflows/runs/:runUuid/tokens.
  */
 export const TASK_CHILDREN = {
-  'receipt-workflow': ['analyze-ocr', 'analyze-annotations', 'create-split'],
+  'receipt-workflow': ['analyze-ocr', 'analyze-annotations', 'create-split', 'normalize-receipt'],
 }
 
 /**

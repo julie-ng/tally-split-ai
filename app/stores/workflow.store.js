@@ -35,6 +35,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
   const DEFAULT_STEP_STATUSES = {
     ocrStatus: WORKFLOW_STEP_STATUS.PENDING,
     annotationsStatus: WORKFLOW_STEP_STATUS.PENDING,
+    normalizeStatus: WORKFLOW_STEP_STATUS.PENDING,
     splitStatus: WORKFLOW_STEP_STATUS.PENDING,
   }
 
@@ -45,6 +46,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     return {
       ocrStatus: latest.ocrStatus ?? WORKFLOW_STEP_STATUS.PENDING,
       annotationsStatus: latest.annotationsStatus ?? WORKFLOW_STEP_STATUS.PENDING,
+      normalizeStatus: latest.normalizeStatus ?? WORKFLOW_STEP_STATUS.PENDING,
       splitStatus: latest.splitStatus ?? WORKFLOW_STEP_STATUS.PENDING,
     }
   })

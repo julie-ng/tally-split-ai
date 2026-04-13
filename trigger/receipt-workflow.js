@@ -4,6 +4,7 @@ import { WORKFLOW_STEP } from '../shared/enums/workflow-step.js'
 import { UPLOAD_ANALYSIS_STATUS } from '../shared/enums/upload-analysis-status.js'
 import { analyzeOcr } from './analyze-ocr.js'
 import { analyzeAnnotations } from './analyze-annotations.js'
+import { normalizeReceipt } from './normalize-receipt.js'
 import { createSplit } from './create-split.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
 import { notifyStatus } from './utils/notify-status.js'
@@ -18,19 +19,19 @@ export const receiptWorkflow = task({
     const authHeaders = { callbackToken, runUuid, taskId: TASK_ID }
     const api = createApiClient(authHeaders)
 
-    // Request per-task tokens from the server (orchestrator never has the HMAC salt)
-    const { tokens } = await api.post(`/api/workflows/runs/${runUuid}/tokens`, {
-      taskIds: ['analyze-ocr', 'analyze-annotations', 'create-split'],
-    })
-
     logger.log(`Starting receipt workflow for ${uploadHashId}`)
 
     // Update workflow status
     await updateWorkflowStatus(authHeaders, { status: WORKFLOW_STATUS.PROCESSING })
 
+    // Phase 1: OCR — request token before receipt exists
+    const { tokens: ocrTokens } = await api.post(`/api/workflows/runs/${runUuid}/tokens`, {
+      taskIds: ['analyze-ocr'],
+    })
+
     // Step 1: OCR — FATAL on failure
     const ocrResult = await analyzeOcr.triggerAndWait(
-      { uploadHashId, runUuid, callbackToken: tokens['analyze-ocr'] },
+      { uploadHashId, runUuid, callbackToken: ocrTokens['analyze-ocr'] },
     )
 
     if (!ocrResult.ok) {
@@ -42,13 +43,38 @@ export const receiptWorkflow = task({
       throw new Error(`OCR analysis failed: ${ocrResult.error}`)
     }
 
-    const { receiptId } = ocrResult.output
+    const { receiptData, title, tags, existingReceiptId } = ocrResult.output
+
+    // Create or update receipt from OCR results, then link to upload
+    let receiptId = existingReceiptId
+
+    if (receiptId) {
+      await api.put(`/api/receipts/${receiptId}`, receiptData)
+      logger.log(`Updated existing receipt ${receiptId}`)
+    }
+    else {
+      const createResult = await api.post('/api/receipts', {
+        ...receiptData,
+        title,
+        tags,
+      })
+      receiptId = createResult.created.id
+      logger.log(`Created new receipt ${receiptId}`)
+    }
+
+    // Link receipt to upload
+    await api.put(`/api/uploads/${uploadHashId}`, { receiptId })
+
+    // Phase 2: Post-OCR tasks — request tokens now that receipt is linked
+    const { tokens: postOcrTokens } = await api.post(`/api/workflows/runs/${runUuid}/tokens`, {
+      taskIds: ['analyze-annotations', 'normalize-receipt', 'create-split'],
+    })
 
     // Step 2: Annotations — NON-FATAL
     let hasStepErrors = false
 
     const annotationsResult = await analyzeAnnotations.triggerAndWait(
-      { uploadHashId, runUuid, callbackToken: tokens['analyze-annotations'] },
+      { uploadHashId, runUuid, callbackToken: postOcrTokens['analyze-annotations'] },
     )
 
     if (!annotationsResult.ok) {
@@ -56,11 +82,21 @@ export const receiptWorkflow = task({
       logger.warn(`Annotations analysis failed, continuing`, { error: annotationsResult.error })
     }
 
-    // Step 3: Create split — NON-FATAL
+    // Step 3: Normalize receipt — NON-FATAL
+    const normalizeResult = await normalizeReceipt.triggerAndWait(
+      { uploadHashId, runUuid, callbackToken: postOcrTokens['normalize-receipt'] },
+    )
+
+    if (!normalizeResult.ok) {
+      hasStepErrors = true
+      logger.warn(`Normalize failed, continuing`, { error: normalizeResult.error })
+    }
+
+    // Step 4: Create split — NON-FATAL
     let splitId = null
 
     const splitResult = await createSplit.triggerAndWait(
-      { receiptId, runUuid, callbackToken: tokens['create-split'] },
+      { receiptId, runUuid, callbackToken: postOcrTokens['create-split'] },
     )
 
     if (splitResult.ok) {

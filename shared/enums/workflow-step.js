@@ -4,6 +4,7 @@
 export const WORKFLOW_STEP = {
   OCR: 'ocr',
   ANNOTATIONS: 'annotations',
+  NORMALIZE: 'normalize',
   SPLIT: 'split',
   WORKFLOW: 'workflow',
 }

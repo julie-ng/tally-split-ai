@@ -25,8 +25,7 @@ export const analyzeOcr = task({
 
     try {
       // 1. Fetch upload record via API
-      const uploadData = await api.get(`/api/uploads/${uploadHashId}`)
-      const upload = uploadData
+      const upload = await api.get(`/api/uploads/${uploadHashId}`)
 
       // 2. Generate read-only SAS token
       const { uploadUrl: blobUrlWithSas } = azureStorageUtils.generateBlobSasToken(upload.blobName, {
@@ -77,37 +76,25 @@ export const analyzeOcr = task({
         analysisStatus: 'analyzed',
       })
 
-      // 5. Create or update receipt via API
-      let receiptId = upload.receiptId
-
-      if (receiptId) {
-        await api.put(`/api/receipts/${receiptId}`, receiptData)
-        logger.log(`Updated existing receipt ${receiptId}`)
-      }
-      else {
-        const createResult = await api.post('/api/receipts', {
-          ...receiptData,
-          title: upload.title || 'Untitled',
-          tags: receiptUtils.azureTagsToReceiptTags(upload.azureTags),
-        })
-        receiptId = createResult.created.id
-        logger.log(`Created new receipt ${receiptId}`)
-      }
-
-      // 6. Update upload with OCR results via API
+      // 5. Store OCR results on upload (no receiptId — orchestrator handles receipt creation)
       await api.put(`/api/uploads/${uploadHashId}`, {
         ocrText: analyzeResult.content || null,
         ocrJson: result.body,
-        receiptId,
       })
 
-      // 7. Update workflow step status
+      // 6. Update workflow step status
       await updateWorkflowStatus(authHeaders, { ocrStatus: WORKFLOW_STEP_STATUS.COMPLETED })
       await notifyStatus(runUuid, WORKFLOW_STEP.OCR, 'completed', authHeaders)
 
-      logger.log(`OCR analysis complete for ${uploadHashId}`, { receiptId })
+      logger.log(`OCR analysis complete for ${uploadHashId}`)
 
-      return { receiptId, receiptData }
+      // Return results to orchestrator for receipt creation + upload linking
+      return {
+        receiptData,
+        title: upload.title || 'Untitled',
+        tags: receiptUtils.azureTagsToReceiptTags(upload.azureTags),
+        existingReceiptId: upload.receiptId,
+      }
     }
     catch (err) {
       await updateWorkflowStatus(authHeaders, { ocrStatus: WORKFLOW_STEP_STATUS.FAILED })

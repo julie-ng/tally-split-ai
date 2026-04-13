@@ -11,7 +11,7 @@ import {
 
 describe('TASK_PERMISSIONS', () => {
   it('should have entries for all known tasks', () => {
-    const expectedTasks = ['receipt-workflow', 'analyze-ocr', 'analyze-annotations', 'create-split']
+    const expectedTasks = ['receipt-workflow', 'analyze-ocr', 'analyze-annotations', 'create-split', 'normalize-receipt']
     for (const taskId of expectedTasks) {
       expect(TASK_PERMISSIONS[taskId]).toBeDefined()
     }
@@ -104,7 +104,7 @@ describe('TASK_CHILDREN', () => {
 describe('getTaskChildren', () => {
   it('should return children for a known orchestrator', () => {
     const children = getTaskChildren('receipt-workflow')
-    expect(children).toEqual(['analyze-ocr', 'analyze-annotations', 'create-split'])
+    expect(children).toEqual(['analyze-ocr', 'analyze-annotations', 'create-split', 'normalize-receipt'])
   })
 
   it('should throw for a non-orchestrator task', () => {

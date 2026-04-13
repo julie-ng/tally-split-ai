@@ -95,9 +95,25 @@ async function authorizeTask (db, event, { workflowRun, taskId, uploadHashId, re
   if (receiptId) {
     // Check via upload (upload-scoped) or direct receipt link (receipt-scoped)
     const expectedReceiptId = upload?.receiptId || workflowRun.receiptId
-    if (receiptId !== expectedReceiptId) {
-      logSecurityEvent(event, 'warn', { taskId, receiptId, expected: expectedReceiptId, reason: 'receipt_scope_mismatch' }, 'Authorization denied')
-      throw createError({ statusCode: 403, message: 'Forbidden' })
+    if (expectedReceiptId) {
+      // Known receipt link — must match exactly
+      if (receiptId !== expectedReceiptId) {
+        logSecurityEvent(event, 'warn', { taskId, receiptId, expected: expectedReceiptId, reason: 'receipt_scope_mismatch' }, 'Authorization denied')
+        throw createError({ statusCode: 403, message: 'Forbidden' })
+      }
+    }
+    else {
+      // No receipt linked yet (first-time linking) — verify receipt belongs to same user as upload
+      const [receipt] = await db
+        .select({ userId: schema.receipts.userId })
+        .from(schema.receipts)
+        .where(eq(schema.receipts.id, receiptId))
+        .limit(1)
+
+      if (!receipt || receipt.userId !== upload?.userId) {
+        logSecurityEvent(event, 'warn', { taskId, receiptId, reason: 'receipt_owner_mismatch' }, 'Authorization denied')
+        throw createError({ statusCode: 403, message: 'Forbidden' })
+      }
     }
   }
 
@@ -115,9 +131,30 @@ async function authorizeTask (db, event, { workflowRun, taskId, uploadHashId, re
       .where(eq(schema.receipts.id, linkedReceiptId))
       .limit(1)
 
-    if (!receipt || receipt.splitId !== splitId) {
-      logSecurityEvent(event, 'warn', { taskId, splitId, expected: receipt?.splitId, reason: 'split_scope_mismatch' }, 'Authorization denied')
+    if (!receipt) {
+      logSecurityEvent(event, 'warn', { taskId, splitId, reason: 'receipt_not_found_for_split_check' }, 'Authorization denied')
       throw createError({ statusCode: 403, message: 'Forbidden' })
+    }
+
+    if (receipt.splitId) {
+      // Known split link — must match exactly
+      if (receipt.splitId !== splitId) {
+        logSecurityEvent(event, 'warn', { taskId, splitId, expected: receipt.splitId, reason: 'split_scope_mismatch' }, 'Authorization denied')
+        throw createError({ statusCode: 403, message: 'Forbidden' })
+      }
+    }
+    else {
+      // No split linked yet (first-time linking) — verify split belongs to same user
+      const [split] = await db
+        .select({ userId: schema.splits.userId })
+        .from(schema.splits)
+        .where(eq(schema.splits.id, splitId))
+        .limit(1)
+
+      if (!split || split.userId !== upload?.userId) {
+        logSecurityEvent(event, 'warn', { taskId, splitId, reason: 'split_owner_mismatch' }, 'Authorization denied')
+        throw createError({ statusCode: 403, message: 'Forbidden' })
+      }
     }
   }
 }

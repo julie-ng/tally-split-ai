@@ -13,6 +13,7 @@ export const workflowRunSchema = z.object({
   ocrStatus: z.enum(WORKFLOW_STEP_STATUSES),
   annotationsStatus: z.enum(WORKFLOW_STEP_STATUSES),
   splitStatus: z.enum(WORKFLOW_STEP_STATUSES),
+  normalizeStatus: z.enum(WORKFLOW_STEP_STATUSES),
   error: z.string().nullable(),
   createdAt: z.iso.datetime(),
   completedAt: z.iso.datetime().nullable(),
@@ -28,6 +29,7 @@ export const workflowRunInsertSchema = z.object({
   ocrStatus: z.enum(WORKFLOW_STEP_STATUSES).default('pending'),
   annotationsStatus: z.enum(WORKFLOW_STEP_STATUSES).default('pending'),
   splitStatus: z.enum(WORKFLOW_STEP_STATUSES).default('pending'),
+  normalizeStatus: z.enum(WORKFLOW_STEP_STATUSES).default('pending'),
 }).refine(
   data => data.uploadId != null || data.receiptId != null,
   { message: 'At least one of uploadId or receiptId is required' },

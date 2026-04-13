@@ -20,7 +20,8 @@ export const receipts = pgTable('receipts', {
   merchantAddress: text('merchant_address'),
   merchantPhone: text('merchant_phone'),
   tags: text('tags'), // Comma-separated tags
-  date: text('date'), // ISO date string
+  date: text('date'), // ISO date string (e.g. "2025-11-07")
+  time: text('time'), // ISO time string (e.g. "17:45:00"), null if not available
   subtotal: real('subtotal'),
   tax: real('tax'),
   tip: real('tip'),
@@ -139,6 +140,7 @@ export const workflowRuns = pgTable('workflow_runs', {
   ocrStatus: text('ocr_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
   annotationsStatus: text('annotations_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
   splitStatus: text('split_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
+  normalizeStatus: text('normalize_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
 
   // Error tracking
   error: text('error'),

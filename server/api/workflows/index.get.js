@@ -17,6 +17,7 @@ export default defineEventHandler(async (event) => {
           status: true,
           ocrStatus: true,
           annotationsStatus: true,
+          normalizeStatus: true,
           splitStatus: true,
           createdAt: true,
           completedAt: true,

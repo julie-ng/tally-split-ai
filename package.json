@@ -33,7 +33,7 @@
     "@nuxt/ui": "^4.3.0",
     "@nuxthub/core": "^0.10.4",
     "@pinia/nuxt": "^0.11.3",
-    "@trigger.dev/sdk": "^4.4.3",
+    "@trigger.dev/sdk": "4.4.4",
     "@vueuse/core": "^14.1.0",
     "chalk": "^5.6.2",
     "dotenv": "^16.4.5",
@@ -51,7 +51,7 @@
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.82",
     "@stylistic/eslint-plugin": "^5.7.0",
-    "@trigger.dev/build": "^4.4.3",
+    "@trigger.dev/build": "4.4.4",
     "@types/pg": "^8.20.0",
     "drizzle-kit": "^0.31.8",
     "sass-embedded": "^1.99.0",

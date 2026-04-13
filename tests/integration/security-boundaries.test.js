@@ -172,3 +172,21 @@ describe('Security boundaries: permissions map covers all trigger task IDs', () 
     }
   })
 })
+
+describe('Security boundaries: task AuthZ handles first-time receipt linking', () => {
+  // When a task creates a receipt and links it to an upload, the upload's receiptId
+  // is null at auth time (workflow run was fetched before the link). The AuthZ must
+  // fall back to verifying the receipt belongs to the same user as the upload,
+  // rather than rejecting with receipt_scope_mismatch.
+  it('require-authorization.js should handle null expectedReceiptId with owner check', () => {
+    const content = readFileSync(resolve('server/utils/require-authorization.js'), 'utf-8')
+    expect(content).toContain('receipt_owner_mismatch')
+    expect(content).toContain('receipt.userId !== upload?.userId')
+  })
+
+  it('require-authorization.js should handle null expectedSplitId with owner check', () => {
+    const content = readFileSync(resolve('server/utils/require-authorization.js'), 'utf-8')
+    expect(content).toContain('split_owner_mismatch')
+    expect(content).toContain('split.userId !== upload?.userId')
+  })
+})

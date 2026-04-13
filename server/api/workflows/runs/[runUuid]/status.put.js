@@ -11,6 +11,7 @@ const statusUpdateSchema = z.object({
   ocrStatus: z.enum(WORKFLOW_STEP_STATUSES).optional(),
   annotationsStatus: z.enum(WORKFLOW_STEP_STATUSES).optional(),
   splitStatus: z.enum(WORKFLOW_STEP_STATUSES).optional(),
+  normalizeStatus: z.enum(WORKFLOW_STEP_STATUSES).optional(),
 
   // Upload analysis status (orchestrator sets this on completion)
   analysisStatus: z.enum(UPLOAD_ANALYSIS_STATUSES).optional(),
@@ -57,6 +58,7 @@ export default defineEventHandler(async (event) => {
   if (workflowUpdates.ocrStatus !== undefined) runUpdates.ocrStatus = workflowUpdates.ocrStatus
   if (workflowUpdates.annotationsStatus !== undefined) runUpdates.annotationsStatus = workflowUpdates.annotationsStatus
   if (workflowUpdates.splitStatus !== undefined) runUpdates.splitStatus = workflowUpdates.splitStatus
+  if (workflowUpdates.normalizeStatus !== undefined) runUpdates.normalizeStatus = workflowUpdates.normalizeStatus
   if (workflowUpdates.error !== undefined) runUpdates.error = workflowUpdates.error
   if (workflowUpdates.completedAt !== undefined) runUpdates.completedAt = workflowUpdates.completedAt ? new Date(workflowUpdates.completedAt) : null
 

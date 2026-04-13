@@ -50,6 +50,13 @@
       "when": 1776077782692,
       "tag": "0006_check-workflow-runs-resource",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1776088683114,
+      "tag": "0007_normal_black_queen",
+      "breakpoints": true
     }
   ]
 }

@@ -35,6 +35,7 @@ const steps = computed(() => [
   { label: 'Upload', status: uploadStepStatus(props.uploadStatus) },
   { label: 'OCR', status: stepStatuses.value.ocrStatus },
   { label: 'Annotations', status: stepStatuses.value.annotationsStatus },
+  { label: 'Normalize', status: stepStatuses.value.normalizeStatus },
   { label: 'Split', status: stepStatuses.value.splitStatus },
 ])
 
