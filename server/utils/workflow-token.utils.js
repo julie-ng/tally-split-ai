@@ -41,6 +41,9 @@ export function generateCallbackToken ({ runUuid, runCreatedAt, scope }) {
  * @returns {boolean} True if token is valid
  */
 export function verifyCallbackToken (token, { runUuid, runCreatedAt, scope }) {
+  if (!token || !/^[0-9a-f]{64}$/i.test(token)) {
+    return false
+  }
   const expected = generateCallbackToken({ runUuid, runCreatedAt, scope })
   return crypto.timingSafeEqual(Buffer.from(token, 'hex'), Buffer.from(expected, 'hex'))
 }
@@ -53,7 +56,8 @@ export function verifyCallbackToken (token, { runUuid, runCreatedAt, scope }) {
  * @returns {{ expired: boolean, expiredAt: Date }} Whether the token is expired and when it expires/expired
  */
 export function isTokenExpired (createdAt, expiryMinutes) {
-  const minutes = expiryMinutes ?? parseInt(process.env.WORKFLOW_TOKEN_EXPIRY_MINUTES ?? '15', 10)
+  const parsed = expiryMinutes ?? parseInt(process.env.WORKFLOW_TOKEN_EXPIRY_MINUTES, 10)
+  const minutes = Number.isFinite(parsed) && parsed > 0 ? parsed : 15
   const expiredAt = new Date(createdAt.getTime() + minutes * 60 * 1000)
   return {
     expired: Date.now() > expiredAt.getTime(),
