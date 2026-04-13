@@ -1,17 +1,17 @@
 import { z } from 'zod'
-import { eq } from 'drizzle-orm'
 import { WORKFLOW_STEPS } from '~~/shared/enums/workflow-step.js'
 import { WORKFLOW_STEP_STATUSES } from '~~/shared/enums/workflow-status.js'
 
 const callbackSchema = z.object({
   step: z.enum(WORKFLOW_STEPS),
   status: z.enum(WORKFLOW_STEP_STATUSES),
-  callbackToken: z.string().min(1),
 })
 
 export default defineEventHandler(async (event) => {
   const log = useLogger('workflow')
-  const db = useDB()
+  await requireAuthentication(event)
+  requireTaskPermission(event)
+
   const runUuid = getRouterParam(event, 'runUuid')
 
   if (!runUuid) {
@@ -29,29 +29,8 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const { step, status, callbackToken } = result.data
-
-  // Look up workflow run by UUID, joined with upload
-  const workflowRun = await db.query.workflowRuns.findFirst({
-    where: eq(schema.workflowRuns.uuid, runUuid),
-    with: { upload: true },
-  })
-
-  if (!workflowRun) {
-    throw createError({ statusCode: 404, message: 'Workflow run not found' })
-  }
-
-  // Verify HMAC token
-  const isValid = verifyCallbackToken(callbackToken, {
-    runUuid: workflowRun.uuid,
-    runCreatedAt: workflowRun.createdAt.toISOString(),
-    scope: `upload:${workflowRun.upload.hashId}`,
-  })
-
-  if (!isValid) {
-    log.warn({ runUuid }, 'Invalid callback token')
-    throw createError({ statusCode: 401, message: 'Invalid callback token' })
-  }
+  const { step, status } = result.data
+  const workflowRun = event.context.workflowRun
 
   log.info({ runUuid, hashId: workflowRun.upload.hashId, step, status }, 'Callback received')
 

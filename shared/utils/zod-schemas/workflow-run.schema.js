@@ -6,7 +6,8 @@ import { WORKFLOW_STATUSES, WORKFLOW_STEP_STATUSES } from '../../enums/workflow-
  */
 export const workflowRunSchema = z.object({
   id: z.number(),
-  uploadId: z.number(),
+  uploadId: z.number().nullable(),
+  receiptId: z.number().nullable(),
   triggerRunId: z.string().nullable(),
   status: z.enum(WORKFLOW_STATUSES),
   ocrStatus: z.enum(WORKFLOW_STEP_STATUSES),
@@ -21,9 +22,13 @@ export const workflowRunSchema = z.object({
  * Workflow Run Insert Schema - validates the full object before DB insert
  */
 export const workflowRunInsertSchema = z.object({
-  uploadId: z.number(),
+  uploadId: z.number().optional(),
+  receiptId: z.number().optional(),
   status: z.enum(WORKFLOW_STATUSES).default('queued'),
   ocrStatus: z.enum(WORKFLOW_STEP_STATUSES).default('pending'),
   annotationsStatus: z.enum(WORKFLOW_STEP_STATUSES).default('pending'),
   splitStatus: z.enum(WORKFLOW_STEP_STATUSES).default('pending'),
-})
+}).refine(
+  data => data.uploadId != null || data.receiptId != null,
+  { message: 'At least one of uploadId or receiptId is required' },
+)

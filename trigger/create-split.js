@@ -11,12 +11,12 @@ export const createSplit = task({
   maxDuration: 10,
   run: async (payload) => {
     const { receiptId, runUuid, callbackToken } = payload
-    const auth = { callbackToken, runUuid, taskId: TASK_ID }
-    const api = createApiClient(auth)
+    const authHeaders = { callbackToken, runUuid, taskId: TASK_ID }
+    const api = createApiClient(authHeaders)
 
     // Update workflow step status
-    await updateWorkflowStatus(auth, { splitStatus: WORKFLOW_STEP_STATUS.PROCESSING })
-    await notifyStatus(runUuid, WORKFLOW_STEP.SPLIT, 'processing', callbackToken)
+    await updateWorkflowStatus(authHeaders, { splitStatus: WORKFLOW_STEP_STATUS.PROCESSING })
+    await notifyStatus(runUuid, WORKFLOW_STEP.SPLIT, 'processing', authHeaders)
 
     try {
       // 1. Fetch receipt to get total via API
@@ -24,7 +24,7 @@ export const createSplit = task({
 
       // 2. Skip if no total available
       if (receipt.total === null || receipt.total === undefined) {
-        await updateWorkflowStatus(auth, { splitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
+        await updateWorkflowStatus(authHeaders, { splitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
 
         logger.log(`Skipped split creation for receipt ${receiptId} — no total`)
         return { splitId: null, skipped: true }
@@ -44,15 +44,15 @@ export const createSplit = task({
       await api.put(`/api/receipts/${receiptId}`, { splitId })
 
       // 5. Update workflow step status
-      await updateWorkflowStatus(auth, { splitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-      await notifyStatus(runUuid, WORKFLOW_STEP.SPLIT, 'completed', callbackToken)
+      await updateWorkflowStatus(authHeaders, { splitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
+      await notifyStatus(runUuid, WORKFLOW_STEP.SPLIT, 'completed', authHeaders)
 
       logger.log(`Split created for receipt ${receiptId}`, { splitId, amount: receipt.total })
 
       return { splitId, splitAmount: receipt.total }
     }
     catch (err) {
-      await updateWorkflowStatus(auth, { splitStatus: WORKFLOW_STEP_STATUS.FAILED })
+      await updateWorkflowStatus(authHeaders, { splitStatus: WORKFLOW_STEP_STATUS.FAILED })
       throw err
     }
   },

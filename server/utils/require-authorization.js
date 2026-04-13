@@ -85,22 +85,34 @@ async function authorizeUser (db, event, { userId, uploadHashId, receiptId, spli
 async function authorizeTask (db, event, { workflowRun, taskId, uploadHashId, receiptId, splitId }) {
   const upload = workflowRun.upload
 
-  if (uploadHashId && uploadHashId !== upload.hashId) {
-    logSecurityEvent(event, 'warn', { taskId, uploadHashId, expected: upload.hashId, reason: 'upload_scope_mismatch' }, 'Authorization denied')
-    throw createError({ statusCode: 403, message: 'Forbidden' })
+  if (uploadHashId) {
+    if (!upload || uploadHashId !== upload.hashId) {
+      logSecurityEvent(event, 'warn', { taskId, uploadHashId, expected: upload?.hashId, reason: 'upload_scope_mismatch' }, 'Authorization denied')
+      throw createError({ statusCode: 403, message: 'Forbidden' })
+    }
   }
 
-  if (receiptId && receiptId !== upload.receiptId) {
-    logSecurityEvent(event, 'warn', { taskId, receiptId, expected: upload.receiptId, reason: 'receipt_scope_mismatch' }, 'Authorization denied')
-    throw createError({ statusCode: 403, message: 'Forbidden' })
+  if (receiptId) {
+    // Check via upload (upload-scoped) or direct receipt link (receipt-scoped)
+    const expectedReceiptId = upload?.receiptId || workflowRun.receiptId
+    if (receiptId !== expectedReceiptId) {
+      logSecurityEvent(event, 'warn', { taskId, receiptId, expected: expectedReceiptId, reason: 'receipt_scope_mismatch' }, 'Authorization denied')
+      throw createError({ statusCode: 403, message: 'Forbidden' })
+    }
   }
 
   if (splitId) {
-    // Verify split belongs to this workflow run's upload → receipt → split chain
+    // Verify split belongs to the workflow's receipt → split chain
+    const linkedReceiptId = upload?.receiptId || workflowRun.receiptId
+    if (!linkedReceiptId) {
+      logSecurityEvent(event, 'warn', { taskId, splitId, reason: 'no_receipt_for_split_check' }, 'Authorization denied')
+      throw createError({ statusCode: 403, message: 'Forbidden' })
+    }
+
     const [receipt] = await db
       .select({ splitId: schema.receipts.splitId })
       .from(schema.receipts)
-      .where(eq(schema.receipts.id, upload.receiptId))
+      .where(eq(schema.receipts.id, linkedReceiptId))
       .limit(1)
 
     if (!receipt || receipt.splitId !== splitId) {

@@ -16,12 +16,12 @@ export const analyzeOcr = task({
   maxDuration: 300,
   run: async (payload) => {
     const { uploadHashId, runUuid, callbackToken } = payload
-    const auth = { callbackToken, runUuid, taskId: TASK_ID }
-    const api = createApiClient(auth)
+    const authHeaders = { callbackToken, runUuid, taskId: TASK_ID }
+    const api = createApiClient(authHeaders)
 
     // Update workflow step status
-    await updateWorkflowStatus(auth, { ocrStatus: WORKFLOW_STEP_STATUS.PROCESSING })
-    await notifyStatus(runUuid, WORKFLOW_STEP.OCR, 'processing', callbackToken)
+    await updateWorkflowStatus(authHeaders, { ocrStatus: WORKFLOW_STEP_STATUS.PROCESSING })
+    await notifyStatus(runUuid, WORKFLOW_STEP.OCR, 'processing', authHeaders)
 
     try {
       // 1. Fetch upload record via API
@@ -102,15 +102,15 @@ export const analyzeOcr = task({
       })
 
       // 7. Update workflow step status
-      await updateWorkflowStatus(auth, { ocrStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-      await notifyStatus(runUuid, WORKFLOW_STEP.OCR, 'completed', callbackToken)
+      await updateWorkflowStatus(authHeaders, { ocrStatus: WORKFLOW_STEP_STATUS.COMPLETED })
+      await notifyStatus(runUuid, WORKFLOW_STEP.OCR, 'completed', authHeaders)
 
       logger.log(`OCR analysis complete for ${uploadHashId}`, { receiptId })
 
       return { receiptId, receiptData }
     }
     catch (err) {
-      await updateWorkflowStatus(auth, { ocrStatus: WORKFLOW_STEP_STATUS.FAILED })
+      await updateWorkflowStatus(authHeaders, { ocrStatus: WORKFLOW_STEP_STATUS.FAILED })
       throw err
     }
   },

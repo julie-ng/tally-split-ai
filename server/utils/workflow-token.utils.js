@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+import { serializeActions } from '../../shared/config/task-permissions.js'
 
 function getSalt () {
   const salt = process.env.WORKFLOW_CALLBACK_SALT
@@ -12,7 +13,8 @@ function getSalt () {
  * Generate an HMAC callback token for workflow authentication.
  * Token is deterministic — same inputs always produce the same hash.
  *
- * HMAC input format: "${runUuid}|${runCreatedAt}|${scope}"
+ * HMAC input format: "${runUuid}|${runCreatedAt}|${scope}|${sortedActions}"
+ *
  * Uses '|' as field separator so scope values can use ':' freely
  * (e.g. "upload:abc123", "receipt:123").
  *
@@ -20,13 +22,14 @@ function getSalt () {
  * @param {string} params.runUuid - Workflow run UUID
  * @param {string} params.runCreatedAt - Workflow run created_at as ISO timestamp string
  * @param {string} params.scope - Resource scope (e.g. "upload:abc123", "receipt:123")
+ * @param {string[]} params.actions - Task actions (e.g. ['upload:read', 'receipt:write'])
  * @returns {string} Hex-encoded HMAC token
  */
-export function generateCallbackToken ({ runUuid, runCreatedAt, scope }) {
-  if (!scope) {
-    throw new Error('scope is required for token generation')
+export function generateCallbackToken ({ runUuid, runCreatedAt, scope, actions }) {
+  if (!scope || !actions?.length) {
+    throw new Error('scope and actions are required for token generation')
   }
-  const input = `${runUuid}|${runCreatedAt}|${scope}`
+  const input = `${runUuid}|${runCreatedAt}|${scope}|${serializeActions(actions)}`
   return crypto.createHmac('sha256', getSalt()).update(input).digest('hex')
 }
 
@@ -38,13 +41,14 @@ export function generateCallbackToken ({ runUuid, runCreatedAt, scope }) {
  * @param {string} params.runUuid - Workflow run UUID
  * @param {string} params.runCreatedAt - Workflow run created_at as ISO timestamp string
  * @param {string} params.scope - Resource scope (must match what was used to generate)
+ * @param {string[]} params.actions - Task actions (must match what was used to generate)
  * @returns {boolean} True if token is valid
  */
-export function verifyCallbackToken (token, { runUuid, runCreatedAt, scope }) {
+export function verifyCallbackToken (token, { runUuid, runCreatedAt, scope, actions }) {
   if (!token || !/^[0-9a-f]{64}$/i.test(token)) {
     return false
   }
-  const expected = generateCallbackToken({ runUuid, runCreatedAt, scope })
+  const expected = generateCallbackToken({ runUuid, runCreatedAt, scope, actions })
   return crypto.timingSafeEqual(Buffer.from(token, 'hex'), Buffer.from(expected, 'hex'))
 }
 

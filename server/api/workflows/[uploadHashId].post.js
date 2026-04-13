@@ -3,6 +3,7 @@ import { eq, and, inArray } from 'drizzle-orm'
 import { workflowRunInsertSchema } from '~~/shared/utils/zod-schemas/workflow-run.schema.js'
 import { WORKFLOW_STATUS } from '~~/shared/enums/workflow-status.js'
 import { UPLOAD_ANALYSIS_STATUS } from '~~/shared/enums/upload-analysis-status.js'
+import { getTaskActions } from '~~/shared/config/task-permissions.js'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger('workflow')
@@ -55,11 +56,12 @@ export default defineEventHandler(async (event) => {
     .set({ analysisStatus: UPLOAD_ANALYSIS_STATUS.QUEUED })
     .where(eq(schema.uploads.hashId, hashId))
 
-  // Generate HMAC callback token scoped to this upload
+  // Generate action-scoped HMAC token for the orchestrator
   const callbackToken = generateCallbackToken({
     runUuid: workflowRun.uuid,
     runCreatedAt: workflowRun.createdAt.toISOString(),
     scope: `upload:${upload.hashId}`,
+    actions: getTaskActions('receipt-workflow'),
   })
 
   // Trigger the workflow (fire and forget)
