@@ -1,91 +1,58 @@
 import { task, logger } from '@trigger.dev/sdk/v3'
-import { eq } from 'drizzle-orm'
-import { useDB, schema } from '../server/db/connection.js'
 import { WORKFLOW_STEP_STATUS } from '../shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '../shared/enums/workflow-step.js'
-import { splitInsertSchema } from '../shared/utils/zod-schemas/split.schema.js'
+import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
 import { notifyStatus } from './utils/notify-status.js'
 
+const TASK_ID = 'create-split'
+
 export const createSplit = task({
-  id: 'create-split',
+  id: TASK_ID,
   maxDuration: 10,
   run: async (payload) => {
-    const { receiptId, workflowRunId, runUuid, callbackToken } = payload
-    const db = useDB()
+    const { receiptId, runUuid, callbackToken } = payload
+    const auth = { callbackToken, runUuid, taskId: TASK_ID }
+    const api = createApiClient(auth)
 
     // Update workflow step status
-    await db
-      .update(schema.workflowRuns)
-      .set({ splitStatus: WORKFLOW_STEP_STATUS.PROCESSING })
-      .where(eq(schema.workflowRuns.id, workflowRunId))
+    await updateWorkflowStatus(auth, { splitStatus: WORKFLOW_STEP_STATUS.PROCESSING })
     await notifyStatus(runUuid, WORKFLOW_STEP.SPLIT, 'processing', callbackToken)
 
     try {
-      // 1. Fetch receipt to get total
-      const receipts = await db
-        .select()
-        .from(schema.receipts)
-        .where(eq(schema.receipts.id, receiptId))
-
-      if (receipts.length === 0) {
-        throw new Error(`Receipt with id '${receiptId}' not found`)
-      }
-
-      const receipt = receipts[0]
+      // 1. Fetch receipt to get total via API
+      const receipt = await api.get(`/api/receipts/${receiptId}`)
 
       // 2. Skip if no total available
       if (receipt.total === null || receipt.total === undefined) {
-        await db
-          .update(schema.workflowRuns)
-          .set({ splitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-          .where(eq(schema.workflowRuns.id, workflowRunId))
+        await updateWorkflowStatus(auth, { splitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
 
         logger.log(`Skipped split creation for receipt ${receiptId} — no total`)
         return { splitId: null, skipped: true }
       }
 
-      // 3. Calculate equal split (placeholder — will evolve with annotations)
-      const halfAmount = Math.floor(receipt.total / 2 * 100) / 100
-
-      // 4. Validate and insert split
-      const insertData = splitInsertSchema.parse({
+      // 3. Create split via API
+      const splitResult = await api.post('/api/splits', {
         receiptId,
-        userId: receipt.userId,
         splitAmount: receipt.total,
-        userAShare: halfAmount,
-        userBShare: halfAmount,
+        paidBy: null,
         isSettled: false,
       })
 
-      const [split] = await db
-        .insert(schema.splits)
-        .values(insertData)
-        .returning()
+      const splitId = splitResult.created.id
 
-      // 5. Link split to receipt
-      await db
-        .update(schema.receipts)
-        .set({ splitId: split.id })
-        .where(eq(schema.receipts.id, receiptId))
+      // 4. Link split to receipt via API
+      await api.put(`/api/receipts/${receiptId}`, { splitId })
 
-      // 6. Update workflow step status
-      await db
-        .update(schema.workflowRuns)
-        .set({ splitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-        .where(eq(schema.workflowRuns.id, workflowRunId))
-
+      // 5. Update workflow step status
+      await updateWorkflowStatus(auth, { splitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
       await notifyStatus(runUuid, WORKFLOW_STEP.SPLIT, 'completed', callbackToken)
 
-      logger.log(`Split created for receipt ${receiptId}`, { splitId: split.id, amount: receipt.total })
+      logger.log(`Split created for receipt ${receiptId}`, { splitId, amount: receipt.total })
 
-      return { splitId: split.id, splitAmount: receipt.total }
+      return { splitId, splitAmount: receipt.total }
     }
     catch (err) {
-      await db
-        .update(schema.workflowRuns)
-        .set({ splitStatus: WORKFLOW_STEP_STATUS.FAILED })
-        .where(eq(schema.workflowRuns.id, workflowRunId))
-
+      await updateWorkflowStatus(auth, { splitStatus: WORKFLOW_STEP_STATUS.FAILED })
       throw err
     }
   },

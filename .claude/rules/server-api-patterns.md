@@ -11,9 +11,10 @@ paths:
 import { z } from 'zod'
 
 export default defineEventHandler(async (event) => {
-  const db = useDB()             // auto-imported via server/utils/db.utils.js
-  requireUserId(event)           // always first — validates auth
-  requireHashIdParam(event)      // or requireIdParam() for numeric IDs
+  const db = useDB()                         // auto-imported via server/utils/db.utils.js
+  await requireAuthentication(event)         // AuthN — establishes principal (user or task)
+  requireHashIdParam(event)                  // or requireIdParam() for numeric IDs
+  await requireAuthorization(event, { ... }) // AuthZ — verifies principal can act on resource
 
   const hashId = getRouterParam(event, 'hashId')
 
@@ -43,7 +44,7 @@ Reference implementation: `server/api/uploads/[hashId].put.js`
 
 ## Key Rules
 
-- **No middleware** — use explicit utility functions (`requireUserId`, `requireHashIdParam`) at the top of each handler
+- **No middleware** — use explicit utility functions (`requireAuthentication`, `requireAuthorization`, `requireHashIdParam`) at the top of each handler
 - **Guards must not return values** — they should only inspect/extend `event.context` or throw an error. Callers read results from `event.context` (e.g. `event.context.upload`). Reference: https://nuxt.com/docs/4.x/directory-structure/server#server-middleware
 - Use `createError()` for all thrown errors (Nuxt-aware, works across server and client)
 - Use `setResponseStatus(event, 400)` for validation errors (don't throw — return structured error)

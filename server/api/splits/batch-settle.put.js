@@ -10,7 +10,7 @@ const batchSettleSchema = z.object({
 export default defineEventHandler(async (event) => {
   const log = useLogger('split')
   const db = useDB()
-  requireUserId(event)
+  await requireAuthentication(event)
   const userId = event.context.userId
 
   // Validate request body
@@ -73,7 +73,7 @@ export default defineEventHandler(async (event) => {
       await trackBatchChanges(tx, {
         historyTable: schema.splitHistory,
         entityIdColumn: 'splitId',
-        source: `user:${userId}`,
+        source: event.context.securityPrincipal,
       }, entities)
 
       return afterRows

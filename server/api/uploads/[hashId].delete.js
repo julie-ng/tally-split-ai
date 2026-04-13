@@ -3,10 +3,11 @@ import { eq } from 'drizzle-orm'
 export default defineEventHandler(async (event) => {
   const log = useLogger('upload')
   const db = useDB()
-  requireUserId(event)
+  await requireAuthentication(event)
   requireHashIdParam(event)
 
   const hashId = getRouterParam(event, 'hashId')
+  await requireAuthorization(event, { uploadHashId: hashId })
 
   azureStorageUtils.useAzureStorageConfig()
 

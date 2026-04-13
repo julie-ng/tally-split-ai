@@ -4,8 +4,11 @@ import { receiptInputSchema } from '~~/shared/utils/zod-schemas/receipt.schema.j
 export default defineEventHandler(async (event) => {
   const log = useLogger('receipt')
   const db = useDB()
-  requireUserId(event)
+  await requireAuthentication(event)
+
+  // For tasks, userId comes from the workflow run's upload owner
   const userId = event.context.userId
+    ?? event.context.workflowRun?.upload?.userId
 
   const result = await readValidatedBody(event, body => receiptInputSchema.safeParse(body))
   if (!result.success) {
@@ -15,6 +18,11 @@ export default defineEventHandler(async (event) => {
       message: 'Invalid request body',
       errors: z.flattenError(result.error).fieldErrors,
     }
+  }
+
+  // AuthZ: if linking to a split, verify principal owns it
+  if (result.data.splitId) {
+    await requireAuthorization(event, { splitId: result.data.splitId })
   }
 
   const insertData = {
@@ -33,7 +41,7 @@ export default defineEventHandler(async (event) => {
     historyTable: schema.receiptHistory,
     entityId: created.id,
     entityIdColumn: 'receiptId',
-    source: `user:${userId}`,
+    source: event.context.securityPrincipal,
   }, created)
 
   log.info({ receiptId: created.id }, 'Receipt created')

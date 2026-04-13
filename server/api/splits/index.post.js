@@ -4,8 +4,11 @@ import { splitRequestSchema } from '~~/shared/utils/zod-schemas/split.schema.js'
 export default defineEventHandler(async (event) => {
   const log = useLogger('split')
   const db = useDB()
-  requireUserId(event)
+  await requireAuthentication(event)
+
+  // For tasks, userId comes from the workflow run's upload owner
   const userId = event.context.userId
+    ?? event.context.workflowRun?.upload?.userId
 
   const result = await readValidatedBody(event, body => splitRequestSchema.safeParse(body))
   if (!result.success) {
@@ -15,6 +18,11 @@ export default defineEventHandler(async (event) => {
       message: 'Invalid request body',
       errors: z.flattenError(result.error).fieldErrors,
     }
+  }
+
+  // AuthZ: if linking to a receipt, verify principal owns it
+  if (result.data.receiptId) {
+    await requireAuthorization(event, { receiptId: result.data.receiptId })
   }
 
   // Calculate both user shares (equal split for now)
@@ -41,7 +49,7 @@ export default defineEventHandler(async (event) => {
     historyTable: schema.splitHistory,
     entityId: created.id,
     entityIdColumn: 'splitId',
-    source: `user:${userId}`,
+    source: event.context.securityPrincipal,
   }, created)
 
   log.info({ splitId: created.id }, 'Split created')

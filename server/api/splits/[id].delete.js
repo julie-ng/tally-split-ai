@@ -1,22 +1,19 @@
-import { eq, and } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger('split')
   const db = useDB()
-  requireUserId(event)
+  await requireAuthentication(event)
   requireIdParam(event)
 
-  const userId = event.context.userId
   const splitId = parseInt(getRouterParam(event, 'id'), 10)
+  await requireAuthorization(event, { splitId })
 
   // Fetch split before deleting for history tracking
   const split = await db
     .select()
     .from(schema.splits)
-    .where(and(
-      eq(schema.splits.id, splitId),
-      eq(schema.splits.userId, userId),
-    ))
+    .where(eq(schema.splits.id, splitId))
     .limit(1)
 
   if (split.length === 0) {
@@ -31,7 +28,7 @@ export default defineEventHandler(async (event) => {
     historyTable: schema.splitHistory,
     entityId: splitId,
     entityIdColumn: 'splitId',
-    source: `user:${userId}`,
+    source: event.context.securityPrincipal,
   }, split[0])
 
   const dbResult = await db

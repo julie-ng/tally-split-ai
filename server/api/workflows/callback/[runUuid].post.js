@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
   const isValid = verifyCallbackToken(callbackToken, {
     runUuid: workflowRun.uuid,
     runCreatedAt: workflowRun.createdAt.toISOString(),
-    blobUrl: workflowRun.upload.blobUrl,
+    scope: `upload:${workflowRun.upload.hashId}`,
   })
 
   if (!isValid) {

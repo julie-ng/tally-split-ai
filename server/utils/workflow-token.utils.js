@@ -9,17 +9,24 @@ function getSalt () {
 }
 
 /**
- * Generate an HMAC callback token for workflow status callbacks.
+ * Generate an HMAC callback token for workflow authentication.
  * Token is deterministic — same inputs always produce the same hash.
  *
+ * HMAC input format: "${runUuid}|${runCreatedAt}|${scope}"
+ * Uses '|' as field separator so scope values can use ':' freely
+ * (e.g. "upload:abc123", "receipt:123").
+ *
  * @param {Object} params
- * @param {number} params.runUuid - Workflow run UUID
+ * @param {string} params.runUuid - Workflow run UUID
  * @param {string} params.runCreatedAt - Workflow run created_at as ISO timestamp string
- * @param {string} params.blobUrl - Upload blob URL
+ * @param {string} params.scope - Resource scope (e.g. "upload:abc123", "receipt:123")
  * @returns {string} Hex-encoded HMAC token
  */
-export function generateCallbackToken ({ runUuid, runCreatedAt, blobUrl }) {
-  const input = `${runUuid}:${runCreatedAt}:${blobUrl}`
+export function generateCallbackToken ({ runUuid, runCreatedAt, scope }) {
+  if (!scope) {
+    throw new Error('scope is required for token generation')
+  }
+  const input = `${runUuid}|${runCreatedAt}|${scope}`
   return crypto.createHmac('sha256', getSalt()).update(input).digest('hex')
 }
 
@@ -28,12 +35,32 @@ export function generateCallbackToken ({ runUuid, runCreatedAt, blobUrl }) {
  *
  * @param {string} token - The token to verify
  * @param {Object} params
- * @param {number} params.runUuid - Workflow run UUID
+ * @param {string} params.runUuid - Workflow run UUID
  * @param {string} params.runCreatedAt - Workflow run created_at as ISO timestamp string
- * @param {string} params.blobUrl - Upload blob URL
+ * @param {string} params.scope - Resource scope (must match what was used to generate)
  * @returns {boolean} True if token is valid
  */
-export function verifyCallbackToken (token, { runUuid, runCreatedAt, blobUrl }) {
-  const expected = generateCallbackToken({ runUuid, runCreatedAt, blobUrl })
+export function verifyCallbackToken (token, { runUuid, runCreatedAt, scope }) {
+  if (!token || !/^[0-9a-f]{64}$/i.test(token)) {
+    return false
+  }
+  const expected = generateCallbackToken({ runUuid, runCreatedAt, scope })
   return crypto.timingSafeEqual(Buffer.from(token, 'hex'), Buffer.from(expected, 'hex'))
+}
+
+/**
+ * Check whether a workflow token has expired based on the workflow run's createdAt.
+ *
+ * @param {Date} createdAt - Workflow run created_at timestamp
+ * @param {number} [expiryMinutes] - Validity window in minutes (defaults to WORKFLOW_TOKEN_EXPIRY_MINUTES env var, or 15)
+ * @returns {{ expired: boolean, expiredAt: Date }} Whether the token is expired and when it expires/expired
+ */
+export function isTokenExpired (createdAt, expiryMinutes) {
+  const parsed = expiryMinutes ?? parseInt(process.env.WORKFLOW_TOKEN_EXPIRY_MINUTES, 10)
+  const minutes = Number.isFinite(parsed) && parsed > 0 ? parsed : 15
+  const expiredAt = new Date(createdAt.getTime() + minutes * 60 * 1000)
+  return {
+    expired: Date.now() > expiredAt.getTime(),
+    expiredAt,
+  }
 }

@@ -1,41 +1,32 @@
 import { task, logger } from '@trigger.dev/sdk/v3'
-import { eq } from 'drizzle-orm'
 import DocumentIntelligence, { getLongRunningPoller, isUnexpected } from '@azure-rest/ai-document-intelligence'
-import { useDB, schema } from '../server/db/connection.js'
 import { WORKFLOW_STEP_STATUS } from '../shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '../shared/enums/workflow-step.js'
 import { azureStorageUtils } from '../server/utils/azure-storage.utils.js'
 import { getAzureDocumentIntelligenceConfig } from '../server/utils/azure-document-intelligence.js'
 import { receiptUtils } from '../shared/utils/receipt.utils.js'
 import { receiptInputSchema } from '../shared/utils/zod-schemas/receipt.schema.js'
+import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
 import { notifyStatus } from './utils/notify-status.js'
 
+const TASK_ID = 'analyze-ocr'
+
 export const analyzeOcr = task({
-  id: 'analyze-ocr',
+  id: TASK_ID,
   maxDuration: 300,
   run: async (payload) => {
-    const { uploadHashId, workflowRunId, runUuid, callbackToken } = payload
-    const db = useDB()
+    const { uploadHashId, runUuid, callbackToken } = payload
+    const auth = { callbackToken, runUuid, taskId: TASK_ID }
+    const api = createApiClient(auth)
 
     // Update workflow step status
-    await db
-      .update(schema.workflowRuns)
-      .set({ ocrStatus: WORKFLOW_STEP_STATUS.PROCESSING })
-      .where(eq(schema.workflowRuns.id, workflowRunId))
+    await updateWorkflowStatus(auth, { ocrStatus: WORKFLOW_STEP_STATUS.PROCESSING })
     await notifyStatus(runUuid, WORKFLOW_STEP.OCR, 'processing', callbackToken)
 
     try {
-      // 1. Fetch upload record
-      const uploads = await db
-        .select()
-        .from(schema.uploads)
-        .where(eq(schema.uploads.hashId, uploadHashId))
-
-      if (uploads.length === 0) {
-        throw new Error(`Upload with hashId '${uploadHashId}' not found`)
-      }
-
-      const upload = uploads[0]
+      // 1. Fetch upload record via API
+      const uploadData = await api.get(`/api/uploads/${uploadHashId}`)
+      const upload = uploadData
 
       // 2. Generate read-only SAS token
       const { uploadUrl: blobUrlWithSas } = azureStorageUtils.generateBlobSasToken(upload.blobName, {
@@ -86,51 +77,32 @@ export const analyzeOcr = task({
         analysisStatus: 'analyzed',
       })
 
-      // 5. Create or update receipt
-      const uploadWithReceipt = await db.query.uploads.findFirst({
-        where: eq(schema.uploads.hashId, uploadHashId),
-        with: { receipt: true },
-      })
-
-      let receiptId = uploadWithReceipt?.receiptId
+      // 5. Create or update receipt via API
+      let receiptId = upload.receiptId
 
       if (receiptId) {
-        await db
-          .update(schema.receipts)
-          .set({ ...receiptData, updatedAt: new Date() })
-          .where(eq(schema.receipts.id, receiptId))
+        await api.put(`/api/receipts/${receiptId}`, receiptData)
         logger.log(`Updated existing receipt ${receiptId}`)
       }
       else {
-        const [newReceipt] = await db
-          .insert(schema.receipts)
-          .values({
-            ...receiptData,
-            userId: upload.userId,
-            title: upload.title || 'Untitled',
-            tags: receiptUtils.azureTagsToReceiptTags(upload.azureTags),
-          })
-          .returning()
-        receiptId = newReceipt.id
+        const createResult = await api.post('/api/receipts', {
+          ...receiptData,
+          title: upload.title || 'Untitled',
+          tags: receiptUtils.azureTagsToReceiptTags(upload.azureTags),
+        })
+        receiptId = createResult.created.id
         logger.log(`Created new receipt ${receiptId}`)
       }
 
-      // 6. Update upload with OCR results
-      await db
-        .update(schema.uploads)
-        .set({
-          ocrText: analyzeResult.content || null,
-          ocrJson: result.body,
-          receiptId,
-        })
-        .where(eq(schema.uploads.hashId, uploadHashId))
+      // 6. Update upload with OCR results via API
+      await api.put(`/api/uploads/${uploadHashId}`, {
+        ocrText: analyzeResult.content || null,
+        ocrJson: result.body,
+        receiptId,
+      })
 
       // 7. Update workflow step status
-      await db
-        .update(schema.workflowRuns)
-        .set({ ocrStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-        .where(eq(schema.workflowRuns.id, workflowRunId))
-
+      await updateWorkflowStatus(auth, { ocrStatus: WORKFLOW_STEP_STATUS.COMPLETED })
       await notifyStatus(runUuid, WORKFLOW_STEP.OCR, 'completed', callbackToken)
 
       logger.log(`OCR analysis complete for ${uploadHashId}`, { receiptId })
@@ -138,11 +110,7 @@ export const analyzeOcr = task({
       return { receiptId, receiptData }
     }
     catch (err) {
-      await db
-        .update(schema.workflowRuns)
-        .set({ ocrStatus: WORKFLOW_STEP_STATUS.FAILED })
-        .where(eq(schema.workflowRuns.id, workflowRunId))
-
+      await updateWorkflowStatus(auth, { ocrStatus: WORKFLOW_STEP_STATUS.FAILED })
       throw err
     }
   },

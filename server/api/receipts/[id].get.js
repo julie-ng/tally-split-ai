@@ -1,18 +1,15 @@
-import { eq, and } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const db = useDB()
-  requireUserId(event)
+  await requireAuthentication(event)
   requireIdParam(event)
 
-  const userId = event.context.userId
   const receiptId = parseInt(getRouterParam(event, 'id'), 10)
+  await requireAuthorization(event, { receiptId })
 
   const receipt = await db.query.receipts.findFirst({
-    where: and(
-      eq(schema.receipts.id, receiptId),
-      eq(schema.receipts.userId, userId),
-    ),
+    where: eq(schema.receipts.id, receiptId),
     with: {
       uploads: true,
     },

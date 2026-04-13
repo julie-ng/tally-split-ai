@@ -3,10 +3,11 @@ import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const db = useDB()
-  requireUserId(event)
+  await requireAuthentication(event)
   requireHashIdParam(event)
 
   const hashId = getRouterParam(event, 'hashId')
+  await requireAuthorization(event, { uploadHashId: hashId })
 
   const result = await readValidatedBody(event, body => zodSchemas.uploadUpdateSchema.safeParse(body))
   if (!result.success) {
@@ -16,6 +17,11 @@ export default defineEventHandler(async (event) => {
       message: 'Invalid request body',
       errors: z.flattenError(result.error).fieldErrors,
     }
+  }
+
+  // AuthZ: if relinking to a different receipt, verify principal owns it
+  if (result.data.receiptId) {
+    await requireAuthorization(event, { receiptId: result.data.receiptId })
   }
 
   const updates = {

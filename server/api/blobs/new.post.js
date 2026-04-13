@@ -4,7 +4,7 @@ export default defineEventHandler(async (event) => {
   const log = useLogger('upload')
   const db = useDB()
   requireLocalDev(event)
-  requireUserId(event)
+  await requireAuthentication(event)
   const userId = event.context.userId
 
   azureStorageUtils.useAzureStorageConfig()

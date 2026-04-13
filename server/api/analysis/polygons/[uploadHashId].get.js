@@ -1,7 +1,7 @@
 // Extracts bounding box polygons from Document Intelligence analysis results
 // for rendering overlays on the receipt image.
 export default defineEventHandler(async (event) => {
-  requireUserId(event)
+  await requireAuthentication(event)
   requireHashIdParam(event, 'uploadHashId')
 
   const hashId = getRouterParam(event, 'uploadHashId')

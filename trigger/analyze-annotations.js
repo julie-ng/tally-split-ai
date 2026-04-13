@@ -1,38 +1,28 @@
 import { task, logger } from '@trigger.dev/sdk/v3'
-import { eq } from 'drizzle-orm'
-import { useDB, schema } from '../server/db/connection.js'
 import { WORKFLOW_STEP_STATUS } from '../shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '../shared/enums/workflow-step.js'
 import { azureStorageUtils } from '../server/utils/azure-storage.utils.js'
 import { gpt4oUtils } from '../server/utils/azure-gpt4o.utils.js'
+import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
 import { notifyStatus } from './utils/notify-status.js'
 
+const TASK_ID = 'analyze-annotations'
+
 export const analyzeAnnotations = task({
-  id: 'analyze-annotations',
+  id: TASK_ID,
   maxDuration: 120,
   run: async (payload) => {
-    const { uploadHashId, workflowRunId, runUuid, callbackToken } = payload
-    const db = useDB()
+    const { uploadHashId, runUuid, callbackToken } = payload
+    const auth = { callbackToken, runUuid, taskId: TASK_ID }
+    const api = createApiClient(auth)
 
     // Update workflow step status
-    await db
-      .update(schema.workflowRuns)
-      .set({ annotationsStatus: WORKFLOW_STEP_STATUS.PROCESSING })
-      .where(eq(schema.workflowRuns.id, workflowRunId))
+    await updateWorkflowStatus(auth, { annotationsStatus: WORKFLOW_STEP_STATUS.PROCESSING })
     await notifyStatus(runUuid, WORKFLOW_STEP.ANNOTATIONS, 'processing', callbackToken)
 
     try {
-      // 1. Fetch upload record (includes ocrJson from OCR step)
-      const uploads = await db
-        .select()
-        .from(schema.uploads)
-        .where(eq(schema.uploads.hashId, uploadHashId))
-
-      if (uploads.length === 0) {
-        throw new Error(`Upload with hashId '${uploadHashId}' not found`)
-      }
-
-      const upload = uploads[0]
+      // 1. Fetch upload record via API (includes ocrJson from OCR step)
+      const upload = await api.get(`/api/uploads/${uploadHashId}`)
 
       // 2. Generate read-only SAS token
       const { uploadUrl: blobUrlWithSas } = azureStorageUtils.generateBlobSasToken(upload.blobName, {
@@ -56,18 +46,11 @@ export const analyzeAnnotations = task({
       // 4. Call GPT-4o for annotation analysis
       const responseData = await gpt4oUtils.analyzeAnnotations(blobUrlWithSas, ocrLineItems)
 
-      // 5. Store result in DB
-      await db
-        .update(schema.uploads)
-        .set({ annotationsJson: responseData })
-        .where(eq(schema.uploads.hashId, uploadHashId))
+      // 5. Store result via API
+      await api.put(`/api/uploads/${uploadHashId}`, { annotationsJson: responseData })
 
       // 6. Update workflow step status
-      await db
-        .update(schema.workflowRuns)
-        .set({ annotationsStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-        .where(eq(schema.workflowRuns.id, workflowRunId))
-
+      await updateWorkflowStatus(auth, { annotationsStatus: WORKFLOW_STEP_STATUS.COMPLETED })
       await notifyStatus(runUuid, WORKFLOW_STEP.ANNOTATIONS, 'completed', callbackToken)
 
       logger.log(`Annotations analysis complete for ${uploadHashId}`)
@@ -75,11 +58,7 @@ export const analyzeAnnotations = task({
       return { annotations: responseData.annotations }
     }
     catch (err) {
-      await db
-        .update(schema.workflowRuns)
-        .set({ annotationsStatus: WORKFLOW_STEP_STATUS.FAILED })
-        .where(eq(schema.workflowRuns.id, workflowRunId))
-
+      await updateWorkflowStatus(auth, { annotationsStatus: WORKFLOW_STEP_STATUS.FAILED })
       throw err
     }
   },

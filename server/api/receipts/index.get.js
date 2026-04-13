@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const db = useDB()
-  requireUserId(event)
+  await requireAuthentication(event)
   const userId = event.context.userId
 
   const receipts = await db.query.receipts.findMany({

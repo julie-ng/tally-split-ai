@@ -1,14 +1,14 @@
 import { z } from 'zod'
-import { eq, and } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger('receipt')
   const db = useDB()
-  requireUserId(event)
+  await requireAuthentication(event)
   requireIdParam(event)
 
-  const userId = event.context.userId
   const receiptId = parseInt(getRouterParam(event, 'id'), 10)
+  await requireAuthorization(event, { receiptId })
 
   const result = await readValidatedBody(event, body => zodSchemas.receiptInputSchema.safeParse(body))
 
@@ -21,6 +21,11 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // AuthZ: if relinking to a different split, verify principal owns it
+  if (result.data.splitId) {
+    await requireAuthorization(event, { splitId: result.data.splitId })
+  }
+
   const updates = {
     ...result.data,
     updatedAt: new Date(),
@@ -31,10 +36,7 @@ export default defineEventHandler(async (event) => {
     const [before] = await tx
       .select()
       .from(schema.receipts)
-      .where(and(
-        eq(schema.receipts.id, receiptId),
-        eq(schema.receipts.userId, userId),
-      ))
+      .where(eq(schema.receipts.id, receiptId))
       .for('update')
 
     if (!before) {
@@ -56,7 +58,7 @@ export default defineEventHandler(async (event) => {
       historyTable: schema.receiptHistory,
       entityId: receiptId,
       entityIdColumn: 'receiptId',
-      source: `user:${userId}`,
+      source: event.context.securityPrincipal,
     }, before, updated)
 
     return updated

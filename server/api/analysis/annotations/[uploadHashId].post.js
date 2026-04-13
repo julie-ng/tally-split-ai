@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   const log = useLogger('analysis')
   const db = useDB()
   requireLocalDev(event)
-  requireUserId(event)
+  await requireAuthentication(event)
   requireHashIdParam(event, 'uploadHashId')
 
   const hashId = getRouterParam(event, 'uploadHashId')
