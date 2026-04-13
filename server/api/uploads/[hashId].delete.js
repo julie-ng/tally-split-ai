@@ -1,4 +1,32 @@
-import { eq } from 'drizzle-orm'
+import { eq, and, ne, count } from 'drizzle-orm'
+
+/**
+ * Delete Azure blobs (original + thumbnail) for an upload.
+ * Logs warnings on thumbnail failures but throws on original blob failure.
+ */
+async function deleteAzureBlobs (log, upload) {
+  const results = { originalBlob: false, thumbnail: false }
+
+  if (upload.status !== 'uploaded') return results
+
+  if (upload.blobName) {
+    await azureStorageUtils.deleteBlob(upload.blobName)
+    results.originalBlob = true
+  }
+
+  if (upload.thumbnailName) {
+    try {
+      await azureStorageUtils.deleteBlob(upload.thumbnailName)
+      results.thumbnail = true
+    }
+    // eslint-disable-next-line no-unused-vars
+    catch (thumbnailError) {
+      log.warn({ hashId: upload.hashId, blob: upload.thumbnailName }, 'Thumbnail not found or already deleted')
+    }
+  }
+
+  return results
+}
 
 export default defineEventHandler(async (event) => {
   const log = useLogger('upload')
@@ -11,69 +39,112 @@ export default defineEventHandler(async (event) => {
 
   azureStorageUtils.useAzureStorageConfig()
 
-  // First, fetch the record to get blob names
-  const uploadRecord = await db
+  // Fetch the upload record
+  const [upload] = await db
     .select()
     .from(schema.uploads)
     .where(eq(schema.uploads.hashId, hashId))
     .limit(1)
 
-  if (uploadRecord.length === 0) {
+  if (!upload) {
     throw createError({
       statusCode: 404,
       message: `Upload with hashId '${hashId}' not found`,
     })
   }
 
-  const upload = uploadRecord[0]
-
-  // Delete blobs from Azure Storage (only if upload was completed)
-  const deletionResults = {
-    originalBlob: false,
-    thumbnail: false,
+  // Delete Azure blobs for this upload
+  let blobsDeletionResults = { originalBlob: false, thumbnail: false }
+  try {
+    blobsDeletionResults = await deleteAzureBlobs(log, upload)
+  }
+  catch (error) {
+    log.error({ hashId, blob: upload.blobName, err: error }, 'Failed to delete blobs from Azure')
+    throw createError({
+      statusCode: 500,
+      message: 'Failed to delete blobs from Azure Storage',
+      data: { error: error.message },
+    })
   }
 
-  if (upload.status === 'uploaded') {
-    try {
-      // Delete original blob
-      if (upload.blobName) {
-        await azureStorageUtils.deleteBlob(upload.blobName)
-        deletionResults.originalBlob = true
-      }
+  let deletedReceipt = null
+  let deletedSplit = null
 
-      // Delete thumbnail if it exists
-      if (upload.thumbnailName) {
-        try {
-          await azureStorageUtils.deleteBlob(upload.thumbnailName)
-          deletionResults.thumbnail = true
+  if (upload.receiptId) {
+    // Count sibling uploads for the same receipt (excluding this one)
+    const [{ siblingCount }] = await db
+      .select({ siblingCount: count() })
+      .from(schema.uploads)
+      .where(and(
+        eq(schema.uploads.receiptId, upload.receiptId),
+        ne(schema.uploads.hashId, hashId),
+      ))
+
+    if (siblingCount === 0) {
+      // Last upload for this receipt — delete receipt and split too
+      const [receipt] = await db
+        .select()
+        .from(schema.receipts)
+        .where(eq(schema.receipts.id, upload.receiptId))
+        .limit(1)
+
+      if (receipt) {
+        if (receipt.splitId) {
+          const [split] = await db
+            .delete(schema.splits)
+            .where(eq(schema.splits.id, receipt.splitId))
+            .returning()
+          deletedSplit = split || null
         }
-        // eslint-disable-next-line no-unused-vars
-        catch (thumbnailError) {
-          log.warn({ hashId, blob: upload.thumbnailName }, 'Thumbnail not found or already deleted')
-        }
+
+        // Deleting the receipt cascade-deletes this upload via FK
+        await db
+          .delete(schema.receipts)
+          .where(eq(schema.receipts.id, upload.receiptId))
+
+        deletedReceipt = receipt
+        log.info({ receiptId: receipt.id, splitId: receipt.splitId || undefined }, 'Deleted associated receipt and split (last upload)')
       }
-    }
-    catch (error) {
-      log.error({ hashId, blob: upload.blobName, err: error }, 'Failed to delete blobs from Azure')
-      throw createError({
-        statusCode: 500,
-        message: 'Failed to delete blobs from Azure Storage',
-        data: { error: error.message },
-      })
     }
   }
 
-  // Delete the database record
-  const result = await db
-    .delete(schema.uploads)
-    .where(eq(schema.uploads.hashId, hashId))
-    .returning()
+  // If receipt was not deleted (siblings exist, or no receipt), delete just this upload
+  if (!deletedReceipt) {
+    await db
+      .delete(schema.uploads)
+      .where(eq(schema.uploads.hashId, hashId))
+  }
 
-  log.info({ hashId, blobUrl: upload.blobUrl, thumbnailUrl: upload.thumbnailUrl || undefined }, 'Upload deleted')
+  // Track deletions in history (audit trail only — no UI to surface these yet)
+  if (deletedReceipt) {
+    await trackDelete(db, {
+      historyTable: schema.receiptHistory,
+      entityId: deletedReceipt.id,
+      entityIdColumn: 'receiptId',
+      source: event.context.securityPrincipal,
+    }, deletedReceipt)
+  }
+
+  if (deletedSplit) {
+    await trackDelete(db, {
+      historyTable: schema.splitHistory,
+      entityId: deletedSplit.id,
+      entityIdColumn: 'splitId',
+      source: event.context.securityPrincipal,
+    }, deletedSplit)
+  }
+
+  log.info({
+    hashId,
+    receiptDeleted: !!deletedReceipt,
+    splitDeleted: !!deletedSplit,
+  }, 'Upload deleted')
 
   return {
     success: true,
-    deleted: result[0],
-    blobsDeletionResults: deletionResults,
+    deleted: { hashId },
+    receiptDeleted: !!deletedReceipt,
+    splitDeleted: !!deletedSplit,
+    blobsDeletionResults,
   }
 })
