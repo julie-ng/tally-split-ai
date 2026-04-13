@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm'
+import { getTaskActions } from '~~/shared/config/task-permissions.js'
 
 /**
  * Authenticate a Trigger.dev task via HMAC callback token.
@@ -38,11 +39,22 @@ export async function requireWorkflowAuth (event) {
     return false
   }
 
+  // Look up task's allowed actions from the permissions map
+  let actions
+  try {
+    actions = getTaskActions(taskId)
+  }
+  catch {
+    logSecurityEvent(event, 'warn', { runUuid, taskId, reason: 'unknown_task_id' }, 'Workflow auth rejected')
+    return false
+  }
+
   // HMAC verification (uses testable utility)
   const isValid = verifyCallbackToken(token, {
     runUuid: workflowRun.uuid,
     runCreatedAt: workflowRun.createdAt.toISOString(),
     scope: `upload:${workflowRun.upload.hashId}`,
+    actions,
   })
 
   if (!isValid) {
@@ -52,6 +64,7 @@ export async function requireWorkflowAuth (event) {
 
   event.context.workflowRun = workflowRun
   event.context.taskId = taskId
+  event.context.taskActions = actions
   event.context.securityPrincipal = `task:${taskId}`
 
   return true

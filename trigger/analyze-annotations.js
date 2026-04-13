@@ -13,12 +13,12 @@ export const analyzeAnnotations = task({
   maxDuration: 120,
   run: async (payload) => {
     const { uploadHashId, runUuid, callbackToken } = payload
-    const auth = { callbackToken, runUuid, taskId: TASK_ID }
-    const api = createApiClient(auth)
+    const authHeaders = { callbackToken, runUuid, taskId: TASK_ID }
+    const api = createApiClient(authHeaders)
 
     // Update workflow step status
-    await updateWorkflowStatus(auth, { annotationsStatus: WORKFLOW_STEP_STATUS.PROCESSING })
-    await notifyStatus(runUuid, WORKFLOW_STEP.ANNOTATIONS, 'processing', callbackToken)
+    await updateWorkflowStatus(authHeaders, { annotationsStatus: WORKFLOW_STEP_STATUS.PROCESSING })
+    await notifyStatus(runUuid, WORKFLOW_STEP.ANNOTATIONS, 'processing', authHeaders)
 
     try {
       // 1. Fetch upload record via API (includes ocrJson from OCR step)
@@ -50,15 +50,15 @@ export const analyzeAnnotations = task({
       await api.put(`/api/uploads/${uploadHashId}`, { annotationsJson: responseData })
 
       // 6. Update workflow step status
-      await updateWorkflowStatus(auth, { annotationsStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-      await notifyStatus(runUuid, WORKFLOW_STEP.ANNOTATIONS, 'completed', callbackToken)
+      await updateWorkflowStatus(authHeaders, { annotationsStatus: WORKFLOW_STEP_STATUS.COMPLETED })
+      await notifyStatus(runUuid, WORKFLOW_STEP.ANNOTATIONS, 'completed', authHeaders)
 
       logger.log(`Annotations analysis complete for ${uploadHashId}`)
 
       return { annotations: responseData.annotations }
     }
     catch (err) {
-      await updateWorkflowStatus(auth, { annotationsStatus: WORKFLOW_STEP_STATUS.FAILED })
+      await updateWorkflowStatus(authHeaders, { annotationsStatus: WORKFLOW_STEP_STATUS.FAILED })
       throw err
     }
   },

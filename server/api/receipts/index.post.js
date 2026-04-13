@@ -5,6 +5,7 @@ export default defineEventHandler(async (event) => {
   const log = useLogger('receipt')
   const db = useDB()
   await requireAuthentication(event)
+  requireTaskPermission(event)
 
   // For tasks, userId comes from the workflow run's upload owner
   const userId = event.context.userId

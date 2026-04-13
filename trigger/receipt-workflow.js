@@ -2,6 +2,8 @@ import { task, logger } from '@trigger.dev/sdk/v3'
 import { WORKFLOW_STATUS } from '../shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '../shared/enums/workflow-step.js'
 import { UPLOAD_ANALYSIS_STATUS } from '../shared/enums/upload-analysis-status.js'
+import { getTaskActions } from '../shared/config/task-permissions.js'
+import { generateCallbackToken } from '../server/utils/workflow-token.utils.js'
 import { analyzeOcr } from './analyze-ocr.js'
 import { analyzeAnnotations } from './analyze-annotations.js'
 import { createSplit } from './create-split.js'
@@ -14,21 +16,27 @@ export const receiptWorkflow = task({
   id: TASK_ID,
   maxDuration: 600,
   run: async (payload) => {
-    const { uploadHashId, runUuid, callbackToken } = payload
-    const auth = { callbackToken, runUuid, taskId: TASK_ID }
+    const { uploadHashId, runUuid, runCreatedAt, scope, callbackToken } = payload
+    const authHeaders = { callbackToken, runUuid, taskId: TASK_ID }
+
+    // Generate per-task tokens with action-scoped permissions
+    const tokenParams = { runUuid, runCreatedAt, scope }
+    const ocrToken = generateCallbackToken({ ...tokenParams, actions: getTaskActions('analyze-ocr') })
+    const annotationsToken = generateCallbackToken({ ...tokenParams, actions: getTaskActions('analyze-annotations') })
+    const splitToken = generateCallbackToken({ ...tokenParams, actions: getTaskActions('create-split') })
 
     logger.log(`Starting receipt workflow for ${uploadHashId}`)
 
     // Update workflow status
-    await updateWorkflowStatus(auth, { status: WORKFLOW_STATUS.PROCESSING })
+    await updateWorkflowStatus(authHeaders, { status: WORKFLOW_STATUS.PROCESSING })
 
     // Step 1: OCR — FATAL on failure
     const ocrResult = await analyzeOcr.triggerAndWait(
-      { uploadHashId, runUuid, callbackToken },
+      { uploadHashId, runUuid, callbackToken: ocrToken },
     )
 
     if (!ocrResult.ok) {
-      await updateWorkflowStatus(auth, {
+      await updateWorkflowStatus(authHeaders, {
         status: WORKFLOW_STATUS.FAILED,
         error: `OCR failed: ${ocrResult.error}`,
       })
@@ -42,7 +50,7 @@ export const receiptWorkflow = task({
     let hasStepErrors = false
 
     const annotationsResult = await analyzeAnnotations.triggerAndWait(
-      { uploadHashId, runUuid, callbackToken },
+      { uploadHashId, runUuid, callbackToken: annotationsToken },
     )
 
     if (!annotationsResult.ok) {
@@ -54,7 +62,7 @@ export const receiptWorkflow = task({
     let splitId = null
 
     const splitResult = await createSplit.triggerAndWait(
-      { receiptId, runUuid, callbackToken },
+      { receiptId, runUuid, callbackToken: splitToken },
     )
 
     if (splitResult.ok) {
@@ -68,13 +76,13 @@ export const receiptWorkflow = task({
     // Finalize: update workflow first, then upload (prevents false positives)
     const finalStatus = hasStepErrors ? WORKFLOW_STATUS.PARTIAL : WORKFLOW_STATUS.COMPLETED
 
-    await updateWorkflowStatus(auth, {
+    await updateWorkflowStatus(authHeaders, {
       status: finalStatus,
       completedAt: new Date().toISOString(),
       analysisStatus: UPLOAD_ANALYSIS_STATUS.COMPLETED,
     })
 
-    await notifyStatus(runUuid, WORKFLOW_STEP.WORKFLOW, finalStatus, callbackToken)
+    await notifyStatus(runUuid, WORKFLOW_STEP.WORKFLOW, finalStatus, authHeaders)
 
     logger.log(`Receipt workflow ${finalStatus} for ${uploadHashId}`, { receiptId, splitId })
 

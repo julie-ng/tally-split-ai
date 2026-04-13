@@ -3,6 +3,7 @@ import { eq, and, inArray } from 'drizzle-orm'
 import { workflowRunInsertSchema } from '~~/shared/utils/zod-schemas/workflow-run.schema.js'
 import { WORKFLOW_STATUS } from '~~/shared/enums/workflow-status.js'
 import { UPLOAD_ANALYSIS_STATUS } from '~~/shared/enums/upload-analysis-status.js'
+import { getTaskActions } from '~~/shared/config/task-permissions.js'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger('workflow')
@@ -55,19 +56,25 @@ export default defineEventHandler(async (event) => {
     .set({ analysisStatus: UPLOAD_ANALYSIS_STATUS.QUEUED })
     .where(eq(schema.uploads.hashId, hashId))
 
-  // Generate HMAC callback token scoped to this upload
+  // Generate action-scoped HMAC token for the orchestrator
+  const runCreatedAt = workflowRun.createdAt.toISOString()
+  const scope = `upload:${upload.hashId}`
   const callbackToken = generateCallbackToken({
     runUuid: workflowRun.uuid,
-    runCreatedAt: workflowRun.createdAt.toISOString(),
-    scope: `upload:${upload.hashId}`,
+    runCreatedAt,
+    scope,
+    actions: getTaskActions('receipt-workflow'),
   })
 
   // Trigger the workflow (fire and forget)
+  // Pass runCreatedAt + scope so orchestrator can generate per-task tokens
   log.info({ hashId, workflowRunId: workflowRun.id }, 'Triggering receipt-workflow')
   const handle = await tasks.trigger('receipt-workflow', {
     uploadHashId: hashId,
     workflowRunId: workflowRun.id,
     runUuid: workflowRun.uuid,
+    runCreatedAt,
+    scope,
     callbackToken,
   })
   log.info({ hashId, triggerRunId: handle.id }, 'Workflow triggered')
