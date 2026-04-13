@@ -121,8 +121,10 @@ export const splits = pgTable('splits', {
 export const workflowRuns = pgTable('workflow_runs', {
   id: serial('id').primaryKey(),
 
-  // Link to upload that triggered this workflow
-  uploadId: integer('upload_id').references(() => uploads.id, { onDelete: 'cascade' }).notNull(),
+  // Resource links (at least one required — enforced in application logic)
+  uploadId: integer('upload_id').references(() => uploads.id, { onDelete: 'cascade' }),
+  // @ts-expect-error implicit return type any
+  receiptId: integer('receipt_id').references(() => receipts.id, { onDelete: 'set null' }),
 
   // UUID for secure callback endpoint (opaque, unguessable)
   uuid: uuid('uuid').defaultRandom().notNull(),
@@ -221,6 +223,10 @@ export const workflowRunsRelations = relations(workflowRuns, ({ one }) => ({
   upload: one(uploads, {
     fields: [workflowRuns.uploadId],
     references: [uploads.id],
+  }),
+  receipt: one(receipts, {
+    fields: [workflowRuns.receiptId],
+    references: [receipts.id],
   }),
 }))
 

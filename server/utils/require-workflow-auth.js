@@ -5,7 +5,7 @@ import { getTaskActions } from '~~/shared/config/task-permissions.js'
  * Authenticate a Trigger.dev task via HMAC callback token.
  * Called internally by requireAuthentication — not directly by handlers.
  *
- * Sets event.context.workflowRun (full object with upload) and event.context.taskId.
+ * Sets event.context.workflowRun (full object with upload/receipt) and event.context.taskId.
  * Does NOT set event.context.userId — tasks are not users.
  *
  * @param {H3Event} event
@@ -21,10 +21,10 @@ export async function requireWorkflowAuth (event) {
 
   if (!token || !runUuid || !taskId) return false
 
-  // Look up workflow run by UUID (join upload)
+  // Look up workflow run by UUID (join upload and receipt for scope derivation)
   const workflowRun = await db.query.workflowRuns.findFirst({
     where: eq(schema.workflowRuns.uuid, runUuid),
-    with: { upload: true },
+    with: { upload: true, receipt: true },
   })
 
   if (!workflowRun) {
@@ -49,11 +49,24 @@ export async function requireWorkflowAuth (event) {
     return false
   }
 
+  // Derive scope from the workflow run's linked resource
+  let scope
+  if (workflowRun.upload) {
+    scope = `upload:${workflowRun.upload.hashId}`
+  }
+  else if (workflowRun.receiptId) {
+    scope = `receipt:${workflowRun.receiptId}`
+  }
+  else {
+    logSecurityEvent(event, 'warn', { runUuid, taskId, reason: 'no_scope_resource' }, 'Workflow auth rejected')
+    return false
+  }
+
   // HMAC verification (uses testable utility)
   const isValid = verifyCallbackToken(token, {
     runUuid: workflowRun.uuid,
     runCreatedAt: workflowRun.createdAt.toISOString(),
-    scope: `upload:${workflowRun.upload.hashId}`,
+    scope,
     actions,
   })
 
