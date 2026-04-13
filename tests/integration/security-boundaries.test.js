@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { globSync } from 'glob'
+import { TASK_PERMISSIONS, VALID_RESOURCES, VALID_PERMISSIONS } from '../../shared/config/task-permissions.js'
 
 /**
  * Security Boundary Tests
@@ -10,6 +11,8 @@ import { globSync } from 'glob'
  * 1. Trigger tasks must NOT have direct DB access (no server/db/connection imports)
  * 2. API endpoints must use requireAuthentication (not the old requireUserId)
  * 3. Resource-specific endpoints must call requireAuthorization
+ * 4. Task-facing endpoints must call requireTaskPermission
+ * 5. Permissions map must cover all known task IDs
  *
  * Known limitation: regex-based, can be bypassed by commented-out code.
  */
@@ -103,4 +106,59 @@ describe('Security boundaries: requireAuthorization uses correct resource parame
       })
     }
   }
+})
+
+describe('Security boundaries: task-facing endpoints call requireTaskPermission', () => {
+  // Endpoints that tasks call must enforce action-scoped permissions.
+  // This list must be updated when tasks start calling new endpoints.
+  const taskFacingEndpoints = [
+    'server/api/uploads/[hashId].get.js',
+    'server/api/uploads/[hashId].put.js',
+    'server/api/receipts/index.post.js',
+    'server/api/receipts/[id].get.js',
+    'server/api/receipts/[id].put.js',
+    'server/api/splits/index.post.js',
+    'server/api/workflows/runs/[runUuid]/status.put.js',
+    'server/api/workflows/callback/[runUuid].post.js',
+  ]
+
+  for (const endpoint of taskFacingEndpoints) {
+    const relative = endpoint.replace('server/api/', '')
+    it(`${relative} should call requireTaskPermission`, () => {
+      const content = readFileSync(resolve(endpoint), 'utf-8')
+      expect(/requireTaskPermission\(event\)/.test(content)).toBe(true)
+    })
+  }
+})
+
+describe('Security boundaries: permissions map covers all trigger task IDs', () => {
+  const taskFiles = getFiles('trigger', '**/*.js')
+
+  // Extract task IDs from trigger files (lines like: const TASK_ID = 'analyze-ocr')
+  const taskIds = []
+  for (const filePath of taskFiles) {
+    const content = readFileSync(filePath, 'utf-8')
+    const match = content.match(/const TASK_ID\s*=\s*'([^']+)'/)
+    if (match) taskIds.push(match[1])
+  }
+
+  it('should find task IDs in trigger files', () => {
+    expect(taskIds.length).toBeGreaterThan(0)
+  })
+
+  for (const taskId of taskIds) {
+    it(`${taskId} should be in TASK_PERMISSIONS map`, () => {
+      expect(TASK_PERMISSIONS[taskId]).toBeDefined()
+    })
+  }
+
+  it('all actions in TASK_PERMISSIONS should use valid resource:permission format', () => {
+    for (const [taskId, actions] of Object.entries(TASK_PERMISSIONS)) {
+      for (const action of actions) {
+        const [resource, permission] = action.split(':')
+        expect(VALID_RESOURCES, `${taskId}: unknown resource '${resource}'`).toContain(resource)
+        expect(VALID_PERMISSIONS, `${taskId}: unknown permission '${permission}'`).toContain(permission)
+      }
+    }
+  })
 })

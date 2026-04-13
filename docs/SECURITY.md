@@ -12,7 +12,7 @@ Human users authenticate via session (currently `local-dev-user` for local devel
 
 ### Service Principals (Tasks)
 
-Trigger.dev tasks are headless agents that process receipts. They authenticate via HMAC tokens scoped to a specific workflow run and resource. A task never authenticates as a user — it authenticates as itself. The token establishes `event.context.workflowRun` and `event.context.taskId`.
+Trigger.dev tasks are headless agents that process receipts. They authenticate via action-scoped HMAC tokens — each task receives a unique token encoding its allowed permissions. A task never authenticates as a user — it authenticates as itself. The token establishes `event.context.workflowRun`, `event.context.taskId`, and `event.context.taskActions`.
 
 Both principal types set `event.context.securityPrincipal` — a string in the format `user:<userId>` or `task:<taskId>` — used for audit trail logging (change history source).
 
@@ -46,10 +46,11 @@ X-Task-Id: <taskId>
 
 Verification steps:
 1. Extract token, runUuid, and taskId from headers
-2. Look up workflow run by UUID (joins upload record)
+2. Look up workflow run by UUID (joins upload and receipt records)
 3. **Expiry check**: reject if `now > workflowRun.createdAt + WORKFLOW_TOKEN_EXPIRY_MINUTES`
-4. **HMAC verification**: recompute token from known DB values using the same scope, compare with `crypto.timingSafeEqual`
-5. Set `event.context.workflowRun`, `event.context.taskId`, and `event.context.securityPrincipal`
+4. **Task ID validation**: look up task's allowed actions from `TASK_PERMISSIONS` map — reject unknown task IDs
+5. **HMAC verification**: recompute token from known DB values using the same scope + actions, compare with `crypto.timingSafeEqual`
+6. Set `event.context.workflowRun`, `event.context.taskId`, `event.context.taskActions`, and `event.context.securityPrincipal`
 
 If neither auth path succeeds, the request is rejected with 401.
 
@@ -67,11 +68,22 @@ AuthZ is handled by `requireAuthorization(event, { uploadHashId?, receiptId?, sp
 
 ### Task AuthZ (Resource Scope)
 
-- Verifies the requested resource belongs to this workflow run's upload
+- Verifies the requested resource belongs to this workflow run's linked resources
 - `uploadHashId`: must match `workflowRun.upload.hashId`
-- `receiptId`: must match `workflowRun.upload.receiptId` (via join)
-- `splitId`: must match the receipt's linked splitId (via join through upload → receipt → split)
+- `receiptId`: must match `workflowRun.upload.receiptId` (upload-scoped) or `workflowRun.receiptId` (receipt-scoped)
+- `splitId`: must match the receipt's linked splitId (via join through receipt → split)
 - Returns **403** on mismatch — tasks know their own scope, no need to hide resource existence
+
+### Task AuthZ (Action Permissions)
+
+After AuthN, `requireTaskPermission(event)` checks that the calling task has permission for the specific endpoint operation:
+
+1. Derives `resource` from the route path (`/api/receipts/...` → `receipt`)
+2. Derives `permission` from the HTTP method (`GET` → `read`, `POST`/`PUT` → `write`, `DELETE` → `delete`)
+3. Checks `resource:permission` is in `event.context.taskActions`
+4. Throws 403 if not permitted
+
+This is a no-op for user requests (users are not subject to task permissions).
 
 All AuthZ failures are logged to the `security` domain with the specific reason, IP, user-agent, method, and path.
 
@@ -79,28 +91,47 @@ All AuthZ failures are logged to the `security` domain with the specific reason,
 
 ### Generation
 
-Tokens are generated server-side when a user triggers a workflow (`POST /api/workflows/:uploadHashId`).
+Tokens are generated server-side when a user triggers a workflow (`POST /api/workflows/:uploadHashId`). The orchestrator then generates per-task tokens for each child task.
 
 ```
 HMAC-SHA256(
   key = WORKFLOW_CALLBACK_SALT,
-  input = "${runUuid}|${runCreatedAt}|${scope}"
+  input = "${runUuid}|${runCreatedAt}|${scope}|${sortedActions}"
 )
 ```
 
-The `|` (pipe) character is used as the field separator so that scope values can use `:` freely (e.g., `upload:abc123`, `receipt:123`).
+- `|` (pipe) is the field separator — allows `:` in scope and action values
+- `sortedActions` is the task's permissions sorted alphabetically and joined with `,`
+- Both `scope` and `actions` are required — generating a token without either throws an error
 
 The token is deterministic — same inputs always produce the same hash. This means the token is valid for retries of the same operation.
+
+### Action-Scoped Permissions
+
+Each task has a defined set of allowed `resource:permission` pairs in `shared/config/task-permissions.js`:
+
+```js
+TASK_PERMISSIONS = {
+  'receipt-workflow': ['workflow:read', 'workflow:write'],
+  'analyze-ocr': ['receipt:read', 'receipt:write', 'upload:read', 'upload:write', 'workflow:read', 'workflow:write'],
+  'analyze-annotations': ['upload:read', 'upload:write', 'workflow:read', 'workflow:write'],
+  'create-split': ['receipt:read', 'receipt:write', 'split:write', 'workflow:read', 'workflow:write'],
+}
+```
+
+The orchestrator generates a unique token per child task by including that task's actions in the HMAC input. The server reconstructs the expected actions from the `X-Task-Id` header + the permissions map. No extra headers needed.
+
+This means `analyze-annotations` literally cannot create a split — its token won't verify against an endpoint that requires `split:write`.
 
 ### Scope
 
 The `scope` parameter binds the token to a specific resource. It is **required** — generating a token without a scope throws an error.
 
-Current scope format:
+Scope formats:
 - Upload-triggered workflows: `upload:<hashId>` (e.g., `upload:abc123`)
-- Future receipt-triggered workflows: `receipt:<id>` (e.g., `receipt:123`)
+- Receipt-triggered workflows: `receipt:<id>` (e.g., `receipt:123`)
 
-The scope is verified during token validation by reconstructing it from the workflow run's known data (e.g., `upload:${workflowRun.upload.hashId}`). A token scoped to one resource cannot be used to access a different resource — the HMAC will not match.
+The scope is derived from the workflow run's linked resource (`workflowRun.upload` or `workflowRun.receiptId`). A token scoped to one resource cannot be used to access a different resource — the HMAC will not match.
 
 ### Properties
 
@@ -109,19 +140,19 @@ The scope is verified during token validation by reconstructing it from the work
 | Algorithm | HMAC-SHA256 |
 | Output | 64-character hex string |
 | Field separator | `\|` (pipe) — allows `:` in scope values |
-| Scoped to | A single workflow run + specific resource (`runUuid + createdAt + scope`) |
+| Scoped to | A single workflow run + resource + task actions (`runUuid + createdAt + scope + actions`) |
 | Expiry | `WORKFLOW_TOKEN_EXPIRY_MINUTES` (default 15 min) from `workflowRun.createdAt` |
 | Comparison | `crypto.timingSafeEqual` (prevents timing side-channel attacks) |
 | Secret | `WORKFLOW_CALLBACK_SALT` env var (server-side only) |
-| Scope required | Yes — generating without scope throws an error |
+| Scope required | Yes — generating without scope or actions throws an error |
 
 ### Token Scoping Philosophy
 
 Tokens must be as granular as possible. The goal is that a token **cannot be reused for anything other than a retry** of the exact same operation.
 
 Scoping layers:
-1. **HMAC scope**: token is bound to a specific workflow run and resource (e.g., `upload:abc123`)
-2. **AuthZ scope**: `requireAuthorization` verifies the requested resource ID matches the workflow run's known resources
+1. **Action scope**: token encodes the task's allowed `resource:permission` pairs — `requireTaskPermission` enforces this per endpoint
+2. **Resource scope**: token is bound to a specific workflow run and resource (e.g., `upload:abc123`) — `requireAuthorization` verifies resource ownership
 3. **Time scope**: token expires after `WORKFLOW_TOKEN_EXPIRY_MINUTES` (default 15 min)
 
 ### Token Lifecycle
@@ -130,12 +161,14 @@ Scoping layers:
 1. User uploads receipt
 2. User triggers workflow → POST /api/workflows/:uploadHashId
 3. Server creates workflow_runs row (UUID, createdAt)
-4. Server generates HMAC token with scope "upload:<hashId>"
-5. Server triggers Trigger.dev task with { callbackToken, runUuid }
-6. Orchestrator passes token to child tasks
-7. Tasks use token as Bearer auth for API calls
-8. Server verifies token by reconstructing HMAC from DB values + scope
-9. Token expires ~15 min after workflow run creation
+4. Server generates orchestrator token with scope + orchestrator actions
+5. Server triggers Trigger.dev orchestrator with { callbackToken, runUuid, runCreatedAt, scope }
+6. Orchestrator generates per-task tokens (each with task-specific actions from TASK_PERMISSIONS)
+7. Each child task receives its own unique token
+8. Tasks use their token as Bearer auth for API calls
+9. Server verifies token by reconstructing HMAC from DB values + scope + task actions
+10. Server checks requested operation is in the task's permission set
+11. Token expires ~15 min after workflow run creation
 ```
 
 ## Security Logging
@@ -152,10 +185,13 @@ All security events are logged via `logSecurityEvent(event, level, context, mess
 
 Integration tests in `tests/integration/security-boundaries.test.js` enforce:
 
-1. **No direct DB access in trigger tasks** — no `server/db/connection`, `useDB`, or `drizzle-orm` imports
+1. **No direct DB access in trigger tasks** — no `server/db/connection`, `useDB`, or `drizzle-orm` imports in `trigger/**/*.js`
 2. **No legacy auth** — no `requireUserId` calls in any API endpoint
 3. **AuthZ on resource endpoints** — every `[id]`/`[hashId]` endpoint calls `requireAuthorization`
 4. **Correct AuthZ parameters** — receipt endpoints pass `receiptId`, split endpoints pass `splitId`, upload endpoints pass `uploadHashId`
+5. **Task permission enforcement** — all task-facing endpoints call `requireTaskPermission`
+6. **Permissions map coverage** — every task ID found in trigger files has an entry in `TASK_PERMISSIONS`
+7. **Valid action format** — all entries in `TASK_PERMISSIONS` use valid `resource:permission` format
 
 These are regex-based and can be bypassed by commented-out code (documented in test file).
 
@@ -168,7 +204,6 @@ These are regex-based and can be bypassed by commented-out code (documented in t
 
 ## Future Improvements
 
-- **Action-scoped tokens**: Add `action` to HMAC input so the token is scoped to a specific operation (e.g., "create receipt"), not just a workflow run. This prevents a token intended for one step from being used in another.
-- **`receiptId` in workflowRuns**: Currently workflows are always triggered by uploads. Future workflows may be receipt-specific (e.g., "re-analyze receipt"). Adding `receiptId` to `workflowRuns` enables direct receipt scope validation without joining through upload.
 - **Household permissions**: User AuthZ currently checks `userId` ownership. Multi-user households will need permission-based access (read, write, admin) on a parent resource.
 - **`nuxt-auth-utils`**: Replace hardcoded dev user with proper session-based authentication.
+- **Generic workflow trigger**: Current trigger endpoint uses `[uploadHashId]` — won't scale for receipt-triggered or other non-upload workflows.
