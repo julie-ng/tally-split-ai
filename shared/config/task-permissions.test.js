@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import {
   TASK_PERMISSIONS,
+  TASK_CHILDREN,
   VALID_RESOURCES,
   VALID_PERMISSIONS,
   getTaskActions,
+  getTaskChildren,
   serializeActions,
 } from './task-permissions.js'
 
@@ -81,5 +83,35 @@ describe('serializeActions', () => {
 
   it('should throw for malformed action string', () => {
     expect(() => serializeActions(['notanaction'])).toThrow('Invalid action format: \'notanaction\'')
+  })
+})
+
+describe('TASK_CHILDREN', () => {
+  it('should have at least one orchestrator defined', () => {
+    expect(Object.keys(TASK_CHILDREN).length).toBeGreaterThan(0)
+  })
+
+  it('all children should exist in TASK_PERMISSIONS', () => {
+    for (const [orchestrator, children] of Object.entries(TASK_CHILDREN)) {
+      expect(TASK_PERMISSIONS[orchestrator], `orchestrator '${orchestrator}' missing`).toBeDefined()
+      for (const childId of children) {
+        expect(TASK_PERMISSIONS[childId], `child '${childId}' of '${orchestrator}' missing`).toBeDefined()
+      }
+    }
+  })
+})
+
+describe('getTaskChildren', () => {
+  it('should return children for a known orchestrator', () => {
+    const children = getTaskChildren('receipt-workflow')
+    expect(children).toEqual(['analyze-ocr', 'analyze-annotations', 'create-split'])
+  })
+
+  it('should throw for a non-orchestrator task', () => {
+    expect(() => getTaskChildren('analyze-ocr')).toThrow('not allowed to generate child tokens')
+  })
+
+  it('should throw for unknown task', () => {
+    expect(() => getTaskChildren('unknown')).toThrow('not allowed to generate child tokens')
   })
 })

@@ -3,8 +3,8 @@
  * is allowed to do via the API. Format: 'resource:permission'.
  *
  * Used by:
- * - Orchestrator: to generate per-task HMAC tokens (actions baked into hash)
- * - Server: to verify HMAC tokens and check endpoint permissions
+ * - Server: to verify HMAC tokens, check endpoint permissions, and generate per-task tokens
+ * - TASK_CHILDREN defines which child tasks each orchestrator may request tokens for
  *
  * Import paths:
  * - From server/: import { getTaskActions } from '~~/shared/config/task-permissions.js'
@@ -19,6 +19,28 @@ export const TASK_PERMISSIONS = {
   'analyze-ocr': ['receipt:read', 'receipt:write', 'upload:read', 'upload:write', 'workflow:read', 'workflow:write'],
   'analyze-annotations': ['upload:read', 'upload:write', 'workflow:read', 'workflow:write'],
   'create-split': ['receipt:read', 'receipt:write', 'split:write', 'workflow:read', 'workflow:write'],
+}
+
+/**
+ * Child task policy — defines which tasks each orchestrator is allowed to
+ * generate tokens for via POST /api/workflows/runs/:runUuid/tokens.
+ */
+export const TASK_CHILDREN = {
+  'receipt-workflow': ['analyze-ocr', 'analyze-annotations', 'create-split'],
+}
+
+/**
+ * Get the allowed child task IDs for an orchestrator.
+ * @param {string} taskId - Orchestrator task ID
+ * @returns {string[]} Array of child task IDs
+ * @throws {Error} If taskId has no children defined
+ */
+export function getTaskChildren (taskId) {
+  const children = TASK_CHILDREN[taskId]
+  if (!children) {
+    throw new Error(`Task '${taskId}' is not allowed to generate child tokens`)
+  }
+  return children
 }
 
 /**

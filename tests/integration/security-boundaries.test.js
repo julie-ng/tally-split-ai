@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { globSync } from 'glob'
-import { TASK_PERMISSIONS, VALID_RESOURCES, VALID_PERMISSIONS } from '../../shared/config/task-permissions.js'
+import { TASK_PERMISSIONS, TASK_CHILDREN, VALID_RESOURCES, VALID_PERMISSIONS } from '../../shared/config/task-permissions.js'
 
 /**
  * Security Boundary Tests
@@ -119,6 +119,7 @@ describe('Security boundaries: task-facing endpoints call requireTaskPermission'
     'server/api/receipts/[id].put.js',
     'server/api/splits/index.post.js',
     'server/api/workflows/runs/[runUuid]/status.put.js',
+    'server/api/workflows/runs/[runUuid]/tokens.post.js',
     'server/api/workflows/callback/[runUuid].post.js',
   ]
 
@@ -158,6 +159,15 @@ describe('Security boundaries: permissions map covers all trigger task IDs', () 
         const [resource, permission] = action.split(':')
         expect(VALID_RESOURCES, `${taskId}: unknown resource '${resource}'`).toContain(resource)
         expect(VALID_PERMISSIONS, `${taskId}: unknown permission '${permission}'`).toContain(permission)
+      }
+    }
+  })
+
+  it('all TASK_CHILDREN entries should reference tasks in TASK_PERMISSIONS', () => {
+    for (const [orchestrator, children] of Object.entries(TASK_CHILDREN)) {
+      expect(TASK_PERMISSIONS[orchestrator], `orchestrator '${orchestrator}' not in TASK_PERMISSIONS`).toBeDefined()
+      for (const childId of children) {
+        expect(TASK_PERMISSIONS[childId], `child '${childId}' of '${orchestrator}' not in TASK_PERMISSIONS`).toBeDefined()
       }
     }
   })

@@ -57,24 +57,19 @@ export default defineEventHandler(async (event) => {
     .where(eq(schema.uploads.hashId, hashId))
 
   // Generate action-scoped HMAC token for the orchestrator
-  const runCreatedAt = workflowRun.createdAt.toISOString()
-  const scope = `upload:${upload.hashId}`
   const callbackToken = generateCallbackToken({
     runUuid: workflowRun.uuid,
-    runCreatedAt,
-    scope,
+    runCreatedAt: workflowRun.createdAt.toISOString(),
+    scope: `upload:${upload.hashId}`,
     actions: getTaskActions('receipt-workflow'),
   })
 
   // Trigger the workflow (fire and forget)
-  // Pass runCreatedAt + scope so orchestrator can generate per-task tokens
   log.info({ hashId, workflowRunId: workflowRun.id }, 'Triggering receipt-workflow')
   const handle = await tasks.trigger('receipt-workflow', {
     uploadHashId: hashId,
     workflowRunId: workflowRun.id,
     runUuid: workflowRun.uuid,
-    runCreatedAt,
-    scope,
     callbackToken,
   })
   log.info({ hashId, triggerRunId: handle.id }, 'Workflow triggered')

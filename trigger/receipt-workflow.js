@@ -2,12 +2,10 @@ import { task, logger } from '@trigger.dev/sdk/v3'
 import { WORKFLOW_STATUS } from '../shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '../shared/enums/workflow-step.js'
 import { UPLOAD_ANALYSIS_STATUS } from '../shared/enums/upload-analysis-status.js'
-import { getTaskActions } from '../shared/config/task-permissions.js'
-import { generateCallbackToken } from '../server/utils/workflow-token.utils.js'
 import { analyzeOcr } from './analyze-ocr.js'
 import { analyzeAnnotations } from './analyze-annotations.js'
 import { createSplit } from './create-split.js'
-import { updateWorkflowStatus } from './utils/api-client.js'
+import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
 import { notifyStatus } from './utils/notify-status.js'
 
 const TASK_ID = 'receipt-workflow'
@@ -16,14 +14,14 @@ export const receiptWorkflow = task({
   id: TASK_ID,
   maxDuration: 600,
   run: async (payload) => {
-    const { uploadHashId, runUuid, runCreatedAt, scope, callbackToken } = payload
+    const { uploadHashId, runUuid, callbackToken } = payload
     const authHeaders = { callbackToken, runUuid, taskId: TASK_ID }
+    const api = createApiClient(authHeaders)
 
-    // Generate per-task tokens with action-scoped permissions
-    const tokenParams = { runUuid, runCreatedAt, scope }
-    const ocrToken = generateCallbackToken({ ...tokenParams, actions: getTaskActions('analyze-ocr') })
-    const annotationsToken = generateCallbackToken({ ...tokenParams, actions: getTaskActions('analyze-annotations') })
-    const splitToken = generateCallbackToken({ ...tokenParams, actions: getTaskActions('create-split') })
+    // Request per-task tokens from the server (orchestrator never has the HMAC salt)
+    const { tokens } = await api.post(`/api/workflows/runs/${runUuid}/tokens`, {
+      taskIds: ['analyze-ocr', 'analyze-annotations', 'create-split'],
+    })
 
     logger.log(`Starting receipt workflow for ${uploadHashId}`)
 
@@ -32,7 +30,7 @@ export const receiptWorkflow = task({
 
     // Step 1: OCR — FATAL on failure
     const ocrResult = await analyzeOcr.triggerAndWait(
-      { uploadHashId, runUuid, callbackToken: ocrToken },
+      { uploadHashId, runUuid, callbackToken: tokens['analyze-ocr'] },
     )
 
     if (!ocrResult.ok) {
@@ -50,7 +48,7 @@ export const receiptWorkflow = task({
     let hasStepErrors = false
 
     const annotationsResult = await analyzeAnnotations.triggerAndWait(
-      { uploadHashId, runUuid, callbackToken: annotationsToken },
+      { uploadHashId, runUuid, callbackToken: tokens['analyze-annotations'] },
     )
 
     if (!annotationsResult.ok) {
@@ -62,7 +60,7 @@ export const receiptWorkflow = task({
     let splitId = null
 
     const splitResult = await createSplit.triggerAndWait(
-      { receiptId, runUuid, callbackToken: splitToken },
+      { receiptId, runUuid, callbackToken: tokens['create-split'] },
     )
 
     if (splitResult.ok) {
