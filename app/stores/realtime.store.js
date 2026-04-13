@@ -6,10 +6,12 @@ import { useWorkflowStore } from '~/stores/workflow.store'
 export const useRealtimeStore = defineStore('realtime', () => {
   const eventSource = ref(null)
   const isConnected = ref(false)
+  const hasShownDisconnectToast = ref(false)
 
   function connect () {
     if (eventSource.value) return
 
+    const toast = useToast()
     const sse = new EventSource('/api/realtime/stream')
 
     sse.addEventListener('workflow-update', (event) => {
@@ -23,9 +25,26 @@ export const useRealtimeStore = defineStore('realtime', () => {
       isConnected.value = true
     })
 
-    sse.addEventListener('error', (err) => {
-      console.warn('[RealtimeStore] SSE error:', err)
+    sse.addEventListener('error', () => {
+      console.warn('[RealtimeStore] SSE connection lost')
       isConnected.value = false
+      sse.close()
+      eventSource.value = null
+
+      if (!hasShownDisconnectToast.value) {
+        hasShownDisconnectToast.value = true
+        toast.add({
+          title: 'Realtime updates disconnected',
+          description: 'Server connection lost.',
+          color: 'warning',
+          icon: 'i-lucide-wifi-off',
+          duration: 0,
+          actions: [{
+            label: 'Refresh to re-connect',
+            onClick: () => window.location.reload(),
+          }],
+        })
+      }
     })
 
     eventSource.value = sse
