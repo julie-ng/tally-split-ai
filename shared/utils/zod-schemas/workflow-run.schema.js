@@ -28,4 +28,7 @@ export const workflowRunInsertSchema = z.object({
   ocrStatus: z.enum(WORKFLOW_STEP_STATUSES).default('pending'),
   annotationsStatus: z.enum(WORKFLOW_STEP_STATUSES).default('pending'),
   splitStatus: z.enum(WORKFLOW_STEP_STATUSES).default('pending'),
-})
+}).refine(
+  data => data.uploadId != null || data.receiptId != null,
+  { message: 'At least one of uploadId or receiptId is required' },
+)
