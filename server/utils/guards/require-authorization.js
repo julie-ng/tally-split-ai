@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { authzPermissions } from '../authz-permissions.utils.js'
+import { authzPermissions } from '#server/utils/authz-permissions.utils.js'
 
 const {
   checkUserOwnership,

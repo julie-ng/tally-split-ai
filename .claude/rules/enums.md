@@ -33,6 +33,6 @@ Each file also exports an array variant (e.g., `UPLOAD_STATUSES`) typed as a tup
 
 ## Import Paths
 
-- From `app/`: `import { X } from '~~/shared/enums/file.js'`
-- From `server/`: `import { X } from '../../shared/enums/file.js'` (relative)
-- From `trigger/`: `import { X } from '../shared/enums/file.js'` (relative)
+Use Node.js subpath imports for all cross-boundary imports:
+
+- `import { X } from '#shared/enums/file.js'`

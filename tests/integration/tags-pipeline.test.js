@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { extractHashtags, extractHashtagsForAzureBlobs } from '../../shared/utils/filename.utils.js'
-import { azureUtils } from '../../shared/utils/azure.utils.js'
-import { receiptUtils } from '../../shared/utils/receipt.utils.js'
+import { extractHashtags, extractHashtagsForAzureBlobs } from '#shared/utils/filename.utils.js'
+import { azureUtils } from '#shared/utils/azure.utils.js'
+import { receiptUtils } from '#shared/utils/receipt.utils.js'
 
 /**
  * Tags Pipeline Tests

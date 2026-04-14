@@ -1,3 +1,3 @@
-import { useDB, schema } from '../db/connection'
+import { useDB, schema } from '#server/db/connection'
 
 export { useDB, schema }

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { RECEIPT_ANALYSIS_STATUSES } from '../../enums/receipt-analysis-status.js'
+import { RECEIPT_ANALYSIS_STATUSES } from '#shared/enums/receipt-analysis-status.js'
 
 /**
  * Receipt Object - Business/finance data extracted from receipt images

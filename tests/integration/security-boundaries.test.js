@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { globSync } from 'glob'
-import { TASK_PERMISSIONS, TASK_CHILDREN, VALID_RESOURCES, VALID_PERMISSIONS } from '../../shared/config/task-permissions.js'
+import { TASK_PERMISSIONS, TASK_CHILDREN, VALID_RESOURCES, VALID_PERMISSIONS } from '#shared/config/task-permissions.js'
 
 /**
  * Security Boundary Tests

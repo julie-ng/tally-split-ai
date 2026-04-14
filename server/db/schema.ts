@@ -1,9 +1,9 @@
 import { pgTable, text, integer, serial, real, boolean, timestamp, jsonb, uuid } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
-import { RECEIPT_ANALYSIS_STATUSES } from '../../shared/enums/receipt-analysis-status.js'
-import { UPLOAD_ANALYSIS_STATUSES } from '../../shared/enums/upload-analysis-status.js'
-import { UPLOAD_STATUSES } from '../../shared/enums/upload-status.js'
-import { WORKFLOW_STATUSES, WORKFLOW_STEP_STATUSES } from '../../shared/enums/workflow-status.js'
+import { RECEIPT_ANALYSIS_STATUSES } from '#shared/enums/receipt-analysis-status.js'
+import { UPLOAD_ANALYSIS_STATUSES } from '#shared/enums/upload-analysis-status.js'
+import { UPLOAD_STATUSES } from '#shared/enums/upload-status.js'
+import { WORKFLOW_STATUSES, WORKFLOW_STEP_STATUSES } from '#shared/enums/workflow-status.js'
 
 /**
  * Receipts table - stores business/finance data extracted from receipt uploads

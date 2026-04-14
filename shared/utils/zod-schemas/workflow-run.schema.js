@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { WORKFLOW_STATUSES, WORKFLOW_STEP_STATUSES } from '../../enums/workflow-status.js'
+import { WORKFLOW_STATUSES, WORKFLOW_STEP_STATUSES } from '#shared/enums/workflow-status.js'
 
 /**
  * Workflow Run Object - full workflow run record

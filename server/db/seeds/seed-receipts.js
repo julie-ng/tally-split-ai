@@ -24,7 +24,7 @@ import {
   extractReceiptDate,
   extractReceiptTotal,
   extractHashtags,
-} from '../../shared/utils/filename.utils.js'
+} from '#shared/utils/filename.utils.js'
 
 // Configuration
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000'
