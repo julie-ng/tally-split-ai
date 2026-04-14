@@ -1,6 +1,6 @@
 export default defineEventHandler(async (event) => {
-  requireLocalDev(event)
-  await requireAuthentication(event)
+  guards.requireLocalDev(event)
+  await guards.requireAuthentication(event)
   const userId = event.context.userId
 
   const storageConfig = azureStorageUtils.useAzureStorageConfig()

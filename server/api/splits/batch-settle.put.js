@@ -10,7 +10,7 @@ const batchSettleSchema = z.object({
 export default defineEventHandler(async (event) => {
   const log = useLogger('split')
   const db = useDB()
-  await requireAuthentication(event)
+  await guards.requireAuthentication(event)
   const userId = event.context.userId
 
   // Validate request body

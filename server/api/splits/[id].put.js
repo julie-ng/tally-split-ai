@@ -5,11 +5,11 @@ import { splitUpdateSchema } from '~~/shared/utils/zod-schemas/split.schema.js'
 export default defineEventHandler(async (event) => {
   const log = useLogger('split')
   const db = useDB()
-  await requireAuthentication(event)
-  requireIdParam(event)
+  await guards.requireAuthentication(event)
+  guards.requireIdParam(event)
 
   const splitId = parseInt(getRouterParam(event, 'id'), 10)
-  await requireAuthorization(event, { splitId })
+  await guards.requireAuthorization(event, { splitId })
 
   const result = await readValidatedBody(event, body => splitUpdateSchema.safeParse(body))
 

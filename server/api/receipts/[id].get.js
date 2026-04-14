@@ -2,12 +2,12 @@ import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const db = useDB()
-  await requireAuthentication(event)
-  requireTaskPermission(event)
-  requireIdParam(event)
+  await guards.requireAuthentication(event)
+  guards.requireTaskPermission(event)
+  guards.requireIdParam(event)
 
   const receiptId = parseInt(getRouterParam(event, 'id'), 10)
-  await requireAuthorization(event, { receiptId })
+  await guards.requireAuthorization(event, { receiptId })
 
   const receipt = await db.query.receipts.findFirst({
     where: eq(schema.receipts.id, receiptId),

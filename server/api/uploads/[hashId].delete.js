@@ -31,11 +31,11 @@ async function deleteAzureBlobs (log, upload) {
 export default defineEventHandler(async (event) => {
   const log = useLogger('upload')
   const db = useDB()
-  await requireAuthentication(event)
-  requireHashIdParam(event)
+  await guards.requireAuthentication(event)
+  guards.requireHashIdParam(event)
 
   const hashId = getRouterParam(event, 'hashId')
-  await requireAuthorization(event, { uploadHashId: hashId })
+  await guards.requireAuthorization(event, { uploadHashId: hashId })
 
   azureStorageUtils.useAzureStorageConfig()
 

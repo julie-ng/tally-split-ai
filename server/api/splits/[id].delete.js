@@ -3,11 +3,11 @@ import { eq } from 'drizzle-orm'
 export default defineEventHandler(async (event) => {
   const log = useLogger('split')
   const db = useDB()
-  await requireAuthentication(event)
-  requireIdParam(event)
+  await guards.requireAuthentication(event)
+  guards.requireIdParam(event)
 
   const splitId = parseInt(getRouterParam(event, 'id'), 10)
-  await requireAuthorization(event, { splitId })
+  await guards.requireAuthorization(event, { splitId })
 
   // Fetch split before deleting for history tracking
   const split = await db

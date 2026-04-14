@@ -1,11 +1,3 @@
-/**
- * Guards an endpoint to local development only.
- * Checks both that the environment is 'development' and
- * that the request originates from localhost.
- * Throws 403 error if either check fails.
- *
- * @param {H3Event} event
- */
 export function requireLocalDev (event) {
   const config = useRuntimeConfig()
 

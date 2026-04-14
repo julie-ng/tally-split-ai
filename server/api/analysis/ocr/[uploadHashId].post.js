@@ -4,12 +4,12 @@ import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '~~/shared/enums/workflow-
 export default defineEventHandler(async (event) => {
   const log = useLogger('analysis')
   const db = useDB()
-  requireLocalDev(event)
-  await requireAuthentication(event)
-  requireHashIdParam(event, 'uploadHashId')
+  guards.requireLocalDev(event)
+  await guards.requireAuthentication(event)
+  guards.requireHashIdParam(event, 'uploadHashId')
 
   const hashId = getRouterParam(event, 'uploadHashId')
-  await requireUploadByHashId(event)
+  await guards.requireUploadByHashId(event)
   const upload = event.context.upload
 
   const [workflowRun] = await db

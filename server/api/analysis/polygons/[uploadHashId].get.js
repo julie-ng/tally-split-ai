@@ -1,11 +1,11 @@
 // Extracts bounding box polygons from Document Intelligence analysis results
 // for rendering overlays on the receipt image.
 export default defineEventHandler(async (event) => {
-  await requireAuthentication(event)
-  requireHashIdParam(event, 'uploadHashId')
+  await guards.requireAuthentication(event)
+  guards.requireHashIdParam(event, 'uploadHashId')
 
   const hashId = getRouterParam(event, 'uploadHashId')
-  await requireUploadByHashId(event)
+  await guards.requireUploadByHashId(event)
   const upload = event.context.upload
 
   // TODO: Remove tmp file fallback once all uploads have ocrJson in DB

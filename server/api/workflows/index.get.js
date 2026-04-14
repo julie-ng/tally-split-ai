@@ -2,7 +2,7 @@ import { eq, desc } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const db = useDB()
-  await requireAuthentication(event)
+  await guards.requireAuthentication(event)
   const userId = event.context.userId
 
   const uploads = await db.query.uploads.findMany({

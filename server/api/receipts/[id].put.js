@@ -4,12 +4,12 @@ import { eq } from 'drizzle-orm'
 export default defineEventHandler(async (event) => {
   const log = useLogger('receipt')
   const db = useDB()
-  await requireAuthentication(event)
-  requireTaskPermission(event)
-  requireIdParam(event)
+  await guards.requireAuthentication(event)
+  guards.requireTaskPermission(event)
+  guards.requireIdParam(event)
 
   const receiptId = parseInt(getRouterParam(event, 'id'), 10)
-  await requireAuthorization(event, { receiptId })
+  await guards.requireAuthorization(event, { receiptId })
 
   const result = await readValidatedBody(event, body => zodSchemas.receiptInputSchema.safeParse(body))
 
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
 
   // AuthZ: if relinking to a different split, verify principal owns it
   if (result.data.splitId) {
-    await requireAuthorization(event, { splitId: result.data.splitId })
+    await guards.requireAuthorization(event, { splitId: result.data.splitId })
   }
 
   const updates = {

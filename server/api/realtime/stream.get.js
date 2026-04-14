@@ -1,6 +1,6 @@
 export default defineEventHandler(async (event) => {
   const log = useLogger('workflow')
-  await requireAuthentication(event)
+  await guards.requireAuthentication(event)
   const userId = event.context.userId
 
   if (!userId) {

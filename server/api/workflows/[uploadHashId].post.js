@@ -8,11 +8,11 @@ import { getTaskActions } from '~~/shared/config/task-permissions.js'
 export default defineEventHandler(async (event) => {
   const log = useLogger('workflow')
   const db = useDB()
-  await requireAuthentication(event)
-  requireHashIdParam(event, 'uploadHashId')
+  await guards.requireAuthentication(event)
+  guards.requireHashIdParam(event, 'uploadHashId')
 
   const hashId = getRouterParam(event, 'uploadHashId')
-  await requireUploadByHashId(event)
+  await guards.requireUploadByHashId(event)
   const upload = event.context.upload
 
   if (upload.status !== 'uploaded') {

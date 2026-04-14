@@ -10,7 +10,7 @@ const requestSchema = (userId) => {
 export default defineEventHandler(async (event) => {
   const log = useLogger('token')
   // ⚠️ TODO - implement security.
-  await requireAuthentication(event)
+  await guards.requireAuthentication(event)
   const userId = event.context.userId
 
   /**

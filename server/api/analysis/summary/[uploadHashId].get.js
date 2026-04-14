@@ -2,8 +2,8 @@ import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const db = useDB()
-  await requireAuthentication(event)
-  requireHashIdParam(event, 'uploadHashId')
+  await guards.requireAuthentication(event)
+  guards.requireHashIdParam(event, 'uploadHashId')
 
   const hashId = getRouterParam(event, 'uploadHashId')
 

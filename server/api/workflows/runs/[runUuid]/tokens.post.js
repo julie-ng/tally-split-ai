@@ -7,8 +7,8 @@ const tokenRequestSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   const log = useLogger('workflow')
-  await requireAuthentication(event)
-  requireTaskPermission(event)
+  await guards.requireAuthentication(event)
+  guards.requireTaskPermission(event)
 
   const runUuid = getRouterParam(event, 'runUuid')
   if (!runUuid) {

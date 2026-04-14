@@ -2,12 +2,12 @@ import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const db = useDB()
-  await requireAuthentication(event)
-  requireTaskPermission(event)
-  requireHashIdParam(event)
+  await guards.requireAuthentication(event)
+  guards.requireTaskPermission(event)
+  guards.requireHashIdParam(event)
 
   const hashId = getRouterParam(event, 'hashId')
-  await requireAuthorization(event, { uploadHashId: hashId })
+  await guards.requireAuthorization(event, { uploadHashId: hashId })
 
   // Query for the specific upload with receipt relation
   const upload = await db.query.uploads.findFirst({

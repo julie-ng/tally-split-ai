@@ -4,8 +4,8 @@ import { splitRequestSchema } from '~~/shared/utils/zod-schemas/split.schema.js'
 export default defineEventHandler(async (event) => {
   const log = useLogger('split')
   const db = useDB()
-  await requireAuthentication(event)
-  requireTaskPermission(event)
+  await guards.requireAuthentication(event)
+  guards.requireTaskPermission(event)
 
   // For tasks, userId comes from the workflow run's upload owner
   const userId = event.context.userId
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
 
   // AuthZ: if linking to a receipt, verify principal owns it
   if (result.data.receiptId) {
-    await requireAuthorization(event, { receiptId: result.data.receiptId })
+    await guards.requireAuthorization(event, { receiptId: result.data.receiptId })
   }
 
   // Calculate both user shares (equal split for now)

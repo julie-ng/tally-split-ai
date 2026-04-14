@@ -4,8 +4,8 @@ import { receiptInputSchema } from '~~/shared/utils/zod-schemas/receipt.schema.j
 export default defineEventHandler(async (event) => {
   const log = useLogger('receipt')
   const db = useDB()
-  await requireAuthentication(event)
-  requireTaskPermission(event)
+  await guards.requireAuthentication(event)
+  guards.requireTaskPermission(event)
 
   // For tasks, userId comes from the workflow run's upload owner
   const userId = event.context.userId
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
 
   // AuthZ: if linking to a split, verify principal owns it
   if (result.data.splitId) {
-    await requireAuthorization(event, { splitId: result.data.splitId })
+    await guards.requireAuthorization(event, { splitId: result.data.splitId })
   }
 
   const insertData = {
