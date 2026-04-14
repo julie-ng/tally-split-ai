@@ -53,4 +53,11 @@ export const splitUpdateSchema = z.object({
   userBShare: z.number().nullable().optional(),
   notes: z.string().nullable().optional(),
   isSettled: z.boolean().optional(),
+
+  // Change tracking metadata (not persisted on the split itself)
+  llm: z.object({
+    confidence: z.number().min(0).max(1).nullable().optional(),
+    reasoning: z.string().nullable().optional(),
+    fieldConfidence: z.record(z.string(), z.number().min(0).max(1)).nullable().optional(),
+  }).optional(),
 })

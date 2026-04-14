@@ -22,7 +22,9 @@ export const analyzeAnnotations = task({
 
     try {
       // 1. Fetch upload record via API (includes ocrJson from OCR step)
+      logger.log(`Fetching upload ${uploadHashId}`)
       const upload = await api.get(`/api/uploads/${uploadHashId}`)
+      logger.log(`Upload fetched`, { blobName: upload.blobName, hasOcrJson: !!upload.ocrJson })
 
       // 2. Generate read-only SAS token
       const { uploadUrl: blobUrlWithSas } = azureStorageUtils.generateBlobSasToken(upload.blobName, {
@@ -43,8 +45,16 @@ export const analyzeAnnotations = task({
         }))
       }
 
+      logger.log(`Calling GPT-4o for annotations`, { lineItemCount: ocrLineItems.length })
+      const startTime = Date.now()
+
       // 4. Call GPT-4o for annotation analysis
       const responseData = await gpt4oUtils.analyzeAnnotations(blobUrlWithSas, ocrLineItems)
+
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
+      logger.log(`GPT-4o responded in ${elapsed}s`, {
+        annotationCount: responseData.annotations?.annotations?.length ?? 0,
+      })
 
       // 5. Store result via API
       await api.put(`/api/uploads/${uploadHashId}`, { annotationsJson: responseData })
@@ -58,6 +68,10 @@ export const analyzeAnnotations = task({
       return { annotations: responseData.annotations }
     }
     catch (err) {
+      logger.error(`Annotations analysis failed for ${uploadHashId}`, {
+        error: err.message,
+        stack: err.stack?.split('\n').slice(0, 3).join('\n'),
+      })
       await updateWorkflowStatus(authHeaders, { annotationsStatus: WORKFLOW_STEP_STATUS.FAILED })
       throw err
     }

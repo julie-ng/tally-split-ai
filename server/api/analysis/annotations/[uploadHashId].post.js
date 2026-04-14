@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
       status: WORKFLOW_STATUS.PROCESSING,
       ocrStatus: WORKFLOW_STEP_STATUS.PENDING,
       annotationsStatus: WORKFLOW_STEP_STATUS.PENDING,
-      splitStatus: WORKFLOW_STEP_STATUS.PENDING,
+      createSplitStatus: WORKFLOW_STEP_STATUS.PENDING,
     })
     .returning()
 

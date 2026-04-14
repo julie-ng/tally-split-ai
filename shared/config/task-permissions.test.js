@@ -104,7 +104,7 @@ describe('TASK_CHILDREN', () => {
 describe('getTaskChildren', () => {
   it('should return children for a known orchestrator', () => {
     const children = getTaskChildren('receipt-workflow')
-    expect(children).toEqual(['analyze-ocr', 'analyze-annotations', 'create-split', 'normalize-receipt'])
+    expect(children).toEqual(['analyze-ocr', 'analyze-annotations', 'create-split', 'adjust-split', 'normalize-receipt'])
   })
 
   it('should throw for a non-orchestrator task', () => {

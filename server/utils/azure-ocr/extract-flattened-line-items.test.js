@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { extractLineItems } from './extract-line-items.js'
+import { extractFlattenedLineItems } from './extract-flattened-line-items.js'
 
-describe('extractLineItems', () => {
+describe('extractFlattenedLineItems', () => {
   it('should extract line items with description, quantity, totalPrice', () => {
     const fields = {
       Items: {
@@ -23,15 +23,15 @@ describe('extractLineItems', () => {
         ],
       },
     }
-    expect(extractLineItems(fields)).toEqual([
+    expect(extractFlattenedLineItems(fields)).toEqual([
       { description: 'Brötchen', quantity: 2, totalPrice: 1.60 },
       { description: 'Milch', quantity: 1, totalPrice: 1.29 },
     ])
   })
 
   it('should return empty array if Items is missing', () => {
-    expect(extractLineItems({})).toEqual([])
-    expect(extractLineItems(null)).toEqual([])
+    expect(extractFlattenedLineItems({})).toEqual([])
+    expect(extractFlattenedLineItems(null)).toEqual([])
   })
 
   it('should handle items with missing sub-fields', () => {
@@ -43,7 +43,7 @@ describe('extractLineItems', () => {
         ],
       },
     }
-    expect(extractLineItems(fields)).toEqual([
+    expect(extractFlattenedLineItems(fields)).toEqual([
       { description: 'Something', quantity: null, totalPrice: null },
       { description: null, quantity: null, totalPrice: null },
     ])

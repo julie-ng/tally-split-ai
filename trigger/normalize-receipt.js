@@ -41,7 +41,7 @@ export const normalizeReceipt = task({
 
       const transactionDate = azureOcrExtract.extractTransactionDate(fields)
       const transactionTime = azureOcrExtract.extractTransactionTime(fields)
-      const lineItems = azureOcrExtract.extractLineItems(fields)
+      const lineItems = azureOcrExtract.extractFlattenedLineItems(fields)
 
       // 4. Fetch receipt for current merchantName
       const receiptId = upload.receiptId

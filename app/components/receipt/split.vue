@@ -256,6 +256,9 @@ function showToast (err) {
         </div>
       </div>
 
+      <USeparator class="my-6" />
+      <split-llm-analysis :split-id="props.splitId" />
+
     <!-- <div class="text-right">
       <UButton
         color="secondary"

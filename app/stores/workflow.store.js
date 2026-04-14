@@ -36,7 +36,8 @@ export const useWorkflowStore = defineStore('workflow', () => {
     ocrStatus: WORKFLOW_STEP_STATUS.PENDING,
     annotationsStatus: WORKFLOW_STEP_STATUS.PENDING,
     normalizeStatus: WORKFLOW_STEP_STATUS.PENDING,
-    splitStatus: WORKFLOW_STEP_STATUS.PENDING,
+    createSplitStatus: WORKFLOW_STEP_STATUS.PENDING,
+    adjustSplitStatus: WORKFLOW_STEP_STATUS.PENDING,
   }
 
   const stepStatusesByHashId = computed(() => (hashId) => {
@@ -47,7 +48,8 @@ export const useWorkflowStore = defineStore('workflow', () => {
       ocrStatus: latest.ocrStatus ?? WORKFLOW_STEP_STATUS.PENDING,
       annotationsStatus: latest.annotationsStatus ?? WORKFLOW_STEP_STATUS.PENDING,
       normalizeStatus: latest.normalizeStatus ?? WORKFLOW_STEP_STATUS.PENDING,
-      splitStatus: latest.splitStatus ?? WORKFLOW_STEP_STATUS.PENDING,
+      createSplitStatus: latest.createSplitStatus ?? WORKFLOW_STEP_STATUS.PENDING,
+      adjustSplitStatus: latest.adjustSplitStatus ?? WORKFLOW_STEP_STATUS.PENDING,
     }
   })
 

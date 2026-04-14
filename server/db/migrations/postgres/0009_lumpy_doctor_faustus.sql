@@ -1,0 +1,1 @@
+ALTER TABLE "workflow_runs" RENAME COLUMN "split_status" TO "create_split_status";

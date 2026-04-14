@@ -52,7 +52,7 @@ Unit tests live alongside their source files (e.g., `shared/utils/azure.utils.te
 
 ## Workflow Architecture
 
-Receipt analysis runs as an async Trigger.dev workflow (`trigger/receipt-workflow.ts`) that orchestrates four tasks:
+Receipt analysis runs as an async Trigger.dev workflow (`trigger/receipt-workflow.js`) that orchestrates five tasks:
 
 ```
 receiptWorkflow
@@ -60,15 +60,22 @@ receiptWorkflow
   → analyzeAnnotations    (GPT-4o vision)
   → normalizeReceipt      (GPT-4o-mini text-only)
   → createSplit           (deterministic, from receipt total)
+  → adjustSplit           (GPT-4o-mini, adjusts split based on annotations)
 ```
 
 **Triggered by:** `POST /api/workflows/[uploadHashId]` (called automatically after upload completes)
 
-**Tracking:** The `workflow_runs` table tracks per-step status (`ocrStatus`, `annotationsStatus`, `splitStatus`). The `uploads.analysisStatus` field is a convenience summary updated by the orchestrator.
+**Tracking:** The `workflow_runs` table tracks per-step status (`ocrStatus`, `annotationsStatus`, `createSplitStatus`, `adjustSplitStatus`, `normalizeStatus`). The `uploads.analysisStatus` field is a convenience summary updated by the orchestrator. If a task times out (Trigger.dev kills the process), the orchestrator sets the step status to `failed`.
 
 **Data retention:** Deleting an upload cascades to its `workflow_runs` rows in Postgres. Run history is still available in the Trigger.dev dashboard independently.
 
 **Duplicate guard:** The workflow endpoint rejects duplicate triggers — if a `queued` or `processing` run already exists for the upload, it returns the existing run instead of creating a new one.
+
+### adjust-split: Known Edge Cases
+
+- **Re-running workflow** — re-analyzing a receipt runs `adjustSplit` again, creating duplicate history entries. No dedup logic yet.
+- **Annotations → split linkage** — the LLM adjustment is not structurally linked back to which annotations drove the decision. The `reasoning` text field explains it but there's no structured reference. (TODO: low priority)
+- **`paidBy` stores initials not userId** — the LLM returns initials (e.g. "JN") but the UI expects a userId for the paid-by radio buttons. Needs household/user mapping to resolve.
 
 ---
 

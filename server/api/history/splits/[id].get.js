@@ -13,10 +13,13 @@ export default defineEventHandler(async (event) => {
       changeId: schema.changes.id,
       source: schema.changes.source,
       sourceVersion: schema.changes.sourceVersion,
+      confidence: schema.changes.confidence,
+      reasoning: schema.changes.reasoning,
       createdAt: schema.changes.createdAt,
       field: schema.splitHistory.field,
       oldValue: schema.splitHistory.oldValue,
       newValue: schema.splitHistory.newValue,
+      fieldConfidence: schema.splitHistory.confidence,
     })
     .from(schema.splitHistory)
     .innerJoin(schema.changes, eq(schema.splitHistory.changeId, schema.changes.id))
@@ -31,6 +34,8 @@ export default defineEventHandler(async (event) => {
         id: row.changeId,
         source: row.source,
         sourceVersion: row.sourceVersion,
+        confidence: row.confidence,
+        reasoning: row.reasoning,
         createdAt: row.createdAt,
         fields: [],
       })
@@ -39,6 +44,7 @@ export default defineEventHandler(async (event) => {
       field: row.field,
       oldValue: row.oldValue,
       newValue: row.newValue,
+      confidence: row.fieldConfidence,
     })
   }
 

@@ -57,6 +57,27 @@
       "when": 1776088683114,
       "tag": "0007_normal_black_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1776186839192,
+      "tag": "0008_fluffy_blacklash",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1776187979283,
+      "tag": "0009_lumpy_doctor_faustus",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1776189217337,
+      "tag": "0010_smiling_loki",
+      "breakpoints": true
     }
   ]
 }

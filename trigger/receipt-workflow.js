@@ -6,6 +6,7 @@ import { analyzeOcr } from './analyze-ocr.js'
 import { analyzeAnnotations } from './analyze-annotations.js'
 import { normalizeReceipt } from './normalize-receipt.js'
 import { createSplit } from './create-split.js'
+import { adjustSplit } from './adjust-split.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
 import { notifyStatus } from './utils/notify-status.js'
 
@@ -67,7 +68,7 @@ export const receiptWorkflow = task({
 
     // Phase 2: Post-OCR tasks — request tokens now that receipt is linked
     const { tokens: postOcrTokens } = await api.post(`/api/workflows/runs/${runUuid}/tokens`, {
-      taskIds: ['analyze-annotations', 'normalize-receipt', 'create-split'],
+      taskIds: ['analyze-annotations', 'normalize-receipt', 'create-split', 'adjust-split'],
     })
 
     // Step 2: Annotations — NON-FATAL
@@ -108,6 +109,19 @@ export const receiptWorkflow = task({
       hasStepErrors = true
       await updateWorkflowStatus(authHeaders, { createSplitStatus: WORKFLOW_STEP_STATUS.FAILED })
       logger.warn(`Split creation failed`, { error: splitResult.error })
+    }
+
+    // Step 5: Adjust split — NON-FATAL, requires both split and annotations
+    if (splitId && annotationsResult.ok) {
+      const adjustResult = await adjustSplit.triggerAndWait(
+        { uploadHashId, splitId, runUuid, callbackToken: postOcrTokens['adjust-split'] },
+      )
+
+      if (!adjustResult.ok) {
+        hasStepErrors = true
+        await updateWorkflowStatus(authHeaders, { adjustSplitStatus: WORKFLOW_STEP_STATUS.FAILED })
+        logger.warn(`Adjust-split failed, continuing`, { error: adjustResult.error })
+      }
     }
 
     // Finalize: update workflow first, then upload (prevents false positives)

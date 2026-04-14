@@ -3,7 +3,7 @@
  * @param {Object} fields - Document fields from extractDocumentFields()
  * @returns {{ description: string|null, quantity: number|null, totalPrice: number|null }[]}
  */
-export function extractLineItems (fields) {
+export function extractFlattenedLineItems (fields) {
   const items = fields?.Items?.valueArray || []
   return items.map(item => ({
     description: item.valueObject?.Description?.content || null,

@@ -1,6 +1,6 @@
 <script setup>
-import { UPLOAD_STATUS } from '~~/shared/enums/upload-status.js'
-import { WORKFLOW_STEP_STATUS } from '~~/shared/enums/workflow-status.js'
+import { UPLOAD_STATUS } from '#shared/enums/upload-status.js'
+import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 import { useWorkflowStore } from '~/stores/workflow.store'
 
 const props = defineProps({
@@ -36,7 +36,8 @@ const steps = computed(() => [
   { label: 'OCR', status: stepStatuses.value.ocrStatus },
   { label: 'Annotations', status: stepStatuses.value.annotationsStatus },
   { label: 'Normalize', status: stepStatuses.value.normalizeStatus },
-  { label: 'Split', status: stepStatuses.value.splitStatus },
+  { label: 'Create Split', status: stepStatuses.value.createSplitStatus },
+  { label: 'Adjust Split', status: stepStatuses.value.adjustSplitStatus },
 ])
 
 function stepIcon (status) {

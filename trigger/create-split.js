@@ -15,7 +15,7 @@ export const createSplit = task({
     const api = createApiClient(authHeaders)
 
     // Update workflow step status
-    await updateWorkflowStatus(authHeaders, { splitStatus: WORKFLOW_STEP_STATUS.PROCESSING })
+    await updateWorkflowStatus(authHeaders, { createSplitStatus: WORKFLOW_STEP_STATUS.PROCESSING })
     await notifyStatus(runUuid, WORKFLOW_STEP.SPLIT, 'processing', authHeaders)
 
     try {
@@ -24,7 +24,7 @@ export const createSplit = task({
 
       // 2. Skip if no total available
       if (receipt.total === null || receipt.total === undefined) {
-        await updateWorkflowStatus(authHeaders, { splitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
+        await updateWorkflowStatus(authHeaders, { createSplitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
 
         logger.log(`Skipped split creation for receipt ${receiptId} — no total`)
         return { splitId: null, skipped: true }
@@ -44,7 +44,7 @@ export const createSplit = task({
       await api.put(`/api/receipts/${receiptId}`, { splitId })
 
       // 5. Update workflow step status
-      await updateWorkflowStatus(authHeaders, { splitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
+      await updateWorkflowStatus(authHeaders, { createSplitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
       await notifyStatus(runUuid, WORKFLOW_STEP.SPLIT, 'completed', authHeaders)
 
       logger.log(`Split created for receipt ${receiptId}`, { splitId, amount: receipt.total })
@@ -52,7 +52,7 @@ export const createSplit = task({
       return { splitId, splitAmount: receipt.total }
     }
     catch (err) {
-      await updateWorkflowStatus(authHeaders, { splitStatus: WORKFLOW_STEP_STATUS.FAILED })
+      await updateWorkflowStatus(authHeaders, { createSplitStatus: WORKFLOW_STEP_STATUS.FAILED })
       throw err
     }
   },

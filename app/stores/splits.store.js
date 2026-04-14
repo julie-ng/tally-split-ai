@@ -10,6 +10,7 @@ export const useSplitsStore = defineStore('splits', () => {
 
   const debug = ref(false) // Debug logging flag
   const splits = ref({}) // Map: { [splitId]: splitObject }
+  const history = ref({}) // Map: { [splitId]: changeArray }
   const loading = ref({}) // Map: { [splitId]: boolean }
   const saving = ref({}) // Map: { [splitId]: boolean }
   const errors = ref({}) // Map: { [splitId]: error }
@@ -67,6 +68,15 @@ export const useSplitsStore = defineStore('splits', () => {
     const tolerance = 0.01 // Account for floating point precision
     const doesIt = Math.abs(sum - split.splitAmount) <= tolerance
     return doesIt
+  })
+
+  /**
+   * Get the most recent LLM-generated change for a split (has confidence/reasoning)
+   */
+  const getLlmChange = computed(() => (id) => {
+    const changes = history.value[id]
+    if (!changes) return null
+    return changes.find(c => c.source?.startsWith('task:') && c.confidence !== null) ?? null
   })
 
   // -------- INTERNAL HELPERS --------
@@ -176,6 +186,30 @@ export const useSplitsStore = defineStore('splits', () => {
     }
     finally {
       loading.value[id] = false
+    }
+  }
+
+  /**
+   * Fetch change history for a split (lazy loads if not in state)
+   * @param {number} id - Split ID
+   * @returns {Promise<Array>} Array of change objects
+   */
+  async function fetchSplitHistory (id) {
+    _log(`[SplitsStore] fetchSplitHistory(${id})`)
+    if (history.value[id]) {
+      return history.value[id]
+    }
+
+    try {
+      const { data } = await $fetch(`/api/history/splits/${id}`)
+      history.value[id] = data
+      _log(`[SplitsStore] fetched history for split: ${id}`)
+      return data
+    }
+    catch (err) {
+      console.error(`[SplitsStore] ❌ failed to fetch split history ${id}:`, err)
+      history.value[id] = []
+      return []
     }
   }
 
@@ -323,6 +357,7 @@ export const useSplitsStore = defineStore('splits', () => {
     // State
     debug,
     splits,
+    history,
     loading,
     saving,
     errors,
@@ -335,11 +370,13 @@ export const useSplitsStore = defineStore('splits', () => {
     allSplits,
     getSplitsByMonth,
     doesSplitAddUp,
+    getLlmChange,
 
     // Actions
     configure,
     fetchAllSplits,
     fetchSplit,
+    fetchSplitHistory,
     updateSplit,
     clearSplitError,
     markMonthAsSettled,

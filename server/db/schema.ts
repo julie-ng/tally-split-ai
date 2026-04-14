@@ -139,7 +139,8 @@ export const workflowRuns = pgTable('workflow_runs', {
   // Per-step statuses
   ocrStatus: text('ocr_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
   annotationsStatus: text('annotations_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
-  splitStatus: text('split_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
+  createSplitStatus: text('create_split_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
+  adjustSplitStatus: text('adjust_split_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
   normalizeStatus: text('normalize_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
 
   // Error tracking
@@ -157,6 +158,8 @@ export const changes = pgTable('changes', {
   id: serial('id').primaryKey(),
   source: text('source').notNull(), // 'user:<userId>' or 'task:<taskName>'
   sourceVersion: text('source_version'), // e.g. 'gpt-4o:2024-11-20', trigger task version, or null
+  confidence: real('confidence'), // 0-1 score for AI-generated changes, null for human edits
+  reasoning: text('reasoning'), // LLM explanation for AI-generated changes
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 
@@ -173,6 +176,7 @@ export const receiptHistory = pgTable('receipt_history', {
   field: text('field').notNull(),
   oldValue: text('old_value'),
   newValue: text('new_value'),
+  confidence: real('confidence'), // 0-1 per-field confidence for AI-generated changes
 })
 
 /**
@@ -188,6 +192,7 @@ export const splitHistory = pgTable('split_history', {
   field: text('field').notNull(),
   oldValue: text('old_value'),
   newValue: text('new_value'),
+  confidence: real('confidence'), // 0-1 per-field confidence for AI-generated changes
 })
 
 /**
