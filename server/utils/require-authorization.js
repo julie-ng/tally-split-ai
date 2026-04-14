@@ -1,4 +1,10 @@
 import { eq } from 'drizzle-orm'
+import {
+  checkUserOwnership,
+  checkTaskUploadScope,
+  checkTaskReceiptScope,
+  checkTaskSplitScope,
+} from './authz-checks.utils.js'
 
 /**
  * Authorize the request — verifies the authenticated principal can act on the specified resource.
@@ -45,8 +51,9 @@ async function authorizeUser (db, event, { userId, uploadHashId, receiptId, spli
       .where(eq(schema.receipts.id, receiptId))
       .limit(1)
 
-    if (!receipt || receipt.userId !== userId) {
-      logSecurityEvent(event, 'warn', { userId, receiptId, reason: 'receipt_not_owned' }, 'Authorization denied')
+    const result = checkUserOwnership(receipt?.userId, userId)
+    if (!result.ok) {
+      logSecurityEvent(event, 'warn', { userId, receiptId, reason: `receipt_${result.reason}` }, 'Authorization denied')
       throw createError({ statusCode: 404, message: 'Not found' })
     }
   }
@@ -58,8 +65,9 @@ async function authorizeUser (db, event, { userId, uploadHashId, receiptId, spli
       .where(eq(schema.splits.id, splitId))
       .limit(1)
 
-    if (!split || split.userId !== userId) {
-      logSecurityEvent(event, 'warn', { userId, splitId, reason: 'split_not_owned' }, 'Authorization denied')
+    const result = checkUserOwnership(split?.userId, userId)
+    if (!result.ok) {
+      logSecurityEvent(event, 'warn', { userId, splitId, reason: `split_${result.reason}` }, 'Authorization denied')
       throw createError({ statusCode: 404, message: 'Not found' })
     }
   }
@@ -71,90 +79,94 @@ async function authorizeUser (db, event, { userId, uploadHashId, receiptId, spli
       .where(eq(schema.uploads.hashId, uploadHashId))
       .limit(1)
 
-    if (!upload || upload.userId !== userId) {
-      logSecurityEvent(event, 'warn', { userId, uploadHashId, reason: 'upload_not_owned' }, 'Authorization denied')
+    const result = checkUserOwnership(upload?.userId, userId)
+    if (!result.ok) {
+      logSecurityEvent(event, 'warn', { userId, uploadHashId, reason: `upload_${result.reason}` }, 'Authorization denied')
       throw createError({ statusCode: 404, message: 'Not found' })
     }
   }
 }
 
 /**
- * Task AuthZ — verify resource belongs to this workflow run's upload.
+ * Task AuthZ — verify resource belongs to this workflow run's scope.
  * Throws 403 on mismatch — tasks know their own scope, so no need to hide resource existence.
  */
 async function authorizeTask (db, event, { workflowRun, taskId, uploadHashId, receiptId, splitId }) {
   const upload = workflowRun.upload
 
   if (uploadHashId) {
-    if (!upload || uploadHashId !== upload.hashId) {
-      logSecurityEvent(event, 'warn', { taskId, uploadHashId, expected: upload?.hashId, reason: 'upload_scope_mismatch' }, 'Authorization denied')
+    const result = checkTaskUploadScope(uploadHashId, upload?.hashId)
+    if (!result.ok) {
+      logSecurityEvent(event, 'warn', { taskId, uploadHashId, expected: upload?.hashId, reason: result.reason }, 'Authorization denied')
       throw createError({ statusCode: 403, message: 'Forbidden' })
     }
   }
 
   if (receiptId) {
-    // Check via upload (upload-scoped) or direct receipt link (receipt-scoped)
     const expectedReceiptId = upload?.receiptId || workflowRun.receiptId
-    if (expectedReceiptId) {
-      // Known receipt link — must match exactly
-      if (receiptId !== expectedReceiptId) {
-        logSecurityEvent(event, 'warn', { taskId, receiptId, expected: expectedReceiptId, reason: 'receipt_scope_mismatch' }, 'Authorization denied')
-        throw createError({ statusCode: 403, message: 'Forbidden' })
-      }
-    }
-    else {
-      // No receipt linked yet (first-time linking) — verify receipt belongs to same user as upload
+
+    // For first-time linking, we need the receipt's userId
+    let receiptUserId = null
+    if (!expectedReceiptId) {
       const [receipt] = await db
         .select({ userId: schema.receipts.userId })
         .from(schema.receipts)
         .where(eq(schema.receipts.id, receiptId))
         .limit(1)
+      receiptUserId = receipt?.userId
+    }
 
-      if (!receipt || receipt.userId !== upload?.userId) {
-        logSecurityEvent(event, 'warn', { taskId, receiptId, reason: 'receipt_owner_mismatch' }, 'Authorization denied')
-        throw createError({ statusCode: 403, message: 'Forbidden' })
-      }
+    const result = checkTaskReceiptScope(receiptId, {
+      expectedReceiptId,
+      receiptUserId,
+      uploadUserId: upload?.userId,
+    })
+    if (!result.ok) {
+      logSecurityEvent(event, 'warn', { taskId, receiptId, expected: expectedReceiptId, reason: result.reason }, 'Authorization denied')
+      throw createError({ statusCode: 403, message: 'Forbidden' })
     }
   }
 
   if (splitId) {
-    // Verify split belongs to the workflow's receipt → split chain
     const linkedReceiptId = upload?.receiptId || workflowRun.receiptId
-    if (!linkedReceiptId) {
-      logSecurityEvent(event, 'warn', { taskId, splitId, reason: 'no_receipt_for_split_check' }, 'Authorization denied')
-      throw createError({ statusCode: 403, message: 'Forbidden' })
-    }
 
-    const [receipt] = await db
-      .select({ splitId: schema.receipts.splitId })
-      .from(schema.receipts)
-      .where(eq(schema.receipts.id, linkedReceiptId))
-      .limit(1)
-
-    if (!receipt) {
-      logSecurityEvent(event, 'warn', { taskId, splitId, reason: 'receipt_not_found_for_split_check' }, 'Authorization denied')
-      throw createError({ statusCode: 403, message: 'Forbidden' })
-    }
-
-    if (receipt.splitId) {
-      // Known split link — must match exactly
-      if (receipt.splitId !== splitId) {
-        logSecurityEvent(event, 'warn', { taskId, splitId, expected: receipt.splitId, reason: 'split_scope_mismatch' }, 'Authorization denied')
-        throw createError({ statusCode: 403, message: 'Forbidden' })
-      }
-    }
-    else {
-      // No split linked yet (first-time linking) — verify split belongs to same user
-      const [split] = await db
-        .select({ userId: schema.splits.userId })
-        .from(schema.splits)
-        .where(eq(schema.splits.id, splitId))
+    // Fetch receipt's splitId for scope check
+    let receiptSplitId = null
+    let splitUserId = null
+    if (linkedReceiptId) {
+      const [receipt] = await db
+        .select({ splitId: schema.receipts.splitId })
+        .from(schema.receipts)
+        .where(eq(schema.receipts.id, linkedReceiptId))
         .limit(1)
 
-      if (!split || split.userId !== upload?.userId) {
-        logSecurityEvent(event, 'warn', { taskId, splitId, reason: 'split_owner_mismatch' }, 'Authorization denied')
+      if (!receipt) {
+        logSecurityEvent(event, 'warn', { taskId, splitId, reason: 'receipt_not_found_for_split_check' }, 'Authorization denied')
         throw createError({ statusCode: 403, message: 'Forbidden' })
       }
+
+      receiptSplitId = receipt.splitId
+
+      // For first-time linking, we need the split's userId
+      if (!receiptSplitId) {
+        const [split] = await db
+          .select({ userId: schema.splits.userId })
+          .from(schema.splits)
+          .where(eq(schema.splits.id, splitId))
+          .limit(1)
+        splitUserId = split?.userId
+      }
+    }
+
+    const result = checkTaskSplitScope(splitId, {
+      linkedReceiptId,
+      receiptSplitId,
+      splitUserId,
+      uploadUserId: upload?.userId,
+    })
+    if (!result.ok) {
+      logSecurityEvent(event, 'warn', { taskId, splitId, expected: receiptSplitId, reason: result.reason }, 'Authorization denied')
+      throw createError({ statusCode: 403, message: 'Forbidden' })
     }
   }
 }
