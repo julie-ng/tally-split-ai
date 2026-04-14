@@ -1,5 +1,18 @@
 import { diffFields } from '~~/shared/utils/diff.utils.js'
 
+/**
+ * Track field-level changes for multiple entities in a single operation.
+ * Creates one `changes` row and multiple history rows across entities.
+ *
+ * @param {object} tx - Drizzle transaction object
+ * @param {object} opts
+ * @param {object} opts.historyTable - Drizzle table (schema.splitHistory)
+ * @param {string} opts.entityIdColumn - Column name for the FK ('splitId')
+ * @param {string} opts.source - Actor identifier
+ * @param {string|null} [opts.sourceVersion] - Version string
+ * @param {Array<{ entityId: number, before: object, after: object }>} entities
+ * @returns {Promise<number|null>} changeId or null if no fields changed
+ */
 export async function trackBatchChanges (tx, { historyTable, entityIdColumn, source, sourceVersion = null }, entities) {
   const allRows = []
   for (const { entityId, before, after } of entities) {

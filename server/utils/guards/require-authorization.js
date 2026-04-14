@@ -8,6 +8,21 @@ const {
   checkTaskSplitScope,
 } = authzPermissions
 
+/**
+ * Authorize the request — verifies the authenticated principal can act on the specified resource.
+ * Must be called after requireAuthentication().
+ *
+ * User path: verifies resource's userId matches event.context.userId.
+ *   Returns 404 on mismatch (do not reveal resource existence to unauthorized users).
+ * Task path: verifies resource belongs to this workflow run's upload.
+ *   Returns 403 on mismatch (tasks know their own scope).
+ *
+ * @param {H3Event} event
+ * @param {Object} resource - Resource IDs to check (at least one required)
+ * @param {string} [resource.uploadHashId] - Upload hashId to verify
+ * @param {number} [resource.receiptId] - Receipt ID to verify
+ * @param {number} [resource.splitId] - Split ID to verify
+ */
 export async function requireAuthorization (event, { uploadHashId, receiptId, splitId } = {}) {
   const db = useDB()
 
@@ -84,6 +99,7 @@ async function authorizeTask (db, event, { workflowRun, taskId, uploadHashId, re
   if (receiptId) {
     const expectedReceiptId = upload?.receiptId || workflowRun.receiptId
 
+    // For first-time linking, we need the receipt's userId
     let receiptUserId = null
     if (!expectedReceiptId) {
       const [receipt] = await db
@@ -108,6 +124,7 @@ async function authorizeTask (db, event, { workflowRun, taskId, uploadHashId, re
   if (splitId) {
     const linkedReceiptId = upload?.receiptId || workflowRun.receiptId
 
+    // Fetch receipt's splitId for scope check
     let receiptSplitId = null
     let splitUserId = null
     if (linkedReceiptId) {
@@ -124,6 +141,7 @@ async function authorizeTask (db, event, { workflowRun, taskId, uploadHashId, re
 
       receiptSplitId = receipt.splitId
 
+      // For first-time linking, we need the split's userId
       if (!receiptSplitId) {
         const [split] = await db
           .select({ userId: schema.splits.userId })

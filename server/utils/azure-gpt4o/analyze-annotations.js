@@ -1,5 +1,11 @@
 import { getGpt4oConfig } from './get-gpt4o-config.js'
 
+/**
+ * Analyze a receipt image for handwritten annotations using GPT-4o.
+ * @param {string} imageUrl - Fully qualified image URL (with SAS token)
+ * @param {Object[]} ocrLineItems - Line items extracted by Document Intelligence
+ * @returns {Promise<Object>} GPT-4o response with annotation data
+ */
 export async function analyzeAnnotations (imageUrl, ocrLineItems) {
   const { endpoint, key } = getGpt4oConfig()
 

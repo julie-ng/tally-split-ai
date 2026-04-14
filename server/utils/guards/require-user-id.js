@@ -1,6 +1,13 @@
+/**
+ * Adds User ID to request context.
+ * Temporarily hard coded for now.
+ *
+ * @param {H3Event} event
+ */
 export function requireUserId (event) {
   const config = useRuntimeConfig()
 
+  // ⚠️ TODO
   const userId = config.public.environment === 'development'
     ? config.public.demoUserId
     : null

@@ -4,6 +4,13 @@ import {
 } from '@azure/storage-blob'
 import { useAzureStorageConfig } from './use-azure-storage-config.js'
 
+/**
+ * Get Azure Blob Storage container client.
+ * @param {Object} options - Options for getting container client
+ * @param {boolean} options.checkExists - Whether to check if container exists (default: true)
+ * @returns {Promise<ContainerClient>} Container client instance
+ * @throws {Error} If checkExists is true and container does not exist
+ */
 export async function getContainerClient ({ checkExists = true } = {}) {
   const { account, accountKey, container } = useAzureStorageConfig()
 

@@ -1,5 +1,17 @@
 import { getGpt4oConfig } from './get-gpt4o-config.js'
 
+/**
+ * Normalize receipt data using GPT-4o-mini (text-only, no vision).
+ * Reconciles inconsistent OCR date/time fields and generates a receipt title.
+ *
+ * @param {Object} params
+ * @param {Object} params.transactionDate - OCR TransactionDate field ({ content, valueDate })
+ * @param {Object} params.transactionTime - OCR TransactionTime field ({ content, valueTime })
+ * @param {string} params.merchantName - Merchant name from receipt
+ * @param {Object[]} params.lineItems - Line items from OCR ({ description, quantity, totalPrice })
+ * @param {string} params.originalFilename - Original upload filename
+ * @returns {Promise<Object>} { date, time, title, filenameIsHumanNamed }
+ */
 export async function normalizeReceipt ({ transactionDate, transactionTime, merchantName, lineItems, originalFilename }) {
   const { endpoint, key } = getGpt4oConfig()
 

@@ -1,5 +1,9 @@
 import { snapshotFields } from '~~/shared/utils/diff.utils.js'
 
+/**
+ * Track a newly created entity (all fields null → value).
+ * Does NOT require a transaction — creates are single inserts.
+ */
 export async function trackCreate (db, { historyTable, entityId, entityIdColumn, source, sourceVersion = null }, created) {
   const fields = snapshotFields(created, 'create')
   if (fields.length === 0) return null

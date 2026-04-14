@@ -1,6 +1,16 @@
 import { eq } from 'drizzle-orm'
 import { getTaskActions } from '../../../shared/config/task-permissions.js'
 
+/**
+ * Authenticate a Trigger.dev task via HMAC callback token.
+ * Called internally by requireAuthentication — not directly by handlers.
+ *
+ * Sets event.context.workflowRun (full object with upload/receipt) and event.context.taskId.
+ * Does NOT set event.context.userId — tasks are not users.
+ *
+ * @param {H3Event} event
+ * @returns {Promise<boolean>} true if workflow auth succeeded
+ */
 export async function requireWorkflowAuth (event) {
   const db = useDB()
 
@@ -11,6 +21,7 @@ export async function requireWorkflowAuth (event) {
 
   if (!token || !runUuid || !taskId) return false
 
+  // Look up workflow run by UUID (join upload and receipt for scope derivation)
   const workflowRun = await db.query.workflowRuns.findFirst({
     where: eq(schema.workflowRuns.uuid, runUuid),
     with: { upload: true, receipt: true },
@@ -21,12 +32,14 @@ export async function requireWorkflowAuth (event) {
     return false
   }
 
+  // Expiry check (uses testable utility)
   const { expired, expiredAt } = workflowTokenUtils.isTokenExpired(workflowRun.createdAt)
   if (expired) {
     logSecurityEvent(event, 'warn', { runUuid, taskId, reason: 'token_expired', expiredAt: expiredAt.toISOString() }, 'Workflow auth rejected')
     return false
   }
 
+  // Look up task's allowed actions from the permissions map
   let actions
   try {
     actions = getTaskActions(taskId)
@@ -36,6 +49,7 @@ export async function requireWorkflowAuth (event) {
     return false
   }
 
+  // Derive scope from the workflow run's linked resource
   let scope
   if (workflowRun.upload) {
     scope = `upload:${workflowRun.upload.hashId}`
@@ -48,6 +62,7 @@ export async function requireWorkflowAuth (event) {
     return false
   }
 
+  // HMAC verification (uses testable utility)
   const isValid = workflowTokenUtils.verifyCallbackToken(token, {
     runUuid: workflowRun.uuid,
     runCreatedAt: workflowRun.createdAt.toISOString(),
