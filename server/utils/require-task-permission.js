@@ -31,8 +31,8 @@ export function requireTaskPermission (event) {
     throw createError({ statusCode: 401, message: 'Unauthorized' })
   }
 
-  const resource = deriveResource(getRequestURL(event).pathname)
-  const permission = derivePermission(event.method)
+  const resource = _deriveResource(getRequestURL(event).pathname)
+  const permission = _derivePermission(event.method)
 
   if (!resource || !permission) {
     logSecurityEvent(event, 'warn', {
@@ -62,7 +62,7 @@ export function requireTaskPermission (event) {
  * @param {string} path - URL pathname (e.g. '/api/receipts/123')
  * @returns {string|null} Resource name or null if unrecognized
  */
-export function deriveResource (path) {
+export function _deriveResource (path) {
   if (path.startsWith('/api/receipts')) return 'receipt'
   if (path.startsWith('/api/uploads')) return 'upload'
   if (path.startsWith('/api/splits')) return 'split'
@@ -75,7 +75,7 @@ export function deriveResource (path) {
  * @param {string} method - HTTP method (e.g. 'GET', 'POST')
  * @returns {string|null} Permission name or null if unrecognized
  */
-export function derivePermission (method) {
+export function _derivePermission (method) {
   const map = { GET: 'read', POST: 'write', PUT: 'write', DELETE: 'delete' }
   return map[method] || null
 }

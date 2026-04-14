@@ -69,7 +69,7 @@ export default defineEventHandler(async (event) => {
   // Generate a token per requested task
   const tokens = {}
   for (const taskId of result.data.taskIds) {
-    tokens[taskId] = generateCallbackToken({
+    tokens[taskId] = workflowTokenUtils.generateCallbackToken({
       runUuid: workflowRun.uuid,
       runCreatedAt: workflowRun.createdAt.toISOString(),
       scope,

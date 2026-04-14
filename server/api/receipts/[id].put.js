@@ -55,7 +55,7 @@ export default defineEventHandler(async (event) => {
       .returning()
 
     // Track history
-    await trackChanges(tx, {
+    await historyUtils.trackChanges(tx, {
       historyTable: schema.receiptHistory,
       entityId: receiptId,
       entityIdColumn: 'receiptId',

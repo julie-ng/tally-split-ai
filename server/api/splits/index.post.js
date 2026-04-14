@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
 
   const created = dbResult[0]
 
-  await trackCreate(db, {
+  await historyUtils.trackCreate(db, {
     historyTable: schema.splitHistory,
     entityId: created.id,
     entityIdColumn: 'splitId',

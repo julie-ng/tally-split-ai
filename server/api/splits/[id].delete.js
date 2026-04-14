@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Track deletion history before deleting
-  await trackDelete(db, {
+  await historyUtils.trackDelete(db, {
     historyTable: schema.splitHistory,
     entityId: splitId,
     entityIdColumn: 'splitId',

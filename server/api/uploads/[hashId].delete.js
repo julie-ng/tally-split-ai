@@ -117,7 +117,7 @@ export default defineEventHandler(async (event) => {
 
   // Track deletions in history (audit trail only — no UI to surface these yet)
   if (deletedReceipt) {
-    await trackDelete(db, {
+    await historyUtils.trackDelete(db, {
       historyTable: schema.receiptHistory,
       entityId: deletedReceipt.id,
       entityIdColumn: 'receiptId',
@@ -126,7 +126,7 @@ export default defineEventHandler(async (event) => {
   }
 
   if (deletedSplit) {
-    await trackDelete(db, {
+    await historyUtils.trackDelete(db, {
       historyTable: schema.splitHistory,
       entityId: deletedSplit.id,
       entityIdColumn: 'splitId',

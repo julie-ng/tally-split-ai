@@ -1,10 +1,12 @@
 import { eq } from 'drizzle-orm'
-import {
+import { authzPermissions } from './authz-permissions.utils.js'
+
+const {
   checkUserOwnership,
   checkTaskUploadScope,
   checkTaskReceiptScope,
   checkTaskSplitScope,
-} from './authz-checks.utils.js'
+} = authzPermissions
 
 /**
  * Authorize the request — verifies the authenticated principal can act on the specified resource.

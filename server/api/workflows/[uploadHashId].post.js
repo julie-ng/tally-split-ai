@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
     .where(eq(schema.uploads.hashId, hashId))
 
   // Generate action-scoped HMAC token for the orchestrator
-  const callbackToken = generateCallbackToken({
+  const callbackToken = workflowTokenUtils.generateCallbackToken({
     runUuid: workflowRun.uuid,
     runCreatedAt: workflowRun.createdAt.toISOString(),
     scope: `upload:${upload.hashId}`,

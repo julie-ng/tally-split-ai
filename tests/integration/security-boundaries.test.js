@@ -178,14 +178,14 @@ describe('Security boundaries: task AuthZ handles first-time receipt linking', (
   // is null at auth time (workflow run was fetched before the link). The AuthZ must
   // fall back to verifying the receipt belongs to the same user as the upload,
   // rather than rejecting with receipt_scope_mismatch.
-  it('authz-checks.utils.js should handle first-time receipt linking with owner check', () => {
-    const content = readFileSync(resolve('server/utils/authz-checks.utils.js'), 'utf-8')
+  it('authz-permissions should handle first-time receipt linking with owner check', () => {
+    const content = readFileSync(resolve('server/utils/authz-permissions/check-task-receipt-scope.js'), 'utf-8')
     expect(content).toContain('receipt_owner_mismatch')
     expect(content).toContain('receiptUserId !== uploadUserId')
   })
 
-  it('authz-checks.utils.js should handle first-time split linking with owner check', () => {
-    const content = readFileSync(resolve('server/utils/authz-checks.utils.js'), 'utf-8')
+  it('authz-permissions should handle first-time split linking with owner check', () => {
+    const content = readFileSync(resolve('server/utils/authz-permissions/check-task-split-scope.js'), 'utf-8')
     expect(content).toContain('split_owner_mismatch')
     expect(content).toContain('splitUserId !== uploadUserId')
   })

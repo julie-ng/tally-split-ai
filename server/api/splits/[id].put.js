@@ -58,7 +58,7 @@ export default defineEventHandler(async (event) => {
       .returning()
 
     // Track history
-    await trackChanges(tx, {
+    await historyUtils.trackChanges(tx, {
       historyTable: schema.splitHistory,
       entityId: splitId,
       entityIdColumn: 'splitId',

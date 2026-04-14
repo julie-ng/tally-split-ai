@@ -33,7 +33,7 @@ export async function requireWorkflowAuth (event) {
   }
 
   // Expiry check (uses testable utility)
-  const { expired, expiredAt } = isTokenExpired(workflowRun.createdAt)
+  const { expired, expiredAt } = workflowTokenUtils.isTokenExpired(workflowRun.createdAt)
   if (expired) {
     logSecurityEvent(event, 'warn', { runUuid, taskId, reason: 'token_expired', expiredAt: expiredAt.toISOString() }, 'Workflow auth rejected')
     return false
@@ -63,7 +63,7 @@ export async function requireWorkflowAuth (event) {
   }
 
   // HMAC verification (uses testable utility)
-  const isValid = verifyCallbackToken(token, {
+  const isValid = workflowTokenUtils.verifyCallbackToken(token, {
     runUuid: workflowRun.uuid,
     runCreatedAt: workflowRun.createdAt.toISOString(),
     scope,

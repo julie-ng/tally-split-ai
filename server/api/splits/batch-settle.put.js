@@ -70,7 +70,7 @@ export default defineEventHandler(async (event) => {
         after: afterById[r.splits.id],
       }))
 
-      await trackBatchChanges(tx, {
+      await historyUtils.trackBatchChanges(tx, {
         historyTable: schema.splitHistory,
         entityIdColumn: 'splitId',
         source: event.context.securityPrincipal,
