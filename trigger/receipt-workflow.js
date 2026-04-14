@@ -1,5 +1,5 @@
 import { task, logger } from '@trigger.dev/sdk/v3'
-import { WORKFLOW_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { UPLOAD_ANALYSIS_STATUS } from '#shared/enums/upload-analysis-status.js'
 import { analyzeOcr } from './analyze-ocr.js'
@@ -79,6 +79,7 @@ export const receiptWorkflow = task({
 
     if (!annotationsResult.ok) {
       hasStepErrors = true
+      await updateWorkflowStatus(authHeaders, { annotationsStatus: WORKFLOW_STEP_STATUS.FAILED })
       logger.warn(`Annotations analysis failed, continuing`, { error: annotationsResult.error })
     }
 
@@ -89,6 +90,7 @@ export const receiptWorkflow = task({
 
     if (!normalizeResult.ok) {
       hasStepErrors = true
+      await updateWorkflowStatus(authHeaders, { normalizeStatus: WORKFLOW_STEP_STATUS.FAILED })
       logger.warn(`Normalize failed, continuing`, { error: normalizeResult.error })
     }
 
@@ -104,6 +106,7 @@ export const receiptWorkflow = task({
     }
     else {
       hasStepErrors = true
+      await updateWorkflowStatus(authHeaders, { createSplitStatus: WORKFLOW_STEP_STATUS.FAILED })
       logger.warn(`Split creation failed`, { error: splitResult.error })
     }
 
