@@ -9,9 +9,18 @@ export default defineEventHandler(async (event) => {
   const hashId = getRouterParam(event, 'hashId')
   await guards.requireAuthorization(event, { uploadHashId: hashId })
 
+  // Parse optional include param — default excludes large JSONB fields
+  const query = getQuery(event)
+  const includes = query.include?.split(',') ?? []
+
+  const columns = {}
+  if (!includes.includes('ocrJson')) columns.ocrJson = false
+  if (!includes.includes('annotationsJson')) columns.annotationsJson = false
+
   // Query for the specific upload with receipt relation
   const upload = await db.query.uploads.findFirst({
     where: eq(schema.uploads.hashId, hashId),
+    columns: Object.keys(columns).length > 0 ? columns : undefined,
     with: {
       receipt: true,
       workflowRuns: true,

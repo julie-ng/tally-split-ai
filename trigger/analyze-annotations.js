@@ -23,7 +23,7 @@ export const analyzeAnnotations = task({
     try {
       // 1. Fetch upload record via API (includes ocrJson from OCR step)
       logger.log(`Fetching upload ${uploadHashId}`)
-      const upload = await api.get(`/api/uploads/${uploadHashId}`)
+      const upload = await api.get(`/api/uploads/${uploadHashId}?include=ocrJson,annotationsJson`)
       logger.log(`Upload fetched`, { blobName: upload.blobName, hasOcrJson: !!upload.ocrJson })
 
       // 2. Generate read-only SAS token

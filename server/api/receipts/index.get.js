@@ -8,7 +8,15 @@ export default defineEventHandler(async (event) => {
   const receipts = await db.query.receipts.findMany({
     where: eq(schema.receipts.userId, userId),
     with: {
-      uploads: true,
+      uploads: {
+        columns: {
+          id: true,
+          hashId: true,
+          analysisStatus: true,
+          originalFilename: true,
+          azureTags: true,
+        },
+      },
     },
   })
 

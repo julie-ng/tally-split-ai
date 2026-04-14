@@ -14,8 +14,19 @@ export default defineEventHandler(async (event) => {
     where: eq(schema.splits.userId, userId),
     with: {
       receipt: {
+        columns: {
+          id: true,
+          title: true,
+          merchantName: true,
+          date: true,
+        },
         with: {
-          uploads: true,
+          uploads: {
+            columns: {
+              analysisStatus: true,
+              originalFilename: true,
+            },
+          },
         },
       },
     },

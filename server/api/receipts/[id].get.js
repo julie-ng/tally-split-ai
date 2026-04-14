@@ -12,7 +12,12 @@ export default defineEventHandler(async (event) => {
   const receipt = await db.query.receipts.findFirst({
     where: eq(schema.receipts.id, receiptId),
     with: {
-      uploads: true,
+      uploads: {
+        columns: {
+          ocrJson: false,
+          annotationsJson: false,
+        },
+      },
     },
   })
 

@@ -22,7 +22,7 @@ export const adjustSplit = task({
 
     try {
       // 1. Fetch upload for OCR and annotations data
-      const upload = await api.get(`/api/uploads/${uploadHashId}`)
+      const upload = await api.get(`/api/uploads/${uploadHashId}?include=ocrJson,annotationsJson`)
 
       // 2. Skip if no annotations — nothing to adjust
       // Structure: annotationsJson.annotations = { annotations: [...], notes: "..." }

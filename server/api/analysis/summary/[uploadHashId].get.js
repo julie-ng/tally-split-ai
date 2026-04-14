@@ -91,10 +91,13 @@ export default defineEventHandler(async (event) => {
   // console.log('⭐️ SORTED')
   // console.log(sorted)
 
+  // Build response without ocrJson — already processed into azureAI.summary above
+  const { ocrJson: _, ...uploadMeta } = upload // eslint-disable-line no-unused-vars
+
   return {
     success: true,
     data: {
-      ...upload,
+      ...uploadMeta,
       status: analysisData.status,
       createdDateTime: analysisData.createdDateTime,
       azureAI: {

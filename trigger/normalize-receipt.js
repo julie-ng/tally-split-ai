@@ -22,7 +22,7 @@ export const normalizeReceipt = task({
 
     try {
       // 1. Fetch upload record for ocrJson and originalFilename
-      const upload = await api.get(`/api/uploads/${uploadHashId}`)
+      const upload = await api.get(`/api/uploads/${uploadHashId}?include=ocrJson`)
 
       // 2. Skip if no OCR data available
       if (!upload.ocrJson) {
