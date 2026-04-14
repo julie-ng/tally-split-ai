@@ -30,10 +30,13 @@ export const createSplit = task({
         return { splitId: null, skipped: true }
       }
 
-      // 3. Create split via API
+      // 3. Create split via API with default 50/50 shares
+      const halfAmount = Math.floor(receipt.total / 2 * 100) / 100
       const splitResult = await api.post('/api/splits', {
         receiptId,
         splitAmount: receipt.total,
+        userAShare: halfAmount,
+        userBShare: halfAmount,
         paidBy: null,
         isSettled: false,
       })

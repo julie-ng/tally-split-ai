@@ -24,6 +24,8 @@ export const splitSchema = z.object({
 export const splitRequestSchema = z.object({
   receiptId: z.number().nullable().optional(),
   splitAmount: z.number(),
+  userAShare: z.number().nullable().optional(),
+  userBShare: z.number().nullable().optional(),
   paidBy: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
   isSettled: z.boolean().optional(),

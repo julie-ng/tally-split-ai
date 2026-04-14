@@ -26,16 +26,11 @@ export default defineEventHandler(async (event) => {
     await guards.requireAuthorization(event, { receiptId: result.data.receiptId })
   }
 
-  // Calculate both user shares (equal split for now)
-  const halfAmount = Math.floor(result.data.splitAmount / 2 * 100) / 100
-  const userAShare = result.data.paidBy ? halfAmount : null
-  const userBShare = result.data.paidBy ? halfAmount : null
-
   const insertData = {
     userId,
     ...result.data,
-    userAShare,
-    userBShare,
+    userAShare: result.data.userAShare ?? null,
+    userBShare: result.data.userBShare ?? null,
     isSettled: result.data.isSettled ?? false,
   }
 
