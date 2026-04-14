@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { eq } from 'drizzle-orm'
-import { WORKFLOW_STATUSES, WORKFLOW_STEP_STATUSES } from '~~/shared/enums/workflow-status.js'
-import { UPLOAD_ANALYSIS_STATUSES } from '~~/shared/enums/upload-analysis-status.js'
+import { WORKFLOW_STATUSES, WORKFLOW_STEP_STATUSES } from '#shared/enums/workflow-status.js'
+import { UPLOAD_ANALYSIS_STATUSES } from '#shared/enums/upload-analysis-status.js'
 
 const statusUpdateSchema = z.object({
   // Orchestrator-level status

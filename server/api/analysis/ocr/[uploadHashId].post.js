@@ -1,5 +1,5 @@
 import { tasks } from '@trigger.dev/sdk/v3'
-import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '~~/shared/enums/workflow-status.js'
+import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger('analysis')

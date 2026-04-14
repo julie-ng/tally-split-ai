@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { eq } from 'drizzle-orm'
-import { splitUpdateSchema } from '~~/shared/utils/zod-schemas/split.schema.js'
+import { splitUpdateSchema } from '#shared/utils/zod-schemas/split.schema.js'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger('split')

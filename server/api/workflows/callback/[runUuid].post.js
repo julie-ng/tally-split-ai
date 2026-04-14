@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { WORKFLOW_STEPS } from '~~/shared/enums/workflow-step.js'
-import { WORKFLOW_STEP_STATUSES } from '~~/shared/enums/workflow-status.js'
+import { WORKFLOW_STEPS } from '#shared/enums/workflow-step.js'
+import { WORKFLOW_STEP_STATUSES } from '#shared/enums/workflow-status.js'
 
 const callbackSchema = z.object({
   step: z.enum(WORKFLOW_STEPS),

@@ -1,9 +1,9 @@
 import { tasks } from '@trigger.dev/sdk/v3'
 import { eq, and, inArray } from 'drizzle-orm'
-import { workflowRunInsertSchema } from '~~/shared/utils/zod-schemas/workflow-run.schema.js'
-import { WORKFLOW_STATUS } from '~~/shared/enums/workflow-status.js'
-import { UPLOAD_ANALYSIS_STATUS } from '~~/shared/enums/upload-analysis-status.js'
-import { getTaskActions } from '~~/shared/config/task-permissions.js'
+import { workflowRunInsertSchema } from '#shared/utils/zod-schemas/workflow-run.schema.js'
+import { WORKFLOW_STATUS } from '#shared/enums/workflow-status.js'
+import { UPLOAD_ANALYSIS_STATUS } from '#shared/enums/upload-analysis-status.js'
+import { getTaskActions } from '#shared/config/task-permissions.js'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger('workflow')

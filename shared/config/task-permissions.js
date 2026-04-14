@@ -7,8 +7,8 @@
  * - TASK_CHILDREN defines which child tasks each orchestrator may request tokens for
  *
  * Import paths:
- * - From server/: import { getTaskActions } from '~~/shared/config/task-permissions.js'
- * - From trigger/: import { getTaskActions } from '../shared/config/task-permissions.js'
+ * - From server/: import { getTaskActions } from '#shared/config/task-permissions.js'
+ * - From trigger/: import { getTaskActions } from '#shared/config/task-permissions.js'
  */
 
 export const VALID_RESOURCES = ['upload', 'receipt', 'split', 'workflow']

@@ -1,5 +1,5 @@
 import crypto from 'node:crypto'
-import { serializeActions } from '../../../shared/config/task-permissions.js'
+import { serializeActions } from '#shared/config/task-permissions.js'
 
 function getSalt () {
   const salt = process.env.WORKFLOW_CALLBACK_SALT

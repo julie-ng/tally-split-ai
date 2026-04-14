@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { getTaskActions, getTaskChildren } from '~~/shared/config/task-permissions.js'
+import { getTaskActions, getTaskChildren } from '#shared/config/task-permissions.js'
 
 const tokenRequestSchema = z.object({
   taskIds: z.array(z.string().min(1)).min(1),

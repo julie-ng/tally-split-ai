@@ -1,8 +1,8 @@
 import { task, logger } from '@trigger.dev/sdk/v3'
-import { WORKFLOW_STEP_STATUS } from '../shared/enums/workflow-status.js'
-import { WORKFLOW_STEP } from '../shared/enums/workflow-step.js'
-import { azureOcrExtract } from '../server/utils/azure-ocr.utils.js'
-import { gpt4oUtils } from '../server/utils/azure-gpt4o.utils.js'
+import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
+import { azureOcrExtract } from '#server/utils/azure-ocr.utils.js'
+import { gpt4oUtils } from '#server/utils/azure-gpt4o.utils.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
 import { notifyStatus } from './utils/notify-status.js'
 

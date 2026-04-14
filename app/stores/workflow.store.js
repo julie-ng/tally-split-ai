@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '~~/shared/enums/workflow-status.js'
-import { WORKFLOW_STEP } from '~~/shared/enums/workflow-step.js'
+import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 
 /**
  * Store for managing workflow run data.

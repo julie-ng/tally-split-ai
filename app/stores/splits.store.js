@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { splitUpdateSchema } from '~~/shared/utils/zod-schemas/split.schema.js'
+import { splitUpdateSchema } from '#shared/utils/zod-schemas/split.schema.js'
 
 /**
  * Store for managing splits with lazy loading and optimistic updates

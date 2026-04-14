@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { asyncUtils } from '~~/shared/utils/async.utils.js'
+import { asyncUtils } from '#shared/utils/async.utils.js'
 
 /**
  * Store for managing receipts with map-based caching and freshness tracking

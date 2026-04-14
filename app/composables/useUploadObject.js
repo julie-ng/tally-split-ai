@@ -2,7 +2,7 @@ import {
   extractReceiptDate,
   extractReceiptTotal,
   extractHashtagsForAzureBlobs,
-} from '~~/shared/utils/filename.utils'
+} from '#shared/utils/filename.utils'
 
 import { useUserStore } from '~/stores/user.store'
 

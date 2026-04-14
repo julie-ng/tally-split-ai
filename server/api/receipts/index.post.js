@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { receiptInputSchema } from '~~/shared/utils/zod-schemas/receipt.schema.js'
+import { receiptInputSchema } from '#shared/utils/zod-schemas/receipt.schema.js'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger('receipt')

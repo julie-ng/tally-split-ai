@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { getTaskActions } from '../../../shared/config/task-permissions.js'
+import { getTaskActions } from '#shared/config/task-permissions.js'
 
 /**
  * Authenticate a Trigger.dev task via HMAC callback token.

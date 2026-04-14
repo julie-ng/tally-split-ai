@@ -1,4 +1,4 @@
-import { snapshotFields } from '~~/shared/utils/diff.utils.js'
+import { snapshotFields } from '#shared/utils/diff.utils.js'
 
 /**
  * Track a deleted entity (all fields value → null).

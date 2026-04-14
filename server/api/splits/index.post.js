@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { splitRequestSchema } from '~~/shared/utils/zod-schemas/split.schema.js'
+import { splitRequestSchema } from '#shared/utils/zod-schemas/split.schema.js'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger('split')

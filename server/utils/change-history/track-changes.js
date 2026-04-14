@@ -1,4 +1,4 @@
-import { diffFields } from '~~/shared/utils/diff.utils.js'
+import { diffFields } from '#shared/utils/diff.utils.js'
 
 /**
  * Track field-level changes for a single entity.
