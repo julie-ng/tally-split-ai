@@ -52,13 +52,14 @@ Unit tests live alongside their source files (e.g., `shared/utils/azure.utils.te
 
 ## Workflow Architecture
 
-Receipt analysis runs as an async Trigger.dev workflow (`trigger/receipt-workflow.ts`) that orchestrates three tasks:
+Receipt analysis runs as an async Trigger.dev workflow (`trigger/receipt-workflow.ts`) that orchestrates four tasks:
 
 ```
 receiptWorkflow
-  → analyzeOcr          (Azure Document Intelligence)
-  → analyzeAnnotations   (GPT-4o)
-  → createSplit          (from receipt total)
+  → analyzeOcr            (Azure Document Intelligence)
+  → analyzeAnnotations    (GPT-4o vision)
+  → normalizeReceipt      (GPT-4o-mini text-only)
+  → createSplit           (deterministic, from receipt total)
 ```
 
 **Triggered by:** `POST /api/workflows/[uploadHashId]` (called automatically after upload completes)
@@ -87,6 +88,19 @@ receiptWorkflow
 ---
 
 ## Azure Document Intelligence
+
+### OCR JSON Token Estimates
+
+The full Azure Document Intelligence response is large. When forwarding OCR data to downstream LLM tasks (e.g., `adjust-split`), strip to only the fields needed:
+
+| Scope | Bytes | ~Tokens | Reduction |
+|:--|--:|--:|--:|
+| Full OCR JSON | 37KB | ~9,200 | — |
+| `documents[0].fields` only | 12KB | ~3,000 | 68% |
+| Items + Total/Subtotal/Tax/Tip | 10.5KB | ~2,600 | 71% |
+| Items + Totals, no `boundingRegions`/`spans` | 5KB | ~1,250 | 86% |
+
+Based on a sample receipt (`tmp/9099f4ba0ced.json`, 122KB raw). Token estimates use chars/4 approximation.
 
 #### References
 
