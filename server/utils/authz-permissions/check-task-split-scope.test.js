@@ -8,14 +8,14 @@ describe('checkTaskSplitScope', () => {
     })).toEqual({ ok: false, reason: 'no_receipt_for_split_check' })
   })
 
-  it('should pass when splitId matches receipt.splitId', () => {
+  it('should pass when splitId matches the split linked to the receipt', () => {
     expect(checkTaskSplitScope(10, {
       linkedReceiptId: 5,
       receiptSplitId: 10,
     })).toEqual({ ok: true })
   })
 
-  it('should fail when splitId does not match receipt.splitId', () => {
+  it('should fail when splitId does not match the split linked to the receipt', () => {
     expect(checkTaskSplitScope(10, {
       linkedReceiptId: 5,
       receiptSplitId: 20,

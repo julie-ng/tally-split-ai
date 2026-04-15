@@ -89,13 +89,11 @@ export default defineEventHandler(async (event) => {
         .limit(1)
 
       if (receipt) {
-        if (receipt.splitId) {
-          const [split] = await db
-            .delete(schema.splits)
-            .where(eq(schema.splits.id, receipt.splitId))
-            .returning()
-          deletedSplit = split || null
-        }
+        const [split] = await db
+          .delete(schema.splits)
+          .where(eq(schema.splits.receiptId, receipt.id))
+          .returning()
+        deletedSplit = split || null
 
         // Deleting the receipt cascade-deletes this upload via FK
         await db
@@ -103,7 +101,7 @@ export default defineEventHandler(async (event) => {
           .where(eq(schema.receipts.id, upload.receiptId))
 
         deletedReceipt = receipt
-        log.info({ receiptId: receipt.id, splitId: receipt.splitId || undefined }, 'Deleted associated receipt and split (last upload)')
+        log.info({ receiptId: receipt.id, splitId: deletedSplit?.id }, 'Deleted associated receipt and split (last upload)')
       }
     }
   }

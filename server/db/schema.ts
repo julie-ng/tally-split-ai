@@ -31,10 +31,6 @@ export const receipts = pgTable('receipts', {
   // User fields
   notes: text('notes'), // User-editable notes
 
-  // Relationships
-  // @ts-expect-error implicit return type any
-  splitId: integer('split_id').references(() => splits.id, { onDelete: 'set null' }),
-
   // Status tracking
   analysisStatus: text('analysis_status', { enum: RECEIPT_ANALYSIS_STATUSES }).notNull().default('unanalyzed'),
 
@@ -197,13 +193,9 @@ export const splitHistory = pgTable('split_history', {
  * Relations
  */
 
-// Receipt has many uploads and optionally one split
-export const receiptsRelations = relations(receipts, ({ many, one }) => ({
+// Receipt has many uploads
+export const receiptsRelations = relations(receipts, ({ many }) => ({
   uploads: many(uploads),
-  split: one(splits, {
-    fields: [receipts.splitId],
-    references: [splits.id],
-  }),
 }))
 
 // Upload belongs to one receipt, has many workflow runs

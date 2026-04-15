@@ -43,10 +43,7 @@ export const createSplit = task({
 
       const splitId = splitResult.created.id
 
-      // 4. Link split to receipt via API
-      await api.put(`/api/receipts/${receiptId}`, { splitId })
-
-      // 5. Update workflow step status
+      // 4. Update workflow step status
       await updateWorkflowStatus(authHeaders, { createSplitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
       await notifyStatus(runUuid, WORKFLOW_STEP.SPLIT, 'completed', authHeaders)
 

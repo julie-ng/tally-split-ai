@@ -124,22 +124,17 @@ async function authorizeTask (db, event, { workflowRun, taskId, uploadHashId, re
   if (splitId) {
     const linkedReceiptId = upload?.receiptId
 
-    // Fetch receipt's splitId for scope check
+    // Derive splitId from splits table (canonical direction: splits.receiptId → receipts.id)
     let receiptSplitId = null
     let splitUserId = null
     if (linkedReceiptId) {
-      const [receipt] = await db
-        .select({ splitId: schema.receipts.splitId })
-        .from(schema.receipts)
-        .where(eq(schema.receipts.id, linkedReceiptId))
+      const [existingSplit] = await db
+        .select({ id: schema.splits.id })
+        .from(schema.splits)
+        .where(eq(schema.splits.receiptId, linkedReceiptId))
         .limit(1)
 
-      if (!receipt) {
-        logSecurityEvent(event, 'warn', { taskId, splitId, reason: 'receipt_not_found_for_split_check' }, 'Authorization denied')
-        throw createError({ statusCode: 403, message: 'Forbidden' })
-      }
-
-      receiptSplitId = receipt.splitId
+      receiptSplitId = existingSplit?.id ?? null
 
       // For first-time linking, we need the split's userId
       if (!receiptSplitId) {

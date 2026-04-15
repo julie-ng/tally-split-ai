@@ -5,7 +5,7 @@
  * @param {number} requestedSplitId - splitId from the request
  * @param {Object} context
  * @param {number|null} context.linkedReceiptId - receiptId from the workflow chain
- * @param {number|null} context.receiptSplitId - splitId currently on the receipt
+ * @param {number|null} context.receiptSplitId - splitId linked to the receipt (derived from splits table)
  * @param {string|null} context.splitUserId - userId on the split record (for first-time linking)
  * @param {string|null} context.uploadUserId - userId on the workflow run's upload
  * @returns {{ ok: boolean, reason?: string }}
