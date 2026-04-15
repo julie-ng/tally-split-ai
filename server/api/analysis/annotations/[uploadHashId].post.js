@@ -1,4 +1,5 @@
 import { tasks } from '@trigger.dev/sdk/v3'
+import { eq } from 'drizzle-orm'
 import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 
 export default defineEventHandler(async (event) => {
@@ -9,8 +10,16 @@ export default defineEventHandler(async (event) => {
   guards.requireHashIdParam(event, 'uploadHashId')
 
   const hashId = getRouterParam(event, 'uploadHashId')
-  await guards.requireUploadByHashId(event)
-  const upload = event.context.upload
+  await guards.requireAuthorization(event, { uploadHashId: hashId })
+
+  const upload = await db.query.uploads.findFirst({
+    where: eq(schema.uploads.hashId, hashId),
+    columns: { id: true },
+  })
+
+  if (!upload) {
+    throw createError({ statusCode: 404, message: 'Upload not found' })
+  }
 
   const [workflowRun] = await db
     .insert(schema.workflowRuns)

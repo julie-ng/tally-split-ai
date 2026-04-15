@@ -12,8 +12,16 @@ export default defineEventHandler(async (event) => {
   guards.requireHashIdParam(event, 'uploadHashId')
 
   const hashId = getRouterParam(event, 'uploadHashId')
-  await guards.requireUploadByHashId(event)
-  const upload = event.context.upload
+  await guards.requireAuthorization(event, { uploadHashId: hashId })
+
+  const upload = await db.query.uploads.findFirst({
+    where: eq(schema.uploads.hashId, hashId),
+    columns: { id: true, status: true, hashId: true },
+  })
+
+  if (!upload) {
+    throw createError({ statusCode: 404, message: 'Upload not found' })
+  }
 
   if (upload.status !== 'uploaded') {
     throw createError({
