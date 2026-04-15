@@ -7,15 +7,28 @@ paths:
 
 ## Data Fetching (Hybrid SSR)
 
-Use `callOnce()` for data fetches — runs only on the server during SSR, preventing client-side re-fetch and UI flickers:
+### In Pinia stores
+- **GET actions:** use `$fetch()` — store manages its own reactive state
+- **Mutations (POST/PUT/DELETE):** use `$fetch()` — always user-initiated, client-side only
+- **Never** use `useFetch` inside stores — creates competing reactive layers
+
+### In Vue components
+- **Fetch data for render:** `await useAsyncData('key', () => store.fetchX())` — runs on server, hydrates to client, no double fetch
+- **User actions (click handlers):** call store directly — `store.deleteX(id)` — no wrapper needed
+- **Never** call `$fetch()` directly in components — causes double fetch (server + client)
 
 ```js
-await callOnce('receipts', async () => {
-  await receiptsStore.fetchAll()
-}, { mode: 'navigation' })
+// ✅ Component setup — data for render
+await useAsyncData('receipts', () => receiptsStore.fetchAll())
+
+// ✅ Component handler — user action
+const handleDelete = () => receiptsStore.deleteReceipt(id)
+
+// ❌ Never — causes double fetch
+const data = await $fetch('/api/receipts')
 ```
 
-The `{ mode: 'navigation' }` option ensures data re-fetches when the user navigates between pages.
+See `docs/README.md` → "Data Fetching Patterns" for the full reference table.
 
 ## Error Handling
 
