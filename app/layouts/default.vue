@@ -52,13 +52,6 @@ function getLinks (state: 'collapsed' | 'expanded') {
   return [
     [
       {
-        label: 'Blobs',
-        icon: 'i-lucide-blocks',
-        to: '/blobs',
-      },
-    ],
-    [
-      {
         label: 'Receipts',
         icon: 'i-lucide-receipt-euro',
         to: '/receipts',
