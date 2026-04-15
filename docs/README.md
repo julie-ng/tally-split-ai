@@ -16,6 +16,33 @@ Julie written for human understanding.
 
 ---
 
+## Data Fetching Patterns
+
+Nuxt uses SSR + client hydration. Choosing the wrong fetch function causes double requests or missing data.
+
+### Pinia Store Actions
+
+| Action type | Function | Why |
+|:--|:--|:--|
+| GET (read data) | `$fetch()` | Store manages its own reactive state |
+| GET (needs SSR auth cookies) | `useRequestFetch()` | Forwards cookies during SSR. Not needed until `nuxt-auth-utils`. Call in store setup scope. |
+| POST/PUT/DELETE (mutation) | `$fetch()` | Always user-initiated, client-side only |
+
+### Vue Components
+
+| Context | Function | Why |
+|:--|:--|:--|
+| Setup — fetch data for render | `await useAsyncData('key', () => store.fetchX())` | Runs on server, hydrates to client — no double fetch |
+| Setup — global side effect | `await callOnce('key', () => store.doX())` | Runs once during SSR. For config init, analytics — not data fetching. |
+| Handler — user action | `store.deleteX(id)` | Direct call, no wrapper. Mutations are client-side only. |
+| Component-level data (no store) | `useFetch('/api/...')` | Returns reactive refs. Avoid when a store exists for that data. |
+| Never | `$fetch()` directly | Causes double fetch (server + client). Always use a store or `useAsyncData`. |
+
+> [!NOTE]
+> `callOnce` vs `useAsyncData` distinction needs further investigation once `nuxt-auth-utils` is implemented. We may be overusing `callOnce` for data fetches where `useAsyncData` is correct.
+
+---
+
 ## Testing
 
 ### Tags Pipeline Tests
