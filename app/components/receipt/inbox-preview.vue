@@ -66,12 +66,8 @@ provide('highlightedLabel', highlightedLabel)
           Split Costs
         </p>
         <receipt-split
-          v-if="receipt.splitId"
-          :split-id="receipt.splitId"
+          :receipt-id="receipt.id"
         />
-        <p v-else class="text-sm text-dimmed">
-          No split assigned
-        </p>
       </div>
 
       <USeparator />

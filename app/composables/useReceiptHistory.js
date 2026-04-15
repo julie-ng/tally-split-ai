@@ -1,12 +1,15 @@
+// Composable instead of store — read-only data, no mutations or shared state
 export function useReceiptHistory (receiptId, splitId) {
   const { data: receiptData, pending: rPending } = useFetch(
     () => `/api/history/receipts/${receiptId}`,
     { key: `history-receipt-${receiptId}` },
   )
 
+  const resolvedSplitId = computed(() => toValue(splitId))
+
   const { data: splitData, pending: sPending } = useFetch(
-    () => `/api/history/splits/${splitId}`,
-    { key: `history-split-${splitId}`, immediate: !!splitId },
+    () => `/api/history/splits/${resolvedSplitId.value}`,
+    { key: `history-split-${receiptId}`, immediate: !!resolvedSplitId.value, watch: [resolvedSplitId] },
   )
 
   const pending = computed(() => rPending.value || sPending.value)

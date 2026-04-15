@@ -10,6 +10,7 @@ export const useSplitsStore = defineStore('splits', () => {
 
   const debug = ref(false) // Debug logging flag
   const splits = ref({}) // Map: { [splitId]: splitObject }
+  const receiptToSplit = ref({}) // Map: { [receiptId]: splitId }
   const history = ref({}) // Map: { [splitId]: changeArray }
   const loading = ref({}) // Map: { [splitId]: boolean }
   const saving = ref({}) // Map: { [splitId]: boolean }
@@ -36,6 +37,19 @@ export const useSplitsStore = defineStore('splits', () => {
    * Get error for a split
    */
   const getSplitError = computed(() => id => errors.value[id] || null)
+
+  /**
+   * Get a split by receipt ID from state (doesn't fetch)
+   */
+  const getSplitByReceiptId = computed(() => (receiptId) => {
+    const splitId = receiptToSplit.value[receiptId]
+    return splitId ? splits.value[splitId] : undefined
+  })
+
+  /**
+   * Get the splitId for a given receiptId (doesn't fetch)
+   */
+  const getSplitIdByReceiptId = computed(() => receiptId => receiptToSplit.value[receiptId] ?? null)
 
   /**
    * Get all splits as array (for listing)
@@ -141,10 +155,15 @@ export const useSplitsStore = defineStore('splits', () => {
 
       // Replace splits map (backend is source of truth)
       const newSplits = {}
+      const newReceiptToSplit = {}
       for (const split of data) {
         newSplits[split.id] = split
+        if (split.receiptId) {
+          newReceiptToSplit[split.receiptId] = split.id
+        }
       }
       splits.value = newSplits
+      receiptToSplit.value = newReceiptToSplit
       _log(`[SplitsStore] ✅ fetched ${data.length} splits`)
       return data
     }
@@ -186,6 +205,41 @@ export const useSplitsStore = defineStore('splits', () => {
     }
     finally {
       loading.value[id] = false
+    }
+  }
+
+  /**
+   * Fetch a split by receipt ID (lazy loads if not in state)
+   * @param {number} receiptId - Receipt ID
+   * @returns {Promise<Object>} The split object
+   */
+  async function fetchSplitByReceiptId (receiptId) {
+    _log(`[SplitsStore] fetchSplitByReceiptId(${receiptId})`)
+
+    const cachedSplitId = receiptToSplit.value[receiptId]
+    if (cachedSplitId && splits.value[cachedSplitId]) {
+      return splits.value[cachedSplitId]
+    }
+
+    loading.value[`receipt:${receiptId}`] = true
+
+    try {
+      const data = await $fetch(`/api/receipts/${receiptId}/split`)
+      splits.value[data.id] = data
+      receiptToSplit.value[receiptId] = data.id
+      _log(`[SplitsStore] fetched split ${data.id} for receipt ${receiptId}`)
+      return data
+    }
+    catch (err) {
+      if (err.statusCode === 404) {
+        _log(`[SplitsStore] no split found for receipt ${receiptId}`)
+        return null
+      }
+      console.error(`[SplitsStore] ❌ failed to fetch split for receipt ${receiptId}:`, err)
+      throw err
+    }
+    finally {
+      loading.value[`receipt:${receiptId}`] = false
     }
   }
 
@@ -357,6 +411,7 @@ export const useSplitsStore = defineStore('splits', () => {
     // State
     debug,
     splits,
+    receiptToSplit,
     history,
     loading,
     saving,
@@ -364,6 +419,8 @@ export const useSplitsStore = defineStore('splits', () => {
 
     // Getters
     getSplitById,
+    getSplitByReceiptId,
+    getSplitIdByReceiptId,
     isSplitLoading,
     isSplitSaving,
     getSplitError,
@@ -376,6 +433,7 @@ export const useSplitsStore = defineStore('splits', () => {
     configure,
     fetchAllSplits,
     fetchSplit,
+    fetchSplitByReceiptId,
     fetchSplitHistory,
     updateSplit,
     clearSplitError,

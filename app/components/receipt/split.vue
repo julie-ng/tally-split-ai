@@ -3,7 +3,7 @@ import { useDebounceFn } from '@vueuse/core'
 import { useSplitsStore } from '~/stores/splits.store'
 
 const props = defineProps({
-  splitId: {
+  receiptId: {
     type: Number,
     required: true,
   },
@@ -35,15 +35,26 @@ const users = [
 // splitsStore.testErrors()
 
 /**
- * Fetch split data — self-managed, works in both SSR and client-side navigation
+ * Fetch split data by receiptId — self-managed, works in both SSR and client-side navigation
  */
-const splitLoading = computed(() => splitsStore.isSplitLoading(props.splitId))
-splitsStore.fetchSplit(props.splitId)
+const splitId = computed(() => splitsStore.getSplitIdByReceiptId(props.receiptId))
+const splitLoading = computed(() => splitsStore.loading[`receipt:${props.receiptId}`] || (splitId.value && splitsStore.isSplitLoading(splitId.value)) || false)
+const fetchAttempted = ref(false)
+splitsStore.fetchSplitByReceiptId(props.receiptId)
+  .then(() => {
+    fetchAttempted.value = true
+  })
+  .catch(() => {
+    fetchAttempted.value = true
+  })
 
 /**
  * UI Functionality
  */
-const sumsUp = computed(() => splitsStore.doesSplitAddUp(props.splitId))
+const sumsUp = computed(() => splitId.value
+  ? splitsStore.doesSplitAddUp(splitId.value)
+  : false,
+)
 const settledText = computed(() => isSettled.value ? 'Settled Up' : 'Unsettled')
 const toggleSettle = () => {
   isSettled.value = !isSettled.value
@@ -67,7 +78,8 @@ const splitHalf = () => {
 /**
  * Split Refs
  */
-const split = computed(() => splitsStore.getSplitById(props.splitId))
+const split = computed(() => splitsStore.getSplitByReceiptId(props.receiptId))
+const noSplit = computed(() => fetchAttempted.value && !splitLoading.value && !split.value)
 
 // Writable computed refs - all accumulate into pendingUpdates
 const splitAmount = computed({
@@ -127,7 +139,7 @@ const debouncedUpdate = useDebounceFn(async () => {
   pendingUpdates.value = {} // Clear accumulator
 
   try {
-    await splitsStore.updateSplit(props.splitId, updates)
+    await splitsStore.updateSplit(splitId.value, updates)
   }
   catch (err) {
     showToast(err)
@@ -164,7 +176,7 @@ function showToast (err) {
 <template>
   <ClientOnly>
     <!-- Loading state -->
-    <template v-if="splitLoading || !split">
+    <template v-if="splitLoading && !split">
       <div class="space-y-3 animate-pulse">
         <div class="h-8 bg-slate-100 rounded" />
         <div class="h-8 bg-slate-100 rounded" />
@@ -173,7 +185,12 @@ function showToast (err) {
       </div>
     </template>
 
-    <div v-else>
+    <!-- No split assigned -->
+    <div v-else-if="noSplit" class="text-sm text-dimmed">
+      No split assigned to this receipt
+    </div>
+
+    <div v-else-if="split">
       <!-- Split Amount -->
       <receipt-split-input
         v-model="splitAmount"
@@ -257,7 +274,7 @@ function showToast (err) {
       </div>
 
       <USeparator class="my-6" />
-      <split-llm-analysis :split-id="props.splitId" />
+      <split-llm-analysis v-if="splitId" :split-id="splitId" />
 
     <!-- <div class="text-right">
       <UButton

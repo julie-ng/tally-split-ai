@@ -52,12 +52,8 @@ const dates = computed(() => {
             Split Costs
           </ui-section-subtitle>
           <receipt-split
-            v-if="props.receipt.splitId"
-            :split-id="props.receipt.splitId"
+            :receipt-id="props.receipt.id"
           />
-          <div v-else class="text-sm text-gray-500">
-            No split assigned to this receipt
-          </div>
         </section>
       </div>
 

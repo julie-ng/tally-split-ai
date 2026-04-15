@@ -10,17 +10,21 @@ export default defineEventHandler(async (event) => {
   const year = query.year ? parseInt(query.year) : null
   const month = query.month ? parseInt(query.month) : null
 
-  const splits = await db.query.splits.findMany({
+  const queryOptions = {
     where: and(
       eq(schema.splits.userId, userId),
       eq(schema.splits.isSettled, false),
     ),
-    with: {
-      receipt: true,
-    },
-  })
+  }
 
-  // Filter by receipt date if year/month provided
+  if (year && month) {
+    queryOptions.with = {
+      receipt: { columns: { date: true } },
+    }
+  }
+
+  const splits = await db.query.splits.findMany(queryOptions)
+
   let filteredSplits = splits
   if (year && month) {
     filteredSplits = splits.filter((split) => {

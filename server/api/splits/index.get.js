@@ -5,7 +5,6 @@ export default defineEventHandler(async (event) => {
   await guards.requireAuthentication(event)
   const userId = event.context.userId
 
-  // Get optional year/month filter from query params
   const query = getQuery(event)
   const year = query.year ? parseInt(query.year) : null
   const month = query.month ? parseInt(query.month) : null
@@ -32,7 +31,6 @@ export default defineEventHandler(async (event) => {
     },
   })
 
-  // Filter by receipt date if year/month provided
   if (year && month) {
     return splits.filter((split) => {
       if (!split.receipt?.date) return false
