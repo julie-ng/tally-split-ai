@@ -243,6 +243,5 @@ const paginationInfo = computed(() => {
         </div>
       </ClientOnly>
     </div>
-
   </UContainer>
 </template>
