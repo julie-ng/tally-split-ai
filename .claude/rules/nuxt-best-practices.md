@@ -8,14 +8,23 @@ paths:
 ## Data Fetching (Hybrid SSR)
 
 ### In Pinia stores
-- **GET actions:** use `$fetch()` — store manages its own reactive state
-- **Mutations (POST/PUT/DELETE):** use `$fetch()` — always user-initiated, client-side only
-- **Never** use `useFetch` inside stores — creates competing reactive layers
+
+| Action type | Function | Why |
+|:--|:--|:--|
+| GET (read data) | `$fetch()` | Store manages its own reactive state |
+| GET (needs SSR auth cookies) | `useRequestFetch()` | Forwards cookies during SSR. Not needed until `nuxt-auth-utils`. Call in store setup scope. |
+| POST/PUT/DELETE (mutation) | `$fetch()` | Always user-initiated, client-side only |
+| **Never** | `useFetch()` | Creates competing reactive layers with Pinia |
 
 ### In Vue components
-- **Fetch data for render:** `await useAsyncData('key', () => store.fetchX())` — runs on server, hydrates to client, no double fetch
-- **User actions (click handlers):** call store directly — `store.deleteX(id)` — no wrapper needed
-- **Never** call `$fetch()` directly in components — causes double fetch (server + client)
+
+| Context | Function | Why |
+|:--|:--|:--|
+| Setup — fetch data for render | `await useAsyncData('key', () => store.fetchX())` | Runs on server, hydrates to client — no double fetch |
+| Setup — global side effect | `await callOnce('key', () => store.doX())` | Runs once during SSR. For config init, analytics — **not data fetching** |
+| Handler — user action | `store.deleteX(id)` | Direct call, no wrapper. Mutations are client-side only |
+| Component-level data (no store) | `useFetch('/api/...')` | Returns reactive refs. Avoid when a store exists for that data |
+| **Never** | `$fetch()` directly | Causes double fetch (server + client). Always use a store or `useAsyncData` |
 
 ```js
 // ✅ Component setup — data for render
@@ -26,6 +35,9 @@ const handleDelete = () => receiptsStore.deleteReceipt(id)
 
 // ❌ Never — causes double fetch
 const data = await $fetch('/api/receipts')
+
+// ❌ Never — callOnce is not for data fetching
+await callOnce('receipts', () => receiptsStore.fetchAll())
 ```
 
 See `docs/README.md` → "Data Fetching Patterns" for the full reference table.

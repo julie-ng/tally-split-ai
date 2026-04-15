@@ -7,18 +7,7 @@ const id = parseInt(route.params.id)
 const receiptsStore = useReceiptsStore()
 receiptsStore.debug = true
 
-// TODO - works, but not sure optimal
-// on SSR - pinia always fetches all,
-// even if loading individual [id] page
-await callOnce(async () => {
-  const cachedCount = receiptsStore.totalReceipts
-  if (cachedCount <= 1) {
-    await receiptsStore.fetchReceipts()
-  }
-  else {
-    await receiptsStore.fetchReceiptById(id)
-  }
-}, { mode: 'navigation' })
+await useAsyncData(`receipt-${id}`, () => receiptsStore.fetchReceiptById(id))
 
 // Get reactive refs from store
 const receipt = computed(() => receiptsStore.getReceiptById(id))
