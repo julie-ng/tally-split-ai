@@ -17,9 +17,9 @@ export const uploadObject = z.object({
   azureTags: z.union([z.object(), z.string()]).nullable(),
 
   analysisStatus: z.string(), // pending, queued, processing, completed, failed
-  ocrText: z.string().nullable(),
-  ocrJson: z.record(z.string(), z.any()).nullable(),
-  annotationsJson: z.record(z.string(), z.any()).nullable(),
+  ocrText: z.string().nullable().optional(),
+  ocrJson: z.record(z.string(), z.any()).nullable().optional(),
+  annotationsJson: z.record(z.string(), z.any()).nullable().optional(),
 
   analyzedAt: z.iso.datetime().nullable(),
   createdAt: z.iso.datetime(),

@@ -52,20 +52,34 @@ export const analyzeAnnotations = task({
       const responseData = await gpt4oUtils.analyzeAnnotations(blobUrlWithSas, ocrLineItems)
 
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
+      // 5. Flatten and slim before storing — drop raw API envelope, keep only what we need
+      const slimAnnotations = {
+        model: responseData.raw?.model,
+        usage: responseData.raw?.usage
+          ? {
+              prompt_tokens: responseData.raw.usage.prompt_tokens,
+              completion_tokens: responseData.raw.usage.completion_tokens,
+              total_tokens: responseData.raw.usage.total_tokens,
+            }
+          : null,
+        annotations: responseData.annotations?.annotations ?? [],
+        notes: responseData.annotations?.notes ?? null,
+      }
+
       logger.log(`GPT-4o responded in ${elapsed}s`, {
-        annotationCount: responseData.annotations?.annotations?.length ?? 0,
+        annotationCount: slimAnnotations.annotations.length,
       })
 
-      // 5. Store result via API
-      await api.put(`/api/uploads/${uploadHashId}`, { annotationsJson: responseData })
+      // 6. Store slimmed result via API
+      await api.put(`/api/uploads/${uploadHashId}`, { annotationsJson: slimAnnotations })
 
-      // 6. Update workflow step status
+      // 7. Update workflow step status
       await updateWorkflowStatus(authHeaders, { annotationsStatus: WORKFLOW_STEP_STATUS.COMPLETED })
       await notifyStatus(runUuid, WORKFLOW_STEP.ANNOTATIONS, 'completed', authHeaders)
 
       logger.log(`Annotations analysis complete for ${uploadHashId}`)
 
-      return { annotations: responseData.annotations }
+      return { annotations: slimAnnotations.annotations }
     }
     catch (err) {
       logger.error(`Annotations analysis failed for ${uploadHashId}`, {

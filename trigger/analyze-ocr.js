@@ -3,6 +3,7 @@ import DocumentIntelligence, { getLongRunningPoller, isUnexpected } from '@azure
 import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { azureStorageUtils } from '#server/utils/azure-storage.utils.js'
+import { azureOcrExtract } from '#server/utils/azure-ocr.utils.js'
 import { getAzureDocumentIntelligenceConfig } from '#server/utils/azure-document-intelligence.js'
 import { receiptUtils } from '#shared/utils/receipt.utils.js'
 import { receiptInputSchema } from '#shared/utils/zod-schemas/receipt.schema.js'
@@ -79,7 +80,7 @@ export const analyzeOcr = task({
       // 5. Store OCR results on upload (no receiptId — orchestrator handles receipt creation)
       await api.put(`/api/uploads/${uploadHashId}`, {
         ocrText: analyzeResult.content || null,
-        ocrJson: result.body,
+        ocrJson: azureOcrExtract.slimOcrResponse(result.body),
       })
 
       // 6. Update workflow step status

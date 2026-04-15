@@ -15,7 +15,7 @@ const upload = computed(() => uploadsStore.getUploadByHashId(props.hashId))
 </script>
 
 <template>
-  <div v-if="upload">
+  <div v-if="upload?.blobName">
     <!-- Original Filename -->
     <ui-file-property label="Original Filename" :ui="{ class: 'my-4' }">
       <p class="text-sm mt-1">

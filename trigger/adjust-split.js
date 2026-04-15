@@ -25,9 +25,8 @@ export const adjustSplit = task({
       const upload = await api.get(`/api/uploads/${uploadHashId}?include=ocrJson,annotationsJson`)
 
       // 2. Skip if no annotations — nothing to adjust
-      // Structure: annotationsJson.annotations = { annotations: [...], notes: "..." }
-      const annotationsList = upload.annotationsJson?.annotations?.annotations
-      if (!annotationsList?.length) {
+      // Structure: annotationsJson = { model, usage, annotations: [...], notes }
+      if (!upload.annotationsJson?.annotations?.length) {
         await updateWorkflowStatus(authHeaders, { adjustSplitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
         await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_SPLIT, 'completed', authHeaders)
 
@@ -55,7 +54,7 @@ export const adjustSplit = task({
       // 5. Call GPT-4o-mini to analyze annotations and determine split
       const result = await gpt4oUtils.adjustSplit({
         ocrData,
-        annotations: upload.annotationsJson.annotations,
+        annotations: upload.annotationsJson,
       })
 
       logger.log(`Adjust-split result for ${uploadHashId}`, result)
