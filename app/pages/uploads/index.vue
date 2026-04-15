@@ -2,7 +2,6 @@
 import { getPaginationRowModel } from '@tanstack/vue-table'
 import { useUserStore } from '~/stores/user.store'
 import { useUploadsStore } from '~/stores/uploads.store'
-import { useUploadQueueStore } from '~/stores/upload-queue.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
 import { UPLOAD_STATUS } from '~~/shared/enums/upload-status.js'
 
@@ -12,17 +11,9 @@ useHead({
 
 const userStore = useUserStore()
 const uploadsStore = useUploadsStore()
-const uploadQueueStore = useUploadQueueStore()
 const workflowStore = useWorkflowStore()
 uploadsStore.debug = true
 workflowStore.debug = true
-
-const showUploadModal = ref(false)
-
-async function onFilesUpdate (files) {
-  await uploadQueueStore.addFiles(files)
-  showUploadModal.value = false
-}
 
 // Fetch uploads and workflows on mount
 await Promise.all([
@@ -157,9 +148,7 @@ const paginationInfo = computed(() => {
           <UButton class="px-4 py-2 cursor-pointer" variant="subtle" @click="uploadsStore.fetchUploads(); workflowStore.fetchAll()">
             Refresh
           </UButton>
-          <UButton class="px-4 py-2 cursor-pointer" icon="i-lucide-upload" @click="showUploadModal = true">
-            Upload
-          </UButton>
+          <upload-button-modal class="px-4 py-2" />
         </div>
       </div>
 
@@ -255,10 +244,5 @@ const paginationInfo = computed(() => {
       </ClientOnly>
     </div>
 
-    <UModal v-model:open="showUploadModal" title="Upload Files">
-      <template #body>
-        <uploads-drop-zone @on-update="onFilesUpdate" />
-      </template>
-    </UModal>
   </UContainer>
 </template>
