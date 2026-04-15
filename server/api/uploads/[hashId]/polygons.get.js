@@ -2,10 +2,10 @@
 // for rendering overlays on the receipt image.
 export default defineEventHandler(async (event) => {
   await guards.requireAuthentication(event)
-  guards.requireHashIdParam(event, 'uploadHashId')
+  guards.requireHashIdParam(event)
 
-  const hashId = getRouterParam(event, 'uploadHashId')
-  await guards.requireUploadByHashId(event)
+  const hashId = getRouterParam(event, 'hashId')
+  await guards.requireUploadByHashId(event, 'hashId')
   const upload = event.context.upload
 
   // TODO: Remove tmp file fallback once all uploads have ocrJson in DB

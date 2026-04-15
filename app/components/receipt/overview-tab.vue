@@ -3,8 +3,7 @@ const props = defineProps({
   receipt: Object,
 })
 
-// Temp - only show 1st upload
-const blobFile = computed(() => props.receipt.uploads?.[0])
+const uploadHashId = computed(() => props.receipt.uploads?.[0]?.hashId)
 
 const dates = computed(() => {
   return [
@@ -79,7 +78,7 @@ const dates = computed(() => {
           <ui-section-subtitle>
             Azure Blob Info
           </ui-section-subtitle>
-          <blob-info v-if="blobFile" :upload="blobFile" />
+          <blob-info v-if="uploadHashId" :hash-id="uploadHashId" />
         </section>
       </div>
     </div>

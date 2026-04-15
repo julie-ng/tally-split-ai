@@ -1,6 +1,4 @@
 <script setup>
-import { useReceiptsStore } from '~/stores/receipts.store'
-
 const props = defineProps({
   receipt: {
     type: Object,
@@ -8,10 +6,7 @@ const props = defineProps({
   },
 })
 
-const receiptsStore = useReceiptsStore()
-
-const upload = computed(() => props.receipt.uploads?.[0])
-const uploadHashId = computed(() => receiptsStore.getUploadHashId(props.receipt.id))
+const uploadHashId = computed(() => props.receipt.uploads?.[0]?.hashId)
 
 const formattedDate = computed(() => {
   return props.receipt.date
@@ -106,9 +101,8 @@ provide('highlightedLabel', highlightedLabel)
     <!-- Right column: Receipt image with overlay -->
     <div class="max-w-xs">
       <receipt-upload-column
-        v-if="upload"
-        :upload="upload"
-        :upload-hash-id="uploadHashId"
+        v-if="uploadHashId"
+        :hash-id="uploadHashId"
       />
       <UAlert
         v-else

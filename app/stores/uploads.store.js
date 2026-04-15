@@ -8,6 +8,7 @@ export const useUploadsStore = defineStore('uploads', () => {
   // -------- STATE --------
 
   const uploads = ref([])
+  const polygons = ref({}) // Map: { [hashId]: { page, polygons } }
   const loading = ref(false)
   const error = ref(null)
   const debug = ref(false) // Debug logging flag
@@ -17,6 +18,8 @@ export const useUploadsStore = defineStore('uploads', () => {
   const totalUploads = computed(() => uploads.value.length)
 
   const getUploadByHashId = computed(() => hashId => uploads.value.find(u => u.hashId === hashId))
+
+  const getPolygonsByHashId = computed(() => hashId => polygons.value[hashId] ?? null)
 
   // -------- ACTIONS --------
 
@@ -94,6 +97,31 @@ export const useUploadsStore = defineStore('uploads', () => {
   }
 
   /**
+   * Fetch bounding polygons for an upload (lazy loads if not in state)
+   * @param {string} hashId - Upload hash ID
+   * @returns {Promise<Object|null>} Polygon data { page, polygons } or null
+   */
+  async function fetchPolygons (hashId) {
+    if (polygons.value[hashId]) {
+      return polygons.value[hashId]
+    }
+
+    try {
+      const result = await $fetch(`/api/uploads/${hashId}/polygons`)
+      if (result.success) {
+        polygons.value[hashId] = result.data
+        _log(`[UploadsStore] ✅ fetched polygons for: ${hashId}`)
+        return result.data
+      }
+      return null
+    }
+    catch (err) {
+      console.error(`[UploadsStore] ❌ failed to fetch polygons ${hashId}:`, err)
+      return null
+    }
+  }
+
+  /**
    * Internal logger helper - only logs when debug flag is enabled
    * @private
    */
@@ -113,9 +141,11 @@ export const useUploadsStore = defineStore('uploads', () => {
     // Getters
     totalUploads,
     getUploadByHashId,
+    getPolygonsByHashId,
 
     // Actions
     fetchUploads,
+    fetchPolygons,
     refreshUploadByHashId,
     deleteUpload,
   }

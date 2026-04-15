@@ -1,32 +1,31 @@
 <script setup>
+import { useUploadsStore } from '~/stores/uploads.store'
+
 const props = defineProps({
-  upload: Object,
-  uploadHashId: {
+  hashId: {
     type: String,
-    default: null,
+    required: true,
   },
 })
 
-const hasBlobImage = computed(() => props.upload.status === 'uploaded')
+const uploadsStore = useUploadsStore()
+uploadsStore.refreshUploadByHashId(props.hashId)
+uploadsStore.fetchPolygons(props.hashId)
+
+const upload = computed(() => uploadsStore.getUploadByHashId(props.hashId))
+const polygonData = computed(() => uploadsStore.getPolygonsByHashId(props.hashId))
+
+const hasBlobImage = computed(() => upload.value?.status === 'uploaded')
 
 const altText = computed(() => {
-  return (props.upload.title)
-    ? `${props.upload.title} (${props.upload.blobName})`
-    : props.upload.blobName
+  if (!upload.value) return ''
+  return (upload.value.title)
+    ? `${upload.value.title} (${upload.value.blobName})`
+    : upload.value.blobName
 })
 
-// Fetch bounding polygons for overlay (only if hashId provided)
-const { data: polygonsData } = await useFetch(
-  () => `/api/analysis/polygons/${props.uploadHashId}`,
-  {
-    key: `polygons-${props.uploadHashId}`,
-    immediate: !!props.uploadHashId,
-  },
-)
-
 const hasPolygons = computed(() =>
-  polygonsData.value?.success
-  && polygonsData.value?.data?.polygons?.length > 0,
+  polygonData.value?.polygons?.length > 0,
 )
 
 const highlightedLabel = inject('highlightedLabel', ref(null))
@@ -34,24 +33,29 @@ const highlightedLabel = inject('highlightedLabel', ref(null))
 
 <template>
   <div class="border border-slate-200">
+    <template v-if="!upload">
+      <div class="p-4 text-sm text-slate-400">
+        Loading upload...
+      </div>
+    </template>
     <blob-sas-link
-      v-if="hasBlobImage"
+      v-else-if="hasBlobImage"
       :blob-name="upload.blobName"
       :blob-url="upload.blobUrl"
     >
       <blob-image-with-overlay
         v-if="hasPolygons"
-        :blob-name="props.upload.blobName"
+        :blob-name="upload.blobName"
         :alt="altText"
-        :polygons="polygonsData.data.polygons"
-        :page-width="polygonsData.data.page.width"
-        :page-height="polygonsData.data.page.height"
+        :polygons="polygonData.polygons"
+        :page-width="polygonData.page.width"
+        :page-height="polygonData.page.height"
         :highlighted-label="highlightedLabel"
         @update:highlighted-label="highlightedLabel = $event"
       />
       <blob-image
         v-else
-        :blob-name="props.upload.blobName"
+        :blob-name="upload.blobName"
         :alt="altText"
       />
     </blob-sas-link>

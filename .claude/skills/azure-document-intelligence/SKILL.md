@@ -54,7 +54,7 @@ analyzeResult
         └── Total              → { valueCurrency: { amount, currencyCode } }
 ```
 
-All fields include `boundingRegions[]` — used by `GET /api/analysis/polygons/[uploadHashId]` for bounding box overlays.
+All fields include `boundingRegions[]` — used by `GET /api/uploads/[hashId]/polygons` for bounding box overlays.
 
 ## Optional Field Challenge
 
@@ -73,7 +73,7 @@ Handle this in **both** the zod schemas (`shared/utils/zod-schemas/`) and the UI
 | `server/utils/azure-document-intelligence.js` | Azure SDK config wrapper |
 | `server/api/analysis/ocr/[uploadHashId].post.js` | API endpoint — triggers OCR task |
 | `server/api/analysis/summary/[uploadHashId].get.js` | Summary endpoint (read-only) |
-| `server/api/analysis/polygons/[uploadHashId].get.js` | Bounding box polygons (reads from DB, falls back to tmp file) |
+| `server/api/uploads/[hashId]/polygons.get.js` | Bounding box polygons (reads from DB, falls back to tmp file) |
 | `shared/utils/azure-receipt-model.utils.js` | Parse Azure response fields |
 | `shared/utils/zod-schemas/receipt.schema.js` | Receipt schemas (receiptSchema, receiptInputSchema) |
 

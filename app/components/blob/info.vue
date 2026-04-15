@@ -1,11 +1,21 @@
 <script setup>
-defineProps({
-  upload: Object,
+import { useUploadsStore } from '~/stores/uploads.store'
+
+const props = defineProps({
+  hashId: {
+    type: String,
+    required: true,
+  },
 })
+
+const uploadsStore = useUploadsStore()
+uploadsStore.refreshUploadByHashId(props.hashId)
+
+const upload = computed(() => uploadsStore.getUploadByHashId(props.hashId))
 </script>
 
 <template>
-  <div>
+  <div v-if="upload">
     <!-- Original Filename -->
     <ui-file-property label="Original Filename" :ui="{ class: 'my-4' }">
       <p class="text-sm mt-1">
