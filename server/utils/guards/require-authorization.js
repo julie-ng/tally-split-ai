@@ -97,7 +97,7 @@ async function authorizeTask (db, event, { workflowRun, taskId, uploadHashId, re
   }
 
   if (receiptId) {
-    const expectedReceiptId = upload?.receiptId || workflowRun.receiptId
+    const expectedReceiptId = upload?.receiptId
 
     // For first-time linking, we need the receipt's userId
     let receiptUserId = null
@@ -122,7 +122,7 @@ async function authorizeTask (db, event, { workflowRun, taskId, uploadHashId, re
   }
 
   if (splitId) {
-    const linkedReceiptId = upload?.receiptId || workflowRun.receiptId
+    const linkedReceiptId = upload?.receiptId
 
     // Fetch receipt's splitId for scope check
     let receiptSplitId = null

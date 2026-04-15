@@ -70,7 +70,7 @@ AuthZ is handled by `requireAuthorization(event, { uploadHashId?, receiptId?, sp
 
 - Verifies the requested resource belongs to this workflow run's linked resources
 - `uploadHashId`: must match `workflowRun.upload.hashId`
-- `receiptId`: must match `workflowRun.upload.receiptId` (upload-scoped) or `workflowRun.receiptId` (receipt-scoped)
+- `receiptId`: must match `workflowRun.upload.receiptId`
 - `splitId`: must match the receipt's linked splitId (via join through receipt → split)
 - Returns **403** on mismatch — tasks know their own scope, no need to hide resource existence
 
@@ -127,11 +127,9 @@ This means `analyze-annotations` literally cannot create a split — its token w
 
 The `scope` parameter binds the token to a specific resource. It is **required** — generating a token without a scope throws an error.
 
-Scope formats:
-- Upload-triggered workflows: `upload:<hashId>` (e.g., `upload:abc123`)
-- Receipt-triggered workflows: `receipt:<id>` (e.g., `receipt:123`)
+Scope format: `upload:<hashId>` (e.g., `upload:abc123`)
 
-The scope is derived from the workflow run's linked resource (`workflowRun.upload` or `workflowRun.receiptId`). A token scoped to one resource cannot be used to access a different resource — the HMAC will not match.
+The scope is derived from the workflow run's linked upload. A token scoped to one upload cannot be used to access a different resource — the HMAC will not match.
 
 ### Properties
 

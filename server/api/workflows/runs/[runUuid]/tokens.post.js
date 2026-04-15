@@ -54,17 +54,12 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Derive scope from workflow run's linked resource
-  let scope
-  if (workflowRun.upload) {
-    scope = `upload:${workflowRun.upload.hashId}`
-  }
-  else if (workflowRun.receiptId) {
-    scope = `receipt:${workflowRun.receiptId}`
-  }
-  else {
+  // Derive scope from workflow run's linked upload
+  if (!workflowRun.upload) {
     throw createError({ statusCode: 500, message: 'Workflow run has no linked resource' })
   }
+
+  const scope = `upload:${workflowRun.upload.hashId}`
 
   // Generate a token per requested task
   const tokens = {}

@@ -4,7 +4,7 @@
  *
  * @param {number} requestedReceiptId - receiptId from the request
  * @param {Object} context
- * @param {number|null} context.expectedReceiptId - upload.receiptId or workflowRun.receiptId
+ * @param {number|null} context.expectedReceiptId - upload.receiptId
  * @param {string|null} context.receiptUserId - userId on the receipt record (for first-time linking)
  * @param {string|null} context.uploadUserId - userId on the workflow run's upload
  * @returns {{ ok: boolean, reason?: string }}
