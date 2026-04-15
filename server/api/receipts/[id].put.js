@@ -22,10 +22,6 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // AuthZ: if relinking to a different split, verify principal owns it
-  if (result.data.splitId) {
-    await guards.requireAuthorization(event, { splitId: result.data.splitId })
-  }
 
   const updates = {
     ...result.data,
