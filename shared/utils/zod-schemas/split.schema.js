@@ -61,5 +61,6 @@ export const splitUpdateSchema = z.object({
     confidence: z.number().min(0).max(1).nullable().optional(),
     reasoning: z.string().nullable().optional(),
     fieldConfidence: z.record(z.string(), z.number().min(0).max(1)).nullable().optional(),
+    sourceVersion: z.string().nullable().optional(),
   }).optional(),
 })

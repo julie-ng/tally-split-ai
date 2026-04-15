@@ -44,4 +44,9 @@ export const receiptInputSchema = z.object({
   currency: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
   analysisStatus: z.enum(RECEIPT_ANALYSIS_STATUSES).optional(),
+
+  // Change tracking metadata (not persisted on the receipt itself)
+  llm: z.object({
+    sourceVersion: z.string().nullable().optional(),
+  }).optional(),
 })

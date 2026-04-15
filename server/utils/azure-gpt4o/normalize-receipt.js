@@ -105,5 +105,8 @@ Return JSON:
     throw new Error('GPT-4o normalize returned empty content')
   }
 
-  return JSON.parse(content)
+  return {
+    ...JSON.parse(content),
+    model: result.model,
+  }
 }

@@ -87,6 +87,7 @@ export const adjustSplit = task({
           confidence: result.confidence,
           reasoning: result.reasoning,
           fieldConfidence,
+          sourceVersion: result.model,
         }
 
         await api.put(`/api/splits/${splitId}`, updates)

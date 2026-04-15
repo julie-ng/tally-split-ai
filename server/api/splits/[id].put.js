@@ -66,6 +66,7 @@ export default defineEventHandler(async (event) => {
       entityId: splitId,
       entityIdColumn: 'splitId',
       source: event.context.securityPrincipal,
+      sourceVersion: llm?.sourceVersion ?? null,
       confidence: llm?.confidence ?? null,
       reasoning: llm?.reasoning ?? null,
       fieldConfidence: llm?.fieldConfidence ?? null,

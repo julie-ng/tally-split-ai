@@ -76,6 +76,7 @@ export const normalizeReceipt = task({
       }
 
       // 7. Update receipt via API
+      updates.llm = { sourceVersion: result.model }
       await api.put(`/api/receipts/${receiptId}`, updates)
 
       // 8. Update workflow step status

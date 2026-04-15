@@ -1,8 +1,5 @@
 import { getGpt4oConfig } from './get-gpt4o-config.js'
 
-// TODO: Pass model version (e.g. 'gpt-4o-mini:2024-07-18') as sourceVersion
-// to change tracking so we can trace which model generated each split adjustment.
-
 /**
  * Analyze OCR data and handwritten annotations to determine the adjusted split amount and payer.
  * Uses GPT-4o-mini (text-only, no vision).
@@ -100,5 +97,8 @@ Where "confidence" is your overall confidence across all fields.`
     throw new Error('GPT-4o adjust-split returned empty content')
   }
 
-  return JSON.parse(content)
+  return {
+    ...JSON.parse(content),
+    model: result.model,
+  }
 }
