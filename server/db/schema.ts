@@ -1,4 +1,4 @@
-import { pgTable, text, integer, serial, real, boolean, timestamp, jsonb, uuid } from 'drizzle-orm/pg-core'
+import { pgTable, text, integer, bigint, serial, real, boolean, timestamp, jsonb, uuid, uniqueIndex } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 import { RECEIPT_ANALYSIS_STATUSES } from '#shared/enums/receipt-analysis-status.js'
 import { UPLOAD_ANALYSIS_STATUSES } from '#shared/enums/upload-analysis-status.js'
@@ -188,6 +188,22 @@ export const splitHistory = pgTable('split_history', {
   newValue: text('new_value'),
   confidence: real('confidence'), // 0-1 per-field confidence for AI-generated changes
 })
+
+/**
+ * Users
+ */
+export const users = pgTable('users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  githubId: bigint('github_id', { mode: 'number' }).notNull(),
+  username: text('username').notNull(),
+  displayName: text('display_name'),
+  initials: text('initials'),
+  avatarUrl: text('avatar_url'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  lastLoginAt: timestamp('last_login_at', { withTimezone: true }).notNull().defaultNow(),
+}, table => [
+  uniqueIndex('users_github_id_idx').on(table.githubId),
+])
 
 /**
  * Relations

@@ -36,7 +36,10 @@ docker compose up -f docker-compose.dev.yaml -d
 
 #### Nuxt App
 
+Load the `.env` configuration and start the app.
+
 ```bash
+. ./.env
 npm run dev
 ```
 Open http://localhost:3000/
