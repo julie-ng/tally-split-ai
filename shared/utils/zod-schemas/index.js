@@ -4,6 +4,7 @@ import { currencySchema } from './currency.schema.js'
 import { itemSchema } from './item.schema.js'
 import { newBlobRequestSchema } from './blob.schema.js'
 import { hashIdParamSchema, idParamSchema } from './params.schema.js'
+import { profileUpdateSchema } from './profile.schema.js'
 import { receiptSchema, receiptInputSchema } from './receipt.schema.js'
 import { splitSchema, splitRequestSchema, splitInsertSchema, splitUpdateSchema } from './split.schema.js'
 import { uploadObject } from './upload-object.schema.js'
@@ -18,6 +19,7 @@ export const zodSchemas = {
   idParamSchema,
   itemSchema,
   newBlobRequestSchema,
+  profileUpdateSchema,
   receiptSchema,
   receiptInputSchema,
   splitSchema,

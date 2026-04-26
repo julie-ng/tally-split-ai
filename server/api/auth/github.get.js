@@ -15,7 +15,6 @@ export default defineOAuthGitHubEventHandler({
         target: schema.users.githubId,
         set: {
           username: user.login,
-          displayName: user.name || null,
           avatarUrl: user.avatar_url,
           lastLoginAt: new Date(),
         },
