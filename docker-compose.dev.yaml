@@ -1,3 +1,4 @@
+name: ai-receipts-poc # temp fix to access docker volume from old project name
 services:
   postgres:
     image: postgres:17-bookworm
