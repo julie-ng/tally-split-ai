@@ -9,7 +9,7 @@ import { TASK_PERMISSIONS, TASK_CHILDREN, VALID_RESOURCES, VALID_PERMISSIONS } f
  *
  * Static analysis tests that enforce architectural security boundaries:
  * 1. Trigger tasks must NOT have direct DB access (no server/db/connection imports)
- * 2. API endpoints must use requireAuthentication (not the old requireUserId)
+ * 2. API endpoints must call requireAuthentication (with public allow-list)
  * 3. Resource-specific endpoints must call requireAuthorization
  * 4. Task-facing endpoints must call requireTaskPermission
  * 5. Permissions map must cover all known task IDs
@@ -50,7 +50,13 @@ describe('Security boundaries: trigger tasks have no direct DB access', () => {
   }
 })
 
-describe('Security boundaries: no requireUserId in API endpoints', () => {
+describe('Security boundaries: API endpoints call requireAuthentication', () => {
+  // Endpoints that legitimately do not authenticate the caller.
+  // Add new entries with a comment justifying why.
+  const PUBLIC_ENDPOINTS = [
+    'auth/github.get.js', // OAuth callback — nuxt-auth-utils validates signed state
+  ]
+
   const apiFiles = getFiles('server/api', '**/*.js')
 
   it('should have API files to test', () => {
@@ -59,8 +65,10 @@ describe('Security boundaries: no requireUserId in API endpoints', () => {
 
   for (const filePath of apiFiles) {
     const relative = filePath.split('server/api/').pop()
-    it(`${relative} should not use requireUserId`, () => {
-      expect(fileContains(filePath, /requireUserId/)).toBe(false)
+    if (PUBLIC_ENDPOINTS.includes(relative)) continue
+
+    it(`${relative} should call requireAuthentication`, () => {
+      expect(fileContains(filePath, /requireAuthentication\(/)).toBe(true)
     })
   }
 })

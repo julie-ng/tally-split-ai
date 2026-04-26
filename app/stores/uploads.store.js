@@ -5,6 +5,8 @@ import { defineStore } from 'pinia'
  * This is separate from upload-queue.store which manages the client-side upload queue
  */
 export const useUploadsStore = defineStore('uploads', () => {
+  const requestFetch = useRequestFetch()
+
   // -------- STATE --------
 
   const uploads = ref([])
@@ -32,7 +34,7 @@ export const useUploadsStore = defineStore('uploads', () => {
     error.value = null
 
     try {
-      const data = await $fetch('/api/uploads')
+      const data = await requestFetch('/api/uploads')
       uploads.value = data
       _log(`[UploadsStore] ✅ fetched ${data.length} uploads`)
     }
@@ -53,7 +55,7 @@ export const useUploadsStore = defineStore('uploads', () => {
    */
   async function refreshUploadByHashId (hashId) {
     try {
-      const data = await $fetch(`/api/uploads/${hashId}`)
+      const data = await requestFetch(`/api/uploads/${hashId}`)
       const index = uploads.value.findIndex(u => u.hashId === hashId)
       if (index !== -1) {
         uploads.value.splice(index, 1, data)
@@ -107,7 +109,7 @@ export const useUploadsStore = defineStore('uploads', () => {
     }
 
     try {
-      const result = await $fetch(`/api/uploads/${hashId}/polygons`)
+      const result = await requestFetch(`/api/uploads/${hashId}/polygons`)
       if (result.success) {
         polygons.value[hashId] = result.data
         _log(`[UploadsStore] ✅ fetched polygons for: ${hashId}`)

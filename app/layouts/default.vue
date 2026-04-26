@@ -3,7 +3,7 @@ import { useUserStore } from '~/stores/user.store'
 
 const store = useUserStore()
 // const userFullName = store.fullName
-const userId = store.userId
+const displayName = store.displayName
 
 const route = useRoute()
 const open = ref(true)
@@ -145,7 +145,7 @@ function getLinks (state: 'collapsed' | 'expanded') {
       <template #footer>
         <UButton
           icon="i-lucide-user-round"
-          :label="userId"
+          :label="displayName"
           color="neutral"
           variant="ghost"
           square

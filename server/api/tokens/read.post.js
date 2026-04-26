@@ -1,17 +1,8 @@
 import { z } from 'zod'
 
-const requestSchema = (userId) => {
-  return z.object({
-    action: z.string().refine(value => value === 'read', { error: 'Invalid action' }),
-    blobName: z.string().includes(userId, { error: 'Blob name must include user Id' }),
-  })
-}
-
 export default defineEventHandler(async (event) => {
   const log = useLogger('token')
-  // ⚠️ TODO - implement security.
   await guards.requireAuthentication(event)
-  const userId = event.context.userId
 
   /**
    * Configure Azure Storage
@@ -21,7 +12,7 @@ export default defineEventHandler(async (event) => {
   /**
    * Validate request params
    */
-  const result = await readValidatedBody(event, body => requestSchema(userId).safeParse(body))
+  const result = await readValidatedBody(event, body => zodSchemas.tokenReadRequestSchema.safeParse(body))
   if (!result.success) {
     setResponseStatus(event, 400)
     return {

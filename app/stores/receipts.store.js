@@ -6,6 +6,8 @@ import { asyncUtils } from '#shared/utils/async.utils.js'
  * Follows the pattern from splits.store.js for consistency
  */
 export const useReceiptsStore = defineStore('receipts', () => {
+  const requestFetch = useRequestFetch()
+
   // -------- STATE --------
 
   const debug = ref(false) // Debug logging flag
@@ -167,7 +169,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
     errors.value.all = null
 
     try {
-      const data = await $fetch('/api/receipts')
+      const data = await requestFetch('/api/receipts')
 
       // Iterate and cache each receipt with timestamp
       for (const receipt of data) {
@@ -210,7 +212,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
     errors.value[id] = null
 
     try {
-      const data = await $fetch(`/api/receipts/${id}`)
+      const data = await requestFetch(`/api/receipts/${id}`)
       _cacheReceipt(data)
       _log(`[ReceiptsStore] ✅ fetched and cached receipt: ${id}`)
       return data

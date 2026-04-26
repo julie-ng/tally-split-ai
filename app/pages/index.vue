@@ -1,5 +1,8 @@
 <script setup>
-const { loggedIn, user, session, clear } = useUserSession()
+import { useRealtimeStore } from '~/stores/realtime.store'
+
+const { loggedIn, user } = useUserSession()
+const realtimeStore = useRealtimeStore()
 
 useHead({
   title: 'Homepage',
@@ -17,14 +20,11 @@ useHead({
         Welcome {{ user.displayName }}!
       </h1>
       <p>Last login: {{ dateUtils.formatDate(new Date(user.lastLoginAt)) }}</p>
-      <UButton
-        variant="solid"
-        color="primary"
-        class="cursor-pointer"
-        @click="clear"
-      >
-        Logout
-      </UButton>
+      <NuxtLink to="/logout" external @click="realtimeStore.disconnect()">
+        <UButton variant="solid" color="primary" class="cursor-pointer">
+          Logout
+        </UButton>
+      </NuxtLink>
     </div>
     <div v-else>
       <h1 class="my-4">

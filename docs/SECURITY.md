@@ -8,7 +8,7 @@ There are two types of principals in this system. They are always separate and n
 
 ### Human Principals (Users)
 
-Human users authenticate via session (currently `local-dev-user` for local development). The session establishes `event.context.userId`, which is used for ownership-based authorization checks.
+Human users authenticate via sessions. The session establishes `event.context.userId`, which is used for ownership-based authorization checks.
 
 ### Service Principals (Tasks)
 

@@ -148,7 +148,7 @@ npx trigger dev                                     # Start Trigger.dev worker (
 
 - **Zod schemas are the single source of truth** — used for validation in both frontend and backend. Distinguish between request schemas (HTTP input) and insert schemas (DB writes). See `.claude/rules/zod-validation.md`.
 - **All Azure SDK usage is server-side only** — access keys must never be exposed to the client.
-- **Explicit utility functions over middleware** — use `requireUserId(event)`, `requireHashIdParam(event)` at the top of each handler.
+- **Explicit utility functions over middleware** — use `guards.requireAuthentication(event)`, `guards.requireHashIdParam(event)` at the top of each handler.
 - **Use `createError()` over `new Error()`** for Nuxt-aware error handling in API handlers. Use plain `Error` in server utils and trigger tasks (which run outside Nuxt).
 - **Stores must not reference each other** — keep Pinia stores independent.
 - **Trigger tasks import directly** — tasks run outside Nuxt and cannot use auto-imports. Import from `../server/db/connection`, `../server/utils/`, `../shared/utils/` directly.

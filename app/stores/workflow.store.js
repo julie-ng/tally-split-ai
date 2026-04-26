@@ -7,6 +7,8 @@ import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
  * Normalized map keyed by uploadHashId, fetches from /api/workflows.
  */
 export const useWorkflowStore = defineStore('workflow', () => {
+  const requestFetch = useRequestFetch()
+
   // -------- STATE --------
 
   const runs = ref({}) // Map: { [uploadHashId]: WorkflowRun[] }
@@ -68,7 +70,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
   async function fetchAll () {
     loading.value = true
     try {
-      const data = await $fetch('/api/workflows')
+      const data = await requestFetch('/api/workflows')
       runs.value = data
       _log(`[WorkflowStore] ✅ fetched workflows for ${Object.keys(data).length} uploads`)
     }
@@ -87,7 +89,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
    */
   async function fetchByUploadHashId (hashId) {
     try {
-      const data = await $fetch(`/api/workflows/${hashId}`)
+      const data = await requestFetch(`/api/workflows/${hashId}`)
       runs.value[hashId] = data
       _log(`[WorkflowStore] ✅ fetched ${data.length} runs for ${hashId}`)
     }

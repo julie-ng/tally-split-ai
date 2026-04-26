@@ -56,6 +56,7 @@ export const useRealtimeStore = defineStore('realtime', () => {
       eventSource.value = null
       isConnected.value = false
     }
+    hasShownDisconnectToast.value = false
   }
 
   function handleWorkflowUpdate (data) {

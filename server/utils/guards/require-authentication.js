@@ -28,13 +28,9 @@ export async function requireAuthentication (event) {
     throw createError({ statusCode: 401, message: 'Unauthorized' })
   }
 
-  // User auth path (session-based)
-  // TODO: Replace with nuxt-auth-utils module for proper session auth.
-  // Currently hardcoded to demo user in development mode.
-  const config = useRuntimeConfig()
-  const userId = config.public.environment === 'development'
-    ? config.public.demoUserId
-    : null // TODO: nuxt-auth-utils session lookup goes here
+  // User auth path (session-based via nuxt-auth-utils)
+  const session = await getUserSession(event)
+  const userId = session?.user?.id
 
   if (userId) {
     event.context.userId = userId

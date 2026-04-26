@@ -6,6 +6,8 @@ import { splitUpdateSchema } from '#shared/utils/zod-schemas/split.schema.js'
  * Handles business logic for expense splitting between two users
  */
 export const useSplitsStore = defineStore('splits', () => {
+  const requestFetch = useRequestFetch()
+
   // -------- STATE --------
 
   const debug = ref(false) // Debug logging flag
@@ -151,7 +153,7 @@ export const useSplitsStore = defineStore('splits', () => {
       if (filters.month) params.append('month', filters.month)
 
       const url = `/api/splits${params.toString() ? '?' + params.toString() : ''}`
-      const data = await $fetch(url)
+      const data = await requestFetch(url)
 
       // Replace splits map (backend is source of truth)
       const newSplits = {}
@@ -193,7 +195,7 @@ export const useSplitsStore = defineStore('splits', () => {
     errors.value[id] = null
 
     try {
-      const data = await $fetch(`/api/splits/${id}`)
+      const data = await requestFetch(`/api/splits/${id}`)
       splits.value[id] = data
       _log(`[SplitsStore] fetched split: ${id}`)
       return data
@@ -224,7 +226,7 @@ export const useSplitsStore = defineStore('splits', () => {
     loading.value[`receipt:${receiptId}`] = true
 
     try {
-      const data = await $fetch(`/api/receipts/${receiptId}/split`)
+      const data = await requestFetch(`/api/receipts/${receiptId}/split`)
       splits.value[data.id] = data
       receiptToSplit.value[receiptId] = data.id
       _log(`[SplitsStore] fetched split ${data.id} for receipt ${receiptId}`)
@@ -255,7 +257,7 @@ export const useSplitsStore = defineStore('splits', () => {
     }
 
     try {
-      const { data } = await $fetch(`/api/history/splits/${id}`)
+      const { data } = await requestFetch(`/api/history/splits/${id}`)
       history.value[id] = data
       _log(`[SplitsStore] fetched history for split: ${id}`)
       return data

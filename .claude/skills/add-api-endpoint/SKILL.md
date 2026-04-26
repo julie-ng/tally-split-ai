@@ -24,9 +24,9 @@ import { z } from 'zod'
 import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
-  const db = useDB()             // auto-imported via server/utils/db.utils.js
-  requireUserId(event)           // validates auth — always first
-  requireHashIdParam(event)      // use requireIdParam() for numeric IDs
+  const db = useDB()                          // auto-imported via server/utils/db.utils.js
+  await guards.requireAuthentication(event)   // AuthN — always first
+  guards.requireHashIdParam(event)            // use requireIdParam() for numeric IDs
 
   const hashId = getRouterParam(event, 'hashId')
 

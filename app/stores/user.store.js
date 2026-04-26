@@ -1,22 +1,13 @@
 import { defineStore } from 'pinia'
-// import { randomUUID } from 'crypto'
 
 export const useUserStore = defineStore('user', () => {
-  const config = useRuntimeConfig()
-  const isDev = config.public.environment === 'development'
+  const { user } = useUserSession()
 
-  // console.log('firstName?', config.public.demoUserFirstName)
-
-  const firstName = ref(isDev ? config.public.demoUserFirstName : 'Unset')
-  const lastName = ref(isDev ? config.public.demoUserLastName : 'Unset')
-  const userId = ref(isDev ? config.public.demoUserId : 'Unset')
-
-  const fullName = computed(() => `${firstName.value} ${lastName.value}`)
+  const userId = computed(() => user.value?.id ?? null)
+  const displayName = computed(() => user.value?.displayName ?? user.value?.username ?? null)
 
   return {
-    firstName,
-    fullName,
-    lastName,
     userId,
+    displayName,
   }
 })

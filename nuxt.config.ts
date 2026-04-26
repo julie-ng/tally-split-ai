@@ -45,11 +45,6 @@ export default defineNuxtConfig({
       uploadMaxConcurrent: 3,
       uploadAutoIntervalMs: 1000,
       uploadAutoEnabled: true,
-      // TODO: remove after auth implementation
-      demoUserFirstName: '',
-      demoUserLastName: '',
-      demoUserEmail: '',
-      demoUserId: '',
       splitUserOneId: '',
       splitUserTwoId: '',
       splitUserOneName: '',
