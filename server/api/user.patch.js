@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   await guards.requireAuthentication(event)
   const userId = event.context.userId
 
-  const result = await readValidatedBody(event, body => zodSchemas.profileUpdateSchema.safeParse(body))
+  const result = await readValidatedBody(event, body => zodSchemas.userUpdateSchema.safeParse(body))
   if (!result.success) {
     setResponseStatus(event, 400)
     return {
@@ -22,28 +22,21 @@ export default defineEventHandler(async (event) => {
       .update(schema.users)
       .set(result.data)
       .where(eq(schema.users.id, userId))
-      .returning({
-        id: schema.users.id,
-        githubId: schema.users.githubId,
-        username: schema.users.username,
-        displayName: schema.users.displayName,
-        initials: schema.users.initials,
-        avatarUrl: schema.users.avatarUrl,
-        lastLoginAt: schema.users.lastLoginAt,
-      })
+      .returning()
     updated = rows[0]
   }
   catch (err) {
-    const log = useLogger('profile')
-    log.error({ err, sessionUserId: userId }, 'Profile update failed')
-    throw createError({ statusCode: 500, message: 'Failed to update profile' })
+    const log = useLogger('user')
+    log.error({ err, sessionUserId: userId }, 'User update failed')
+    throw createError({ statusCode: 500, message: 'Failed to update user' })
   }
 
   if (!updated) {
     await handleSessionUserNotFound(event, userId)
   }
 
-  await replaceUserSession(event, { user: updated })
+  const sessionUser = toSessionUser(updated)
+  await replaceUserSession(event, { user: sessionUser })
 
-  return updated
+  return sessionUser
 })

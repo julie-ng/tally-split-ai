@@ -1,15 +1,13 @@
 <script setup>
-import { useProfileStore } from '~/stores/profile.store'
+import { useUserStore } from '~/stores/user.store'
 
-const profileStore = useProfileStore()
+const userStore = useUserStore()
 
-await useAsyncData('profile', () => profileStore.fetchProfile())
-
-const profile = computed(() => profileStore.profile)
-
+// Form state is intentionally a snapshot — the user is about to edit it.
+// See user.store.js JSDoc for the form-snapshot exception.
 const formData = ref({
-  displayName: profile.value?.displayName ?? '',
-  initials: profile.value?.initials ?? '',
+  displayName: userStore.displayName ?? '',
+  initials: userStore.initials ?? '',
 })
 
 const fieldErrors = ref({})
@@ -23,12 +21,10 @@ async function handleSubmit () {
   fieldErrors.value = {}
   saveSuccess.value = false
   try {
-    await profileStore.updateProfile({
+    await userStore.updateUser({
       displayName: formData.value.displayName,
       initials: formData.value.initials,
     })
-    formData.value.displayName = profileStore.profile?.displayName ?? ''
-    formData.value.initials = profileStore.profile?.initials ?? ''
     saveSuccess.value = true
   }
   catch (err) {
@@ -54,7 +50,7 @@ async function handleSubmit () {
       :close="{ onClick: () => saveSuccess = false }"
     />
 
-    <form v-if="profile" @submit.prevent="handleSubmit">
+    <form v-if="userStore.userId" @submit.prevent="handleSubmit">
       <div class="grid grid-cols-3 gap-4 max-w-2xl">
         <div>
           <label for="username" class="block text-sm">Username</label>
@@ -62,7 +58,7 @@ async function handleSubmit () {
         <div class="col-span-2">
           <UInput
             id="username"
-            :model-value="profile.username"
+            :model-value="userStore.username"
             disabled
             class="w-80"
             variant="subtle"
@@ -107,10 +103,10 @@ async function handleSubmit () {
           color="info"
           size="lg"
           class="cursor-pointer"
-          :loading="profileStore.saving"
-          :disabled="profileStore.saving"
+          :loading="userStore.saving"
+          :disabled="userStore.saving"
         >
-          {{ profileStore.saving ? 'Saving...' : 'Save Changes' }}
+          {{ userStore.saving ? 'Saving...' : 'Save Changes' }}
         </UButton>
       </div>
     </form>

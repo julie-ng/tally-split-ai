@@ -22,14 +22,7 @@ export default defineOAuthGitHubEventHandler({
       .returning()
 
     await setUserSession(event, {
-      user: {
-        id: dbUser.id,
-        githubId: dbUser.githubId,
-        username: dbUser.username,
-        displayName: dbUser.displayName,
-        avatarUrl: dbUser.avatarUrl,
-        lastLoginAt: dbUser.lastLoginAt,
-      },
+      user: toSessionUser(dbUser),
     })
 
     log.info({ userId: dbUser.id, githubId: dbUser.githubId }, 'GitHub OAuth login')
