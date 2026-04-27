@@ -6,6 +6,18 @@ import { UPLOAD_STATUSES } from '#shared/enums/upload-status.js'
 import { WORKFLOW_STATUSES, WORKFLOW_STEP_STATUSES } from '#shared/enums/workflow-status.js'
 
 /**
+ * Households - groups of users that share receipts/uploads/splits.
+ * POC constraint: max 2 members per household, enforced at API layer (not DB).
+ */
+export const households = pgTable('households', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name'),
+  description: text('description'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+/**
  * Receipts table - stores business/finance data extracted from receipt uploads
  */
 // @ts-expect-error implicit return type any
@@ -36,6 +48,10 @@ export const receipts = pgTable('receipts', {
 
   // Metadata
   userId: text('user_id').notNull(),
+
+  // Household scope for authZ.
+  // @ts-expect-error implicit return type any
+  householdId: uuid('household_id').notNull().references(() => households.id, { onDelete: 'restrict' }),
 
   // Timestamps
   createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -75,6 +91,12 @@ export const uploads = pgTable('uploads', {
 
   // Annotation results (GPT-4o)
   annotationsJson: jsonb('annotations_json'), // handwriting, circles, strikethroughs, etc.
+
+  // Household scope for authZ. Set explicitly at upload creation rather than
+  // derived via receiptId, because uploads exist briefly before OCR creates
+  // the receipt — during that window receiptId is null. Keeping the column
+  // always-set means authZ has one code path, not two.
+  householdId: uuid('household_id').notNull().references(() => households.id, { onDelete: 'restrict' }),
 
   // Timestamps
   createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -192,9 +214,12 @@ export const splitHistory = pgTable('split_history', {
 /**
  * Users
  */
+// @ts-expect-error implicit return type any
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   githubId: bigint('github_id', { mode: 'number' }).notNull(),
+  // @ts-expect-error implicit return type any
+  householdId: uuid('household_id').notNull().references(() => households.id, { onDelete: 'restrict' }),
   username: text('username').notNull(),
   displayName: text('display_name'),
   initials: text('initials'),
@@ -209,18 +234,43 @@ export const users = pgTable('users', {
  * Relations
  */
 
-// Receipt has many uploads
-export const receiptsRelations = relations(receipts, ({ many }) => ({
+// Household has many users, receipts, uploads
+export const householdsRelations = relations(households, ({ many }) => ({
+  users: many(users),
+  receipts: many(receipts),
   uploads: many(uploads),
 }))
 
-// Upload belongs to one receipt, has many workflow runs
+// User belongs to one household
+export const usersRelations = relations(users, ({ one }) => ({
+  household: one(households, {
+    fields: [users.householdId],
+    references: [households.id],
+  }),
+}))
+
+// Receipt has many uploads, belongs to one household
+export const receiptsRelations = relations(receipts, ({ one, many }) => ({
+  uploads: many(uploads),
+  household: one(households, {
+    fields: [receipts.householdId],
+    references: [households.id],
+  }),
+}))
+
+// Upload belongs to one receipt, one household, has many workflow runs.
+// 💡 Note: Upload has its own householdId (rather than deriving via receipt) for the
+// brief window between upload creation and receipt creation by the OCR task.
 export const uploadsRelations = relations(uploads, ({ one, many }) => ({
   receipt: one(receipts, {
     fields: [uploads.receiptId],
     references: [receipts.id],
   }),
   workflowRuns: many(workflowRuns),
+  household: one(households, {
+    fields: [uploads.householdId],
+    references: [households.id],
+  }),
 }))
 
 // Split belongs to one receipt (optional)

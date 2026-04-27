@@ -3,7 +3,7 @@ export default defineOAuthGitHubEventHandler({
     const log = useLogger('auth')
     const db = useDB()
 
-    const [dbUser] = await db
+    let [dbUser] = await db
       .insert(schema.users)
       .values({
         githubId: user.id,
@@ -20,6 +20,14 @@ export default defineOAuthGitHubEventHandler({
         },
       })
       .returning()
+
+    // First-time login: user was just inserted without a household.
+    // Existing users already have one (set at insert time, either via this
+    // path or via the future add-user endpoint).
+    if (!dbUser.householdId) {
+      dbUser = await createPersonalHousehold(db, dbUser)
+      log.info({ userId: dbUser.id, householdId: dbUser.householdId }, 'Created personal household')
+    }
 
     await setUserSession(event, {
       user: toSessionUser(dbUser),
