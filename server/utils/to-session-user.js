@@ -12,6 +12,7 @@ export function toSessionUser (dbUser) {
   return {
     id: dbUser.id,
     githubId: dbUser.githubId,
+    householdId: dbUser.householdId,
     username: dbUser.username,
     displayName: dbUser.displayName,
     initials: dbUser.initials,
