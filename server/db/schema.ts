@@ -51,7 +51,7 @@ export const receipts = pgTable('receipts', {
 
   // Household scope for authZ.
   // @ts-expect-error implicit return type any
-  householdId: uuid('household_id').references(() => households.id, { onDelete: 'restrict' }),
+  householdId: uuid('household_id').notNull().references(() => households.id, { onDelete: 'restrict' }),
 
   // Timestamps
   createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -96,7 +96,7 @@ export const uploads = pgTable('uploads', {
   // derived via receiptId, because uploads exist briefly before OCR creates
   // the receipt — during that window receiptId is null. Keeping the column
   // always-set means authZ has one code path, not two.
-  householdId: uuid('household_id').references(() => households.id, { onDelete: 'restrict' }),
+  householdId: uuid('household_id').notNull().references(() => households.id, { onDelete: 'restrict' }),
 
   // Timestamps
   createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -219,7 +219,7 @@ export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   githubId: bigint('github_id', { mode: 'number' }).notNull(),
   // @ts-expect-error implicit return type any
-  householdId: uuid('household_id').references(() => households.id, { onDelete: 'restrict' }),
+  householdId: uuid('household_id').notNull().references(() => households.id, { onDelete: 'restrict' }),
   username: text('username').notNull(),
   displayName: text('display_name'),
   initials: text('initials'),
