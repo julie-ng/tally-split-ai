@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   const log = useLogger('split')
   const db = useDB()
   await guards.requireAuthentication(event)
-  const userId = event.context.userId
+  const householdId = event.context.householdId
 
   // Validate request body
   const result = await readValidatedBody(event, body => batchSettleSchema.safeParse(body))
@@ -28,14 +28,14 @@ export default defineEventHandler(async (event) => {
 
   try {
     const updated = await db.transaction(async (tx) => {
-      // Lock + read full rows for before state
+      // Lock + read full rows for before state — filter via receipt's householdId
       const beforeRows = await tx
         .select({ splits: schema.splits })
         .from(schema.splits)
         .innerJoin(schema.receipts, eq(schema.splits.receiptId, schema.receipts.id))
         .where(
           and(
-            eq(schema.splits.userId, userId),
+            eq(schema.receipts.householdId, householdId),
             sql`EXTRACT(YEAR FROM ${schema.receipts.date}::date)::int = ${year}`,
             sql`EXTRACT(MONTH FROM ${schema.receipts.date}::date)::int = ${month}`,
           ),
@@ -54,12 +54,7 @@ export default defineEventHandler(async (event) => {
           settledAt: new Date(),
           updatedAt: new Date(),
         })
-        .where(
-          and(
-            eq(schema.splits.userId, userId),
-            sql`${schema.splits.id} IN ${splitIds}`,
-          ),
-        )
+        .where(sql`${schema.splits.id} IN ${splitIds}`)
         .returning()
 
       // Match before → after by ID for diffing

@@ -11,36 +11,36 @@ describe('checkTaskReceiptScope', () => {
   })
 
   describe('first-time linking (no expectedReceiptId)', () => {
-    it('should pass when receipt belongs to same user as upload', () => {
+    it('should pass when receipt belongs to same household as upload', () => {
       expect(checkTaskReceiptScope(5, {
         expectedReceiptId: null,
-        receiptUserId: 'user-1',
-        uploadUserId: 'user-1',
+        receiptHouseholdId: 'household-1',
+        uploadHouseholdId: 'household-1',
       })).toEqual({ ok: true })
     })
 
-    it('should fail when receipt belongs to different user', () => {
+    it('should fail when receipt belongs to different household', () => {
       expect(checkTaskReceiptScope(5, {
         expectedReceiptId: null,
-        receiptUserId: 'user-2',
-        uploadUserId: 'user-1',
-      })).toEqual({ ok: false, reason: 'receipt_owner_mismatch' })
+        receiptHouseholdId: 'household-2',
+        uploadHouseholdId: 'household-1',
+      })).toEqual({ ok: false, reason: 'receipt_household_mismatch' })
     })
 
-    it('should fail when receiptUserId is null', () => {
+    it('should fail when receiptHouseholdId is null', () => {
       expect(checkTaskReceiptScope(5, {
         expectedReceiptId: null,
-        receiptUserId: null,
-        uploadUserId: 'user-1',
-      })).toEqual({ ok: false, reason: 'receipt_owner_mismatch' })
+        receiptHouseholdId: null,
+        uploadHouseholdId: 'household-1',
+      })).toEqual({ ok: false, reason: 'receipt_household_mismatch' })
     })
 
-    it('should fail when uploadUserId is null', () => {
+    it('should fail when uploadHouseholdId is null', () => {
       expect(checkTaskReceiptScope(5, {
         expectedReceiptId: null,
-        receiptUserId: 'user-1',
-        uploadUserId: null,
-      })).toEqual({ ok: false, reason: 'receipt_owner_mismatch' })
+        receiptHouseholdId: 'household-1',
+        uploadHouseholdId: null,
+      })).toEqual({ ok: false, reason: 'receipt_household_mismatch' })
     })
   })
 })

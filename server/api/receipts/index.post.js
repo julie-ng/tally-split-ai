@@ -7,9 +7,11 @@ export default defineEventHandler(async (event) => {
   await guards.requireAuthentication(event)
   guards.requireTaskPermission(event)
 
-  // For tasks, userId comes from the workflow run's upload owner
+  // For tasks, userId/householdId come from the workflow run's upload
   const userId = event.context.userId
     ?? event.context.workflowRun?.upload?.userId
+  const householdId = event.context.householdId
+    ?? event.context.workflowRun?.upload?.householdId
 
   const result = await readValidatedBody(event, body => receiptInputSchema.safeParse(body))
   if (!result.success) {
@@ -21,13 +23,14 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // AuthZ: if linking to a split, verify principal owns it
+  // AuthZ: if linking to a split, verify principal can act on it
   if (result.data.splitId) {
     await guards.requireAuthorization(event, { splitId: result.data.splitId })
   }
 
   const insertData = {
     userId,
+    householdId,
     ...result.data,
   }
 

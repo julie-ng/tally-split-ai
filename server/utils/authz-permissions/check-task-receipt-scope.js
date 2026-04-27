@@ -1,15 +1,15 @@
 /**
  * Check if a task can access a receipt.
- * Handles both known-link (exact match) and first-time-linking (owner check) cases.
+ * Handles both known-link (exact match) and first-time-linking (household match) cases.
  *
  * @param {number} requestedReceiptId - receiptId from the request
  * @param {Object} context
  * @param {number|null} context.expectedReceiptId - upload.receiptId
- * @param {string|null} context.receiptUserId - userId on the receipt record (for first-time linking)
- * @param {string|null} context.uploadUserId - userId on the workflow run's upload
+ * @param {string|null} context.receiptHouseholdId - householdId on the receipt record (for first-time linking)
+ * @param {string|null} context.uploadHouseholdId - householdId on the workflow run's upload
  * @returns {{ ok: boolean, reason?: string }}
  */
-export function checkTaskReceiptScope (requestedReceiptId, { expectedReceiptId, receiptUserId, uploadUserId }) {
+export function checkTaskReceiptScope (requestedReceiptId, { expectedReceiptId, receiptHouseholdId, uploadHouseholdId }) {
   if (expectedReceiptId) {
     if (requestedReceiptId !== expectedReceiptId) {
       return { ok: false, reason: 'receipt_scope_mismatch' }
@@ -17,8 +17,8 @@ export function checkTaskReceiptScope (requestedReceiptId, { expectedReceiptId, 
     return { ok: true }
   }
 
-  if (!receiptUserId || receiptUserId !== uploadUserId) {
-    return { ok: false, reason: 'receipt_owner_mismatch' }
+  if (!receiptHouseholdId || receiptHouseholdId !== uploadHouseholdId) {
+    return { ok: false, reason: 'receipt_household_mismatch' }
   }
   return { ok: true }
 }

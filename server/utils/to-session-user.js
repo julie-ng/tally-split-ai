@@ -12,6 +12,10 @@ export function toSessionUser (dbUser) {
   return {
     id: dbUser.id,
     githubId: dbUser.githubId,
+    // householdId is an authZ scope claim (analogous to OAuth scopes in a JWT),
+    // not domain data. Read by requireAuthentication into event.context to scope
+    // resource queries without a per-request DB lookup. Frontend must NOT expose
+    // this via useUserStore — household domain data lives in useHouseholdStore.
     householdId: dbUser.householdId,
     username: dbUser.username,
     displayName: dbUser.displayName,

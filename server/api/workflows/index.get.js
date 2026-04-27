@@ -3,10 +3,10 @@ import { eq, desc } from 'drizzle-orm'
 export default defineEventHandler(async (event) => {
   const db = useDB()
   await guards.requireAuthentication(event)
-  const userId = event.context.userId
+  const householdId = event.context.householdId
 
   const uploads = await db.query.uploads.findMany({
-    where: eq(schema.uploads.userId, userId),
+    where: eq(schema.uploads.householdId, householdId),
     columns: {
       hashId: true,
     },

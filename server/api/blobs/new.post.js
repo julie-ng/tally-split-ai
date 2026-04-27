@@ -6,6 +6,7 @@ export default defineEventHandler(async (event) => {
   guards.requireLocalDev(event)
   await guards.requireAuthentication(event)
   const userId = event.context.userId
+  const householdId = event.context.householdId
 
   azureStorageUtils.useAzureStorageConfig()
 
@@ -49,6 +50,7 @@ export default defineEventHandler(async (event) => {
   const dbResult = await db.insert(schema.uploads).values({
     hashId,
     userId,
+    householdId,
     title: receiptTitle || 'Untitled',
     status: 'initialized',
     blobName: blobPath,

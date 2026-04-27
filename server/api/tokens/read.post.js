@@ -1,8 +1,11 @@
 import { z } from 'zod'
+import { eq, or } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger('token')
+  const db = useDB()
   await guards.requireAuthentication(event)
+  const householdId = event.context.householdId
 
   /**
    * Configure Azure Storage
@@ -22,6 +25,24 @@ export default defineEventHandler(async (event) => {
     }
   }
   const { action, blobName } = result.data
+
+  /**
+   * AuthZ: verify the blob belongs to an upload owned by this user's household.
+   * blobName may match either the original or the thumbnail.
+   */
+  const [upload] = await db
+    .select({ householdId: schema.uploads.householdId })
+    .from(schema.uploads)
+    .where(or(
+      eq(schema.uploads.blobName, blobName),
+      eq(schema.uploads.thumbnailName, blobName),
+    ))
+    .limit(1)
+
+  if (!upload || upload.householdId !== householdId) {
+    logSecurityEvent(event, 'warn', { householdId, blobName, reason: 'blob_not_household_member' }, 'Authorization denied')
+    throw createError({ statusCode: 404, message: 'Not found' })
+  }
 
   /**
    * Generate SAS Token

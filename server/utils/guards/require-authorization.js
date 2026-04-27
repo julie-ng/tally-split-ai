@@ -2,7 +2,6 @@ import { eq } from 'drizzle-orm'
 import { authzPermissions } from '#server/utils/authz-permissions.utils.js'
 
 const {
-  checkUserOwnership,
   checkTaskUploadScope,
   checkTaskReceiptScope,
   checkTaskSplitScope,
@@ -12,8 +11,8 @@ const {
  * Authorize the request — verifies the authenticated principal can act on the specified resource.
  * Must be called after requireAuthentication().
  *
- * User path: verifies resource's userId matches event.context.userId.
- *   Returns 404 on mismatch (do not reveal resource existence to unauthorized users).
+ * User path: verifies resource's householdId matches event.context.householdId.
+ *   Returns 404 on mismatch (do not reveal resource existence to non-members).
  * Task path: verifies resource belongs to this workflow run's upload.
  *   Returns 403 on mismatch (tasks know their own scope).
  *
@@ -34,52 +33,51 @@ export async function requireAuthorization (event, { uploadHashId, receiptId, sp
   }
 
   if (isUserRequest) {
-    await authorizeUser(db, event, { userId: event.context.userId, uploadHashId, receiptId, splitId })
+    await authorizeUser(db, event, { householdId: event.context.householdId, uploadHashId, receiptId, splitId })
   }
   else {
     await authorizeTask(db, event, { workflowRun: event.context.workflowRun, taskId: event.context.taskId, uploadHashId, receiptId, splitId })
   }
 }
 
-async function authorizeUser (db, event, { userId, uploadHashId, receiptId, splitId }) {
+async function authorizeUser (db, event, { householdId, uploadHashId, receiptId, splitId }) {
   if (receiptId) {
     const [receipt] = await db
-      .select({ userId: schema.receipts.userId })
+      .select({ householdId: schema.receipts.householdId })
       .from(schema.receipts)
       .where(eq(schema.receipts.id, receiptId))
       .limit(1)
 
-    const result = checkUserOwnership(receipt?.userId, userId)
-    if (!result.ok) {
-      logSecurityEvent(event, 'warn', { userId, receiptId, reason: `receipt_${result.reason}` }, 'Authorization denied')
+    if (!receipt?.householdId || receipt.householdId !== householdId) {
+      logSecurityEvent(event, 'warn', { householdId, receiptId, reason: 'receipt_not_household_member' }, 'Authorization denied')
       throw createError({ statusCode: 404, message: 'Not found' })
     }
   }
 
   if (splitId) {
-    const [split] = await db
-      .select({ userId: schema.splits.userId })
+    // splits has no householdId column — derive via receipt
+    const [row] = await db
+      .select({ householdId: schema.receipts.householdId })
       .from(schema.splits)
+      .leftJoin(schema.receipts, eq(schema.splits.receiptId, schema.receipts.id))
       .where(eq(schema.splits.id, splitId))
       .limit(1)
 
-    const result = checkUserOwnership(split?.userId, userId)
-    if (!result.ok) {
-      logSecurityEvent(event, 'warn', { userId, splitId, reason: `split_${result.reason}` }, 'Authorization denied')
+    if (!row?.householdId || row.householdId !== householdId) {
+      logSecurityEvent(event, 'warn', { householdId, splitId, reason: 'split_not_household_member' }, 'Authorization denied')
       throw createError({ statusCode: 404, message: 'Not found' })
     }
   }
 
   if (uploadHashId) {
     const [upload] = await db
-      .select({ userId: schema.uploads.userId })
+      .select({ householdId: schema.uploads.householdId })
       .from(schema.uploads)
       .where(eq(schema.uploads.hashId, uploadHashId))
       .limit(1)
 
-    const result = checkUserOwnership(upload?.userId, userId)
-    if (!result.ok) {
-      logSecurityEvent(event, 'warn', { userId, uploadHashId, reason: `upload_${result.reason}` }, 'Authorization denied')
+    if (!upload?.householdId || upload.householdId !== householdId) {
+      logSecurityEvent(event, 'warn', { householdId, uploadHashId, reason: 'upload_not_household_member' }, 'Authorization denied')
       throw createError({ statusCode: 404, message: 'Not found' })
     }
   }
@@ -99,21 +97,21 @@ async function authorizeTask (db, event, { workflowRun, taskId, uploadHashId, re
   if (receiptId) {
     const expectedReceiptId = upload?.receiptId
 
-    // For first-time linking, we need the receipt's userId
-    let receiptUserId = null
+    // For first-time linking, we need the receipt's householdId
+    let receiptHouseholdId = null
     if (!expectedReceiptId) {
       const [receipt] = await db
-        .select({ userId: schema.receipts.userId })
+        .select({ householdId: schema.receipts.householdId })
         .from(schema.receipts)
         .where(eq(schema.receipts.id, receiptId))
         .limit(1)
-      receiptUserId = receipt?.userId
+      receiptHouseholdId = receipt?.householdId
     }
 
     const result = checkTaskReceiptScope(receiptId, {
       expectedReceiptId,
-      receiptUserId,
-      uploadUserId: upload?.userId,
+      receiptHouseholdId,
+      uploadHouseholdId: upload?.householdId,
     })
     if (!result.ok) {
       logSecurityEvent(event, 'warn', { taskId, receiptId, expected: expectedReceiptId, reason: result.reason }, 'Authorization denied')
@@ -126,7 +124,7 @@ async function authorizeTask (db, event, { workflowRun, taskId, uploadHashId, re
 
     // Derive splitId from splits table (canonical direction: splits.receiptId → receipts.id)
     let receiptSplitId = null
-    let splitUserId = null
+    let splitHouseholdId = null
     if (linkedReceiptId) {
       const [existingSplit] = await db
         .select({ id: schema.splits.id })
@@ -136,22 +134,23 @@ async function authorizeTask (db, event, { workflowRun, taskId, uploadHashId, re
 
       receiptSplitId = existingSplit?.id ?? null
 
-      // For first-time linking, we need the split's userId
+      // For first-time linking, derive split's householdId via its receipt
       if (!receiptSplitId) {
-        const [split] = await db
-          .select({ userId: schema.splits.userId })
+        const [row] = await db
+          .select({ householdId: schema.receipts.householdId })
           .from(schema.splits)
+          .leftJoin(schema.receipts, eq(schema.splits.receiptId, schema.receipts.id))
           .where(eq(schema.splits.id, splitId))
           .limit(1)
-        splitUserId = split?.userId
+        splitHouseholdId = row?.householdId ?? null
       }
     }
 
     const result = checkTaskSplitScope(splitId, {
       linkedReceiptId,
       receiptSplitId,
-      splitUserId,
-      uploadUserId: upload?.userId,
+      splitHouseholdId,
+      uploadHouseholdId: upload?.householdId,
     })
     if (!result.ok) {
       logSecurityEvent(event, 'warn', { taskId, splitId, expected: receiptSplitId, reason: result.reason }, 'Authorization denied')

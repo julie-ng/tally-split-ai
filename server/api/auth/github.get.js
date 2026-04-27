@@ -1,32 +1,33 @@
+import { eq } from 'drizzle-orm'
+
 export default defineOAuthGitHubEventHandler({
   async onSuccess (event, { user }) {
     const log = useLogger('auth')
     const db = useDB()
 
-    let [dbUser] = await db
-      .insert(schema.users)
-      .values({
-        githubId: user.id,
+    // Closed user set: users must be added explicitly via the household
+    // member endpoint (Phase 5). OAuth login only refreshes existing user
+    // records — unknown githubIds are rejected.
+    const [dbUser] = await db
+      .update(schema.users)
+      .set({
         username: user.login,
-        displayName: user.name || null,
         avatarUrl: user.avatar_url,
+        lastLoginAt: new Date(),
       })
-      .onConflictDoUpdate({
-        target: schema.users.githubId,
-        set: {
-          username: user.login,
-          avatarUrl: user.avatar_url,
-          lastLoginAt: new Date(),
-        },
-      })
+      .where(eq(schema.users.githubId, user.id))
       .returning()
 
-    // First-time login: user was just inserted without a household.
-    // Existing users already have one (set at insert time, either via this
-    // path or via the future add-user endpoint).
-    if (!dbUser.householdId) {
-      dbUser = await createPersonalHousehold(db, dbUser)
-      log.info({ userId: dbUser.id, householdId: dbUser.householdId }, 'Created personal household')
+    if (!dbUser) {
+      logSecurityEvent(event,
+        'warn',
+        {
+          githubId: user.id,
+          githubLogin: user.login,
+          reason: 'unknown_user',
+        },
+        'OAuth login rejected')
+      return sendRedirect(event, '/login/unauthorized')
     }
 
     await setUserSession(event, {

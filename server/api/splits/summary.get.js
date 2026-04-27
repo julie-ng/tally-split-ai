@@ -1,18 +1,24 @@
-import { eq, and } from 'drizzle-orm'
+import { eq, and, inArray } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const db = useDB()
   await guards.requireAuthentication(event)
-  const userId = event.context.userId
+  const householdId = event.context.householdId
 
   // Get optional year/month filter from query params
   const query = getQuery(event)
   const year = query.year ? parseInt(query.year) : null
   const month = query.month ? parseInt(query.month) : null
 
+  // splits has no householdId column; filter via the linked receipt
   const queryOptions = {
     where: and(
-      eq(schema.splits.userId, userId),
+      inArray(
+        schema.splits.receiptId,
+        db.select({ id: schema.receipts.id })
+          .from(schema.receipts)
+          .where(eq(schema.receipts.householdId, householdId)),
+      ),
       eq(schema.splits.isSettled, false),
     ),
   }

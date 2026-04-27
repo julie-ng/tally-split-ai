@@ -5,13 +5,13 @@ export default defineEventHandler(async (event) => {
   await guards.requireAuthentication(event)
   guards.requireHashIdParam(event, 'uploadHashId')
 
-  const userId = event.context.userId
+  const householdId = event.context.householdId
   const hashId = getRouterParam(event, 'uploadHashId')
 
   const upload = await db.query.uploads.findFirst({
     where: and(
       eq(schema.uploads.hashId, hashId),
-      eq(schema.uploads.userId, userId),
+      eq(schema.uploads.householdId, householdId),
     ),
     columns: { id: true },
     with: {

@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   await guards.requireAuthentication(event)
   guards.requireTaskPermission(event)
 
-  // For tasks, userId comes from the workflow run's upload owner
+  // For tasks, userId comes from the workflow run's upload
   const userId = event.context.userId
     ?? event.context.workflowRun?.upload?.userId
 
@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // AuthZ: if linking to a receipt, verify principal owns it
+  // AuthZ: if linking to a receipt, verify principal can act on it
   if (result.data.receiptId) {
     await guards.requireAuthorization(event, { receiptId: result.data.receiptId })
   }

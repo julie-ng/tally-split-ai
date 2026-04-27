@@ -8,7 +8,9 @@ There are two types of principals in this system. They are always separate and n
 
 ### Human Principals (Users)
 
-Human users authenticate via sessions. The session establishes `event.context.userId`, which is used for ownership-based authorization checks.
+Human users authenticate via GitHub OAuth (`nuxt-auth-utils`). The session establishes `event.context.userId` (identity) and `event.context.householdId` (authorization scope), which are used by `requireAuthorization` to enforce household-membership-based access.
+
+User accounts are a closed set — only users explicitly added via the household member endpoint (Phase 5) can log in. OAuth login refreshes existing user records but never creates new ones; unknown `githubId`s are redirected to `/login/unauthorized`.
 
 ### Service Principals (Tasks)
 
@@ -31,8 +33,12 @@ If no workflow headers are present, the user auth path runs.
 
 ### User Auth Path
 
-- Checks for user session (TODO: replace with `nuxt-auth-utils` module)
-- Sets `event.context.userId` and `event.context.securityPrincipal`
+- Reads the session via `nuxt-auth-utils` (`getUserSession`)
+- Rejects sessions that lack `householdId` (stale cookies issued before Phase 1 introduced the field) — clears the session and returns 401 to force re-login
+- Sets `event.context.userId`, `event.context.householdId`, and `event.context.securityPrincipal`
+
+> [!NOTE]
+> `householdId` lives in the session as an authZ **scope claim** — analogous to scopes in an OAuth JWT — not as domain data. It's stored there so authZ checks don't need a per-request DB lookup. Frontend stores must not expose `householdId` via `useUserStore`; household domain data lives in a separate store.
 
 ### Workflow Auth Path
 
@@ -62,16 +68,20 @@ AuthZ is handled by `requireAuthorization(event, { uploadHashId?, receiptId?, sp
 
 ### User AuthZ
 
-- Verifies the resource's `userId` field matches `event.context.userId`
-- Returns **404** on mismatch — do not reveal resource existence to unauthorized users
-- Future: will check household/shared permissions here
+- Verifies the resource's `householdId` matches `event.context.householdId` — i.e. the principal is a member of the household that owns the resource
+- For **receipts** and **uploads**: direct column lookup (`receipts.householdId`, `uploads.householdId`)
+- For **splits**: derived via the linked receipt (`splits.receiptId → receipts.householdId`) — splits do not carry their own `householdId`
+- Returns **404** on mismatch — do not reveal resource existence to non-members
+
+> [!NOTE]
+> The `userId` columns on receipts/uploads/splits are retained as `createdBy` metadata only — they are no longer used for authZ. AuthZ flows entirely through household membership.
 
 ### Task AuthZ (Resource Scope)
 
 - Verifies the requested resource belongs to this workflow run's linked resources
 - `uploadHashId`: must match `workflowRun.upload.hashId`
-- `receiptId`: must match `workflowRun.upload.receiptId`
-- `splitId`: must match the receipt's linked splitId (via join through receipt → split)
+- `receiptId`: must match `workflowRun.upload.receiptId`. For first-time linking (no `upload.receiptId` yet), the receipt's `householdId` must match the upload's `householdId`
+- `splitId`: must match the receipt's linked splitId (via join through receipt → split). For first-time linking, the split's derived `householdId` (via its receipt) must match the upload's `householdId`
 - Returns **403** on mismatch — tasks know their own scope, no need to hide resource existence
 
 ### Task AuthZ (Action Permissions)
@@ -202,6 +212,6 @@ These are regex-based and can be bypassed by commented-out code (documented in t
 
 ## Future Improvements
 
-- **Household permissions**: User AuthZ currently checks `userId` ownership. Multi-user households will need permission-based access (read, write, admin) on a parent resource.
-- **`nuxt-auth-utils`**: Replace hardcoded dev user with proper session-based authentication.
+- **Roles within a household**: All household members currently have equal permissions on shared resources. A `GLOBAL_ADMIN_ID` env-var escape hatch is planned for cross-household admin actions (e.g. setting another member's initials).
+- **N-user splits**: The `splits` table currently has hardcoded `userAShare`/`userBShare` columns, capping households at 2 members. A future migration to a `split_shares` join table will lift this constraint.
 - **Generic workflow trigger**: Current trigger endpoint uses `[uploadHashId]` — won't scale for receipt-triggered or other non-upload workflows.
