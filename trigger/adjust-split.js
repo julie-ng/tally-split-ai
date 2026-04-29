@@ -59,41 +59,33 @@ export const adjustSplit = task({
 
       logger.log(`Adjust-split result for ${uploadHashId}`, result)
 
-      // 6. Fetch current split to compare — only write if values actually changed
-      const currentSplit = await api.get(`/api/splits/${splitId}`)
+      // 6. Compute share amounts (50/50 default; null adjustedTotal lets the
+      // endpoint keep the existing splitAmount)
+      const halfAmount = result.adjustedTotal != null
+        ? Math.floor(result.adjustedTotal / 2 * 100) / 100
+        : null
 
-      const updates = {}
-      if (result.adjustedTotal != null && result.adjustedTotal !== currentSplit.splitAmount) {
-        updates.splitAmount = result.adjustedTotal
-      }
-      if (result.paidBy && result.paidBy !== currentSplit.paidBy) {
-        updates.paidBy = result.paidBy
-      }
+      // 7. Resolve via task endpoint — owns initials → userId mapping (PII
+      // boundary) and writes paidByMatch + paidByUserId + amounts atomically.
+      // History tracking inside the endpoint no-ops when nothing changed.
+      const fieldConfidence = {}
+      if (result.adjustedTotal != null) fieldConfidence.splitAmount = result.amountConfidence
+      if (result.paidBy != null) fieldConfidence.paidByUserId = result.payerConfidence
 
-      // Always set 50/50 shares if they're currently null
-      const splitAmount = updates.splitAmount ?? currentSplit.splitAmount
-      if (currentSplit.userAShare === null || currentSplit.userBShare === null || updates.splitAmount !== undefined) {
-        const halfAmount = Math.floor(splitAmount / 2 * 100) / 100
-        updates.userAShare = halfAmount
-        updates.userBShare = halfAmount
-      }
-
-      if (Object.keys(updates).length > 0) {
-        const fieldConfidence = {}
-        if (updates.splitAmount !== undefined) fieldConfidence.splitAmount = result.amountConfidence
-        if (updates.paidBy !== undefined) fieldConfidence.paidBy = result.payerConfidence
-
-        updates.llm = {
+      await api.post(`/api/splits/${splitId}/task`, {
+        adjustedTotal: result.adjustedTotal ?? null,
+        userOneShare: halfAmount,
+        userTwoShare: halfAmount,
+        paidByInitials: result.paidBy ?? null,
+        llm: {
           confidence: result.confidence,
           reasoning: result.reasoning,
           fieldConfidence,
           sourceVersion: result.model,
-        }
+        },
+      })
 
-        await api.put(`/api/splits/${splitId}`, updates)
-      }
-
-      // 7. Update workflow step status
+      // 8. Update workflow step status
       await updateWorkflowStatus(authHeaders, { adjustSplitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
       await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_SPLIT, 'completed', authHeaders)
 
@@ -101,7 +93,7 @@ export const adjustSplit = task({
         splitId,
         originalTotal: result.originalTotal,
         adjustedTotal: result.adjustedTotal,
-        paidBy: result.paidBy,
+        paidByInitials: result.paidBy,
         amountConfidence: result.amountConfidence,
         payerConfidence: result.payerConfidence,
       })

@@ -5,7 +5,7 @@ import { itemSchema } from './item.schema.js'
 import { newBlobRequestSchema } from './blob.schema.js'
 import { hashIdParamSchema, idParamSchema } from './params.schema.js'
 import { receiptSchema, receiptInputSchema } from './receipt.schema.js'
-import { splitSchema, splitRequestSchema, splitInsertSchema, splitUpdateSchema } from './split.schema.js'
+import { splitSchema, splitRequestSchema, splitUpdateSchema, splitTaskResolutionSchema } from './split.schema.js'
 import { tokenReadRequestSchema } from './token-read-request.schema.js'
 import { uploadObject } from './upload-object.schema.js'
 import { uploadUpdateSchema } from './upload-update.schema.js'
@@ -24,8 +24,8 @@ export const zodSchemas = {
   receiptInputSchema,
   splitSchema,
   splitRequestSchema,
-  splitInsertSchema,
   splitUpdateSchema,
+  splitTaskResolutionSchema,
   tokenReadRequestSchema,
   uploadObject,
   uploadUpdateSchema,

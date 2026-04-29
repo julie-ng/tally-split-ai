@@ -75,15 +75,28 @@ export const useSplitsStore = defineStore('splits', () => {
   /**
    * Check if share amounts sum to split amount (for UI warnings)
    * @param {number} id - Split ID
-   * @returns {boolean} True if userAShare + userBShare === splitAmount
+   * @returns {boolean} True if userOneShare + userTwoShare === splitAmount
    */
   const doesSplitAddUp = computed(() => (id) => {
     const split = _getSplit(id)
     if (!split) return false
-    const sum = split.userAShare + split.userBShare
+    const sum = split.userOneShare + split.userTwoShare
     const tolerance = 0.01 // Account for floating point precision
     const doesIt = Math.abs(sum - split.splitAmount) <= tolerance
     return doesIt
+  })
+
+  /**
+   * Whether a split is eligible to be marked settled. A split must have a
+   * known payer (paidByUserId) to settle. Mirrors the API-side guard in
+   * server/api/splits/[id].put.js.
+   * @param {number} id - Split ID
+   * @returns {boolean}
+   */
+  const canSettleSplit = computed(() => (id) => {
+    const split = _getSplit(id)
+    if (!split) return false
+    return !!split.paidByUserId
   })
 
   /**
@@ -336,13 +349,13 @@ export const useSplitsStore = defineStore('splits', () => {
     const payload = { ...updates }
 
     // Business logic: Apply transformations based on what changed
-    if ('userAShare' in updates && !('userBShare' in updates)) {
-      // Only userAShare changed - calculate userBShare
-      payload.userBShare = Math.floor((currentSplit.splitAmount - updates.userAShare) * 100) / 100
+    if ('userOneShare' in updates && !('userTwoShare' in updates)) {
+      // Only userOneShare changed - calculate userTwoShare
+      payload.userTwoShare = Math.floor((currentSplit.splitAmount - updates.userOneShare) * 100) / 100
     }
-    else if ('userBShare' in updates && !('userAShare' in updates)) {
-      // Only userBShare changed - calculate userAShare
-      payload.userAShare = Math.floor((currentSplit.splitAmount - updates.userBShare) * 100) / 100
+    else if ('userTwoShare' in updates && !('userOneShare' in updates)) {
+      // Only userTwoShare changed - calculate userOneShare
+      payload.userOneShare = Math.floor((currentSplit.splitAmount - updates.userTwoShare) * 100) / 100
     }
     // If both share fields provided, use as-is
     // If splitAmount changed alone, no auto-calculation (per user requirement)
@@ -429,6 +442,7 @@ export const useSplitsStore = defineStore('splits', () => {
     allSplits,
     getSplitsByMonth,
     doesSplitAddUp,
+    canSettleSplit,
     getLlmChange,
 
     // Actions

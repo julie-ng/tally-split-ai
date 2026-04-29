@@ -1,4 +1,4 @@
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and, isNotNull, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
 // Validation schema for batch settle request
@@ -36,6 +36,7 @@ export default defineEventHandler(async (event) => {
         .where(
           and(
             eq(schema.receipts.householdId, householdId),
+            isNotNull(schema.splits.paidByUserId),
             sql`EXTRACT(YEAR FROM ${schema.receipts.date}::date)::int = ${year}`,
             sql`EXTRACT(MONTH FROM ${schema.receipts.date}::date)::int = ${month}`,
           ),

@@ -1,19 +1,22 @@
 import { z } from 'zod'
+import { PAID_BY_MATCHES } from '#shared/enums/paid-by-match.js'
 
 /**
- * Split Object - tracks expense splitting between two people
+ * Split Object - tracks expense splitting between two household members
  */
 export const splitSchema = z.object({
   id: z.number(),
   receiptId: z.number().nullable(),
   splitAmount: z.number(),
-  paidBy: z.string().nullable(), // User ID who paid - null until settled
-  userAShare: z.number().nullable(), // Amount userA's share
-  userBShare: z.number().nullable(), // Amount userB's share
+  userOneShare: z.number().nullable(),
+  userTwoShare: z.number().nullable(),
+  userOneId: z.uuid().nullable(),
+  userTwoId: z.uuid().nullable(),
+  paidByUserId: z.uuid().nullable(),
+  paidByMatch: z.enum(PAID_BY_MATCHES),
   isSettled: z.boolean(),
   settledAt: z.string().nullable(),
   notes: z.string().nullable(),
-  userId: z.string(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 })
@@ -24,39 +27,49 @@ export const splitSchema = z.object({
 export const splitRequestSchema = z.object({
   receiptId: z.number().nullable().optional(),
   splitAmount: z.number(),
-  userAShare: z.number().nullable().optional(),
-  userBShare: z.number().nullable().optional(),
-  paidBy: z.string().nullable().optional(),
+  userOneShare: z.number().nullable().optional(),
+  userTwoShare: z.number().nullable().optional(),
+  userOneId: z.uuid().nullable().optional(),
+  userTwoId: z.uuid().nullable().optional(),
   notes: z.string().nullable().optional(),
   isSettled: z.boolean().optional(),
 })
 
 /**
- * Split Insert Schema - validates the full object before DB insert
- */
-export const splitInsertSchema = z.object({
-  receiptId: z.number().nullable(),
-  splitAmount: z.number(),
-  userId: z.string(),
-  userAShare: z.number().nullable(),
-  userBShare: z.number().nullable(),
-  paidBy: z.string().nullable().optional(),
-  notes: z.string().nullable().optional(),
-  isSettled: z.boolean(),
-})
-
-/**
- * Split Update Schema - for partial updates
+ * Split Update Schema - for partial updates from humans (and from tasks for
+ * non-paidBy fields). The paidByUserId / paidByMatch fields are intentionally
+ * excluded — paidBy resolution flows through POST /api/splits/[id]/task.
  */
 export const splitUpdateSchema = z.object({
   splitAmount: z.number().optional(),
-  paidBy: z.string().nullable().optional(),
-  userAShare: z.number().nullable().optional(),
-  userBShare: z.number().nullable().optional(),
+  userOneShare: z.number().nullable().optional(),
+  userTwoShare: z.number().nullable().optional(),
+  paidByUserId: z.uuid().nullable().optional(),
   notes: z.string().nullable().optional(),
   isSettled: z.boolean().optional(),
 
   // Change tracking metadata (not persisted on the split itself)
+  llm: z.object({
+    confidence: z.number().min(0).max(1).nullable().optional(),
+    reasoning: z.string().nullable().optional(),
+    fieldConfidence: z.record(z.string(), z.number().min(0).max(1)).nullable().optional(),
+    sourceVersion: z.string().nullable().optional(),
+  }).optional(),
+})
+
+/**
+ * Split Task Resolution Schema - validates POST /api/splits/[id]/task body.
+ * Sent by the adjust-split trigger task with raw LLM output. The endpoint
+ * matches initials → userId (PII boundary) and writes paidByUserId +
+ * paidByMatch + share/amount fields in one transaction.
+ */
+export const splitTaskResolutionSchema = z.object({
+  adjustedTotal: z.number().nullable().optional(),
+  userOneShare: z.number().nullable().optional(),
+  userTwoShare: z.number().nullable().optional(),
+  paidByInitials: z.string().nullable().optional(),
+
+  // Change tracking metadata
   llm: z.object({
     confidence: z.number().min(0).max(1).nullable().optional(),
     reasoning: z.string().nullable().optional(),

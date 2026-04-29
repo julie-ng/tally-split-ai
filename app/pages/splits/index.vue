@@ -56,15 +56,15 @@ const columns = [
     header: 'Split Amount',
   },
   {
-    accessorKey: 'userAShare',
-    header: `${user1Name}'s' Share`,
+    accessorKey: 'userOneShare',
+    header: `${user1Name}'s Share`,
   },
   {
-    accessorKey: 'userBShare',
+    accessorKey: 'userTwoShare',
     header: `${user2Name}'s Share`,
   },
   {
-    accessorKey: 'paidBy',
+    accessorKey: 'paidByUserId',
     header: 'Paid By',
   },
   {
@@ -146,11 +146,11 @@ const paginationInfo = computed(() => {
       <!-- Summary Cards -->
       <div v-if="summary" class="grid grid-cols-4 gap-4 mb-5">
         <split-card
-          :title="`${receiptUtils.formatCurrency(summary.userAShare, 'EUR')}`"
+          :title="`${receiptUtils.formatCurrency(summary.userOneShare, 'EUR')}`"
           :subtitle="`${user1Name}'s Share`"
         />
         <split-card
-          :title="`${receiptUtils.formatCurrency(summary.userBShare, 'EUR')}`"
+          :title="`${receiptUtils.formatCurrency(summary.userTwoShare, 'EUR')}`"
           :subtitle="`${user2Name}'s Share`"
         />
         <split-card
@@ -228,20 +228,20 @@ const paginationInfo = computed(() => {
               </div>
             </template>
 
-            <!-- User A Share (Read-Only) -->
-            <template #userAShare-cell="{ row }">
-              <div v-if="row.original.userAShare != null" class="text-right font-medium">
-                {{ receiptUtils.formatCurrency(row.original.userAShare, 'EUR') }}
+            <!-- User One Share (Read-Only) -->
+            <template #userOneShare-cell="{ row }">
+              <div v-if="row.original.userOneShare != null" class="text-right font-medium">
+                {{ receiptUtils.formatCurrency(row.original.userOneShare, 'EUR') }}
               </div>
               <div v-else class="text-slate-400 text-right">
                 -
               </div>
             </template>
 
-            <!-- User B Share (Read-Only) -->
-            <template #userBShare-cell="{ row }">
-              <div v-if="row.original.userBShare != null" class="text-right font-medium">
-                {{ receiptUtils.formatCurrency(row.original.userBShare, 'EUR') }}
+            <!-- User Two Share (Read-Only) -->
+            <template #userTwoShare-cell="{ row }">
+              <div v-if="row.original.userTwoShare != null" class="text-right font-medium">
+                {{ receiptUtils.formatCurrency(row.original.userTwoShare, 'EUR') }}
               </div>
               <div v-else class="text-slate-400 text-right">
                 -
@@ -249,9 +249,9 @@ const paginationInfo = computed(() => {
             </template>
 
             <!-- Paid By (Read-Only) -->
-            <template #paidBy-cell="{ row }">
+            <template #paidByUserId-cell="{ row }">
               <div class="text-sm">
-                {{ getUserName(row.original.paidBy) }}
+                {{ getUserName(row.original.paidByUserId) }}
               </div>
             </template>
 

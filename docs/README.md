@@ -4,6 +4,13 @@ Julie written for human understanding.
 
 ---
 
+## Database Schema
+
+- [SCHEMA.md](./SCHEMA.md)  
+  Tables, relationships, and status enums. Single source of truth for the data model.
+
+---
+
 ## Frontend Architecture
 
 - [frontend-architecture.md](./frontend-architecture.md)  

@@ -56,22 +56,33 @@ const sumsUp = computed(() => splitId.value
   : false,
 )
 const settledText = computed(() => isSettled.value ? 'Settled Up' : 'Unsettled')
+const canSettle = computed(() => splitId.value ? splitsStore.canSettleSplit(splitId.value) : false)
 const toggleSettle = () => {
+  if (!canSettle.value && !isSettled.value) {
+    toast.add({
+      title: 'Cannot settle without paid-by',
+      description: 'Identify who paid before marking as settled.',
+      color: 'warning',
+      icon: 'i-lucide-triangle-alert',
+      timeout: 4000,
+    })
+    return
+  }
   isSettled.value = !isSettled.value
 }
 
 const zeroOut = () => {
   pendingUpdates.value.splitAmount = 0
-  pendingUpdates.value.userAShare = 0
-  pendingUpdates.value.userBShare = 0
-  pendingUpdates.value.paidBy = null
+  pendingUpdates.value.userOneShare = 0
+  pendingUpdates.value.userTwoShare = 0
+  pendingUpdates.value.paidByUserId = null
   pendingUpdates.value.isSettled = false
   debouncedUpdate()
 }
 
 const splitHalf = () => {
-  pendingUpdates.value.userAShare = split.value?.splitAmount / 2
-  pendingUpdates.value.userBShare = split.value?.splitAmount / 2
+  pendingUpdates.value.userOneShare = split.value?.splitAmount / 2
+  pendingUpdates.value.userTwoShare = split.value?.splitAmount / 2
   debouncedUpdate()
 }
 
@@ -92,29 +103,29 @@ const splitAmount = computed({
   },
 })
 
-const paidBy = computed({
-  get: () => split.value?.paidBy,
+const paidByUserId = computed({
+  get: () => split.value?.paidByUserId,
   set: (value) => {
-    pendingUpdates.value.paidBy = value
+    pendingUpdates.value.paidByUserId = value
     debouncedUpdate()
   },
 })
 
-const userAShare = computed({
-  get: () => split.value?.userAShare,
+const userOneShare = computed({
+  get: () => split.value?.userOneShare,
   set: (value) => {
     if (value !== '') { // user clears field
-      pendingUpdates.value.userAShare = parseFloat(value)
+      pendingUpdates.value.userOneShare = parseFloat(value)
       debouncedUpdate()
     }
   },
 })
 
-const userBShare = computed({
-  get: () => split.value?.userBShare,
+const userTwoShare = computed({
+  get: () => split.value?.userTwoShare,
   set: (value) => {
     if (value !== '') { // user clears field
-      pendingUpdates.value.userBShare = parseFloat(value)
+      pendingUpdates.value.userTwoShare = parseFloat(value)
       debouncedUpdate()
     }
   },
@@ -215,26 +226,26 @@ function showToast (err) {
         </div>
         <div class="text-right">
           <receipt-split-paid-by
-            v-model="paidBy"
+            v-model="paidByUserId"
             :users="users"
           />
         </div>
       </section>
 
-      <!-- User A Share -->
+      <!-- User One Share -->
       <receipt-split-input
-        v-model="userAShare"
+        v-model="userOneShare"
         :label="`${user1Name}'s Share`"
         :sums-up="sumsUp"
-        input-name="userAShare"
+        input-name="userOneShare"
       />
 
-      <!-- User B Share -->
+      <!-- User Two Share -->
       <receipt-split-input
-        v-model="userBShare"
+        v-model="userTwoShare"
         :label="`${user2Name}'s Share`"
         :sums-up="sumsUp"
-        input-name="userBShare"
+        input-name="userTwoShare"
       />
 
       <!-- Settle Button -->

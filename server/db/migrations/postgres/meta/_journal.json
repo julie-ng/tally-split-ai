@@ -106,6 +106,13 @@
       "when": 1777255348176,
       "tag": "0014_short_shaman",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1777470907418,
+      "tag": "0015_brainy_blur",
+      "breakpoints": true
     }
   ]
 }

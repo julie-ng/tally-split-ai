@@ -1,5 +1,6 @@
 import { pgTable, text, integer, bigint, serial, real, boolean, timestamp, jsonb, uuid, uniqueIndex } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
+import { PAID_BY_MATCHES } from '#shared/enums/paid-by-match.js'
 import { RECEIPT_ANALYSIS_STATUSES } from '#shared/enums/receipt-analysis-status.js'
 import { UPLOAD_ANALYSIS_STATUSES } from '#shared/enums/upload-analysis-status.js'
 import { UPLOAD_STATUSES } from '#shared/enums/upload-status.js'
@@ -105,7 +106,7 @@ export const uploads = pgTable('uploads', {
 })
 
 /**
- * Splits table - tracks expense splitting between two people
+ * Splits table - tracks expense splitting between two household members
  */
 // @ts-expect-error implicit type any
 export const splits = pgTable('splits', {
@@ -117,17 +118,27 @@ export const splits = pgTable('splits', {
 
   // Split details
   splitAmount: real('split_amount').notNull(), // Amount to split (defaults to receipt total)
-  paidBy: text('paid_by'), // 'user1' or 'user2' - nullable until settled
-  userAShare: real('user_a_share'), // Amount userA's share
-  userBShare: real('user_b_share'), // Amount userB's share
+  userOneShare: real('user_one_share'), // userOne's share
+  userTwoShare: real('user_two_share'), // userTwo's share
+
+  // Household member slots — assigned at split-create time by users.createdAt order.
+  // Nullable to support demo/portfolio uploads where the household has only 1 member.
+  // @ts-expect-error implicit return type any
+  userOneId: uuid('user_one_id').references(() => users.id, { onDelete: 'restrict' }),
+  // @ts-expect-error implicit return type any
+  userTwoId: uuid('user_two_id').references(() => users.id, { onDelete: 'restrict' }),
+
+  // Who paid — nullable until resolved (LLM via initials, or human edit).
+  // @ts-expect-error implicit return type any
+  paidByUserId: uuid('paid_by_user_id').references(() => users.id, { onDelete: 'set null' }),
+  // Frozen LLM signal — see docs/SCHEMA.md. Never updated by humans.
+  paidByMatch: text('paid_by_match', { enum: PAID_BY_MATCHES }).notNull().default('unresolved'),
 
   // Settlement tracking
   isSettled: boolean('is_settled').notNull().default(false),
   settledAt: timestamp('settled_at'),
 
-  // Metadata
   notes: text('notes'),
-  userId: text('user_id').notNull(),
 
   // Timestamps
   createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -273,11 +284,27 @@ export const uploadsRelations = relations(uploads, ({ one, many }) => ({
   }),
 }))
 
-// Split belongs to one receipt (optional)
+// Split belongs to one receipt (optional) and references up to 3 users
+// (userOne, userTwo as slots; paidByUser as resolution).
 export const splitsRelations = relations(splits, ({ one }) => ({
   receipt: one(receipts, {
     fields: [splits.receiptId],
     references: [receipts.id],
+  }),
+  userOne: one(users, {
+    fields: [splits.userOneId],
+    references: [users.id],
+    relationName: 'splitUserOne',
+  }),
+  userTwo: one(users, {
+    fields: [splits.userTwoId],
+    references: [users.id],
+    relationName: 'splitUserTwo',
+  }),
+  paidByUser: one(users, {
+    fields: [splits.paidByUserId],
+    references: [users.id],
+    relationName: 'splitPaidBy',
   }),
 }))
 

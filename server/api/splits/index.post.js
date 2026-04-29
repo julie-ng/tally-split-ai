@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { eq, asc } from 'drizzle-orm'
 import { splitRequestSchema } from '#shared/utils/zod-schemas/split.schema.js'
 
 export default defineEventHandler(async (event) => {
@@ -6,10 +7,6 @@ export default defineEventHandler(async (event) => {
   const db = useDB()
   await guards.requireAuthentication(event)
   guards.requireTaskPermission(event)
-
-  // For tasks, userId comes from the workflow run's upload
-  const userId = event.context.userId
-    ?? event.context.workflowRun?.upload?.userId
 
   const result = await readValidatedBody(event, body => splitRequestSchema.safeParse(body))
   if (!result.success) {
@@ -26,11 +23,37 @@ export default defineEventHandler(async (event) => {
     await guards.requireAuthorization(event, { receiptId: result.data.receiptId })
   }
 
+  // Auto-assign userOneId/userTwoId slots from the receipt's household.
+  // Slot order is users.createdAt ASC — stable across all splits in a household.
+  // Demo households may have only one member; userTwoId stays null in that case.
+  let userOneId = result.data.userOneId ?? null
+  let userTwoId = result.data.userTwoId ?? null
+  if (result.data.receiptId && (userOneId === null || userTwoId === null)) {
+    const [receipt] = await db
+      .select({ householdId: schema.receipts.householdId })
+      .from(schema.receipts)
+      .where(eq(schema.receipts.id, result.data.receiptId))
+      .limit(1)
+
+    if (receipt?.householdId) {
+      const members = await db
+        .select({ id: schema.users.id })
+        .from(schema.users)
+        .where(eq(schema.users.householdId, receipt.householdId))
+        .orderBy(asc(schema.users.createdAt))
+        .limit(2)
+
+      userOneId ??= members[0]?.id ?? null
+      userTwoId ??= members[1]?.id ?? null
+    }
+  }
+
   const insertData = {
-    userId,
     ...result.data,
-    userAShare: result.data.userAShare ?? null,
-    userBShare: result.data.userBShare ?? null,
+    userOneId,
+    userTwoId,
+    userOneShare: result.data.userOneShare ?? null,
+    userTwoShare: result.data.userTwoShare ?? null,
     isSettled: result.data.isSettled ?? false,
   }
 

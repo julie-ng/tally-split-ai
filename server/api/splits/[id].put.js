@@ -53,6 +53,19 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Settling requires a known payer. Enforce post-update state — payer can be
+    // set in the same request as isSettled=true. Defense-in-depth alongside UI
+    // disabling the settle action when paidByUserId is null.
+    if (result.data.isSettled === true) {
+      const nextPaidByUserId = 'paidByUserId' in updates ? updates.paidByUserId : before.paidByUserId
+      if (!nextPaidByUserId) {
+        throw createError({
+          statusCode: 400,
+          message: 'Cannot settle a split without identifying who paid',
+        })
+      }
+    }
+
     // Apply update
     const [updated] = await tx
       .update(schema.splits)
