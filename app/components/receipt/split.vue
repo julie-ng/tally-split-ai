@@ -1,6 +1,7 @@
 <script setup>
 import { useDebounceFn } from '@vueuse/core'
 import { useSplitsStore } from '~/stores/splits.store'
+import { useHouseholdStore } from '~/stores/household.store'
 
 const props = defineProps({
   receiptId: {
@@ -11,24 +12,23 @@ const props = defineProps({
 
 const toast = useToast()
 const splitsStore = useSplitsStore()
+const householdStore = useHouseholdStore()
 splitsStore.debug = true
 
-// Temporary until Auth implemented
-const config = useRuntimeConfig()
-const user1Name = config.public.splitUserOneName
-const user2Name = config.public.splitUserTwoName
-const user1Id = config.public.splitUserOneId
-const user2Id = config.public.splitUserTwoId
-const users = [
-  {
-    id: user1Id,
-    name: user1Name,
-  },
-  {
-    id: user2Id,
-    name: user2Name,
-  },
-]
+const userOne = computed(() => householdStore.userOne)
+const userTwo = computed(() => householdStore.userTwo)
+const user1Name = computed(() => householdStore.getMemberFirstName(userOne.value?.id))
+const user2Name = computed(() => householdStore.getMemberFirstName(userTwo.value?.id))
+
+// Radio-button options for paid-by selector. Only includes household members
+// that exist (userTwo may be null in single-member households — but the
+// outer v-if/v-else hides the whole component in that case).
+const paidByOptions = computed(() => {
+  const options = []
+  if (userOne.value) options.push({ id: userOne.value.id, name: user1Name.value })
+  if (userTwo.value) options.push({ id: userTwo.value.id, name: user2Name.value })
+  return options
+})
 
 // ❗️ TODO: just always show errors in UI.
 // const splitErrors = computed(() => splitsStore.getSplitError(props.splitId))
@@ -186,116 +186,123 @@ function showToast (err) {
 
 <template>
   <ClientOnly>
-    <!-- Loading state -->
-    <template v-if="splitLoading && !split">
-      <div class="space-y-3 animate-pulse">
-        <div class="h-8 bg-slate-100 rounded" />
-        <div class="h-8 bg-slate-100 rounded" />
-        <div class="h-8 bg-slate-100 rounded" />
-        <div class="h-8 bg-slate-100 rounded" />
-      </div>
-    </template>
-
-    <!-- No split assigned -->
-    <div v-else-if="noSplit" class="text-sm text-dimmed">
-      No split assigned to this receipt
+    <!-- Single-member household — splitting is meaningless -->
+    <div v-if="!householdStore.hasTwoMembers" class="text-sm text-dimmed">
+      Splitting is only possible if your household has more than 2 members.
     </div>
 
-    <div v-else-if="split">
-      <!-- Split Amount -->
-      <receipt-split-input
-        v-model="splitAmount"
-        :sums-up="sumsUp"
-        label="Split Amount"
-        input-name="splitAmount"
-        :highlight-on-success="true"
-      >
-        <template v-if="sumsUp" #success>
-          Shares add up
-        </template>
-        <template v-if="!sumsUp" #warn>
-          Shares do not add up
-        </template>
-      </receipt-split-input>
-
-      <!-- Paid by -->
-      <section class="flex justify-between items-center my-2 text-sm">
-        <div class="font-medium">
-          Paid By
-        <!-- <ui-saved-inline-alert /> -->
+    <template v-else>
+      <!-- Loading state -->
+      <template v-if="splitLoading && !split">
+        <div class="space-y-3 animate-pulse">
+          <div class="h-8 bg-slate-100 rounded" />
+          <div class="h-8 bg-slate-100 rounded" />
+          <div class="h-8 bg-slate-100 rounded" />
+          <div class="h-8 bg-slate-100 rounded" />
         </div>
-        <div class="text-right">
-          <receipt-split-paid-by
-            v-model="paidByUserId"
-            :users="users"
-          />
-        </div>
-      </section>
+      </template>
 
-      <!-- User One Share -->
-      <receipt-split-input
-        v-model="userOneShare"
-        :label="`${user1Name}'s Share`"
-        :sums-up="sumsUp"
-        input-name="userOneShare"
-      />
+      <!-- No split assigned -->
+      <div v-else-if="noSplit" class="text-sm text-dimmed">
+        No split assigned to this receipt
+      </div>
 
-      <!-- User Two Share -->
-      <receipt-split-input
-        v-model="userTwoShare"
-        :label="`${user2Name}'s Share`"
-        :sums-up="sumsUp"
-        input-name="userTwoShare"
-      />
+      <div v-else-if="split">
+        <!-- Split Amount -->
+        <receipt-split-input
+          v-model="splitAmount"
+          :sums-up="sumsUp"
+          label="Split Amount"
+          input-name="splitAmount"
+          :highlight-on-success="true"
+        >
+          <template v-if="sumsUp" #success>
+            Shares add up
+          </template>
+          <template v-if="!sumsUp" #warn>
+            Shares do not add up
+          </template>
+        </receipt-split-input>
 
-      <!-- Settle Button -->
-      <div class="mt-4 border rounded-md p-3 grid grid-cols-2 cursor-pointer hover:bg-slate-50" :class="settledClass" @click="toggleSettle">
-        <div class="text-left">
-          <div class="text-sm">
-            {{ settledText }}
+        <!-- Paid by -->
+        <section class="flex justify-between items-center my-2 text-sm">
+          <div class="font-medium">
+            Paid By
+            <!-- <ui-saved-inline-alert /> -->
+          </div>
+          <div class="text-right">
+            <receipt-split-paid-by
+              v-model="paidByUserId"
+              :users="paidByOptions"
+            />
+          </div>
+        </section>
+
+        <!-- User One Share -->
+        <receipt-split-input
+          v-model="userOneShare"
+          :label="`${user1Name}'s Share`"
+          :sums-up="sumsUp"
+          input-name="userOneShare"
+        />
+
+        <!-- User Two Share -->
+        <receipt-split-input
+          v-model="userTwoShare"
+          :label="`${user2Name}'s Share`"
+          :sums-up="sumsUp"
+          input-name="userTwoShare"
+        />
+
+        <!-- Settle Button -->
+        <div class="mt-4 border rounded-md p-3 grid grid-cols-2 cursor-pointer hover:bg-slate-50" :class="settledClass" @click="toggleSettle">
+          <div class="text-left">
+            <div class="text-sm">
+              {{ settledText }}
+            </div>
+          </div>
+          <div class="flex justify-end">
+            <UCheckbox v-model="isSettled" class="cursor-pointer" />
           </div>
         </div>
-        <div class="flex justify-end">
-          <UCheckbox v-model="isSettled" class="cursor-pointer" />
+
+        <div class="flex justify-between items-center mt-3 text-sm">
+          <div>Reset</div>
+          <div>
+            <UButton
+              variant="solid"
+              color="neutral"
+              class="mr-2 cursor-pointer"
+              icon="i-lucide-zap"
+              @click="splitHalf"
+            >
+              Split 50/50
+            </UButton>
+            <UButton
+              variant="solid"
+              color="neutral"
+              class="cursor-pointer"
+              icon="i-lucide-eraser"
+              @click="zeroOut"
+            >
+              Reset to zero
+            </UButton>
+          </div>
         </div>
+
+        <USeparator class="my-6" />
+        <split-llm-analysis v-if="splitId" :split-id="splitId" />
+
+      <!-- <div class="text-right">
+        <UButton
+          color="secondary"
+          class="mt-3 cursor-pointer"
+          icon="i-lucide-save"
+        >
+          Update Split
+        </UButton>
+      </div> -->
       </div>
-
-      <div class="flex justify-between items-center mt-3 text-sm">
-        <div>Reset</div>
-        <div>
-          <UButton
-            variant="solid"
-            color="neutral"
-            class="mr-2 cursor-pointer"
-            icon="i-lucide-zap"
-            @click="splitHalf"
-          >
-            Split 50/50
-          </UButton>
-          <UButton
-            variant="solid"
-            color="neutral"
-            class="cursor-pointer"
-            icon="i-lucide-eraser"
-            @click="zeroOut"
-          >
-            Reset to zero
-          </UButton>
-        </div>
-      </div>
-
-      <USeparator class="my-6" />
-      <split-llm-analysis v-if="splitId" :split-id="splitId" />
-
-    <!-- <div class="text-right">
-      <UButton
-        color="secondary"
-        class="mt-3 cursor-pointer"
-        icon="i-lucide-save"
-      >
-        Update Split
-      </UButton>
-    </div> -->
-    </div>
+    </template>
   </ClientOnly>
 </template>

@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { useUserStore } from '~/stores/user.store'
+import { useHouseholdStore } from '~/stores/household.store'
 
 const userStore = useUserStore()
+const householdStore = useHouseholdStore()
+
+// Fetch household once per navigation. Hydrates on the server so child
+// components/pages can read members synchronously.
+await useAsyncData('household', () => householdStore.fetch())
 
 const route = useRoute()
 const open = ref(true)

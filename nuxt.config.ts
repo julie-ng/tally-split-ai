@@ -45,10 +45,6 @@ export default defineNuxtConfig({
       uploadMaxConcurrent: 3,
       uploadAutoIntervalMs: 1000,
       uploadAutoEnabled: true,
-      splitUserOneId: '',
-      splitUserTwoId: '',
-      splitUserOneName: '',
-      splitUserTwoName: '',
     },
   },
   watch: [

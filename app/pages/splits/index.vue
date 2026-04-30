@@ -2,6 +2,7 @@
 import { getPaginationRowModel } from '@tanstack/vue-table'
 import { useUserStore } from '~/stores/user.store'
 import { useSplitsStore } from '~/stores/splits.store'
+import { useHouseholdStore } from '~/stores/household.store'
 
 useHead({
   title: 'Splits',
@@ -9,13 +10,10 @@ useHead({
 
 const userStore = useUserStore()
 const splitsStore = useSplitsStore()
+const householdStore = useHouseholdStore()
 
-// User config for display names
-const config = useRuntimeConfig()
-const user1Name = config.public.splitUserOneName
-const user2Name = config.public.splitUserTwoName
-const user1Id = config.public.splitUserOneId
-const user2Id = config.public.splitUserTwoId
+const user1Name = computed(() => householdStore.getMemberFirstName(householdStore.userOne?.id))
+const user2Name = computed(() => householdStore.getMemberFirstName(householdStore.userTwo?.id))
 
 // Fetch all splits on mount
 await callOnce(() => splitsStore.fetchAllSplits(), { mode: 'navigation' })
@@ -34,7 +32,7 @@ const pagination = ref({
   pageSize: 50,
 })
 
-const columns = [
+const columns = computed(() => [
   {
     accessorKey: 'analysisStatus',
     header: 'Analyzed',
@@ -57,11 +55,11 @@ const columns = [
   },
   {
     accessorKey: 'userOneShare',
-    header: `${user1Name}'s Share`,
+    header: `${user1Name.value}'s Share`,
   },
   {
     accessorKey: 'userTwoShare',
-    header: `${user2Name}'s Share`,
+    header: `${user2Name.value}'s Share`,
   },
   {
     accessorKey: 'paidByUserId',
@@ -79,7 +77,7 @@ const columns = [
     accessorKey: 'filename',
     header: 'File',
   },
-]
+])
 
 const tableStyles = {
   base: 'min-w-full',
@@ -95,19 +93,10 @@ function getFirstUpload (split) {
   return split?.receipt?.uploads?.[0] || null
 }
 
-/**
- * Get user name by ID
- */
-function getUserName (userId) {
-  if (userId === user1Id) return user1Name
-  if (userId === user2Id) return user2Name
-  return '?'
-}
-
 function netBalanceText (summary) {
   return summary.netBalance >= 0
-    ? `${user1Name} owes`
-    : `${user2Name} owes`
+    ? `${user1Name.value} owes`
+    : `${user2Name.value} owes`
 }
 
 /**
@@ -251,7 +240,7 @@ const paginationInfo = computed(() => {
             <!-- Paid By (Read-Only) -->
             <template #paidByUserId-cell="{ row }">
               <div class="text-sm">
-                {{ getUserName(row.original.paidByUserId) }}
+                {{ householdStore.getMemberFirstName(row.original.paidByUserId) }}
               </div>
             </template>
 
