@@ -177,9 +177,6 @@ Expense splitting between two household members.
 > [!NOTE]
 > POC schema hardcodes 2 users (`userOne`/`userTwo` slots). N-user splits would migrate to a `split_shares` join table. The 2-user cap is enforced at the household level (max 2 members).
 
-> [!IMPORTANT]
-> Phase 3 introduces `userOneId`/`userTwoId`/`paidByUserId`/`paidByMatch` columns and renames `userAShare`→`userOneShare`, `userBShare`→`userTwoShare`. Documented here as the target shape.
-
 | Column | Type | Notes |
 |:--|:--|:--|
 | `id` | `serial` PK | |
@@ -194,10 +191,9 @@ Expense splitting between two household members.
 | `isSettled` | `boolean` NOT NULL | Default `false` |
 | `settledAt` | `timestamp` | |
 | `notes` | `text` | User-editable |
-| `userId` | `text` NOT NULL | Createdby metadata only — **not used for authZ** |
 | `createdAt`, `updatedAt` | `timestamp` | |
 
-### `PAID_BY_MATCH` *(Phase 3)*
+### `PAID_BY_MATCH`
 
 - **File:** `shared/enums/paid-by-match.js`
 - **Used in:** `splits.paid_by_match`
@@ -212,7 +208,7 @@ Expense splitting between two household members.
 | `MISMATCHED` | `mismatched` | LLM ran, found initials, but no household member matched |
 | `MATCHED` | `matched` | LLM ran, found initials, mapped to a household member |
 
-`MATCHED` does **not** mean "the LLM was correct." It means "the LLM extracted something we could map to a member." Whether that mapping was *correct* is answered by human edit history in the `changes` table. See the analytics view (Phase 6) for the LLM-accuracy-vs-human-correction metric.
+`MATCHED` does **not** mean "the LLM was correct." It means "the LLM extracted something we could map to a member." Whether that mapping was *correct* is answered by human edit history in the `changes` table. See `v_split_metrics` (below) for the LLM-accuracy-vs-human-correction metric.
 
 > [!NOTE]
 > AuthZ for splits derives `householdId` via `splits.receiptId → receipts.householdId`. Splits do not carry their own `householdId` column.
@@ -311,7 +307,26 @@ A single mutation creates one `changes` row + N `*_history` rows (one per change
 ```
 
 > [!NOTE]
-> The `changes.source` format (`user:<userId>` vs `task:<taskName>`) is the basis for the AI-vs-human attribution analytics planned in Phase 6.
+> The `changes.source` format (`user:<userId>` vs `task:<taskName>`) is the basis for AI-vs-human attribution in `v_split_metrics`.
+
+## `v_split_metrics` (view)
+
+Analytics view aggregating per-split LLM signals + human override flag. Read-only, joined from `splits`, `receipts`, `changes`, and `split_history`. Used by `GET /api/dashboard/metrics`.
+
+> [!NOTE]
+> Hand-written SQL migration (`0016_split_metrics_view.sql`) — Drizzle's relational query API does not model views. Queries use raw SQL via `db.execute(sql\`...\`)`.
+
+| Column | Source | Notes |
+|:--|:--|:--|
+| `split_id` | `splits.id` | |
+| `receipt_id` | `splits.receipt_id` | |
+| `household_id` | `receipts.household_id` | Scope filter for all dashboard queries |
+| `receipt_date` | `receipts.date` | |
+| `paid_by_match` | `splits.paid_by_match` | Frozen LLM signal |
+| `is_settled` | `splits.is_settled` | |
+| `split_created_at` | `splits.created_at` | Used for activity windows |
+| `llm_confidence` | latest `task:*` row in `changes` joined via `split_history` | Null if LLM never ran |
+| `paid_by_overridden_by_human` | EXISTS check on `split_history.field = 'paidByUserId'` with `user:*` source | Boolean |
 
 ## Status enum cross-reference
 
@@ -325,7 +340,7 @@ Quick lookup for "where is this status used":
 | `WORKFLOW_STATUS` | `workflow_runs.status` |
 | `WORKFLOW_STEP_STATUS` | `workflow_runs.ocr_status`, `annotations_status`, `create_split_status`, `adjust_split_status`, `normalize_status` |
 | `WORKFLOW_STEP` | (SSE payloads, not a column) |
-| `PAID_BY_MATCH` *(Phase 3)* | `splits.paid_by_match` |
+| `PAID_BY_MATCH` | `splits.paid_by_match` |
 
 > [!NOTE]
 > **Naming inconsistencies (TODO):** `pending` vs `queued`, `completed` vs `analyzed`, `processing` vs (implied) — these evolved organically across phases. Not critical for the POC.

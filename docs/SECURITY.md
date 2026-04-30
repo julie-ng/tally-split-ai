@@ -10,7 +10,7 @@ There are two types of principals in this system. They are always separate and n
 
 Human users authenticate via GitHub OAuth (`nuxt-auth-utils`). The session establishes `event.context.userId` (identity) and `event.context.householdId` (authorization scope), which are used by `requireAuthorization` to enforce household-membership-based access.
 
-User accounts are a closed set — only users explicitly added via the household member endpoint (Phase 5) can log in. OAuth login refreshes existing user records but never creates new ones; unknown `githubId`s are redirected to `/login/unauthorized`.
+User accounts are a closed set — only users explicitly added via the household member endpoint can log in. OAuth login refreshes existing user records but never creates new ones; unknown `githubId`s are redirected to `/login/unauthorized`.
 
 ### Service Principals (Tasks)
 
@@ -213,5 +213,5 @@ These are regex-based and can be bypassed by commented-out code (documented in t
 ## Future Improvements
 
 - **Roles within a household**: All household members currently have equal permissions on shared resources. A `GLOBAL_ADMIN_ID` env-var escape hatch is planned for cross-household admin actions (e.g. setting another member's initials).
-- **N-user splits**: The `splits` table currently has hardcoded `userAShare`/`userBShare` columns, capping households at 2 members. A future migration to a `split_shares` join table will lift this constraint.
+- **N-user splits**: The `splits` table has hardcoded `userOneId`/`userOneShare`/`userTwoId`/`userTwoShare` slots, capping households at 2 members. A future migration to a `split_shares` join table would lift this constraint.
 - **Generic workflow trigger**: Current trigger endpoint uses `[uploadHashId]` — won't scale for receipt-triggered or other non-upload workflows.
