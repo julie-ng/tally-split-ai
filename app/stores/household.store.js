@@ -31,6 +31,10 @@ export const useHouseholdStore = defineStore('household', () => {
   const userTwo = computed(() => members.value[1] ?? null)
   const hasTwoMembers = computed(() => members.value.length >= 2)
 
+  // Frontend-friendly path to the household page. Returns '/' as a safe
+  // fallback during the brief pre-hydration window when id is null.
+  const path = computed(() => id.value ? `/households/${id.value}` : '/')
+
   // -------- GETTERS --------
 
   const getMemberById = computed(() => id => members.value.find(m => m.id === id) ?? null)
@@ -62,7 +66,7 @@ export const useHouseholdStore = defineStore('household', () => {
     loading.value = true
     error.value = null
     try {
-      household.value = await requestFetch('/api/household')
+      household.value = await requestFetch('/api/households')
       return household.value
     }
     catch (err) {
@@ -83,6 +87,22 @@ export const useHouseholdStore = defineStore('household', () => {
     return fetch()
   }
 
+  /**
+   * Add a member to the current household by their GitHub username.
+   * Refreshes the store on success so all consumers re-render.
+   */
+  async function addMember (githubUsername) {
+    if (!id.value) {
+      throw new Error('Household not loaded')
+    }
+    const result = await $fetch(`/api/households/${id.value}/members`, {
+      method: 'POST',
+      body: { githubUsername },
+    })
+    await refresh()
+    return result.member
+  }
+
   return {
     household,
     loading,
@@ -93,10 +113,12 @@ export const useHouseholdStore = defineStore('household', () => {
     userOne,
     userTwo,
     hasTwoMembers,
+    path,
     getMemberById,
     getMemberName,
     getMemberFirstName,
     fetch,
     refresh,
+    addMember,
   }
 })

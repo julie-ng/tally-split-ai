@@ -80,6 +80,12 @@ function getLinks (state: 'collapsed' | 'expanded') {
         to: '/uploads',
         active: isActive('/uploads'),
       },
+      {
+        label: 'Household',
+        icon: 'i-lucide-users',
+        to: householdStore.path,
+        active: isActive('/households'),
+      },
     ],
     [
       {

@@ -15,3 +15,11 @@ export const hashIdParamSchema = z.object({
 export const idParamSchema = z.object({
   id: z.string().regex(/^\d+$/, 'id must be a numeric string'),
 })
+
+/**
+ * Schema for UUID id route parameter
+ * Used in /api/household/[id] endpoints (households, users — UUID PKs)
+ */
+export const uuidParamSchema = z.object({
+  id: z.uuid('id must be a valid UUID'),
+})
