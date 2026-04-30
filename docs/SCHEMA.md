@@ -18,7 +18,7 @@ Single source of truth for table structure, relationships, and status enums. Sch
                 │                    │                    │
            1:many                1:many                1:many
                 │                    │                    │
-        ┌───────▼──────┐     ┌───────▼──────┐     ┌──────▼──────┐
+        ┌───────▼──────┐     ┌───────▼──────┐     ┌───────▼─────┐
         │    users     │     │   receipts   │     │   uploads   │
         └──────────────┘     └───────┬──────┘     └──────┬──────┘
                                      │                   │
@@ -43,13 +43,13 @@ Single source of truth for table structure, relationships, and status enums. Sch
    │   uploads    │── 1:many ────────────▶│  workflow_runs   │
    └──────────────┘                       └──────────────────┘
 
-   ┌──────────────┐         ┌──────────────────┐
+   ┌──────────────┐          ┌──────────────────┐
    │   changes    │── 1:many │  receipt_history │  (per-field, per-mutation)
    │              │── 1:many │  split_history   │
-   └──────────────┘         └──────────────────┘
+   └──────────────┘          └──────────────────┘
 ```
 
-## households
+## Households
 
 Groups of users that share receipts/uploads/splits.
 
@@ -64,7 +64,7 @@ Groups of users that share receipts/uploads/splits.
 | `createdAt` | `timestamp` | |
 | `updatedAt` | `timestamp` | |
 
-## users
+## Users
 
 Authenticated principals. One user belongs to one household.
 
@@ -83,7 +83,7 @@ Authenticated principals. One user belongs to one household.
 > [!IMPORTANT]
 > Closed user set: rows are only created via the household member endpoint. OAuth login refreshes existing records but never creates new ones — unknown `githubId`s are rejected.
 
-## receipts
+## Receipts
 
 Business/finance data extracted from receipt uploads.
 
@@ -114,7 +114,7 @@ UI logic uses this to show or hide the "Analyze" button. Granular progress track
 | `UNANALYZED` | `unanalyzed` | Default for new receipts |
 | `ANALYZED` | `analyzed` | `analyze-ocr` task on success |
 
-## uploads
+## Uploads
 
 File/blob metadata for uploaded receipt images. Created before the corresponding receipt exists.
 
@@ -170,7 +170,7 @@ Upload-level convenience field updated by the workflow orchestrator so the front
 | `COMPLETED` | `completed` | Orchestrator when workflow finishes |
 | `FAILED` | `failed` | (not yet implemented) |
 
-## splits
+## Splits
 
 Expense splitting between two household members.
 
@@ -281,7 +281,7 @@ Names of individual workflow steps for UI/realtime updates.
 | `ADJUST_SPLIT` | `adjustSplit` |
 | `WORKFLOW` | `workflow` |
 
-## changes + history tables
+## Changes + history tables
 
 Field-level audit trail for mutations on receipts and splits.
 
