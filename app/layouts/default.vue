@@ -56,6 +56,12 @@ function getLinks (state: 'collapsed' | 'expanded') {
   return [
     [
       {
+        label: 'Dashboard',
+        icon: 'i-lucide-bar-chart-3',
+        to: '/dashboard',
+        active: isActive('/dashboard'),
+      },
+      {
         label: 'Receipts',
         icon: 'i-lucide-receipt-euro',
         to: '/receipts',
