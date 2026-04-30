@@ -10,7 +10,6 @@ const householdStore = useHouseholdStore()
 await useAsyncData('household', () => householdStore.fetch())
 
 const route = useRoute()
-const open = ref(true)
 
 function isActive (path: string) {
   return route.path === path || route.path.startsWith(path + '/')
@@ -18,8 +17,24 @@ function isActive (path: string) {
 
 const splitMonths = useSplitMonths()
 
-function getLinks (state: 'collapsed' | 'expanded') {
-  const expanded = state === 'expanded'
+const userMenuItems = computed(() => [
+  [
+    {
+      label: 'Profile',
+      icon: 'i-lucide-user',
+      to: '/profile',
+    },
+    {
+      label: 'Logout',
+      icon: 'i-lucide-log-out',
+      to: '/logout',
+      external: true,
+    },
+  ],
+])
+
+function getLinks (collapsed: boolean) {
+  const expanded = !collapsed
   return [
     [
       {
@@ -84,58 +99,58 @@ function getLinks (state: 'collapsed' | 'expanded') {
 </script>
 
 <template>
-  <div class="flex flex-1">
-    <USidebar
-      v-model:open="open"
-      collapsible="icon"
+  <UDashboardGroup>
+    <UDashboardSidebar
+      collapsible
       :ui="{
         inner: 'bg-elevated/25',
       }"
     >
-      <template #header>
-        <div class="flex items-center justify-between w-full overflow-hidden">
-          <UButton
-            to="/"
-            icon="i-lucide-scan-barcode"
-            label="TallySplit AI"
-            color="neutral"
-            variant="ghost"
-            square
-            class="overflow-hidden"
-            :ui="{ leadingIcon: 'text-blue-600' }"
-          />
-          <UButton
-            icon="i-lucide-panel-left"
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            aria-label="Toggle sidebar"
-            class="shrink-0"
-            @click="open = !open"
-          />
-        </div>
+      <template #header="{ collapsed }">
+        <UButton
+          v-if="!collapsed"
+          to="/"
+          icon="i-lucide-scan-barcode"
+          label="TallySplit AI"
+          color="neutral"
+          variant="ghost"
+          square
+          class="overflow-hidden"
+          :ui="{ leadingIcon: 'text-blue-600' }"
+        />
+        <UDashboardSidebarCollapse variant="ghost" class="ms-auto opacity-80 hover:opacity-100 transition-opacity" />
       </template>
 
-      <template #default="{ state }">
+      <template #default="{ collapsed }">
         <UNavigationMenu
-          :key="state"
-          :items="getLinks(state)"
+          :key="String(collapsed)"
+          :collapsed="collapsed"
+          :items="getLinks(collapsed)"
           orientation="vertical"
           :ui="{ link: 'p-1.5 overflow-hidden' }"
         />
       </template>
 
-      <template #footer>
-        <UButton
-          icon="i-lucide-user-round"
-          :label="userStore.displayName"
-          color="neutral"
-          variant="ghost"
-          square
-          class="w-full overflow-hidden"
-        />
+      <template #footer="{ collapsed }">
+        <UDropdownMenu :items="userMenuItems" :ui="{ content: 'w-48' }">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            :square="collapsed"
+            :block="!collapsed"
+            class="overflow-hidden"
+            :class="collapsed ? '' : 'justify-start'"
+          >
+            <UAvatar
+              :src="userStore.avatarUrl"
+              :alt="userStore.displayName"
+              size="xs"
+            />
+            <span v-if="!collapsed" class="truncate">{{ userStore.displayName }}</span>
+          </UButton>
+        </UDropdownMenu>
       </template>
-    </USidebar>
+    </UDashboardSidebar>
 
     <div class="flex-1 flex flex-col overflow-hidden">
       <div class="flex-1 overflow-auto">
@@ -146,5 +161,5 @@ function getLinks (state: 'collapsed' | 'expanded') {
         <slot name="panel-footer" />
       </div>
     </div>
-  </div>
+  </UDashboardGroup>
 </template>
