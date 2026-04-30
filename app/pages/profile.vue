@@ -51,29 +51,36 @@ async function handleSubmit () {
     />
 
     <form v-if="userStore.userId" @submit.prevent="handleSubmit">
-      <div class="grid grid-cols-3 gap-4 max-w-2xl">
+      <div class="flex flex-col gap-4 max-w-2xl">
         <div>
-          <label for="username" class="block text-sm">Username</label>
-        </div>
-        <div class="col-span-2">
+          <p class="block text-sm mb-1 font-semibold">
+            GitHub Username
+          </p>
+          <p class="text-xs text-muted mt-0 mb-1">
+            GitHub account used for login. Not editable.
+          </p>
+          <!-- <p class="text-sm text-muted">
+            {{ userStore.username }}
+          </p> -->
           <UInput
             id="username"
             :model-value="userStore.username"
             disabled
-            class="w-80"
+            class="w-40 mb-2"
             variant="subtle"
           />
         </div>
 
         <div>
-          <label for="displayName" class="block text-sm">Display name</label>
-        </div>
-        <div class="col-span-2">
+          <label for="displayName" class="block text-sm font-semibold mb-1">Display name</label>
+          <p class="text-xs text-muted mb-2">
+            Defaults to GitHub full name.
+          </p>
           <UInput
             id="displayName"
             v-model="formData.displayName"
-            class="w-80"
-            variant="subtle"
+            class="w-40 mb-2"
+            variant="outline"
           />
           <p v-if="fieldErrors.displayName" class="text-red-600 text-sm mt-1">
             {{ fieldErrors.displayName.join(', ') }}
@@ -81,15 +88,16 @@ async function handleSubmit () {
         </div>
 
         <div>
-          <label for="initials" class="block text-sm">Initials</label>
-        </div>
-        <div class="col-span-2">
+          <label for="initials" class="block text-sm mb-1 font-semibold">Initials</label>
+          <p class="text-xs text-muted mb-2">
+            Used for handwriting analysis on receipts to attribute payer.
+          </p>
           <UInput
             id="initials"
             v-model="formData.initials"
             maxlength="5"
-            class="w-80"
-            variant="subtle"
+            class="w-20 mb-2"
+            variant="outline"
           />
           <p v-if="fieldErrors.initials" class="text-red-600 text-sm mt-1">
             {{ fieldErrors.initials.join(', ') }}
@@ -106,7 +114,7 @@ async function handleSubmit () {
           :loading="userStore.saving"
           :disabled="userStore.saving"
         >
-          {{ userStore.saving ? 'Saving...' : 'Save Changes' }}
+          {{ userStore.saving ? 'Saving...' : 'Update' }}
         </UButton>
       </div>
     </form>
