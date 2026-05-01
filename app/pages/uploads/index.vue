@@ -1,6 +1,5 @@
 <script setup>
 import { getPaginationRowModel } from '@tanstack/vue-table'
-import { useUserStore } from '~/stores/user.store'
 import { useUploadsStore } from '~/stores/uploads.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
 import { UPLOAD_STATUS } from '~~/shared/enums/upload-status.js'
@@ -9,7 +8,6 @@ useHead({
   title: 'Uploads',
 })
 
-const userStore = useUserStore()
 const uploadsStore = useUploadsStore()
 const workflowStore = useWorkflowStore()
 uploadsStore.debug = true
@@ -132,28 +130,28 @@ const paginationInfo = computed(() => {
 </script>
 
 <template>
-  <UContainer>
-    <div class="my-5">
-      <div class="flex justify-between items-center mb-5">
-        <div>
-          <h1 class="font-bold text-2xl">
-            Uploads
-          </h1>
-          <p class="mt-1 text-sm text-slate-400">
-            Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} database records for
-            {{ userStore.userId }}
-          </p>
-        </div>
-        <div class="flex gap-2">
+  <UDashboardPanel>
+    <template #header>
+      <UDashboardNavbar title="Uploads">
+        <template #left>
+          <UBreadcrumb :items="[{ label: 'Uploads' }]" />
+        </template>
+        <template #right>
           <UButton class="px-4 py-2 cursor-pointer" variant="subtle" @click="uploadsStore.fetchUploads(); workflowStore.fetchAll()">
             Refresh
           </UButton>
           <upload-button-modal class="px-4 py-2" />
-        </div>
-      </div>
+        </template>
+      </UDashboardNavbar>
+    </template>
+
+    <template #body>
+      <p class="text-sm text-slate-400 mb-4">
+        Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} database records
+      </p>
 
       <ClientOnly>
-        <div class="border bg-white border-slate-200 overflow-hidden">
+        <div class="border bg-white border-slate-200">
           <!-- TODO: autoResetPageIndex configuration works now to keep page when deleting items. But it will break as soon as we try to use filters -->
           <UTable
             ref="table"
@@ -242,6 +240,6 @@ const paginationInfo = computed(() => {
           </div>
         </div>
       </ClientOnly>
-    </div>
-  </UContainer>
+    </template>
+  </UDashboardPanel>
 </template>

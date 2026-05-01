@@ -176,206 +176,225 @@ async function handleMarkAllSettled () {
 </script>
 
 <template>
-  <UContainer>
-    <div v-if="hasSplits" class="my-5">
-      <!-- Breadcrumb -->
-      <div class="mb-3">
-        <NuxtLink to="/splits" class="text-sm text-blue-600 hover:underline">
-          ← All Splits
-        </NuxtLink>
-      </div>
-
-      <!-- Header -->
-      <splits-monthly-header
-        :title="`${monthName} ${year}`"
-        :period="`${monthName} ${year}`"
-        :pagination-info="paginationInfo"
-        :user-id="userStore.userId"
-        @refresh="refreshAll"
-      />
-
-      <!-- Summary Cards -->
-      <div v-if="summary" class="grid grid-cols-4 gap-4 mb-5">
-        <split-card
-          :title="`${receiptUtils.formatCurrency(summary.userOneShare, 'EUR')}`"
-          :subtitle="`${user1Name}'s Share`"
-        />
-        <split-card
-          :title="`${receiptUtils.formatCurrency(summary.userTwoShare, 'EUR')}`"
-          :subtitle="`${user2Name}'s Share`"
-        />
-        <split-card
-          :title="`${receiptUtils.formatCurrency(Math.abs(summary.netBalance), 'EUR')}`"
-          :note="netBalanceText(summary)"
-          subtitle="Net Balance"
-        />
-        <split-card
-          :title="summary.unsettledCount"
-          :note="`${summary.pendingCount} pending`"
-          subtitle="Unsettled"
-        />
-      </div>
-
-      <!-- Table -->
-      <ClientOnly>
-        <div class="border bg-white border-slate-200 rounded-lg overflow-hidden">
-          <UTable
-            ref="table"
-            v-model:pagination="pagination"
-            :pagination-options="{
-              getPaginationRowModel: getPaginationRowModel(),
-              autoResetPageIndex: false,
-            }"
-            :data="splits"
-            :columns="columns"
-            :ui="tableStyles"
-            :loading="pending"
-            loading-color="primary"
-            loading-animation="carousel"
-            class="flex-1"
+  <UDashboardPanel>
+    <template #header>
+      <UDashboardNavbar :title="`${monthName} ${year}`">
+        <template #left>
+          <UBreadcrumb
+            :items="[
+              { label: 'Splits', to: '/splits' },
+              { label: `${monthName} ${year}` },
+            ]"
+          />
+        </template>
+        <template #right>
+          <UButton
+            color="neutral"
+            variant="subtle"
+            class="cursor-pointer"
+            icon="i-lucide-refresh-cw"
+            @click="refreshAll"
           >
-            <!-- Analysis Status -->
-            <template #analysisStatus-cell="{ row }">
-              <UBadge
-                v-if="getFirstUpload(row.original)"
-                :color="badgeStyleHelpers.statusBadgeColor(getFirstUpload(row.original).analysisStatus)"
-                :variant="badgeStyleHelpers.statusBadgeVariant(getFirstUpload(row.original).analysisStatus)"
-              >
-                {{ getFirstUpload(row.original).analysisStatus || 'unknown' }}
-              </UBadge>
-              <span v-else class="text-slate-400">—</span>
-            </template>
+            Refresh
+          </UButton>
+        </template>
+      </UDashboardNavbar>
+    </template>
 
-            <!-- Receipt Title -->
-            <template #title-cell="{ row }">
-              <NuxtLink
-                v-if="row.original.receipt"
-                :to="`/receipts/${row.original.receipt.id}`"
-                class="text-slate-600 hover:text-blue-800 hover:underline font-medium"
-              >
-                {{ row.original.receipt.title || row.original.receipt.merchantName || '—' }}
-              </NuxtLink>
-              <span v-else class="text-slate-400">—</span>
-            </template>
+    <template #body>
+      <div v-if="hasSplits">
+        <!-- Header -->
+        <splits-monthly-header
+          :title="`${monthName} ${year}`"
+          :period="`${monthName} ${year}`"
+          :pagination-info="paginationInfo"
+          :user-id="userStore.userId"
+          @refresh="refreshAll"
+        />
 
-            <!-- Receipt Date -->
-            <template #date-cell="{ row }">
-              <time
-                v-if="row.original.receipt?.date"
-                :datetime="row.original.receipt.date"
-              >
-                {{ timestampUtils.toGermanISODate(row.original.receipt.date) }}
-              </time>
-              <span v-else class="text-slate-400">—</span>
-            </template>
-
-            <!-- Split Amount (Read-Only) -->
-            <template #splitAmount-cell="{ row }">
-              <div v-if="row.original.splitAmount != null" class="text-right font-medium">
-                {{ receiptUtils.formatCurrency(row.original.splitAmount, 'EUR') }}
-              </div>
-              <div v-else class="text-slate-400 text-right">
-                —
-              </div>
-            </template>
-
-            <!-- User One Share (Read-Only) -->
-            <template #userOneShare-cell="{ row }">
-              <div v-if="row.original.userOneShare != null" class="text-right font-medium">
-                {{ receiptUtils.formatCurrency(row.original.userOneShare, 'EUR') }}
-              </div>
-              <div v-else class="text-slate-400 text-right">
-                -
-              </div>
-            </template>
-
-            <!-- User Two Share (Read-Only) -->
-            <template #userTwoShare-cell="{ row }">
-              <div v-if="row.original.userTwoShare != null" class="text-right font-medium">
-                {{ receiptUtils.formatCurrency(row.original.userTwoShare, 'EUR') }}
-              </div>
-              <div v-else class="text-slate-400 text-right">
-                -
-              </div>
-            </template>
-
-            <!-- Paid By (Read-Only) -->
-            <template #paidByUserId-cell="{ row }">
-              <div class="text-sm">
-                {{ householdStore.getMemberFirstName(row.original.paidByUserId) }}
-              </div>
-            </template>
-
-            <!-- Is Settled (Read-Only) -->
-            <template #isSettled-cell="{ row }">
-              <UIcon
-                :name="row.original.isSettled ? 'i-lucide-square-check' : 'i-lucide-square'"
-                class="size-4"
-                :class="row.original.isSettled ? 'text-emerald-600' : 'text-slate-300'"
-                :title="row.original.isSettled ? 'Settled Up' : 'Unsettled'"
-              />
-            </template>
-
-            <!-- Actions -->
-            <template #actions-cell="{ row }">
-              <NuxtLink :to="`/receipts/${row.original.receipt?.id}`">
-                <UButton
-                  variant="soft"
-                  color="primary"
-                  size="xs"
-                  icon="i-lucide-edit"
-                  class="cursor-pointer"
-                >
-                  Edit
-                </UButton>
-              </NuxtLink>
-            </template>
-
-            <!-- Filename -->
-            <template #filename-cell="{ row }">
-              <span v-if="getFirstUpload(row.original)" class="text-xs text-slate-500 font-mono truncate max-w-32 block">
-                {{ getFirstUpload(row.original).originalFilename || '—' }}
-              </span>
-              <span v-else class="text-slate-400">—</span>
-            </template>
-          </UTable>
-
-          <!-- Pagination -->
-          <div class="flex justify-between items-center border-t border-default py-4 px-4">
-            <div class="text-sm text-slate-600">
-              Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }}
-            </div>
-            <UPagination
-              :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
-              :items-per-page="table?.tableApi?.getState().pagination.pageSize"
-              :total="table?.tableApi?.getFilteredRowModel().rows.length"
-              @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
-            />
-          </div>
-
-          <!-- Mark All as Settled -->
-          <div class="px-4 py-3 border-t border-default">
-            <UButton
-              color="primary"
-              variant="solid"
-              icon="i-lucide-check-check"
-              :disabled="splits.length === 0 || allSettled || settleableCount === 0"
-              @click="handleMarkAllSettled"
-            >
-              Mark All as Settled
-            </UButton>
-          </div>
+        <!-- Summary Cards -->
+        <div v-if="summary" class="grid grid-cols-4 gap-4 mb-5">
+          <split-card
+            :title="`${receiptUtils.formatCurrency(summary.userOneShare, 'EUR')}`"
+            :subtitle="`${user1Name}'s Share`"
+          />
+          <split-card
+            :title="`${receiptUtils.formatCurrency(summary.userTwoShare, 'EUR')}`"
+            :subtitle="`${user2Name}'s Share`"
+          />
+          <split-card
+            :title="`${receiptUtils.formatCurrency(Math.abs(summary.netBalance), 'EUR')}`"
+            :note="netBalanceText(summary)"
+            subtitle="Net Balance"
+          />
+          <split-card
+            :title="summary.unsettledCount"
+            :note="`${summary.pendingCount} pending`"
+            subtitle="Unsettled"
+          />
         </div>
-      </ClientOnly>
-    </div>
-    <div v-else class="my-6">
-      <h1 class="mb-1 font-bold text-xl">
-        No splits for {{ monthName }} {{ year }}
-      </h1>
-      <p class="mb-4">
-        Please upload receipts to get some data.
-      </p>
-      <upload-button-modal label="Upload Receipts" />
-    </div>
-  </UContainer>
+
+        <!-- Table -->
+        <ClientOnly>
+          <div class="border bg-white border-slate-200 rounded-lg">
+            <UTable
+              ref="table"
+              v-model:pagination="pagination"
+              :pagination-options="{
+                getPaginationRowModel: getPaginationRowModel(),
+                autoResetPageIndex: false,
+              }"
+              :data="splits"
+              :columns="columns"
+              :ui="tableStyles"
+              :loading="pending"
+              loading-color="primary"
+              loading-animation="carousel"
+              class="flex-1"
+            >
+              <!-- Analysis Status -->
+              <template #analysisStatus-cell="{ row }">
+                <UBadge
+                  v-if="getFirstUpload(row.original)"
+                  :color="badgeStyleHelpers.statusBadgeColor(getFirstUpload(row.original).analysisStatus)"
+                  :variant="badgeStyleHelpers.statusBadgeVariant(getFirstUpload(row.original).analysisStatus)"
+                >
+                  {{ getFirstUpload(row.original).analysisStatus || 'unknown' }}
+                </UBadge>
+                <span v-else class="text-slate-400">—</span>
+              </template>
+
+              <!-- Receipt Title -->
+              <template #title-cell="{ row }">
+                <NuxtLink
+                  v-if="row.original.receipt"
+                  :to="`/receipts/${row.original.receipt.id}`"
+                  class="text-slate-600 hover:text-blue-800 hover:underline font-medium"
+                >
+                  {{ row.original.receipt.title || row.original.receipt.merchantName || '—' }}
+                </NuxtLink>
+                <span v-else class="text-slate-400">—</span>
+              </template>
+
+              <!-- Receipt Date -->
+              <template #date-cell="{ row }">
+                <time
+                  v-if="row.original.receipt?.date"
+                  :datetime="row.original.receipt.date"
+                >
+                  {{ timestampUtils.toGermanISODate(row.original.receipt.date) }}
+                </time>
+                <span v-else class="text-slate-400">—</span>
+              </template>
+
+              <!-- Split Amount (Read-Only) -->
+              <template #splitAmount-cell="{ row }">
+                <div v-if="row.original.splitAmount != null" class="text-right font-medium">
+                  {{ receiptUtils.formatCurrency(row.original.splitAmount, 'EUR') }}
+                </div>
+                <div v-else class="text-slate-400 text-right">
+                  —
+                </div>
+              </template>
+
+              <!-- User One Share (Read-Only) -->
+              <template #userOneShare-cell="{ row }">
+                <div v-if="row.original.userOneShare != null" class="text-right font-medium">
+                  {{ receiptUtils.formatCurrency(row.original.userOneShare, 'EUR') }}
+                </div>
+                <div v-else class="text-slate-400 text-right">
+                  -
+                </div>
+              </template>
+
+              <!-- User Two Share (Read-Only) -->
+              <template #userTwoShare-cell="{ row }">
+                <div v-if="row.original.userTwoShare != null" class="text-right font-medium">
+                  {{ receiptUtils.formatCurrency(row.original.userTwoShare, 'EUR') }}
+                </div>
+                <div v-else class="text-slate-400 text-right">
+                  -
+                </div>
+              </template>
+
+              <!-- Paid By (Read-Only) -->
+              <template #paidByUserId-cell="{ row }">
+                <div class="text-sm">
+                  {{ householdStore.getMemberFirstName(row.original.paidByUserId) }}
+                </div>
+              </template>
+
+              <!-- Is Settled (Read-Only) -->
+              <template #isSettled-cell="{ row }">
+                <UIcon
+                  :name="row.original.isSettled ? 'i-lucide-square-check' : 'i-lucide-square'"
+                  class="size-4"
+                  :class="row.original.isSettled ? 'text-emerald-600' : 'text-slate-300'"
+                  :title="row.original.isSettled ? 'Settled Up' : 'Unsettled'"
+                />
+              </template>
+
+              <!-- Actions -->
+              <template #actions-cell="{ row }">
+                <NuxtLink :to="`/receipts/${row.original.receipt?.id}`">
+                  <UButton
+                    variant="soft"
+                    color="primary"
+                    size="xs"
+                    icon="i-lucide-edit"
+                    class="cursor-pointer"
+                  >
+                    Edit
+                  </UButton>
+                </NuxtLink>
+              </template>
+
+              <!-- Filename -->
+              <template #filename-cell="{ row }">
+                <span v-if="getFirstUpload(row.original)" class="text-xs text-slate-500 font-mono truncate max-w-32 block">
+                  {{ getFirstUpload(row.original).originalFilename || '—' }}
+                </span>
+                <span v-else class="text-slate-400">—</span>
+              </template>
+            </UTable>
+
+            <!-- Pagination -->
+            <div class="flex justify-between items-center border-t border-default py-4 px-4">
+              <div class="text-sm text-slate-600">
+                Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }}
+              </div>
+              <UPagination
+                :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
+                :items-per-page="table?.tableApi?.getState().pagination.pageSize"
+                :total="table?.tableApi?.getFilteredRowModel().rows.length"
+                @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
+              />
+            </div>
+
+            <!-- Mark All as Settled -->
+            <div class="px-4 py-3 border-t border-default">
+              <UButton
+                color="primary"
+                variant="solid"
+                icon="i-lucide-check-check"
+                :disabled="splits.length === 0 || allSettled || settleableCount === 0"
+                @click="handleMarkAllSettled"
+              >
+                Mark All as Settled
+              </UButton>
+            </div>
+          </div>
+        </ClientOnly>
+      </div>
+      <div v-else class="my-6">
+        <h1 class="mb-1 font-bold text-xl">
+          No splits for {{ monthName }} {{ year }}
+        </h1>
+        <p class="mb-4">
+          Please upload receipts to get some data.
+        </p>
+        <upload-button-modal label="Upload Receipts" />
+      </div>
+    </template>
+  </UDashboardPanel>
 </template>

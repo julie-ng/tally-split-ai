@@ -43,92 +43,100 @@ async function handleSubmit () {
 </script>
 
 <template>
-  <UContainer class="my-5 content">
-    <div class="flex items-start justify-between mb-2">
-      <h1 class="font-bold text-3xl">
-        Household Members
-      </h1>
-      <UButton
-        :to="`/households/${householdStore.id}/edit`"
-        icon="i-lucide-pencil"
-        color="neutral"
-        variant="ghost"
-        size="sm"
-      >
-        Edit
-      </UButton>
-    </div>
-    <p v-if="householdStore.name" class="text-dimmed mb-1">
-      {{ householdStore.name }}
-    </p>
-    <p v-if="householdStore.description" class="text-dimmed text-sm mb-6">
-      {{ householdStore.description }}
-    </p>
-    <div v-else class="mb-6" />
+  <UDashboardPanel>
+    <template #header>
+      <UDashboardNavbar :title="householdStore.name ?? 'Household'">
+        <template #left>
+          <UBreadcrumb
+            :items="[
+              { label: 'Household' },
+              { label: householdStore.name ?? '...', to: $route.path },
+            ]"
+          />
+        </template>
+        <template #right>
+          <UButton
+            :to="`/households/${householdStore.id}/edit`"
+            icon="i-lucide-pencil"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+          >
+            Edit
+          </UButton>
+        </template>
+      </UDashboardNavbar>
+    </template>
 
-    <!-- Members list -->
-    <section class="mb-8">
-      <h2 class="font-semibold text-lg mb-3">
-        Current members ({{ householdStore.members.length }} / 2)
-      </h2>
-      <div class="grid gap-3 max-w-2xl">
-        <div
-          v-for="member in householdStore.members"
-          :key="member.id"
-          class="flex items-center gap-3 p-3 border border-slate-200 rounded-md bg-white"
-        >
-          <UAvatar :src="member.avatarUrl" :alt="member.username" size="md" />
-          <div class="flex-1">
-            <div class="font-medium">
-              <NuxtLink :to="`/users/${member.id}`">
-                {{ member.displayName ?? member.username }}
-              </NuxtLink>
-            </div>
-            <div class="text-sm text-dimmed">
-              @{{ member.username }} · {{ member.initials }}
+    <template #body>
+      <p v-if="householdStore.description" class="text-dimmed text-sm mb-6">
+        {{ householdStore.description }}
+      </p>
+
+      <!-- Members list -->
+      <section class="mb-8">
+        <h2 class="font-semibold text-lg mb-3">
+          Current members ({{ householdStore.members.length }} / 2)
+        </h2>
+        <div class="grid gap-3 max-w-2xl">
+          <div
+            v-for="member in householdStore.members"
+            :key="member.id"
+            class="flex items-center gap-3 p-3 border border-slate-200 rounded-md bg-white"
+          >
+            <UAvatar :src="member.avatarUrl" :alt="member.username" size="md" />
+            <div class="flex-1">
+              <div class="font-medium">
+                <NuxtLink :to="`/users/${member.id}`">
+                  {{ member.displayName ?? member.username }}
+                </NuxtLink>
+              </div>
+              <div class="text-sm text-dimmed">
+                @{{ member.username }} · {{ member.initials }}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Add member form -->
-    <section class="max-w-2xl">
-      <h2 class="font-semibold text-lg mb-3">
-        Add a member
-      </h2>
+      <!-- Add member form -->
+      <section class="max-w-2xl">
+        <h2 class="font-semibold text-lg mb-3">
+          Add a member
+        </h2>
 
-      <div v-if="isFull" class="text-sm text-dimmed">
-        Household is full. The 2-member limit applies during the POC.
-      </div>
-
-      <form v-else @submit.prevent="handleSubmit">
-        <div class="flex gap-2">
-          <UInput
-            v-model="newUsername"
-            placeholder="GitHub username"
-            class="flex-1"
-            variant="subtle"
-            :disabled="submitting"
-          />
-          <UButton
-            type="submit"
-            color="info"
-            class="cursor-pointer"
-            :loading="submitting"
-            :disabled="submitting"
-          >
-            Add member
-          </UButton>
+        <div v-if="isFull" class="text-sm text-dimmed">
+          Household is full. The 2-member limit applies during the POC.
         </div>
-        <p v-if="formError" class="text-red-600 text-sm mt-2">
-          {{ formError }}
-        </p>
-        <p class="text-xs text-dimmed mt-2">
-          We fetch the public GitHub profile to provision the account. The new
-          member must log in via GitHub themselves before using the app.
-        </p>
-      </form>
-    </section>
-  </UContainer>
+
+        <form v-else @submit.prevent="handleSubmit">
+          <div class="flex gap-2">
+            <UInput
+              v-model="newUsername"
+              placeholder="GitHub username"
+              class="flex-1"
+              variant="subtle"
+              :disabled="submitting"
+            />
+            <UButton
+              type="submit"
+              color="info"
+              class="cursor-pointer"
+              :loading="submitting"
+              :disabled="submitting"
+            >
+              Add member
+            </UButton>
+          </div>
+          <p v-if="formError" class="text-red-600 text-sm mt-2">
+            {{ formError }}
+          </p>
+          <p class="text-xs text-dimmed mt-2">
+            We fetch the public GitHub profile to provision the account. The new
+            member must log in via GitHub themselves before using the app.
+          </p>
+        </form>
+      </section>
+    </template>
+  </UDashboardPanel>
 </template>

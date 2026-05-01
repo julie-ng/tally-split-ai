@@ -72,50 +72,54 @@ const handleCancel = () => {
 </script>
 
 <template>
-  <UContainer class="pt-5">
-    <UBreadcrumb :items="breadcrumbItems" />
+  <UDashboardPanel>
+    <template #header>
+      <UDashboardNavbar :title="receipt ? `Edit ${receipt.title || `Receipt #${id}`}` : 'Edit Receipt'">
+        <template #left>
+          <UBreadcrumb :items="breadcrumbItems" />
+        </template>
+      </UDashboardNavbar>
+    </template>
 
-    <!-- Loading -->
-    <loading-placeholder v-if="pending" title="Loading Receipt" :hash-id="id" />
+    <template #body>
+      <!-- Loading -->
+      <loading-placeholder v-if="pending" title="Loading Receipt" :hash-id="id" />
 
-    <!-- Error -->
-    <UAlert
-      v-else-if="error"
-      title="Unable to Load Receipt"
-      :description="error.message"
-      class="my-5"
-      color="error"
-      variant="subtle"
-      icon="i-lucide-triangle-alert"
-    />
-
-    <!-- Edit Form -->
-    <div v-else-if="receipt" class="my-5">
-      <h1 class="font-bold text-3xl mb-5">
-        Edit "{{ receipt.title || `Receipt #${id}` }}"
-      </h1>
-
-      <!-- Save Error Alert -->
-      <zod-errors-pretty
-        v-if="saveError"
-        title="Error saving receipt"
-        :errors="saveError.data.errors"
-        :message="saveError.message"
+      <!-- Error -->
+      <UAlert
+        v-else-if="error"
+        title="Unable to Load Receipt"
+        :description="error.message"
+        class="my-5"
+        color="error"
+        variant="subtle"
+        icon="i-lucide-triangle-alert"
       />
 
-      <div class="max-w-3xl">
-        <receipt-edit-form
-          :receipt="receipt"
-          :saving="saving"
-          @save="handleSave"
-          @cancel="handleCancel"
+      <!-- Edit Form -->
+      <div v-else-if="receipt">
+        <!-- Save Error Alert -->
+        <zod-errors-pretty
+          v-if="saveError"
+          title="Error saving receipt"
+          :errors="saveError.data.errors"
+          :message="saveError.message"
         />
-      </div>
-    </div>
 
-    <!-- Not found state -->
-    <div v-else>
-      <not-found :title="`Receipt Not Found`" :hash-id="id" />
-    </div>
-  </UContainer>
+        <div class="max-w-3xl">
+          <receipt-edit-form
+            :receipt="receipt"
+            :saving="saving"
+            @save="handleSave"
+            @cancel="handleCancel"
+          />
+        </div>
+      </div>
+
+      <!-- Not found state -->
+      <div v-else>
+        <not-found :title="`Receipt Not Found`" :hash-id="id" />
+      </div>
+    </template>
+  </UDashboardPanel>
 </template>

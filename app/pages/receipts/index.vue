@@ -1,6 +1,5 @@
 <script setup>
 import { getPaginationRowModel } from '@tanstack/vue-table'
-import { useUserStore } from '~/stores/user.store'
 import { useReceiptsStore } from '~/stores/receipts.store'
 
 useHead({
@@ -8,7 +7,6 @@ useHead({
 })
 
 const toast = useToast()
-const userStore = useUserStore()
 const receiptsStore = useReceiptsStore()
 
 // Use callOnce for SSR + navigation optimization
@@ -217,19 +215,13 @@ const paginationInfo = computed(() => {
 </script>
 
 <template>
-  <UContainer>
-    <div class="my-5">
-      <div class="flex justify-between items-center mb-5">
-        <div>
-          <h1 class="font-bold text-2xl">
-            Receipts
-          </h1>
-          <p class="mt-1 text-sm text-slate-400">
-            Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} receipts for
-            {{ userStore.userId }}
-          </p>
-        </div>
-        <div class="flex gap-2">
+  <UDashboardPanel>
+    <template #header>
+      <UDashboardNavbar title="Receipts">
+        <template #left>
+          <UBreadcrumb :items="[{ label: 'Receipts' }]" />
+        </template>
+        <template #right>
           <UButton
             v-if="selectedCount > 0"
             color="error"
@@ -250,15 +242,21 @@ const paginationInfo = computed(() => {
           >
             Refresh
           </UButton>
-        </div>
-      </div>
+        </template>
+      </UDashboardNavbar>
+    </template>
+
+    <template #body>
+      <p class="text-sm text-slate-400 mb-4">
+        Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} receipts
+      </p>
 
       <div class="my-2">
         <UCheckbox v-model="highlightTotals" label="Highlight Totals" />
       </div>
 
       <ClientOnly>
-        <div class="border bg-white border-slate-200 overflow-hidden">
+        <div class="border bg-white border-slate-200">
           <UTable
             ref="table"
             v-model:row-selection="rowSelection"
@@ -384,8 +382,8 @@ const paginationInfo = computed(() => {
           </div>
         </div>
       </ClientOnly>
-    </div>
-  </UContainer>
+    </template>
+  </UDashboardPanel>
 </template>
 
 <style scoped>

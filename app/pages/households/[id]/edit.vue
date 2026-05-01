@@ -59,61 +59,73 @@ async function handleSubmit () {
 </script>
 
 <template>
-  <UContainer class="my-5 content">
-    <h1 class="font-bold text-3xl mb-6">
-      Edit Household
-    </h1>
-
-    <form @submit.prevent="handleSubmit">
-      <div class="flex flex-col gap-4 max-w-2xl">
-        <div>
-          <label for="name" class="block text-sm font-semibold mb-1">Name</label>
-          <UInput
-            id="name"
-            v-model="formData.name"
-            class="w-80"
-            variant="outline"
+  <UDashboardPanel>
+    <template #header>
+      <UDashboardNavbar title="Edit Household">
+        <template #left>
+          <UBreadcrumb
+            :items="[
+              { label: 'Household', to: `/households/${householdStore.id}` },
+              { label: householdStore.name ?? '...', to: `/households/${householdStore.id}` },
+              { label: 'Edit' },
+            ]"
           />
-          <p v-if="fieldErrors.name" class="text-red-600 text-sm mt-1">
-            {{ fieldErrors.name.join(', ') }}
-          </p>
+        </template>
+      </UDashboardNavbar>
+    </template>
+
+    <template #body>
+      <form @submit.prevent="handleSubmit">
+        <div class="flex flex-col gap-4 max-w-2xl">
+          <div>
+            <label for="name" class="block text-sm font-semibold mb-1">Name</label>
+            <UInput
+              id="name"
+              v-model="formData.name"
+              class="w-80"
+              variant="outline"
+            />
+            <p v-if="fieldErrors.name" class="text-red-600 text-sm mt-1">
+              {{ fieldErrors.name.join(', ') }}
+            </p>
+          </div>
+
+          <div>
+            <label for="description" class="block text-sm font-semibold mb-1">Description</label>
+            <UTextarea
+              id="description"
+              v-model="formData.description"
+              class="w-full max-w-xl"
+              :rows="3"
+              variant="outline"
+            />
+            <p v-if="fieldErrors.description" class="text-red-600 text-sm mt-1">
+              {{ fieldErrors.description.join(', ') }}
+            </p>
+          </div>
         </div>
 
-        <div>
-          <label for="description" class="block text-sm font-semibold mb-1">Description</label>
-          <UTextarea
-            id="description"
-            v-model="formData.description"
-            class="w-full max-w-xl"
-            :rows="3"
-            variant="outline"
-          />
-          <p v-if="fieldErrors.description" class="text-red-600 text-sm mt-1">
-            {{ fieldErrors.description.join(', ') }}
-          </p>
+        <div class="mt-6 flex gap-2">
+          <UButton
+            type="submit"
+            color="info"
+            size="lg"
+            class="cursor-pointer"
+            :loading="submitting"
+            :disabled="submitting"
+          >
+            {{ submitting ? 'Saving...' : 'Save Changes' }}
+          </UButton>
+          <UButton
+            :to="`/households/${householdStore.id}`"
+            color="neutral"
+            variant="ghost"
+            size="lg"
+          >
+            Cancel
+          </UButton>
         </div>
-      </div>
-
-      <div class="mt-6 flex gap-2">
-        <UButton
-          type="submit"
-          color="info"
-          size="lg"
-          class="cursor-pointer"
-          :loading="submitting"
-          :disabled="submitting"
-        >
-          {{ submitting ? 'Saving...' : 'Save Changes' }}
-        </UButton>
-        <UButton
-          :to="`/households/${householdStore.id}`"
-          color="neutral"
-          variant="ghost"
-          size="lg"
-        >
-          Cancel
-        </UButton>
-      </div>
-    </form>
-  </UContainer>
+      </form>
+    </template>
+  </UDashboardPanel>
 </template>

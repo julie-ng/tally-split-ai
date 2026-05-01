@@ -38,38 +38,44 @@ const breadcrumbItems = [
 </script>
 
 <template>
-  <UContainer class="pt-5">
-    <div class="ml-4">
-      <UBreadcrumb :items="breadcrumbItems" />
-    </div>
+  <UDashboardPanel>
+    <template #header>
+      <UDashboardNavbar :title="receipt?.title ?? `Receipt #${id}`">
+        <template #left>
+          <UBreadcrumb :items="breadcrumbItems" />
+        </template>
+      </UDashboardNavbar>
+    </template>
 
-    <!-- Loading -->
-    <loading-placeholder v-if="pending" title="Loading Receipt" :hash-id="id" />
+    <template #body>
+      <!-- Loading -->
+      <loading-placeholder v-if="pending" title="Loading Receipt" :hash-id="id" />
 
-    <!-- Error -->
-    <UAlert
-      v-else-if="error"
-      title="Unable to Load Receipt"
-      :description="error.message"
-      class="my-5"
-      color="error"
-      variant="subtle"
-      icon="i-lucide-triangle-alert"
-    />
+      <!-- Error -->
+      <UAlert
+        v-else-if="error"
+        title="Unable to Load Receipt"
+        :description="error.message"
+        class="my-5"
+        color="error"
+        variant="subtle"
+        icon="i-lucide-triangle-alert"
+      />
 
-    <!-- Receipt Details -->
-    <div v-else-if="receipt" class="mr-4">
-      <receipt-detail :receipt="receipt" />
-    </div>
+      <!-- Receipt Details -->
+      <div v-else-if="receipt">
+        <receipt-detail :receipt="receipt" />
+      </div>
 
-    <!-- Not found state -->
-    <div v-else>
-      <not-found :title="`Receipt Not Found`" :hash-id="id" />
-    </div>
+      <!-- Not found state -->
+      <div v-else>
+        <not-found :title="`Receipt Not Found`" :hash-id="id" />
+      </div>
 
-    <!-- Prev/Next Navigation -->
-    <receipt-next-prev-nav :receipt-id="id" class="mt-5 border-t border-default pt-4" />
-  </UContainer>
+      <!-- Prev/Next Navigation -->
+      <receipt-next-prev-nav :receipt-id="id" class="mt-5 border-t border-default pt-4" />
+    </template>
+  </UDashboardPanel>
 </template>
 
 <style scoped>

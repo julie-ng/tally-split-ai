@@ -152,14 +152,6 @@ function getLinks (collapsed: boolean) {
       </template>
     </UDashboardSidebar>
 
-    <div class="flex-1 flex flex-col overflow-hidden">
-      <div class="flex-1 overflow-auto">
-        <slot />
-      </div>
-
-      <div v-if="$slots['panel-footer']" class="py-1 bg-slate-100 border-0">
-        <slot name="panel-footer" />
-      </div>
-    </div>
+    <slot />
   </UDashboardGroup>
 </template>

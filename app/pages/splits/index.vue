@@ -122,8 +122,27 @@ const paginationInfo = computed(() => {
 </script>
 
 <template>
-  <UContainer>
-    <div class="my-5">
+  <UDashboardPanel>
+    <template #header>
+      <UDashboardNavbar title="Splits">
+        <template #left>
+          <UBreadcrumb :items="[{ label: 'Splits' }]" />
+        </template>
+        <template #right>
+          <UButton
+            color="neutral"
+            variant="subtle"
+            class="cursor-pointer"
+            icon="i-lucide-refresh-cw"
+            @click="refreshAll"
+          >
+            Refresh
+          </UButton>
+        </template>
+      </UDashboardNavbar>
+    </template>
+
+    <template #body>
       <!-- Header -->
       <splits-monthly-header
         title="Splits"
@@ -156,7 +175,7 @@ const paginationInfo = computed(() => {
 
       <!-- Table -->
       <ClientOnly>
-        <div class="border bg-white border-slate-200 rounded-lg overflow-hidden">
+        <div class="border bg-white border-slate-200 rounded-lg">
           <UTable
             ref="table"
             v-model:pagination="pagination"
@@ -298,6 +317,6 @@ const paginationInfo = computed(() => {
           </div>
         </div>
       </ClientOnly>
-    </div>
-  </UContainer>
+    </template>
+  </UDashboardPanel>
 </template>

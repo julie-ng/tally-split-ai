@@ -51,38 +51,46 @@ const breadcrumbItems = [
 </script>
 
 <template>
-  <UContainer class="pt-5">
-    <UBreadcrumb :items="breadcrumbItems" />
+  <UDashboardPanel>
+    <template #header>
+      <UDashboardNavbar :title="upload?.title ?? `Upload ${hashId}`">
+        <template #left>
+          <UBreadcrumb :items="breadcrumbItems" />
+        </template>
+      </UDashboardNavbar>
+    </template>
 
-    <!-- Loading -->
-    <loading-placeholder v-if="pending" title="Loading Upload" :hash-id="hashId" />
+    <template #body>
+      <!-- Loading -->
+      <loading-placeholder v-if="pending" title="Loading Upload" :hash-id="hashId" />
 
-    <!-- Error -->
-    <UAlert
-      v-else-if="error"
-      title="Unable to Load Upload"
-      :description="error.message"
-      class="my-5"
-      color="error"
-      variant="subtle"
-      icon="i-lucide-triangle-alert"
-    />
-
-    <!-- Upload Details -->
-    <div v-else-if="upload">
-      <upload-analysis-tab
-        :upload="upload"
-        :analysis-data="analysisData"
-        :analysis-pending="analysisPending"
-        :analysis-error="analysisError"
+      <!-- Error -->
+      <UAlert
+        v-else-if="error"
+        title="Unable to Load Upload"
+        :description="error.message"
+        class="my-5"
+        color="error"
+        variant="subtle"
+        icon="i-lucide-triangle-alert"
       />
-    </div>
 
-    <!-- Not found state -->
-    <div v-else>
-      <not-found :title="`Upload Not Found`" :hash-id="hashId" />
-    </div>
-  </UContainer>
+      <!-- Upload Details -->
+      <div v-else-if="upload">
+        <upload-analysis-tab
+          :upload="upload"
+          :analysis-data="analysisData"
+          :analysis-pending="analysisPending"
+          :analysis-error="analysisError"
+        />
+      </div>
+
+      <!-- Not found state -->
+      <div v-else>
+        <not-found :title="`Upload Not Found`" :hash-id="hashId" />
+      </div>
+    </template>
+  </UDashboardPanel>
 </template>
 
 <style scoped>
