@@ -127,10 +127,28 @@ const paginationInfo = computed(() => {
 
   return { start, end, total }
 })
+
+// -------- Slideover preview --------
+// URL state: ?preview=<hashId> is the single source of truth. The slideover
+// component reads :hash-id and opens itself. Use router.replace so the
+// slideover doesn't pollute browser history.
+const route = useRoute()
+const router = useRouter()
+
+const previewHashId = computed(() => route.query.preview ?? null)
+
+function openPreview (hashId) {
+  router.replace({ query: { ...route.query, preview: hashId } })
+}
+
+function closePreview () {
+  const { preview, ...rest } = route.query
+  router.replace({ query: rest })
+}
 </script>
 
 <template>
-  <UDashboardPanel>
+  <UDashboardPanel id="uploads-list">
     <template #header>
       <UDashboardNavbar title="Uploads">
         <template #left>
@@ -198,7 +216,13 @@ const paginationInfo = computed(() => {
                     variant="ghost"
                   />
                 </UTooltip>
-                {{ row.original.originalFilename }}
+                <UButton
+                  variant="link"
+                  color="neutral"
+                  @click="openPreview(row.original.hashId)"
+                >
+                  {{ row.original.originalFilename }}
+                </UButton>
               </span>
             </template>
 
@@ -242,4 +266,10 @@ const paginationInfo = computed(() => {
       </ClientOnly>
     </template>
   </UDashboardPanel>
+
+  <upload-preview-panel
+    v-if="previewHashId"
+    :hash-id="previewHashId"
+    @close="closePreview"
+  />
 </template>
