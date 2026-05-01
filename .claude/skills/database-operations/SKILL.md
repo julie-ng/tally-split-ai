@@ -1,6 +1,6 @@
 ---
 name: database-operations
-description: Database workflows for this project — schema changes, migrations, and seed scripts using Drizzle ORM + PostgreSQL. Use when the user asks to add a table, modify a schema, create a migration, or seed the database.
+description: Database workflows for this project — schema changes and migrations using Drizzle ORM + PostgreSQL. Use when the user asks to add a table, modify a schema, or create a migration.
 ---
 
 # Database Operations
@@ -12,7 +12,7 @@ description: Database workflows for this project — schema changes, migrations,
 | Schema | `server/db/schema.ts` |
 | DB connection | `server/db/connection.ts` |
 | Migrations | `server/db/migrations/postgres/` |
-| Seed files | `server/db/seeds/` |
+| Backfill scripts | `server/db/migrations/backfills/` (historical, not maintained) |
 
 ## Database
 
@@ -35,20 +35,16 @@ Connection string via env var: `NUXT_DATABASE_URL`
 2. Generate migration: `npm run db:generate`
 3. Apply migration: `npm run db:migrate`
 
-## Seed Scripts
+## Backfill Scripts
 
-Use `npx tsx` to run seed files:
+`server/db/migrations/backfills/` holds **historical, time-bound** scripts
+(named `seed-*.js`, `migrate-*.js`, etc.) that were run once against past
+schema states. They are NOT maintained against the current schema and may
+no longer compile — this is expected. Do not update them when changing
+the schema.
 
-```bash
-npx tsx ./server/db/seeds/seed-receipts.js
-```
-
-Existing seed files (in `server/db/seeds/`):
-- `seed-receipts.js` — Receipt data
-- `seed-splits.js` — Split records
-- `seed-receipt-titles.js` — Receipt title updates
-- `seed-receipt-analysis-statuses.js` — Analysis status seeding
-- `seed-receipt-split-ids.js` — Link receipts to splits
+When a future schema change requires data movement, write a NEW backfill
+script in this directory rather than editing existing ones.
 
 ## Drizzle Query Patterns
 
