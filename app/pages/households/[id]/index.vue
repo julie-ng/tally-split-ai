@@ -44,12 +44,27 @@ async function handleSubmit () {
 
 <template>
   <UContainer class="my-5 content">
-    <h1 class="font-bold text-3xl mb-2">
-      Household Members
-    </h1>
-    <p v-if="householdStore.name" class="text-dimmed mb-6">
+    <div class="flex items-start justify-between mb-2">
+      <h1 class="font-bold text-3xl">
+        Household Members
+      </h1>
+      <UButton
+        :to="`/households/${householdStore.id}/edit`"
+        icon="i-lucide-pencil"
+        color="neutral"
+        variant="ghost"
+        size="sm"
+      >
+        Edit
+      </UButton>
+    </div>
+    <p v-if="householdStore.name" class="text-dimmed mb-1">
       {{ householdStore.name }}
     </p>
+    <p v-if="householdStore.description" class="text-dimmed text-sm mb-6">
+      {{ householdStore.description }}
+    </p>
+    <div v-else class="mb-6" />
 
     <!-- Members list -->
     <section class="mb-8">

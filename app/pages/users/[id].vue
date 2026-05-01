@@ -61,6 +61,20 @@ useHead({
           </dd>
         </div>
 
+        <div v-if="usersStore.user.household">
+          <dt class="text-sm text-muted mb-1">
+            Household
+          </dt>
+          <dd class="text-sm font-medium">
+            <NuxtLink
+              :to="`/households/${usersStore.user.household.id}`"
+              class="text-primary hover:underline"
+            >
+              {{ usersStore.user.household.name }}
+            </NuxtLink>
+          </dd>
+        </div>
+
         <div>
           <dt class="text-sm text-muted mb-1">
             Receipts uploaded

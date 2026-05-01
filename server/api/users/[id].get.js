@@ -26,6 +26,14 @@ export default defineEventHandler(async (event) => {
       avatarUrl: true,
       householdId: true,
     },
+    with: {
+      household: {
+        columns: {
+          id: true,
+          name: true,
+        },
+      },
+    },
   })
 
   if (!user || user.householdId !== event.context.householdId) {
@@ -47,6 +55,7 @@ export default defineEventHandler(async (event) => {
     displayName: user.displayName,
     initials: user.initials,
     avatarUrl: user.avatarUrl,
+    household: user.household,
     uploadsCount,
     paidCount,
   }

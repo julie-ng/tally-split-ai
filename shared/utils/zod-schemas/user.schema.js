@@ -1,6 +1,5 @@
 import { z } from 'zod'
-
-const emptyToNull = v => (typeof v === 'string' && v.trim() === '' ? null : v)
+import { emptyToNull } from './helpers.js'
 
 /**
  * Schema for user update request body

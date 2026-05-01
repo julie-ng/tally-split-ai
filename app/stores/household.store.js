@@ -26,6 +26,7 @@ export const useHouseholdStore = defineStore('household', () => {
 
   const id = computed(() => household.value?.id ?? null)
   const name = computed(() => household.value?.name ?? null)
+  const description = computed(() => household.value?.description ?? null)
   const members = computed(() => household.value?.members ?? [])
   const userOne = computed(() => members.value[0] ?? null)
   const userTwo = computed(() => members.value[1] ?? null)
@@ -103,12 +104,29 @@ export const useHouseholdStore = defineStore('household', () => {
     return result.member
   }
 
+  /**
+   * Update the household's name and/or description.
+   * Refreshes the store on success.
+   */
+  async function update (data) {
+    if (!id.value) {
+      throw new Error('Household not loaded')
+    }
+    const result = await $fetch(`/api/households/${id.value}`, {
+      method: 'PUT',
+      body: data,
+    })
+    await refresh()
+    return result.household
+  }
+
   return {
     household,
     loading,
     error,
     id,
     name,
+    description,
     members,
     userOne,
     userTwo,
@@ -120,5 +138,6 @@ export const useHouseholdStore = defineStore('household', () => {
     fetch,
     refresh,
     addMember,
+    update,
   }
 })
