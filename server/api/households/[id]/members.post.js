@@ -56,7 +56,7 @@ export default defineEventHandler(async (event) => {
   // Fetch public GitHub profile
   const ghResponse = await fetch(`https://api.github.com/users/${encodeURIComponent(githubUsername)}`, {
     headers: {
-      Accept: 'application/vnd.github+json',
+      'Accept': 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
     },
   })
