@@ -65,7 +65,9 @@ async function handleSubmit () {
           <UAvatar :src="member.avatarUrl" :alt="member.username" size="md" />
           <div class="flex-1">
             <div class="font-medium">
-              {{ member.displayName ?? member.username }}
+              <NuxtLink :to="`/users/${member.id}`">
+                {{ member.displayName ?? member.username }}
+              </NuxtLink>
             </div>
             <div class="text-sm text-dimmed">
               @{{ member.username }} · {{ member.initials }}
