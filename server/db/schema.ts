@@ -47,8 +47,9 @@ export const receipts = pgTable('receipts', {
   // Status tracking
   analysisStatus: text('analysis_status', { enum: RECEIPT_ANALYSIS_STATUSES }).notNull().default('unanalyzed'),
 
-  // Metadata
-  userId: text('user_id').notNull(),
+  // Metadata — uploader (creator) of the receipt
+  // @ts-expect-error implicit return type any
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
 
   // Household scope for authZ.
   // @ts-expect-error implicit return type any
@@ -65,7 +66,8 @@ export const receipts = pgTable('receipts', {
 export const uploads = pgTable('uploads', {
   id: serial('id').primaryKey(),
   hashId: text('hash_id').notNull().unique(),
-  userId: text('user_id').notNull().default('local-dev-user'),
+  // @ts-expect-error implicit return type any
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
   title: text('title').notNull().default('Untitled'),
 
   // Foreign key to receipts table
@@ -260,12 +262,16 @@ export const usersRelations = relations(users, ({ one }) => ({
   }),
 }))
 
-// Receipt has many uploads, belongs to one household
+// Receipt has many uploads, belongs to one household and one user (uploader)
 export const receiptsRelations = relations(receipts, ({ one, many }) => ({
   uploads: many(uploads),
   household: one(households, {
     fields: [receipts.householdId],
     references: [households.id],
+  }),
+  user: one(users, {
+    fields: [receipts.userId],
+    references: [users.id],
   }),
 }))
 
@@ -281,6 +287,10 @@ export const uploadsRelations = relations(uploads, ({ one, many }) => ({
   household: one(households, {
     fields: [uploads.householdId],
     references: [households.id],
+  }),
+  user: one(users, {
+    fields: [uploads.userId],
+    references: [users.id],
   }),
 }))
 

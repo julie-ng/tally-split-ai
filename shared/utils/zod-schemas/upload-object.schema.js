@@ -7,7 +7,7 @@ export const uploadObject = z.object({
   id: z.number(),
   hashId: z.string(),
   title: z.string(),
-  userId: z.string(),
+  userId: z.uuid(),
   status: z.string(), // TODO
   blobName: z.string(),
   blobUrl: z.string(),

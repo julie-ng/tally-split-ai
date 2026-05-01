@@ -20,7 +20,7 @@ export const receiptSchema = z.object({
   currency: z.string().nullable(),
   notes: z.string().nullable(),
   analysisStatus: z.enum(RECEIPT_ANALYSIS_STATUSES),
-  userId: z.string(),
+  userId: z.uuid(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 })
