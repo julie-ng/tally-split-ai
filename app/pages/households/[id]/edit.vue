@@ -65,7 +65,7 @@ async function handleSubmit () {
         <template #left>
           <UBreadcrumb
             :items="[
-              { label: 'Household', to: `/households/${householdStore.id}` },
+              { label: 'Households', to: `/households/${householdStore.id}`, class: 'font-semibold text-default' },
               { label: householdStore.name ?? '...', to: `/households/${householdStore.id}` },
               { label: 'Edit' },
             ]"
@@ -78,6 +78,9 @@ async function handleSubmit () {
       <form @submit.prevent="handleSubmit">
         <div class="flex flex-col gap-4 max-w-2xl">
           <div>
+            <h1 class="text-2xl mb-4 font-bold">
+              Edit Household
+            </h1>
             <label for="name" class="block text-sm font-semibold mb-1">Name</label>
             <UInput
               id="name"

@@ -40,6 +40,19 @@ async function handleSubmit () {
     submitting.value = false
   }
 }
+
+const actionItems = ref([
+  {
+    label: 'Edit',
+    icon: 'i-lucide-edit-2',
+    to: `/households/${householdStore.id}/edit`,
+  },
+  {
+    label: 'Delete',
+    icon: 'i-lucide-trash-2',
+    disabled: true,
+  },
+])
 </script>
 
 <template>
@@ -49,35 +62,41 @@ async function handleSubmit () {
         <template #left>
           <UBreadcrumb
             :items="[
-              { label: 'Household' },
+              { label: 'Households', class: 'font-semibold text-default' },
               { label: householdStore.name ?? '...', to: $route.path },
             ]"
           />
         </template>
         <template #right>
-          <UButton
-            :to="`/households/${householdStore.id}/edit`"
-            icon="i-lucide-pencil"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-          >
-            Edit
-          </UButton>
+          <UDropdownMenu :items="actionItems">
+            <UButton
+              icon="i-lucide-more-vertical"
+              color="neutral"
+              variant="ghost"
+            />
+          </UDropdownMenu>
         </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
-      <p v-if="householdStore.description" class="text-dimmed text-sm mb-6">
-        {{ householdStore.description }}
-      </p>
+      <div>
+        <h1 class="text-2xl mb-1 font-bold">
+          {{ householdStore.name }}
+        </h1>
+        <p v-if="householdStore.description" class="text-dimmed text-sm">
+          {{ householdStore.description }}
+        </p>
+      </div>
 
       <!-- Members list -->
-      <section class="mb-8">
-        <h2 class="font-semibold text-lg mb-3">
-          Current members ({{ householdStore.members.length }} / 2)
+      <section class="mb-4">
+        <h2 class="font-semibold text-lg mb-1">
+          Current members
         </h2>
+        <p class="text-dimmed text-sm mb-6">
+          Showing {{ householdStore.members.length }} of 2 members.
+        </p>
         <div class="grid gap-3 max-w-2xl">
           <div
             v-for="member in householdStore.members"
@@ -101,7 +120,7 @@ async function handleSubmit () {
 
       <!-- Add member form -->
       <section class="max-w-2xl">
-        <h2 class="font-semibold text-lg mb-3">
+        <h2 class="font-semibold text-lg mb-1">
           Add a member
         </h2>
 
