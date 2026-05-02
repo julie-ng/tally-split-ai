@@ -70,6 +70,12 @@ const tableStyles = {
   tr: 'hover:bg-elevated/50',
 }
 
+const tableMeta = computed(() => ({
+  class: {
+    tr: row => row?.original?.hashId === previewHashId.value ? 'bg-primary/10' : '',
+  },
+}))
+
 const deleteUpload = async (hashId, title, blobName) => {
   if (!confirm(`Are you sure you want to delete '${title}' (${blobName})?`)) {
     return
@@ -181,6 +187,7 @@ function closePreview () {
             }"
             :data="uploads"
             :columns="columns"
+            :meta="tableMeta"
             :ui="tableStyles"
             :loading="pending"
             loading-color="primary"
