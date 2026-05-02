@@ -13,6 +13,11 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const loading = ref(false)
   const error = ref(null)
 
+  const confidenceTotal = computed(() =>
+    metrics.value.confidenceDistribution.high
+    + metrics.value.confidenceDistribution.medium
+    + metrics.value.confidenceDistribution.low)
+
   // -------- ACTIONS --------
 
   async function fetchMetrics () {
@@ -37,5 +42,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
     loading,
     error,
     fetchMetrics,
+    confidenceTotal,
   }
 })

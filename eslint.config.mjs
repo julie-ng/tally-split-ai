@@ -51,6 +51,7 @@ export default withNuxt(
         baseIndent: 1,
       }],
       'vue/multi-word-component-names': ['error'],
+      'vue/no-multiple-template-root': 'off', // because UDashboardPanel's need to be direct siblings
       '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       '@stylistic/brace-style': ['error', 'stroustrup'],

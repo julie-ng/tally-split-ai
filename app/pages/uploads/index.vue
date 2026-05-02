@@ -142,8 +142,9 @@ function openPreview (hashId) {
 }
 
 function closePreview () {
-  const { preview, ...rest } = route.query
-  router.replace({ query: rest })
+  const query = { ...route.query }
+  delete query.preview
+  router.replace({ query })
 }
 </script>
 
