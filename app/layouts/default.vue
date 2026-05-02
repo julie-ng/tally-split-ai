@@ -103,7 +103,7 @@ function getLinks (collapsed: boolean) {
     <UDashboardSidebar
       collapsible
       :ui="{
-        inner: 'bg-elevated/25',
+        footer: 'border-t border-default',
       }"
     >
       <template #header="{ collapsed }">
@@ -118,7 +118,7 @@ function getLinks (collapsed: boolean) {
           class="overflow-hidden"
           :ui="{ leadingIcon: 'text-blue-600' }"
         />
-        <UDashboardSidebarCollapse variant="ghost" class="ms-auto opacity-80 hover:opacity-100 transition-opacity" />
+        <UDashboardSidebarCollapse variant="ghost" class="ms-auto opacity-60 hover:opacity-100 transition-opacity" />
       </template>
 
       <template #default="{ collapsed }">
@@ -139,7 +139,11 @@ function getLinks (collapsed: boolean) {
             :square="collapsed"
             :block="!collapsed"
             class="overflow-hidden"
+            trailing-icon="i-lucide-chevrons-up-down"
             :class="collapsed ? '' : 'justify-start'"
+            :ui="{
+              trailingIcon: 'opacity-40',
+            }"
           >
             <UAvatar
               :src="userStore.avatarUrl"
