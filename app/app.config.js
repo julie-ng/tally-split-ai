@@ -46,5 +46,10 @@ export default defineAppConfig({
         },
       },
     },
+    dashboardPanel: {
+      slots: {
+        root: 'bg-muted',
+      },
+    },
   },
 })
