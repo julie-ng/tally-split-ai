@@ -208,7 +208,6 @@ async function handleMarkAllSettled () {
           :title="`${monthName} ${year}`"
           :period="`${monthName} ${year}`"
           :pagination-info="paginationInfo"
-          :user-id="userStore.userId"
           @refresh="refreshAll"
         />
 

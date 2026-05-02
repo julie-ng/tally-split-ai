@@ -147,7 +147,6 @@ const paginationInfo = computed(() => {
       <splits-monthly-header
         title="Splits"
         :pagination-info="paginationInfo"
-        :user-id="userStore.userId"
         @refresh="refreshAll"
       />
 

@@ -1,4 +1,6 @@
 <script setup>
+import { useHouseholdStore } from '~/stores/household.store'
+
 defineProps({
   title: {
     type: String,
@@ -13,13 +15,11 @@ defineProps({
     type: Object,
     required: true,
   },
-  userId: {
-    type: String,
-    required: true,
-  },
 })
 
 defineEmits(['refresh'])
+
+const householdStore = useHouseholdStore()
 </script>
 
 <template>
@@ -30,7 +30,7 @@ defineEmits(['refresh'])
       </h1>
       <p class="mt-1 text-sm text-slate-400">
         Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} splits for
-        {{ userId }}
+        <NuxtLink :to="householdStore.path" class="underline cursor-pointer">{{ householdStore.name }}</NuxtLink>
       </p>
     </div>
     <div class="flex items-center gap-2">
