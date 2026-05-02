@@ -44,6 +44,12 @@ function getLinks (collapsed: boolean) {
         active: isActive('/dashboard'),
       },
       {
+        label: 'Household',
+        icon: 'i-lucide-users',
+        to: householdStore.path,
+        active: isActive('/households'),
+      },
+      {
         label: 'Receipts',
         icon: 'i-lucide-receipt-euro',
         to: '/receipts',
@@ -67,12 +73,6 @@ function getLinks (collapsed: boolean) {
         icon: 'i-lucide-upload-cloud',
         to: '/uploads',
         active: isActive('/uploads'),
-      },
-      {
-        label: 'Household',
-        icon: 'i-lucide-users',
-        to: householdStore.path,
-        active: isActive('/households'),
       },
     ],
     [
