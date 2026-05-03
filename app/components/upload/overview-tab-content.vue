@@ -1,4 +1,6 @@
 <script setup>
+import { hasKeys } from '#shared/utils/object.utils.js'
+
 // eslint-disable-next-line no-unused-vars
 const props = defineProps({
   upload: Object, // should inherit valid schema.
@@ -8,46 +10,51 @@ const props = defineProps({
 <template>
   <div class="pt-6 px-4 grid grid-cols-5 gap-6">
     <div class="col-span-3">
-      <ui-collapsible-property-group title="File Info">
-        <ui-file-property label="Original Filename" :text="upload.originalFilename" />
-        <ui-file-property label="Blob Size" :text="formatBytes(upload.size)" />
-      </ui-collapsible-property-group>
+      <UCard>
+        <ui-collapsible-property-group title="File Info">
+          <ui-file-property label="Original Filename" :text="upload.originalFilename" />
+          <ui-file-property label="Blob Size" :text="formatBytes(upload.size)" />
+        </ui-collapsible-property-group>
 
-      <hr class="text-slate-300 my-3">
+        <hr class="text-slate-300 my-3">
 
-      <ui-collapsible-property-group title="Azure Info">
-        <ui-file-property label="Blob Name" :text="upload.blobName" />
-        <ui-file-property label="Blob Url" :text="upload.blobUrl" />
-        <ClientOnly>
-          <ui-file-property label="Azure Blob Index Tags">
-            <div class="flex flex-wrap gap-2 pt-2">
-              <UBadge
-                v-for="tag in azureUtils.blobTagsJsonToObject(upload.azureTags)"
-                :key="tag.key"
-                class="text-slate-500"
-                color="neutral"
-                variant="soft"
-              >
-                {{ tag.key }}: {{ tag.value }}
-              </UBadge>
-            </div>
-          </ui-file-property>
-        </ClientOnly>
-      </ui-collapsible-property-group>
-
-      <hr class="text-slate-300 my-3">
-
-      <ui-collapsible-property-group title="OCR Analysis">
-        <ui-file-property label="Status" :text="upload.analysisStatus" />
-        <ui-file-property v-if="upload.analyzedAt" label="Analyzed At" :text="timestampUtils.toShortDate(upload.analyzedAt)" />
-        <ui-file-property v-if="upload.analyzedAt" label="OCR Result">
+        <ui-collapsible-property-group title="Azure Info">
+          <ui-file-property label="Blob Name" :text="upload.blobName" />
+          <ui-file-property label="Blob Url" :text="upload.blobUrl" />
           <ClientOnly>
-            <pre class="w-fit mt-1 p-5 bg-slate-100 rounded-lg font-mono text-xs">
+            <ui-file-property label="Azure Blob Index Tags">
+              <div class="flex flex-wrap gap-2 pt-2">
+                <UBadge
+                  v-for="tag in azureUtils.blobTagsJsonToObject(upload.azureTags)"
+                  :key="tag.key"
+                  class="text-slate-500"
+                  color="neutral"
+                  variant="soft"
+                >
+                  {{ tag.key }}: {{ tag.value }}
+                </UBadge>
+                <span v-if="!hasKeys(upload.azureTags)" class="-mt-1">
+                  -
+                </span>
+              </div>
+            </ui-file-property>
+          </ClientOnly>
+        </ui-collapsible-property-group>
+
+        <hr class="text-slate-300 my-3">
+
+        <ui-collapsible-property-group title="OCR Analysis">
+          <ui-file-property label="Status" :text="upload.analysisStatus" />
+          <ui-file-property v-if="upload.analyzedAt" label="Analyzed At" :text="timestampUtils.toShortDate(upload.analyzedAt)" />
+          <ui-file-property v-if="upload.analyzedAt" label="OCR Result">
+            <ClientOnly>
+              <pre class="w-fit mt-1 p-5 bg-slate-100 rounded-lg font-mono text-xs">
             {{ upload.ocrText }}
           </pre>
-          </ClientOnly>
-        </ui-file-property>
-      </ui-collapsible-property-group>
+            </ClientOnly>
+          </ui-file-property>
+        </ui-collapsible-property-group>
+      </UCard>
     </div>
     <div class="col-span-2">
       <blob-image
