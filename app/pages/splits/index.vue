@@ -1,6 +1,5 @@
 <script setup>
 import { getPaginationRowModel } from '@tanstack/vue-table'
-import { useUserStore } from '~/stores/user.store'
 import { useSplitsStore } from '~/stores/splits.store'
 import { useHouseholdStore } from '~/stores/household.store'
 
@@ -8,7 +7,6 @@ useHead({
   title: 'Splits',
 })
 
-const userStore = useUserStore()
 const splitsStore = useSplitsStore()
 const householdStore = useHouseholdStore()
 
