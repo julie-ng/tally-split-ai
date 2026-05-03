@@ -31,6 +31,11 @@ export const useRealtimeStore = defineStore('realtime', () => {
       sse.close()
       eventSource.value = null
 
+      // Suppress the disconnect toast when the user is logged out — the server
+      // closes the stream as part of session destruction, which is expected.
+      const { loggedIn } = useUserSession()
+      if (!loggedIn.value) return
+
       if (!hasShownDisconnectToast.value) {
         hasShownDisconnectToast.value = true
         toast.add({
