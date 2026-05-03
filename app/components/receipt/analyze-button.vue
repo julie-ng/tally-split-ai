@@ -1,5 +1,6 @@
 <script setup>
 import { useReceiptsStore } from '~/stores/receipts.store'
+import { useUploadsStore } from '~/stores/uploads.store'
 
 const props = defineProps({
   id: {
@@ -13,6 +14,7 @@ const props = defineProps({
 })
 
 const receiptsStore = useReceiptsStore()
+const uploadsStore = useUploadsStore()
 const toast = useToast()
 
 const isAnalyzing = computed(() => receiptsStore.isReceiptAnalyzing(props.id))
@@ -20,10 +22,10 @@ const isAnalyzing = computed(() => receiptsStore.isReceiptAnalyzing(props.id))
 async function handleAnalyze () {
   try {
     await receiptsStore.analyzeReceipt(props.id)
-    // Refresh analysis tab data (keyed by uploadHashId in analysis-tab.vue)
+    // Invalidate cached analysis so the next view re-fetches fresh OCR data.
     const hashId = receiptsStore.getUploadHashId(props.id)
     if (hashId) {
-      await refreshNuxtData(`analysis-${hashId}`)
+      uploadsStore.clearAnalysisCacheByHashId(hashId)
     }
     toast.add({
       title: 'Analysis complete',

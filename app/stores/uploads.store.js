@@ -198,6 +198,12 @@ export const useUploadsStore = defineStore('uploads', () => {
     _log(`[UploadsStore] 🧹 cleared ${size} cached analysis result(s)`)
   }
 
+  function clearAnalysisCacheByHashId (hashId) {
+    if (analysisCache.value.delete(hashId)) {
+      _log(`[UploadsStore] 🧹 cleared cached analysis: ${hashId}`)
+    }
+  }
+
   /**
    * Internal logger helper - only logs when debug flag is enabled
    * @private
@@ -226,6 +232,7 @@ export const useUploadsStore = defineStore('uploads', () => {
     fetchPolygons,
     fetchAnalysisByHashId,
     clearAnalysisCache,
+    clearAnalysisCacheByHashId,
     refreshUploadByHashId,
     deleteUpload,
   }

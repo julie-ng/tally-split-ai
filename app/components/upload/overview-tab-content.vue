@@ -43,7 +43,7 @@ const upload = computed(() => uploadsStore.getUploadByHashId(props.hashId))
                 >
                   {{ tag.key }}: {{ tag.value }}
                 </UBadge>
-                <span v-if="!hasKeys(upload.azureTags)" class="-mt-1">
+                <span v-if="!hasKeys(upload.azureTags, { silent: true })" class="-mt-1">
                   -
                 </span>
               </div>

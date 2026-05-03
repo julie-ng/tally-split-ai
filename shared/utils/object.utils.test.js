@@ -25,4 +25,11 @@ describe('hasKeys', () => {
     expect(hasKeys(undefined)).toBe(false)
     expect(warn).toHaveBeenCalled()
   })
+
+  it('suppresses warning when silent: true', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    expect(hasKeys(null, { silent: true })).toBe(false)
+    expect(hasKeys(undefined, { silent: true })).toBe(false)
+    expect(warn).not.toHaveBeenCalled()
+  })
 })
