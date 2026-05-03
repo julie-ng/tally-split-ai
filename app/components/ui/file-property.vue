@@ -21,10 +21,10 @@ const displayText = computed(() => {
 
 <template>
   <div :class="uiClasses">
-    <p class="text-sm text-slate-400">
+    <p class="text-xs text-dimmed">
       {{ label }}
     </p>
-    <div class="text-base text-slate-500">
+    <div class="text-sm text-muted">
       {{ displayText }}
       <slot />
     </div>
