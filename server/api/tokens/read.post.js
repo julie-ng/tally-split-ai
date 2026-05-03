@@ -1,19 +1,31 @@
 import { z } from 'zod'
 import { eq, or } from 'drizzle-orm'
 
+/**
+ * Issues a 5-minute SAS read URL for a blob (or thumbnail). Storage account
+ * key never leaves the server — Trigger.dev workers call this endpoint
+ * instead of generating SAS locally.
+ *
+ * Dual-auth, with separate AuthZ paths because the resource here is a
+ * capability ("read this blob"), not one of the standard household
+ * resources (upload/receipt/split). requireAuthorization is unsuitable —
+ * its task path checks `workflowRun.upload.hashId` against a passed
+ * uploadHashId, but our request is keyed by blobName. Special-case AuthZ
+ * is inlined below.
+ *
+ * - User principal: blob's upload must be in the user's household
+ * - Task principal: blob's upload.hashId must equal workflowRun.upload.hashId
+ *   AND task must hold the `token:read` action
+ */
 export default defineEventHandler(async (event) => {
   const log = useLogger('token')
   const db = useDB()
   await guards.requireAuthentication(event)
-  const householdId = event.context.householdId
 
-  /**
-   * Configure Azure Storage
-   */
   azureStorageUtils.useAzureStorageConfig()
 
   /**
-   * Validate request params
+   * Validate request body
    */
   const rawBody = await readBody(event).catch(() => null)
   const result = zodSchemas.tokenReadRequestSchema.safeParse(rawBody)
@@ -30,11 +42,13 @@ export default defineEventHandler(async (event) => {
   const { action, blobName } = result.data
 
   /**
-   * AuthZ: verify the blob belongs to an upload owned by this user's household.
-   * blobName may match either the original or the thumbnail.
+   * Resolve the upload that owns this blob (matches original blob OR thumbnail).
    */
   const [upload] = await db
-    .select({ householdId: schema.uploads.householdId })
+    .select({
+      hashId: schema.uploads.hashId,
+      householdId: schema.uploads.householdId,
+    })
     .from(schema.uploads)
     .where(or(
       eq(schema.uploads.blobName, blobName),
@@ -42,25 +56,60 @@ export default defineEventHandler(async (event) => {
     ))
     .limit(1)
 
-  if (!upload || upload.householdId !== householdId) {
-    logSecurityEvent(event, 'warn', { householdId, blobName, reason: 'blob_not_household_member' }, 'Authorization denied')
+  if (!upload) {
+    logSecurityEvent(event, 'warn', { blobName, reason: 'blob_not_found' }, 'Authorization denied')
     throw createError({ statusCode: 404, message: 'Not found' })
   }
 
   /**
-   * Generate SAS Token
-   * with read-only permissions (5 minutes validity)
+   * AuthZ — special-case because the resource is a capability, not a
+   * standard household resource. See file-level docblock.
+   */
+  const isTask = !!event.context.workflowRun
+  if (isTask) {
+    const taskActions = event.context.taskActions ?? []
+    const expectedHashId = event.context.workflowRun.upload?.hashId
+
+    if (!taskActions.includes('token:read')) {
+      logSecurityEvent(event, 'warn', {
+        taskId: event.context.taskId,
+        granted: taskActions,
+        reason: 'token_read_not_granted',
+      }, 'Task permission denied')
+      throw createError({ statusCode: 403, message: 'Forbidden' })
+    }
+
+    if (upload.hashId !== expectedHashId) {
+      logSecurityEvent(event, 'warn', {
+        taskId: event.context.taskId,
+        blobName,
+        uploadHashId: upload.hashId,
+        expected: expectedHashId,
+        reason: 'blob_outside_workflow_scope',
+      }, 'Authorization denied')
+      throw createError({ statusCode: 403, message: 'Forbidden' })
+    }
+  }
+  else {
+    const householdId = event.context.householdId
+    if (upload.householdId !== householdId) {
+      logSecurityEvent(event, 'warn', { householdId, blobName, reason: 'blob_not_household_member' }, 'Authorization denied')
+      throw createError({ statusCode: 404, message: 'Not found' })
+    }
+  }
+
+  /**
+   * Generate SAS Token (read-only, 5 minute validity)
    */
   const {
     blobUrl,
     sasToken,
     uploadUrl,
     expiresAt,
-  } = azureStorageUtils.generateBlobSasToken(blobName,
-    {
-      permissions: 'read',
-      expiresInMinutes: 5,
-    })
+  } = azureStorageUtils.generateBlobSasToken(blobName, {
+    permissions: 'read',
+    expiresInMinutes: 5,
+  })
 
   log.info({ permissions: 'read', blobUrl, expiresAt }, 'SAS token generated')
 

@@ -2,6 +2,17 @@ import { tasks } from '@trigger.dev/sdk/v3'
 import { eq } from 'drizzle-orm'
 import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 
+/**
+ * Manual single-task trigger for annotations (dev/admin use).
+ *
+ * Why this exists: Trigger.dev workers don't have direct Azure Storage
+ * credentials (SAS URLs are requested via /api/tokens/read instead).
+ * Combined with HMAC-scoped task tokens, individual tasks cannot be
+ * re-triggered from the Trigger.dev dashboard. This endpoint creates a
+ * workflow_runs row and kicks off just the annotations step.
+ *
+ * Guarded by requireLocalDev — not exposed in production.
+ */
 export default defineEventHandler(async (event) => {
   const log = useLogger('analysis')
   const db = useDB()

@@ -23,7 +23,70 @@ Both principal types set `event.context.securityPrincipal` — a string in the f
 
 ## Authentication (AuthN)
 
-AuthN is handled by `requireAuthentication(event)`, which dispatches to the appropriate auth mechanism based on what credentials are present.
+AuthN is handled by `requireAuthentication(event)`, which dispatches to the appropriate auth mechanism based on what credentials are present. The two paths are mutually exclusive — a single request is either user-authenticated or task-authenticated, never both. AuthZ then runs on whichever principal was established.
+
+```mermaid
+---
+config:
+  htmlLabels: false
+---
+flowchart TD
+    Req(["`**Incoming request**`"])
+    Headers{"`**Has Workflow Headers?**
+• _Authorization: Bearer_
+• _X-Workflow-Run-UUID_`"}
+
+    Req --> AuthN("`**requireAuthentication()**`")
+    AuthN --> Headers
+
+    subgraph one ["`**Workflow AuthN**`"]
+        TaskAuth{"`**Verify Token**`"}
+        TaskCtx("`**Sets event.context**:
+        • _workflowRun_
+        • _taskId_
+        • _taskActions_
+        • _securityPrincipal_`")
+        Reject401a(["`**401 Unauthorized**`"])
+
+        TaskAuth -->|HMAC valid| TaskCtx
+        TaskAuth -->|HMAC invalid| Reject401a
+    end
+
+    subgraph two ["`**User AuthN**`"]
+        UserAuth{"`**Check User Session**`"}
+        UserCtx("`**Sets event.context**:
+        • _userId_
+        • _householdId_
+        • _securityPrincipal_`")
+        Reject401c(["`**401 Unauthorized**
+        Clear session to force re-login`"])
+        Reject401b(["`**401 Unauthorized**`"])
+
+        UserAuth -->|"Session valid<br/>+ has 'householdId'"| UserCtx
+        UserAuth -->|"Stale session<br/>missing 'householdId'"| Reject401c
+        UserAuth -->|No session| Reject401b
+    end
+
+    Headers -->|Yes| TaskAuth
+    Headers -->|No| UserAuth
+
+    TaskCtx --> AuthZ
+    UserCtx --> AuthZ
+    AuthZ("`**requireAuthorization()**
+    (per handler)`") --> NextLayer("`**Scope check**
+    (per resource)
+    • User: _householdId_
+    • Task: _workflowRun.upload_`")
+
+    classDef reject fill:#fee,stroke:#c33,color:#900
+    class Reject401a,Reject401b,Reject401c reject
+
+    classDef cluster fill:#f8f9fa,stroke:#cbd5e1,color:#475569
+    class one,two cluster
+```
+
+> [!IMPORTANT]
+> If workflow headers are present but the HMAC fails, the request is rejected — it does NOT fall through to user auth. This prevents identity blending (a task pretending to be a user on failure).
 
 ### Dispatch Order
 
@@ -66,6 +129,67 @@ All AuthN failures are logged to the `security` domain with IP, user-agent, meth
 
 AuthZ is handled by `requireAuthorization(event, { uploadHashId?, receiptId?, splitId? })`, called after AuthN in every protected handler that operates on a specific resource.
 
+```mermaid
+---
+config:
+  htmlLabels: false
+---
+flowchart TD
+    Req(["`**Authenticated request**
+    (event.context)`"])
+    Req -->|"resourceId + event.context"| AuthZ("`**requireAuthorization()**`")
+    AuthZ -->Principal{"`**Security 
+    Principal
+    type?**`"}
+
+    subgraph user ["`**User AuthZ**`"]
+        UScope("`**Find resource household** via
+        • _receipt.householdId_
+        • _upload.householdId_
+        • _split.receiptId.householdId_`")
+        UMatch{"`**Matches 
+        user's _householdId_?**
+        (via session)`"}
+        UOk("`Continue to handler`")
+        URej(["`**404 Not Found**
+        (do not reveal existence)`"])
+
+        UScope -->|resource householdId| UMatch
+        UMatch -->|Yes| UOk
+        UMatch -->|No| URej
+    end
+
+    subgraph task ["`**Task AuthZ**`"]
+        TScope{"`**_resourceId_ matches
+        _workflowRun.resourceId_?**`"}
+        TPerm{"`**requireTaskPermission()**
+        action, e.g. _receipt:write_
+        permitted on _resourceId_?`"}
+        TOk("`Continue to handler`")
+        TRejScope(["`**403 Forbidden**
+        (scope mismatch)`"])
+        TRejPerm(["`**403 Forbidden**
+        (insufficient permissions)`"])
+
+        TScope -->|Yes| TPerm
+        TScope -->|No| TRejScope
+        TPerm -->|Yes| TOk
+        TPerm -->|No| TRejPerm
+    end
+
+    Principal -->|User| UScope
+    Principal -->|Task| TScope
+
+    classDef reject fill:#fee,stroke:#c33,color:#900
+    class URej,TRejScope,TRejPerm reject
+
+    classDef ok fill:#efe,stroke:#3a3,color:#060
+    class UOk,TOk ok
+
+    classDef cluster fill:#f8f9fa,stroke:#cbd5e1,color:#475569
+    class user,task cluster
+```
+
 ### User AuthZ
 
 - Verifies the resource's `householdId` matches `event.context.householdId` — i.e. the principal is a member of the household that owns the resource
@@ -97,6 +221,19 @@ This is a no-op for user requests (users are not subject to task permissions).
 
 All AuthZ failures are logged to the `security` domain with the specific reason, IP, user-agent, method, and path.
 
+### Special-case AuthZ: `token` resource
+
+`POST /api/tokens/read` issues short-lived SAS read URLs for blobs and does not fit the standard `requireAuthorization` model — its resource is a *capability* ("read this blob"), not a household resource. The endpoint inlines its own AuthZ:
+
+- **User principal**: blob's parent upload must be in `event.context.householdId`. Returns 404 on mismatch.
+- **Task principal**: parent upload's `hashId` must equal `workflowRun.upload.hashId`, and `taskActions` must include `'token:read'`. Returns 403 on mismatch.
+
+The standard `requireAuthorization(event, { uploadHashId })` is **not** suitable here because requests are keyed by `blobName`, not `uploadHashId` — and blobs include thumbnails, which are not the upload's primary blob.
+
+The path-based `_deriveResource` mapping does NOT include `/api/tokens` — derivation would yield `token:write` for a POST, which is semantically wrong (generating a SAS read URL is a read-capability action). The endpoint checks `'token:read'` directly instead of going through `requireTaskPermission`.
+
+**Why this matters operationally:** Trigger.dev workers do not need `AZ_STORAGE_ACCOUNT_KEY` in their environment. The storage key stays server-side; workers only hold their HMAC callback token + this scoped `token:read` capability.
+
 ## HMAC Token Mechanism
 
 ### Generation
@@ -122,16 +259,21 @@ Each task has a defined set of allowed `resource:permission` pairs in `shared/co
 
 ```js
 TASK_PERMISSIONS = {
-  'receipt-workflow': ['workflow:read', 'workflow:write'],
-  'analyze-ocr': ['receipt:read', 'receipt:write', 'upload:read', 'upload:write', 'workflow:read', 'workflow:write'],
-  'analyze-annotations': ['upload:read', 'upload:write', 'workflow:read', 'workflow:write'],
+  'receipt-workflow': ['receipt:read', 'receipt:write', 'upload:read', 'upload:write', 'workflow:read', 'workflow:write'],
+  'analyze-ocr': ['upload:read', 'upload:write', 'workflow:read', 'workflow:write', 'token:read'],
+  'analyze-annotations': ['upload:read', 'upload:write', 'workflow:read', 'workflow:write', 'token:read'],
   'create-split': ['receipt:read', 'receipt:write', 'split:write', 'workflow:read', 'workflow:write'],
+  'normalize-receipt': ['receipt:read', 'receipt:write', 'upload:read', 'workflow:read', 'workflow:write'],
+  'adjust-split': ['split:write', 'upload:read', 'workflow:read', 'workflow:write'],
 }
 ```
 
 The orchestrator generates a unique token per child task by including that task's actions in the HMAC input. The server reconstructs the expected actions from the `X-Task-Id` header + the permissions map. No extra headers needed.
 
 This means `analyze-annotations` literally cannot create a split — its token won't verify against an endpoint that requires `split:write`.
+
+> [!NOTE]
+> `token:read` is granted only to `analyze-ocr` and `analyze-annotations` — the only tasks that need to fetch blob content. It permits calling `POST /api/tokens/read` to obtain a short-lived (5 min) Azure Blob Storage SAS read URL for the workflow's scoped blob. Workers do not hold the storage account key — that secret stays on the Nuxt server. See "Special-case AuthZ: `token` resource" below.
 
 ### Scope
 
@@ -165,18 +307,54 @@ Scoping layers:
 
 ### Token Lifecycle
 
-```
-1. User uploads receipt
-2. User triggers workflow → POST /api/workflows/:uploadHashId
-3. Server creates workflow_runs row (UUID, createdAt)
-4. Server generates orchestrator token with scope + orchestrator actions
-5. Server triggers Trigger.dev orchestrator with { callbackToken, runUuid, runCreatedAt, scope }
-6. Orchestrator generates per-task tokens (each with task-specific actions from TASK_PERMISSIONS)
-7. Each child task receives its own unique token
-8. Tasks use their token as Bearer auth for API calls
-9. Server verifies token by reconstructing HMAC from DB values + scope + task actions
-10. Server checks requested operation is in the task's permission set
-11. Token expires ~15 min after workflow run creation
+A blob upload is a prerequisite — see [blob-storage-architecture.md](./blob-storage-architecture.md). The diagram below picks up at workflow trigger. The trigger itself is shown as a generic `POST /api/workflows/:uploadHashId` — it could be initiated by a logged-in user, a cron job, or any authenticated caller.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant DB@{ "type" : "database" } as Database
+    participant API as TallySplit API
+    box rgb(245, 243, 255) Agent Infrastructure
+      participant Orch as Orchestrator task
+      participant Child@{ "type" : "collections" } as Child task(s)
+    end
+    box rgb(240, 246, 255) Azure
+      participant AI as AI Service(s)
+      participant Storage@{ "type" : "database" } as Blob Storage
+    end
+
+    Note over API: POST /api/workflows/:uploadHashId
+    activate API
+    API->>+DB: INSERT workflow_runs (UUID, createdAt)
+    DB-->>-API: row
+    API->>API: Generate orchestrator token<br/>(scope + orchestrator actions)
+    API->>+Orch: enqueue (fire-and-forget)<br/>{ callbackToken, runUuid, runCreatedAt, scope }
+    Orch-->>-API: 202 Accepted    
+    deactivate API
+
+    activate Orch
+    Orch->>Orch: Generate task specific tokens<br/>
+    Orch->>Child: Dispatch (fire-and-forget)
+    deactivate Orch
+
+    opt Child needs blob content (e.g. analyze-ocr, analyze-annotations)        
+      Child->>+API: POST /api/tokens/read<br/>(token:read action)
+      API-->>-Child: SAS read URL (5 min TTL)
+      rect rgb(254, 252, 232)
+        Note over Child,Storage: AI service uses SAS URL
+        Child->>+AI: Request inference
+        AI->>+Storage: GET blob via SAS URL
+        Storage-->>-AI: blob bytes
+        AI-->>-Child: inference result
+      end        
+    end
+
+    Child->>+API: Apply task outcomes (e.g. results, mutations)
+    API->>API: Security Checks
+    Note over API: See AuthN + AuthZ flowchart
+    API->>+DB: Persist
+    DB-->>-API: OK
+    API-->>-Child: 200 OK / 403 Forbidden
 ```
 
 ## Security Logging
@@ -202,6 +380,8 @@ Integration tests in `tests/integration/security-boundaries.test.js` enforce:
 7. **Valid action format** — all entries in `TASK_PERMISSIONS` use valid `resource:permission` format
 
 These are regex-based and can be bypassed by commented-out code (documented in test file).
+
+Unit tests in `shared/config/task-permissions.test.js` additionally pin the **`token:read` allowlist** — the test fails loudly if any task other than `analyze-ocr` or `analyze-annotations` is granted `token:read`.
 
 ## Environment Variables
 

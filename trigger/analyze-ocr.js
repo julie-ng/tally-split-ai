@@ -2,7 +2,6 @@ import { task, logger } from '@trigger.dev/sdk/v3'
 import DocumentIntelligence, { getLongRunningPoller, isUnexpected } from '@azure-rest/ai-document-intelligence'
 import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
-import { azureStorageUtils } from '#server/utils/azure-storage.utils.js'
 import { azureOcrExtract } from '#server/utils/azure-ocr.utils.js'
 import { getAzureDocumentIntelligenceConfig } from '#server/utils/azure-document-intelligence.js'
 import { receiptUtils } from '#shared/utils/receipt.utils.js'
@@ -28,10 +27,12 @@ export const analyzeOcr = task({
       // 1. Fetch upload record via API
       const upload = await api.get(`/api/uploads/${uploadHashId}`)
 
-      // 2. Generate read-only SAS token
-      const { uploadUrl: blobUrlWithSas } = azureStorageUtils.generateBlobSasToken(upload.blobName, {
-        permissions: 'read',
-        expiresInMinutes: 5,
+      // 2. Request a read-only SAS URL from the Nuxt API.
+      //    The storage account key never leaves the server — see
+      //    server/api/tokens/read.post.js for the dual-auth handler.
+      const { blobUrlWithSas } = await api.post('/api/tokens/read', {
+        action: 'read',
+        blobName: upload.blobName,
       })
 
       // 3. Call Azure Document Intelligence

@@ -33,6 +33,22 @@ describe('TASK_PERMISSIONS', () => {
       expect(unique.size, `${taskId} has duplicate actions`).toBe(actions.length)
     }
   })
+
+  it('should grant token:read only to tasks that load blob content', () => {
+    // token:read lets a task request a SAS read URL via /api/tokens/read.
+    // Only tasks that actually fetch blob content (OCR, annotations) should
+    // have this — extending it broadens the storage-access blast radius.
+    const allowed = new Set(['analyze-ocr', 'analyze-annotations'])
+    for (const [taskId, actions] of Object.entries(TASK_PERMISSIONS)) {
+      const has = actions.includes('token:read')
+      if (allowed.has(taskId)) {
+        expect(has, `${taskId} should have token:read`).toBe(true)
+      }
+      else {
+        expect(has, `${taskId} must not have token:read`).toBe(false)
+      }
+    }
+  })
 })
 
 describe('getTaskActions', () => {

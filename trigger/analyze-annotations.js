@@ -1,7 +1,6 @@
 import { task, logger } from '@trigger.dev/sdk/v3'
 import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
-import { azureStorageUtils } from '#server/utils/azure-storage.utils.js'
 import { gpt4oUtils } from '#server/utils/azure-gpt4o.utils.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
 import { notifyStatus } from './utils/notify-status.js'
@@ -26,10 +25,12 @@ export const analyzeAnnotations = task({
       const upload = await api.get(`/api/uploads/${uploadHashId}?include=ocrJson,annotationsJson`)
       logger.log(`Upload fetched`, { blobName: upload.blobName, hasOcrJson: !!upload.ocrJson })
 
-      // 2. Generate read-only SAS token
-      const { uploadUrl: blobUrlWithSas } = azureStorageUtils.generateBlobSasToken(upload.blobName, {
-        permissions: 'read',
-        expiresInMinutes: 5,
+      // 2. Request a read-only SAS URL from the Nuxt API.
+      //    The storage account key never leaves the server — see
+      //    server/api/tokens/read.post.js for the dual-auth handler.
+      const { blobUrlWithSas } = await api.post('/api/tokens/read', {
+        action: 'read',
+        blobName: upload.blobName,
       })
 
       // 3. Extract line items from ocrJson (stored by analyzeOcr task)
