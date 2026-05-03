@@ -103,6 +103,7 @@ function getLinks (collapsed: boolean) {
     <UDashboardSidebar
       collapsible
       :ui="{
+        root: 'bg-muted',
         footer: 'border-t border-default',
       }"
     >
