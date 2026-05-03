@@ -15,13 +15,16 @@ export default defineEventHandler(async (event) => {
   /**
    * Validate request params
    */
-  const result = await readValidatedBody(event, body => zodSchemas.tokenReadRequestSchema.safeParse(body))
+  const rawBody = await readBody(event).catch(() => null)
+  const result = zodSchemas.tokenReadRequestSchema.safeParse(rawBody)
   if (!result.success) {
+    const errors = z.flattenError(result.error).fieldErrors
+    log.warn({ body: rawBody, errors }, 'Invalid request body for SAS read token')
     setResponseStatus(event, 400)
     return {
       success: false,
       message: 'Invalid request body',
-      errors: z.flattenError(result.error).fieldErrors,
+      errors,
     }
   }
   const { action, blobName } = result.data

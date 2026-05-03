@@ -16,6 +16,7 @@ function isActive (path: string) {
 }
 
 const splitMonths = useSplitMonths()
+const logout = useLogout()
 
 const userMenuItems = computed(() => [
   [
@@ -27,8 +28,7 @@ const userMenuItems = computed(() => [
     {
       label: 'Logout',
       icon: 'i-lucide-log-out',
-      to: '/logout',
-      external: true,
+      onSelect: () => logout(),
     },
   ],
 ])

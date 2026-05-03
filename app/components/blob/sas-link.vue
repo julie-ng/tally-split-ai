@@ -1,4 +1,6 @@
 <script setup>
+import { useTokensStore } from '~/stores/tokens.store'
+
 const props = defineProps({
   blobName: {
     type: String,
@@ -15,6 +17,8 @@ const props = defineProps({
   },
 })
 
+const tokensStore = useTokensStore()
+
 const uiClasses = computed(() => {
   if (props.ui && Object.hasOwn(props.ui, 'class')) {
     return props.ui.class
@@ -25,17 +29,8 @@ const uiClasses = computed(() => {
 })
 
 async function openBlobWithSas () {
-  const data = await $fetch('/api/tokens/read', {
-    method: 'POST',
-    body: {
-      action: 'read',
-      blobName: props.blobName,
-    },
-  })
-
-  if (data?.blobUrlWithSas) {
-    window.open(data.blobUrlWithSas, '_blank')
-  }
+  const url = await tokensStore.getReadUrl(props.blobName)
+  if (url) window.open(url, '_blank')
 }
 </script>
 

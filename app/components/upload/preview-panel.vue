@@ -13,22 +13,13 @@ const upload = computed(() =>
   props.hashId ? uploadsStore.getUploadByHashId(props.hashId) : null,
 )
 
-const isLoading = ref(false)
-
-// Fetch the full upload record whenever hashId changes. The panel stays
-// mounted while the user clicks between rows, so swapping content is
-// preferable to unmounting + remounting.
+// Refresh the full upload record in the background whenever hashId changes.
+// We rely on the cached value from the store (via the computed above) for
+// immediate render — this keeps it fresh.
 watch(
   () => props.hashId,
-  async (hashId) => {
-    if (!hashId) return
-    isLoading.value = true
-    try {
-      await uploadsStore.refreshUploadByHashId(hashId)
-    }
-    finally {
-      isLoading.value = false
-    }
+  (hashId) => {
+    if (hashId) uploadsStore.refreshUploadByHashId(hashId)
   },
   { immediate: true },
 )
@@ -67,7 +58,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
     </template>
 
     <template #body>
-      <div v-if="isLoading || !upload" class="space-y-3">
+      <div
+        v-if="!upload"
+        class="space-y-3"
+      >
         <USkeleton class="h-4 w-[250px]" />
         <USkeleton class="h-4 w-[250px]" />
         <USkeleton class="h-4 w-[250px]" />
