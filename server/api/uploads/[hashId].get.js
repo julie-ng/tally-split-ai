@@ -17,12 +17,21 @@ export default defineEventHandler(async (event) => {
   if (!includes.includes('ocrJson')) columns.ocrJson = false
   if (!includes.includes('annotationsJson')) columns.annotationsJson = false
 
-  // Query for the specific upload with receipt relation
+  // Query for the specific upload with relations.
+  // Receipt is intentionally slim ({id, title}) — matches the slim list
+  // endpoint shape so refreshUploadByHashId can replace list entries
+  // without losing receipt data. Components that need full receipt fields
+  // should fetch via the receipts store.
   const upload = await db.query.uploads.findFirst({
     where: eq(schema.uploads.hashId, hashId),
     columns: Object.keys(columns).length > 0 ? columns : undefined,
     with: {
-      receipt: true,
+      receipt: {
+        columns: {
+          id: true,
+          title: true,
+        },
+      },
       workflowRuns: true,
     },
   })

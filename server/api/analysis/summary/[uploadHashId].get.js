@@ -7,21 +7,12 @@ export default defineEventHandler(async (event) => {
 
   const hashId = getRouterParam(event, 'uploadHashId')
 
-  // Get upload from database with receipt relation
   const upload = await db.query.uploads.findFirst({
     where: eq(schema.uploads.hashId, hashId),
     columns: {
       hashId: true,
-      originalFilename: true,
       blobName: true,
-      size: true,
-      createdAt: true,
-      analyzedAt: true,
-      azureTags: true,
       ocrJson: true,
-    },
-    with: {
-      receipt: true,
     },
   })
 
@@ -68,47 +59,43 @@ export default defineEventHandler(async (event) => {
     return cleaned
   }
 
-  const resultFields = analysisData.analyzeResult.documents[0].fields
-  const summary = []
-  Object.keys(resultFields).forEach((key) => {
-    const fieldData = resultFields[key]
-    const f = {
-      field: key,
-    }
+  // Only build results if Azure succeeded — for failed/in-progress/legacy
+  // shapes, omit `results` and let the consumer check status before reading.
+  let results = null
+  const docFields = analysisData?.analyzeResult?.documents?.[0]?.fields
+  if (docFields) {
+    const summary = []
+    Object.keys(docFields).forEach((key) => {
+      const fieldData = docFields[key]
+      const f = { field: key }
 
-    // Include specific keys and any key starting with "value"
-    Object.keys(fieldData).forEach((fieldKey) => {
-      if (fieldKey === 'type' || fieldKey === 'confidence' || fieldKey === 'content' || fieldKey.startsWith('value')) {
-        f[fieldKey] = removeKeys(fieldData[fieldKey])
-      }
+      // Include specific keys and any key starting with "value"
+      Object.keys(fieldData).forEach((fieldKey) => {
+        if (fieldKey === 'type' || fieldKey === 'confidence' || fieldKey === 'content' || fieldKey.startsWith('value')) {
+          f[fieldKey] = removeKeys(fieldData[fieldKey])
+        }
+      })
+
+      summary.push(f)
     })
 
-    summary.push(f)
-  })
-
-  const sorted = AZReceiptModelUtils.sortFields(summary)
-  sorted.items = AZReceiptModelUtils.sortItems(sorted.items)
-  // console.log('⭐️ SORTED')
-  // console.log(sorted)
-
-  // Build response without ocrJson — already processed into azureAI.summary above
-  const { ocrJson: _, ...uploadMeta } = upload // eslint-disable-line no-unused-vars
+    results = AZReceiptModelUtils.sortFields(summary)
+    results.items = AZReceiptModelUtils.sortItems(results.items)
+  }
 
   return {
     success: true,
     data: {
-      ...uploadMeta,
-      status: analysisData.status,
-      createdDateTime: analysisData.createdDateTime,
-      azureAI: {
+      upload: {
+        hashId: upload.hashId,
+        blobName: upload.blobName,
+      },
+      azureAIDocIntel: {
+        status: analysisData.status,
+        createdDateTime: analysisData.createdDateTime,
         apiVersion: analysisData.analyzeResult?.apiVersion,
         modelId: analysisData.analyzeResult?.modelId,
-        summary: sorted,
-        // original: summary
-        // fieldsSummary: summary,
-        // result: {
-        //   document: analysisData.analyzeResult?.documents?.[0]
-        // }
+        results,
       },
     },
   }

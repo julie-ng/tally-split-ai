@@ -2,7 +2,6 @@
 import { getPaginationRowModel } from '@tanstack/vue-table'
 import { useUploadsStore } from '~/stores/uploads.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
-import { UPLOAD_STATUS } from '~~/shared/enums/upload-status.js'
 
 useHead({
   title: 'Uploads',
@@ -76,52 +75,7 @@ const tableMeta = computed(() => ({
   },
 }))
 
-const deleteUpload = async (hashId, title, blobName) => {
-  if (!confirm(`Are you sure you want to delete '${title}' (${blobName})?`)) {
-    return
-  }
-
-  try {
-    await uploadsStore.deleteUpload(hashId)
-  }
-  catch (error) {
-    console.error('Failed to delete upload:', error)
-    alert('Failed to delete upload. Please try again.')
-  }
-}
-
-function canAnalyze (upload) {
-  return upload.status === UPLOAD_STATUS.UPLOADED
-    && !workflowStore.isProcessingByHashId(upload.hashId)
-}
-
-function getRowActions (row) {
-  return [
-    [
-      { label: 'Actions', type: 'label' },
-      {
-        label: 'Details',
-        onSelect: () => navigateTo(`/uploads/${row.original.hashId}`),
-      },
-      {
-        label: 'View Receipt',
-        disabled: !row.original.receipt,
-        onSelect: () => row.original.receipt && navigateTo(`/receipts/${row.original.receipt.id}`),
-      },
-      {
-        label: 'Analyze',
-        disabled: !canAnalyze(row.original),
-        onSelect: () => workflowStore.triggerWorkflow(row.original.hashId),
-      },
-    ],
-    [
-      {
-        label: 'Delete',
-        onSelect: () => deleteUpload(row.original.hashId, row.original.title, row.original.blobName),
-      },
-    ],
-  ]
-}
+const { getRowActions } = useUploadRowActions()
 
 const paginationInfo = computed(() => {
   if (!table.value?.tableApi) return { start: 0, end: 0, total: 0 }

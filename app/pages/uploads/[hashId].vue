@@ -1,52 +1,22 @@
 <script setup>
-import { useIntervalFn } from '@vueuse/core'
-import { UPLOAD_ANALYSIS_STATUS } from '~~/shared/enums/upload-analysis-status.js'
+import { useUploadsStore } from '~/stores/uploads.store'
 
 const route = useRoute()
 const hashId = route.params.hashId
 
-// Fetch upload details
-const { data: upload, pending, error, refresh } = await useFetch(`/api/uploads/${hashId}`)
+const uploadsStore = useUploadsStore()
 
-// Fetch analysis data
-const { data: analysisData, pending: analysisPending, error: analysisError } = await useFetch(`/api/analysis/summary/${hashId}`)
+await uploadsStore.fetchUploadByHashId(hashId)
 
-// TODO: Evaluate where polling belongs — currently dies on page navigation.
-// Consider moving to a Pinia store or app-level composable so workflow status
-// updates survive navigation (e.g., user goes to /receipts while OCR is running).
-const isProcessing = computed(() => {
-  const status = upload.value?.analysisStatus
-  return status === UPLOAD_ANALYSIS_STATUS.QUEUED || status === UPLOAD_ANALYSIS_STATUS.PROCESSING
-})
+const upload = computed(() => uploadsStore.getUploadByHashId(hashId))
 
-const { pause, resume } = useIntervalFn(async () => {
-  if (isProcessing.value) {
-    await refresh()
-  }
-  else {
-    pause()
-  }
-}, 3000, { immediate: false })
-
-watch(isProcessing, (val) => {
-  if (val) resume()
-  else pause()
-}, { immediate: true })
-
-// Set page title reactively after upload is fetched
 useHead({
-  // eslint-disable-next-line no-constant-binary-expression
-  title: () => `${upload.value?.title} | Upload` || `Upload ${hashId}`,
+  title: () => upload.value?.title ? `${upload.value.title} | Upload` : `Upload ${hashId}`,
 })
 
 const breadcrumbItems = [
-  {
-    label: 'Uploads',
-    to: '/uploads',
-  }, {
-    label: hashId,
-    to: `/uploads/${hashId}`,
-  },
+  { label: 'Uploads', to: '/uploads' },
+  { label: hashId, to: `/uploads/${hashId}` },
 ]
 </script>
 
@@ -57,47 +27,24 @@ const breadcrumbItems = [
         <template #left>
           <UBreadcrumb :items="breadcrumbItems" />
         </template>
+        <template #right>
+          <UButton
+            :to="`/api/analysis/summary/${hashId}`"
+            target="_blank"
+            external
+            color="neutral"
+            variant="subtle"
+            icon="i-lucide-external-link"
+          >
+            View raw OCR
+          </UButton>
+        </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
-      <!-- Loading -->
-      <loading-placeholder v-if="pending" title="Loading Upload" :hash-id="hashId" />
-
-      <!-- Error -->
-      <UAlert
-        v-else-if="error"
-        title="Unable to Load Upload"
-        :description="error.message"
-        class="my-5"
-        color="error"
-        variant="subtle"
-        icon="i-lucide-triangle-alert"
-      />
-
-      <!-- Upload Details -->
-      <div v-else-if="upload">
-        <upload-analysis-tab
-          :upload="upload"
-          :analysis-data="analysisData"
-          :analysis-pending="analysisPending"
-          :analysis-error="analysisError"
-        />
-      </div>
-
-      <!-- Not found state -->
-      <div v-else>
-        <not-found :title="`Upload Not Found`" :hash-id="hashId" />
-      </div>
+      <upload-overview-tab-content v-if="upload" :hash-id="hashId" />
+      <not-found v-else :title="`Upload Not Found`" :hash-id="hashId" />
     </template>
   </UDashboardPanel>
 </template>
-
-<style scoped>
-pre {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  overflow-x: auto;
-  max-width: 100%;
-}
-</style>

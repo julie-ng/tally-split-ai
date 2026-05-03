@@ -1,25 +1,41 @@
 <script setup>
+import { useUploadsStore } from '~/stores/uploads.store'
+
 const props = defineProps({
   receipt: Object,
 })
 
+const uploadsStore = useUploadsStore()
+
 // Get upload hashId for fetching analysis
 const uploadHashId = computed(() => props.receipt.uploads?.[0]?.hashId)
 
-// Fetch analysis data
-const { data: analysisData, pending, error } = await useFetch(
-  () => `/api/analysis/summary/${uploadHashId.value}`,
-  {
-    key: `analysis-${uploadHashId.value}`,
-    immediate: !!uploadHashId.value,
-  },
-)
+// Fetch analysis data via store (cache-aware). The store returns the envelope
+// `data` field directly (or null on error).
+const analysisData = ref(null)
+const pending = ref(false)
+const error = ref(null)
+
+watchEffect(async () => {
+  if (!uploadHashId.value) return
+  pending.value = true
+  error.value = null
+  try {
+    analysisData.value = await uploadsStore.fetchAnalysisByHashId(uploadHashId.value)
+  }
+  catch (err) {
+    error.value = err
+  }
+  finally {
+    pending.value = false
+  }
+})
 
 const is404 = computed(() => error.value?.statusCode === 404)
 const is500 = computed(() => error.value?.statusCode === 500)
 
 // Validate analysis data
-const validation = computed(() => zodSchemas.analysisSummarySchema.safeParse(analysisData.value?.data?.azureAI?.summary))
+const validation = computed(() => zodSchemas.analysisSummarySchema.safeParse(analysisData.value?.azureAIDocIntel?.results))
 const isValid = computed(() => validation.value.success)
 const validatedFields = computed(() => validation.value.success ? validation.value.data : null)
 
@@ -105,7 +121,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
     </UAlert>
 
     <!-- Analysis data -->
-    <div v-else-if="analysisData?.success">
+    <div v-else-if="analysisData">
       <!-- Validation Error -->
       <UAlert
         v-if="!isValid"
@@ -221,7 +237,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
       </h1>
       <div class="bg-slate-50 p-4 rounded">
         <vue-json-pretty
-          :data="analysisData.data"
+          :data="analysisData"
           :indent="2"
           :deep="4"
           :show-icon="true"

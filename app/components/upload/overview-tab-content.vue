@@ -1,14 +1,24 @@
 <script setup>
 import { hasKeys } from '#shared/utils/object.utils.js'
+import { useUploadsStore } from '~/stores/uploads.store'
 
-// eslint-disable-next-line no-unused-vars
 const props = defineProps({
-  upload: Object, // should inherit valid schema.
+  hashId: { type: String, required: true },
 })
+
+const uploadsStore = useUploadsStore()
+
+// Ensure full upload record is loaded (cache-aware).
+await uploadsStore.fetchUploadByHashId(props.hashId)
+
+const upload = computed(() => uploadsStore.getUploadByHashId(props.hashId))
 </script>
 
 <template>
-  <div class="pt-6 px-4 grid grid-cols-5 gap-6">
+  <div v-if="!upload" class="pt-6 px-4 text-muted">
+    Upload not found.
+  </div>
+  <div v-else class="pt-6 px-4 grid grid-cols-5 gap-6">
     <div class="col-span-3">
       <UCard>
         <ui-collapsible-property-group title="File Info">

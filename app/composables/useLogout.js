@@ -1,5 +1,6 @@
 import { useRealtimeStore } from '~/stores/realtime.store'
 import { useTokensStore } from '~/stores/tokens.store'
+import { useUploadsStore } from '~/stores/uploads.store'
 
 /**
  * Centralized logout: clear in-memory state that should not survive a session
@@ -12,10 +13,12 @@ import { useTokensStore } from '~/stores/tokens.store'
 export function useLogout () {
   const realtimeStore = useRealtimeStore()
   const tokensStore = useTokensStore()
+  const uploadsStore = useUploadsStore()
 
   return async function logout () {
     realtimeStore.disconnect()
     tokensStore.clear()
+    uploadsStore.clearAnalysisCache()
     await navigateTo('/logout', { external: true })
   }
 }

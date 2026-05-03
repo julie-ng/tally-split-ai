@@ -13,13 +13,12 @@ const upload = computed(() =>
   props.hashId ? uploadsStore.getUploadByHashId(props.hashId) : null,
 )
 
-// Refresh the full upload record in the background whenever hashId changes.
-// We rely on the cached value from the store (via the computed above) for
-// immediate render — this keeps it fresh.
+// Cache-aware fetch on hashId change. Returns immediately if the full record
+// is already cached; otherwise fetches in the background.
 watch(
   () => props.hashId,
   (hashId) => {
-    if (hashId) uploadsStore.refreshUploadByHashId(hashId)
+    if (hashId) uploadsStore.fetchUploadByHashId(hashId)
   },
   { immediate: true },
 )
@@ -47,6 +46,15 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
       >
         <template #right>
           <UButton
+            :to="`/api/analysis/summary/${hashId}`"
+            target="_blank"
+            external
+            color="neutral"
+            variant="ghost"
+            icon="i-lucide-external-link"
+            aria-label="View raw OCR"
+          />
+          <UButton
             icon="i-lucide-x"
             color="neutral"
             variant="ghost"
@@ -58,19 +66,17 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
     </template>
 
     <template #body>
-      <div
-        v-if="!upload"
-        class="space-y-3"
-      >
-        <USkeleton class="h-4 w-[250px]" />
-        <USkeleton class="h-4 w-[250px]" />
-        <USkeleton class="h-4 w-[250px]" />
-        <USkeleton class="h-4 w-[250px]" />
-      </div>
-      <upload-overview-tab-content
-        v-else
-        :upload="upload"
-      />
+      <Suspense :key="hashId">
+        <upload-overview-tab-content :hash-id="hashId" />
+        <template #fallback>
+          <div class="space-y-3">
+            <USkeleton class="h-4 w-[250px]" />
+            <USkeleton class="h-4 w-[250px]" />
+            <USkeleton class="h-4 w-[250px]" />
+            <USkeleton class="h-4 w-[250px]" />
+          </div>
+        </template>
+      </Suspense>
     </template>
   </UDashboardPanel>
 </template>
