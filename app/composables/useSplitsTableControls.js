@@ -108,13 +108,13 @@ export function useSplitsTableControls (splitsRef) {
 
   const sortLabel = computed(() => {
     const option = sortOptions.value.find(o => o.value === sortBy.value)
-    const direction = sortOrder.value === 'desc'
-      ? 'DESC'
-      : 'ASC'
-    return option
-      ? `${option.label} · ${direction}`
-      : direction
+    return option?.label ?? 'Sort'
   })
+
+  const sortIcon = computed(() => sortOrder.value === 'desc'
+    ? 'i-lucide-arrow-down-wide-narrow'
+    : 'i-lucide-arrow-up-narrow-wide',
+  )
 
   const sortMenuItems = computed(() => [
     [
@@ -212,6 +212,7 @@ export function useSplitsTableControls (splitsRef) {
     paidByLabel,
     paidByMenuItems,
     sortLabel,
+    sortIcon,
     sortMenuItems,
     // Reset
     hasActiveFilters,

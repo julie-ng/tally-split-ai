@@ -22,6 +22,10 @@ defineProps({
     type: String,
     required: true,
   },
+  sortIcon: {
+    type: String,
+    default: 'i-lucide-arrow-down-wide-narrow',
+  },
   sortMenuItems: {
     type: Array,
     required: true,
@@ -35,14 +39,13 @@ defineProps({
     default: () => ({ start: 0, end: 0, total: 0 }),
   },
 })
-
 defineEmits(['reset'])
 
 const householdStore = useHouseholdStore()
 </script>
 
 <template>
-  <div class="flex items-center justify-between gap-2 -mb-1">
+  <div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between lg:gap-0">
     <p class="text-sm text-slate-400">
       Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} splits for
       <NuxtLink :to="householdStore.path" class="underline cursor-pointer">{{ householdStore.name }}</NuxtLink>
@@ -57,7 +60,7 @@ const householdStore = useHouseholdStore()
           leading-icon="i-lucide-square-check"
           trailing-icon="i-lucide-chevron-down"
         >
-          Settled · {{ settledLabel }}
+          {{ settledLabel }}
         </UButton>
 
         <template #check-leading="{ item }">
@@ -77,7 +80,7 @@ const householdStore = useHouseholdStore()
           leading-icon="i-lucide-user"
           trailing-icon="i-lucide-chevron-down"
         >
-          Paid By · {{ paidByLabel }}
+          {{ paidByLabel }}
         </UButton>
 
         <template #check-leading="{ item }">
@@ -94,7 +97,7 @@ const householdStore = useHouseholdStore()
           color="neutral"
           variant="outline"
           size="sm"
-          leading-icon="i-lucide-arrow-down-wide-narrow"
+          :leading-icon="sortIcon"
           trailing-icon="i-lucide-chevron-down"
         >
           {{ sortLabel }}

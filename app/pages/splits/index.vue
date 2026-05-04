@@ -34,6 +34,7 @@ const {
   paidByLabel,
   paidByMenuItems,
   sortLabel,
+  sortIcon,
   sortMenuItems,
   hasActiveFilters,
   reset,
