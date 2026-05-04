@@ -86,9 +86,9 @@ _As of April 2025, docs are scattered brain dumps. Clean up needed._
 - [x] UI to upload files (drag-and-drop, queued, direct-to-Azure)
 - [x] UI to view/edit/delete receipts
 - [x] UI for splits (via receipt view page)
-- [x] Receipt inbox view (list + preview at `/receipts/inbox`)
+- [x] ~~Receipt inbox view (list + preview at `/receipts/inbox`)~~ _(temporary solution removed)_
 - [x] Real-time workflow status updates via SSE
-- [ ] SSO with GitHub
+- [x] SSO with GitHub
 
 #### Backend Functionality
 

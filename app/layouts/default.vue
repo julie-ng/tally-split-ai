@@ -54,11 +54,6 @@ function getLinks (collapsed: boolean) {
         icon: 'i-lucide-receipt-euro',
         to: '/receipts',
         active: isActive('/receipts'),
-        children: expanded
-          ? [
-              { label: 'Inbox', to: '/receipts/inbox', icon: 'i-lucide-inbox' },
-            ]
-          : [],
       },
       {
         label: 'Splits',
