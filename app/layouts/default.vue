@@ -65,7 +65,7 @@ function getLinks (collapsed: boolean) {
         icon: 'i-lucide-coins',
         to: '/splits',
         active: isActive('/splits'),
-        defaultOpen: true,
+        // defaultOpen: true,
         children: expanded ? splitMonths : [],
       },
       {
