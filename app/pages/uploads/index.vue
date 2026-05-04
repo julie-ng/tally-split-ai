@@ -97,7 +97,9 @@ const router = useRouter()
 
 const previewHashId = computed(() => route.query.preview ?? null)
 
-function openPreview (hashId) {
+function openPreview (event, row) {
+  // console.log('openPreview()', row)
+  const hashId = row.original.hashId
   router.replace({ query: { ...route.query, preview: hashId } })
 }
 
@@ -113,7 +115,7 @@ function closePreview () {
     <template #header>
       <UDashboardNavbar title="Uploads">
         <template #left>
-          <UBreadcrumb :items="[{ label: 'Uploads' }]" />
+          <UBreadcrumb :items="[{ label: 'Uploads', class: 'font-semibold text-default' }]" />
         </template>
         <template #right>
           <UButton class="px-4 py-2 cursor-pointer" variant="subtle" @click="uploadsStore.fetchUploads(); workflowStore.fetchAll()">
@@ -125,8 +127,8 @@ function closePreview () {
     </template>
 
     <template #body>
-      <p class="text-sm text-slate-400 mb-4">
-        Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} database records
+      <p class="text-sm text-slate-400">
+        Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} Uploads
       </p>
 
       <ClientOnly>
@@ -147,6 +149,7 @@ function closePreview () {
             loading-color="primary"
             loading-animation="carousel"
             class="flex-1"
+            @select="openPreview"
           >
             <template #hashId-cell="{ row }">
               <NuxtLink
@@ -178,13 +181,7 @@ function closePreview () {
                     variant="ghost"
                   />
                 </UTooltip>
-                <UButton
-                  variant="link"
-                  color="neutral"
-                  @click="openPreview(row.original.hashId)"
-                >
-                  {{ row.original.originalFilename }}
-                </UButton>
+                {{ row.original.originalFilename }}
               </span>
             </template>
 
