@@ -6,24 +6,8 @@ defineProps({
     default: 'All dates',
   },
 })
-const items = [
-  {
-    label: 'October 2025',
-    to: '/splits/2025/10',
-  },
-  {
-    label: 'November 2025',
-    to: '/splits/2025/11',
-  },
-  {
-    label: 'December 2025',
-    to: '/splits/2025/12',
-  },
-  {
-    label: 'January 2026',
-    to: '/splits/2026/01',
-  },
-]
+
+const items = useSplitMonths()
 </script>
 
 <template>
