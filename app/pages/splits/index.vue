@@ -30,14 +30,66 @@ const pagination = ref({
   pageSize: 50,
 })
 
+// -------- Sort dropdown --------
+// `sortBy` + `sortOrder` are the user-facing knobs; they drive `sorting`
+// (TanStack's model). New sort options just need an entry in SORT_OPTIONS.
+const sortOptions = computed(() => [
+  { value: 'date', label: 'Receipt Date' },
+  { value: 'splitAmount', label: 'Split Amount' },
+  { value: 'userOneShare', label: `${user1Name.value}'s Share` },
+  { value: 'userTwoShare', label: `${user2Name.value}'s Share` },
+])
+const sortBy = ref('date')
+const sortOrder = ref('desc') // 'desc' | 'asc'
+
+const sorting = computed(() => [{ id: sortBy.value, desc: sortOrder.value === 'desc' }])
+
+const sortLabel = computed(() => {
+  const option = sortOptions.value.find(o => o.value === sortBy.value)
+  const direction = sortOrder.value === 'desc' ? 'DESC' : 'ASC'
+  return option ? `${option.label} · ${direction}` : direction
+})
+
+const sortMenuItems = computed(() => [
+  [
+    { label: 'Sort by', type: 'label' },
+    ...sortOptions.value.map(o => ({
+      label: o.label,
+      icon: sortBy.value === o.value ? 'i-lucide-check' : undefined,
+      onSelect: () => {
+        sortBy.value = o.value
+      },
+    })),
+  ],
+  [
+    { label: 'Order', type: 'label' },
+    {
+      label: 'ASC',
+      icon: sortOrder.value === 'asc' ? 'i-lucide-check' : 'i-lucide-arrow-up-narrow-wide',
+      onSelect: () => {
+        sortOrder.value = 'asc'
+      },
+    },
+    {
+      label: 'DESC',
+      icon: sortOrder.value === 'desc' ? 'i-lucide-check' : 'i-lucide-arrow-down-wide-narrow',
+      onSelect: () => {
+        sortOrder.value = 'desc'
+      },
+    },
+  ],
+])
+
 const columns = computed(() => [
+  // {
+  //   accessorKey: 'analysisStatus',
+  //   header: 'Analyzed',
+  // },
   {
-    accessorKey: 'analysisStatus',
-    header: 'Analyzed',
-  },
-  {
-    accessorKey: 'date',
-    header: 'Date',
+    id: 'date',
+    accessorFn: row => row.receipt?.date ?? null,
+    header: 'Receipt Date',
+    sortUndefined: 'last',
   },
   {
     accessorKey: 'title',
@@ -50,14 +102,17 @@ const columns = computed(() => [
   {
     accessorKey: 'splitAmount',
     header: 'Split Amount',
+    meta: { class: { th: 'text-right' } },
   },
   {
     accessorKey: 'userOneShare',
     header: `${user1Name.value}'s Share`,
+    meta: { class: { th: 'text-right' } },
   },
   {
     accessorKey: 'userTwoShare',
     header: `${user2Name.value}'s Share`,
+    meta: { class: { th: 'text-right' } },
   },
   {
     accessorKey: 'paidByUserId',
@@ -67,14 +122,14 @@ const columns = computed(() => [
     accessorKey: 'isSettled',
     header: 'Settled',
   },
-  {
-    id: 'actions',
-    header: 'Actions',
-  },
-  {
-    accessorKey: 'filename',
-    header: 'File',
-  },
+  // {
+  //   id: 'actions',
+  //   header: 'Actions',
+  // },
+  // {
+  //   accessorKey: 'filename',
+  //   header: 'File',
+  // },
 ])
 
 const tableStyles = {
@@ -117,6 +172,44 @@ const paginationInfo = computed(() => {
 
   return { start, end, total }
 })
+
+// -------- Preview panel --------
+// URL state: ?preview=<splitId> is the single source of truth.
+const route = useRoute()
+const router = useRouter()
+
+const previewSplitId = computed(() => {
+  const raw = route.query.preview
+  if (!raw) return null
+  const id = Number(raw)
+  return Number.isFinite(id) ? id : null
+})
+
+function openPreview (event, row) {
+  router.replace({ query: { ...route.query, preview: row.original.id } })
+}
+
+function closePreview () {
+  const query = { ...route.query }
+  delete query.preview
+  router.replace({ query })
+}
+
+const tableMeta = computed(() => ({
+  class: {
+    tr: row => row?.original?.id === previewSplitId.value ? 'bg-primary/10' : '',
+  },
+}))
+
+// On initial load (or when previewSplitId changes), jump to the page that
+// contains the previewed row so the highlight is actually visible.
+watch([previewSplitId, splits, () => table.value?.tableApi], ([id, rows, api]) => {
+  if (!id || !api || !rows?.length) return
+  const index = rows.findIndex(s => s.id === id)
+  if (index < 0) return
+  const pageSize = api.getState().pagination.pageSize
+  api.setPageIndex(Math.floor(index / pageSize))
+}, { immediate: true })
 </script>
 
 <template>
@@ -170,26 +263,44 @@ const paginationInfo = computed(() => {
         />
       </div>
 
+      <!-- Toolbar -->
+      <div class="flex items-center gap-2 mb-3">
+        <UDropdownMenu :items="sortMenuItems">
+          <UButton
+            color="neutral"
+            variant="outline"
+            size="sm"
+            leading-icon="i-lucide-arrow-down-wide-narrow"
+            trailing-icon="i-lucide-chevron-down"
+          >
+            {{ sortLabel }}
+          </UButton>
+        </UDropdownMenu>
+      </div>
+
       <!-- Table -->
       <ClientOnly>
         <div class="border bg-white border-slate-200 rounded-lg">
           <UTable
             ref="table"
             v-model:pagination="pagination"
+            v-model:sorting="sorting"
             :pagination-options="{
               getPaginationRowModel: getPaginationRowModel(),
               autoResetPageIndex: false,
             }"
             :data="splits"
             :columns="columns"
+            :meta="tableMeta"
             :ui="tableStyles"
             :loading="pending"
             loading-color="primary"
             loading-animation="carousel"
             class="flex-1"
+            @select="openPreview"
           >
             <!-- Analysis Status -->
-            <template #analysisStatus-cell="{ row }">
+            <!-- <template #analysisStatus-cell="{ row }">
               <UBadge
                 v-if="getFirstUpload(row.original)"
                 :color="badgeStyleHelpers.statusBadgeColor(getFirstUpload(row.original).analysisStatus)"
@@ -198,7 +309,7 @@ const paginationInfo = computed(() => {
                 {{ getFirstUpload(row.original).analysisStatus || 'unknown' }}
               </UBadge>
               <span v-else class="text-slate-400">—</span>
-            </template>
+            </template> -->
 
             <!-- Receipt Title -->
             <template #title-cell="{ row }">
@@ -277,7 +388,7 @@ const paginationInfo = computed(() => {
             </template>
 
             <!-- Actions -->
-            <template #actions-cell="{ row }">
+            <!-- <template #actions-cell="{ row }">
               <NuxtLink :to="`/receipts/${row.original.receipt?.id}`">
                 <UButton
                   variant="soft"
@@ -289,15 +400,15 @@ const paginationInfo = computed(() => {
                   Edit
                 </UButton>
               </NuxtLink>
-            </template>
+            </template> -->
 
             <!-- Filename -->
-            <template #filename-cell="{ row }">
+            <!-- <template #filename-cell="{ row }">
               <span v-if="getFirstUpload(row.original)" class="text-xs text-slate-500 font-mono truncate max-w-32 block">
                 {{ getFirstUpload(row.original).originalFilename || '—' }}
               </span>
               <span v-else class="text-slate-400">—</span>
-            </template>
+            </template> -->
           </UTable>
 
           <!-- Pagination -->
@@ -316,4 +427,10 @@ const paginationInfo = computed(() => {
       </ClientOnly>
     </template>
   </UDashboardPanel>
+
+  <split-panel
+    v-if="previewSplitId"
+    :split-id="previewSplitId"
+    @close="closePreview"
+  />
 </template>

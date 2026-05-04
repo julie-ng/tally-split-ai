@@ -308,9 +308,11 @@ export const useSplitsStore = defineStore('splits', () => {
         body: payload,
       })
 
-      // Update with server response
+      // Merge server response onto the existing entry. The PUT endpoint
+      // returns a bare split (no `receipt` join), so a full replacement
+      // would clobber nested fields populated by the list endpoint.
       if (result.updated) {
-        splits.value[id] = result.updated
+        splits.value[id] = { ...splits.value[id], ...result.updated }
       }
 
       _log(`[SplitsStore] ✅ updated split: ${id}`)

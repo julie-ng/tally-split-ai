@@ -1,16 +1,30 @@
 <script setup>
+import { useReceiptsStore } from '~/stores/receipts.store'
+import { useSplitsStore } from '~/stores/splits.store'
+
 const props = defineProps({
-  receipt: {
-    type: Object,
+  splitId: {
+    type: Number,
     required: true,
   },
 })
 
-const uploadHashId = computed(() => props.receipt.uploads?.[0]?.hashId)
+const splitsStore = useSplitsStore()
+const receiptsStore = useReceiptsStore()
+
+const split = computed(() => splitsStore.getSplitById(props.splitId))
+const receiptId = computed(() => split.value?.receiptId ?? split.value?.receipt?.id ?? null)
+const receipt = computed(() => receiptId.value ? receiptsStore.getReceiptById(receiptId.value) : null)
+
+watchEffect(() => {
+  if (receiptId.value) receiptsStore.fetchReceiptById(receiptId.value)
+})
+
+const uploadHashId = computed(() => receipt.value?.uploads?.[0]?.hashId)
 
 const formattedDate = computed(() => {
-  return props.receipt.date
-    ? dateUtils.formatISODate(props.receipt.date)
+  return receipt.value?.date
+    ? dateUtils.formatISODate(receipt.value.date)
     : null
 })
 
@@ -20,7 +34,7 @@ provide('highlightedLabel', highlightedLabel)
 </script>
 
 <template>
-  <div class="grid grid-cols-2 gap-6">
+  <div v-if="receipt" class="grid grid-cols-2 gap-6">
     <!-- Left column: Receipt info -->
     <div class="space-y-5">
       <!-- Title & Merchant -->
@@ -60,14 +74,12 @@ provide('highlightedLabel', highlightedLabel)
 
       <USeparator />
 
-      <!-- Split Costs -->
+      <!-- Split Costs (includes LLM analysis) -->
       <div>
         <p class="text-sm text-muted mb-2">
           Split Costs
         </p>
-        <receipt-split
-          :receipt-id="receipt.id"
-        />
+        <receipt-split :receipt-id="receipt.id" />
       </div>
 
       <USeparator />
