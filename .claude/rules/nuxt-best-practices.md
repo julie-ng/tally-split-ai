@@ -64,7 +64,7 @@ Wrap content that should not be server-rendered in `<ClientOnly>`:
 </ClientOnly>
 ```
 
-Reference: `app/components/upload/overview.vue`
+Reference: `app/components/upload/preview-azure.vue`
 
 ## Configuration Access
 

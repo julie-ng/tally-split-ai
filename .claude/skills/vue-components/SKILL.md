@@ -66,4 +66,4 @@ const receipt = computed(() => receiptsStore.getReceiptById(props.receiptId))
 
 - `app/components/receipt/edit-form.vue` — form with store interaction
 - `app/components/blob/sas-link.vue` — simple display with SAS URL
-- `app/components/upload/overview.vue` — `<ClientOnly>` usage
+- `app/components/upload/preview-azure.vue` — `<ClientOnly>` usage

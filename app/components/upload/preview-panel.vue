@@ -57,17 +57,36 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
     </template>
 
     <template #body>
-      <Suspense :key="hashId">
-        <upload-overview :hash-id="hashId" />
-        <template #fallback>
-          <div class="space-y-3">
-            <USkeleton class="h-4 w-[250px]" />
-            <USkeleton class="h-4 w-[250px]" />
-            <USkeleton class="h-4 w-[250px]" />
-            <USkeleton class="h-4 w-[250px]" />
-          </div>
-        </template>
-      </Suspense>
+      <div v-if="!upload" class="pt-6 px-4 text-muted">
+        Loading…
+      </div>
+      <div v-else class="pt-6 px-4 grid grid-cols-5 gap-6">
+        <div class="col-span-3">
+          <UCard>
+            <ui-collapsible-property-group title="Overview">
+              <upload-preview-overview :hash-id="hashId" />
+            </ui-collapsible-property-group>
+
+            <hr class="text-slate-300 my-3">
+
+            <ui-collapsible-property-group title="AI Analysis">
+              <upload-preview-analysis :hash-id="hashId" />
+            </ui-collapsible-property-group>
+
+            <hr class="text-slate-300 my-3">
+
+            <ui-collapsible-property-group title="Azure Info">
+              <upload-preview-azure :hash-id="hashId" />
+            </ui-collapsible-property-group>
+          </UCard>
+        </div>
+        <div class="col-span-2">
+          <blob-image
+            :blob-name="upload.blobName"
+            :alt="upload.blobName"
+          />
+        </div>
+      </div>
     </template>
   </UDashboardPanel>
 </template>
