@@ -99,32 +99,36 @@ function closePreview () {
     </template>
 
     <template #body>
-      <h1 class="font-bold text-2xl">
-        All Splits
-      </h1>
+      <div>
+        <h1 class="font-bold text-2xl">
+          All Splits
+        </h1>
 
-      <splits-summary-cards :summary="summary" />
+        <splits-summary-cards :summary="summary" class="my-4" />
 
-      <splits-toolbar
-        :settled-label="settledLabel"
-        :settled-menu-items="settledMenuItems"
-        :paid-by-label="paidByLabel"
-        :paid-by-menu-items="paidByMenuItems"
-        :sort-label="sortLabel"
-        :sort-menu-items="sortMenuItems"
-        :has-active-filters="hasActiveFilters"
-        :pagination-info="paginationInfo"
-        @reset="reset"
-      />
+        <splits-toolbar
+          :settled-label="settledLabel"
+          :settled-menu-items="settledMenuItems"
+          :paid-by-label="paidByLabel"
+          :paid-by-menu-items="paidByMenuItems"
+          :sort-label="sortLabel"
+          :sort-icon="sortIcon"
+          :sort-menu-items="sortMenuItems"
+          :has-active-filters="hasActiveFilters"
+          :pagination-info="paginationInfo"
+          class="mt-6 mb-3"
+          @reset="reset"
+        />
 
-      <splits-table
-        v-model:pagination="pagination"
-        :data="filteredSplits"
-        :sorting="sorting"
-        :pagination-info="paginationInfo"
-        :preview-split-id="previewSplitId"
-        @select="openPreview"
-      />
+        <splits-table
+          v-model:pagination="pagination"
+          :data="filteredSplits"
+          :sorting="sorting"
+          :pagination-info="paginationInfo"
+          :preview-split-id="previewSplitId"
+          @select="openPreview"
+        />
+      </div>
     </template>
   </UDashboardPanel>
 
