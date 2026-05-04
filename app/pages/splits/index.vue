@@ -27,6 +27,8 @@ async function refreshAll () {
 const {
   filteredSplits,
   sorting,
+  pagination,
+  paginationInfo,
   settledLabel,
   settledMenuItems,
   paidByLabel,
@@ -69,7 +71,17 @@ function closePreview () {
     <template #header>
       <UDashboardNavbar title="Splits">
         <template #left>
-          <UBreadcrumb :items="[{ label: 'Splits' }]" />
+          <UBreadcrumb
+            :items="[
+              {
+                label: 'Splits',
+                // class: 'text-default',
+              },
+              {
+                label: 'All',
+              },
+            ]"
+          />
         </template>
         <template #right>
           <UButton
@@ -86,6 +98,10 @@ function closePreview () {
     </template>
 
     <template #body>
+      <h1 class="font-bold text-2xl">
+        All Splits
+      </h1>
+
       <splits-summary-cards :summary="summary" />
 
       <splits-toolbar
@@ -96,12 +112,15 @@ function closePreview () {
         :sort-label="sortLabel"
         :sort-menu-items="sortMenuItems"
         :has-active-filters="hasActiveFilters"
+        :pagination-info="paginationInfo"
         @reset="reset"
       />
 
       <splits-table
+        v-model:pagination="pagination"
         :data="filteredSplits"
         :sorting="sorting"
+        :pagination-info="paginationInfo"
         :preview-split-id="previewSplitId"
         @select="openPreview"
       />

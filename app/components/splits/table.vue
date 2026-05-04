@@ -15,9 +15,9 @@ const props = defineProps({
     type: [Number, null],
     default: null,
   },
-  pageSize: {
-    type: Number,
-    default: 25,
+  paginationInfo: {
+    type: Object,
+    default: () => ({ start: 0, end: 0, total: 0 }),
   },
   showPagination: {
     type: Boolean,
@@ -30,16 +30,16 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['select'])
+const pagination = defineModel('pagination', {
+  type: Object,
+  default: () => ({ pageIndex: 0, pageSize: 25 }),
+})
 
 const householdStore = useHouseholdStore()
 const user1Name = computed(() => householdStore.getMemberFirstName(householdStore.userOne?.id))
 const user2Name = computed(() => householdStore.getMemberFirstName(householdStore.userTwo?.id))
 
 const table = useTemplateRef('table')
-const pagination = ref({
-  pageIndex: 0,
-  pageSize: props.pageSize,
-})
 
 const columns = computed(() => [
   {
@@ -95,34 +95,6 @@ const tableMeta = computed(() => ({
       : '',
   },
 }))
-
-const paginationInfo = computed(() => {
-  if (!table.value?.tableApi) {
-    return { start: 0, end: 0, total: 0 }
-  }
-  const state = table.value.tableApi.getState().pagination
-  const total = table.value.tableApi.getFilteredRowModel().rows.length
-  const start = state.pageIndex * state.pageSize + 1
-  const end = Math.min((state.pageIndex + 1) * state.pageSize, total)
-  return { start, end, total }
-})
-
-// Clamp pageIndex when filtered data shrinks below the current page.
-// (autoResetPageIndex is disabled to avoid resets on unrelated data
-// refreshes, so this case is handled manually.)
-watch(
-  () => props.data?.length ?? 0,
-  (total) => {
-    if (!table.value?.tableApi) {
-      return
-    }
-    const size = table.value.tableApi.getState().pagination.pageSize
-    const lastValidPage = Math.max(0, Math.ceil(total / size) - 1)
-    if (pagination.value.pageIndex > lastValidPage) {
-      pagination.value.pageIndex = lastValidPage
-    }
-  },
-)
 
 // Auto-jump to the page that contains the previewed row so the highlight is
 // visible after a deep-link. Use TanStack's sorted/filtered row model so the
@@ -238,10 +210,10 @@ function onSelect (event, row) {
           Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }}
         </div>
         <UPagination
-          :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
-          :items-per-page="table?.tableApi?.getState().pagination.pageSize"
-          :total="table?.tableApi?.getFilteredRowModel().rows.length"
-          @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
+          :page="pagination.pageIndex + 1"
+          :items-per-page="pagination.pageSize"
+          :total="paginationInfo.total"
+          @update:page="(p) => { pagination.pageIndex = p - 1 }"
         />
       </div>
 

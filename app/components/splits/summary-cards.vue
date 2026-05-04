@@ -1,8 +1,11 @@
 <script setup>
 import { useHouseholdStore } from '~/stores/household.store'
 
-const props = defineProps({
-  summary: { type: Object, default: null },
+defineProps({
+  summary: {
+    type: Object,
+    default: null,
+  },
 })
 
 const householdStore = useHouseholdStore()

@@ -1,4 +1,6 @@
 <script setup>
+import { useHouseholdStore } from '~/stores/household.store'
+
 defineProps({
   settledLabel: {
     type: String,
@@ -28,82 +30,95 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  paginationInfo: {
+    type: Object,
+    default: () => ({ start: 0, end: 0, total: 0 }),
+  },
 })
 
 defineEmits(['reset'])
+
+const householdStore = useHouseholdStore()
 </script>
 
 <template>
-  <div class="flex items-center justify-end gap-2 -mb-1">
-    <UDropdownMenu :items="settledMenuItems">
+  <div class="flex items-center justify-between gap-2 -mb-1">
+    <p class="text-sm text-slate-400">
+      Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} splits for
+      <NuxtLink :to="householdStore.path" class="underline cursor-pointer">{{ householdStore.name }}</NuxtLink>
+    </p>
+
+    <div class="flex items-center gap-2">
+      <UDropdownMenu :items="settledMenuItems">
+        <UButton
+          color="neutral"
+          variant="outline"
+          size="sm"
+          leading-icon="i-lucide-square-check"
+          trailing-icon="i-lucide-chevron-down"
+        >
+          Settled · {{ settledLabel }}
+        </UButton>
+
+        <template #check-leading="{ item }">
+          <UIcon
+            name="i-lucide-check"
+            class="size-4 shrink-0"
+            :class="item.active ? '' : 'invisible'"
+          />
+        </template>
+      </UDropdownMenu>
+
+      <UDropdownMenu :items="paidByMenuItems">
+        <UButton
+          color="neutral"
+          variant="outline"
+          size="sm"
+          leading-icon="i-lucide-user"
+          trailing-icon="i-lucide-chevron-down"
+        >
+          Paid By · {{ paidByLabel }}
+        </UButton>
+
+        <template #check-leading="{ item }">
+          <UIcon
+            name="i-lucide-check"
+            class="size-4 shrink-0"
+            :class="item.active ? '' : 'invisible'"
+          />
+        </template>
+      </UDropdownMenu>
+
+      <UDropdownMenu :items="sortMenuItems">
+        <UButton
+          color="neutral"
+          variant="outline"
+          size="sm"
+          leading-icon="i-lucide-arrow-down-wide-narrow"
+          trailing-icon="i-lucide-chevron-down"
+        >
+          {{ sortLabel }}
+        </UButton>
+
+        <template #check-leading="{ item }">
+          <UIcon
+            name="i-lucide-check"
+            class="size-4 shrink-0"
+            :class="item.active ? '' : 'invisible'"
+          />
+        </template>
+      </UDropdownMenu>
+
       <UButton
         color="neutral"
-        variant="outline"
+        :variant="hasActiveFilters ? 'solid' : 'subtle'"
         size="sm"
-        leading-icon="i-lucide-square-check"
-        trailing-icon="i-lucide-chevron-down"
+        icon="i-lucide-x"
+        :disabled="!hasActiveFilters"
+        @click="$emit('reset')"
       >
-        Settled · {{ settledLabel }}
+        Filters
       </UButton>
-
-      <template #check-leading="{ item }">
-        <UIcon
-          name="i-lucide-check"
-          class="size-4 shrink-0"
-          :class="item.active ? '' : 'invisible'"
-        />
-      </template>
-    </UDropdownMenu>
-
-    <UDropdownMenu :items="paidByMenuItems">
-      <UButton
-        color="neutral"
-        variant="outline"
-        size="sm"
-        leading-icon="i-lucide-user"
-        trailing-icon="i-lucide-chevron-down"
-      >
-        Paid By · {{ paidByLabel }}
-      </UButton>
-
-      <template #check-leading="{ item }">
-        <UIcon
-          name="i-lucide-check"
-          class="size-4 shrink-0"
-          :class="item.active ? '' : 'invisible'"
-        />
-      </template>
-    </UDropdownMenu>
-
-    <UDropdownMenu :items="sortMenuItems">
-      <UButton
-        color="neutral"
-        variant="outline"
-        size="sm"
-        leading-icon="i-lucide-arrow-down-wide-narrow"
-        trailing-icon="i-lucide-chevron-down"
-      >
-        {{ sortLabel }}
-      </UButton>
-
-      <template #check-leading="{ item }">
-        <UIcon
-          name="i-lucide-check"
-          class="size-4 shrink-0"
-          :class="item.active ? '' : 'invisible'"
-        />
-      </template>
-    </UDropdownMenu>
-
-    <UButton
-      color="neutral"
-      :variant="hasActiveFilters ? 'solid' : 'subtle'"
-      size="sm"
-      icon="i-lucide-x"
-      :disabled="!hasActiveFilters"
-      @click="$emit('reset')"
-    >
-      Filters
-    </UButton>
+    </div>
   </div>
 </template>

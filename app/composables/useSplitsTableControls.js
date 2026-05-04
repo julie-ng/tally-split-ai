@@ -149,6 +149,35 @@ export function useSplitsTableControls (splitsRef) {
     ],
   ])
 
+  // -------- Pagination --------
+  const pagination = ref({
+    pageIndex: 0,
+    pageSize: 25,
+  })
+
+  const paginationInfo = computed(() => {
+    const total = filteredSplits.value.length
+    const { pageIndex, pageSize } = pagination.value
+    if (total === 0) {
+      return { start: 0, end: 0, total: 0 }
+    }
+    const start = pageIndex * pageSize + 1
+    const end = Math.min((pageIndex + 1) * pageSize, total)
+    return { start, end, total }
+  })
+
+  // Clamp pageIndex when filtered data shrinks below the current page.
+  watch(
+    () => filteredSplits.value.length,
+    (total) => {
+      const { pageIndex, pageSize } = pagination.value
+      const lastValidPage = Math.max(0, Math.ceil(total / pageSize) - 1)
+      if (pageIndex > lastValidPage) {
+        pagination.value.pageIndex = lastValidPage
+      }
+    },
+  )
+
   // Defaults — single source of truth for resetting.
   const DEFAULTS = {
     settledFilter: 'all',
@@ -175,6 +204,8 @@ export function useSplitsTableControls (splitsRef) {
     // Derived data for the table
     filteredSplits,
     sorting,
+    pagination,
+    paginationInfo,
     // Dropdown UI state
     settledLabel,
     settledMenuItems,
