@@ -211,7 +211,8 @@ function closePreview () {
           >
             <template #hashId-cell="{ row }">
               <NuxtLink
-                :to="`/uploads/${row.original.hashId}`"
+                :to="{ query: { ...route.query, preview: row.original.hashId } }"
+                replace
                 class="text-slate-400 hover:text-blue-800 hover:underline font-mono"
               >
                 {{ row.original.hashId }}

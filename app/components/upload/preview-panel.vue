@@ -46,15 +46,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
       >
         <template #right>
           <UButton
-            :to="`/api/analysis/summary/${hashId}`"
-            target="_blank"
-            external
-            color="neutral"
-            variant="ghost"
-            icon="i-lucide-external-link"
-            aria-label="View raw OCR"
-          />
-          <UButton
             icon="i-lucide-x"
             color="neutral"
             variant="ghost"
@@ -67,7 +58,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
     <template #body>
       <Suspense :key="hashId">
-        <upload-overview-tab-content :hash-id="hashId" />
+        <upload-overview :hash-id="hashId" />
         <template #fallback>
           <div class="space-y-3">
             <USkeleton class="h-4 w-[250px]" />

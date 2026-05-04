@@ -15,6 +15,10 @@ export const useUploadsStore = defineStore('uploads', () => {
   // Only populated for succeeded analyses (failed/in-progress results bypass
   // the cache so the next access re-fetches).
   const analysisCache = ref(new Map())
+  // Cache for upload annotations (gpt-4o output), keyed by upload hashId.
+  // Small payload (notes + annotations array); cached unconditionally since
+  // a successful response means the data is final.
+  const annotationsCache = ref(new Map())
   const loading = ref(false)
   const error = ref(null)
   const debug = ref(false) // Debug logging flag
@@ -205,6 +209,33 @@ export const useUploadsStore = defineStore('uploads', () => {
   }
 
   /**
+   * Cache-aware fetch for an upload's annotations (gpt-4o handwriting analysis).
+   * Returns the slimmed annotations payload: { model, usage, annotations, notes }.
+   * @param {string} hashId
+   * @returns {Promise<Object|null>} Annotations data, or null if unavailable
+   */
+  async function fetchAnnotationsByHashId (hashId) {
+    if (annotationsCache.value.has(hashId)) {
+      _log(`[UploadsStore] ✅ annotations cache hit: ${hashId}`)
+      return annotationsCache.value.get(hashId)
+    }
+
+    try {
+      const data = await requestFetch(`/api/uploads/${hashId}/annotations`)
+      annotationsCache.value.set(hashId, data)
+      _log(`[UploadsStore] ✅ fetched + cached annotations: ${hashId}`)
+      return data
+    }
+    catch (err) {
+      // 404 is expected when annotations haven't been generated yet
+      if (err?.statusCode !== 404) {
+        console.error(`[UploadsStore] ❌ failed to fetch annotations ${hashId}:`, err)
+      }
+      return null
+    }
+  }
+
+  /**
    * Internal logger helper - only logs when debug flag is enabled
    * @private
    */
@@ -231,6 +262,7 @@ export const useUploadsStore = defineStore('uploads', () => {
     fetchUploadByHashId,
     fetchPolygons,
     fetchAnalysisByHashId,
+    fetchAnnotationsByHashId,
     clearAnalysisCache,
     clearAnalysisCacheByHashId,
     refreshUploadByHashId,

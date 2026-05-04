@@ -50,10 +50,6 @@ export function useUploadRowActions () {
       [
         { label: 'Actions', type: 'label' },
         {
-          label: 'View Upload',
-          onSelect: () => navigateTo(`/uploads/${hashId}`),
-        },
-        {
           label: 'View Receipt',
           disabled: !upload.receipt,
           onSelect: () => upload.receipt && navigateTo(`/receipts/${upload.receipt.id}`),

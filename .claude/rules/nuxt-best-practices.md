@@ -64,7 +64,7 @@ Wrap content that should not be server-rendered in `<ClientOnly>`:
 </ClientOnly>
 ```
 
-Reference: `app/components/Upload/OverviewTabContent.vue`
+Reference: `app/components/upload/overview.vue`
 
 ## Configuration Access
 

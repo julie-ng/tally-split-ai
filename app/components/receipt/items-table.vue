@@ -9,6 +9,10 @@ defineProps({
     type: Number,
     required: false,
   },
+  tableClass: {
+    type: String,
+    default: 'my-3 text-sm',
+  },
 })
 
 const highlightedLabel = inject('highlightedLabel', ref(null))
@@ -20,8 +24,8 @@ const isCellHighlighted = (index, key) =>
 </script>
 
 <template>
-  <div class="">
-    <table class="my-3 text-sm">
+  <div>
+    <table :class="tableClass">
       <thead>
         <tr>
           <th v-if="hasQuantity" class="py-2 border-b border-slate-300 font-medium">
