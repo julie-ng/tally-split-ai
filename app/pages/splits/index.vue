@@ -27,7 +27,82 @@ const { data: summary, refresh: refreshSummary } = await useFetch('/api/splits/s
 const table = useTemplateRef('table')
 const pagination = ref({
   pageIndex: 0,
-  pageSize: 50,
+  pageSize: 25,
+})
+
+// -------- Settled filter dropdown --------
+const SETTLED_OPTIONS = [
+  { value: 'all', label: 'All' },
+  { value: 'settled', label: 'Is Settled' },
+  { value: 'unsettled', label: 'Not Settled' },
+]
+const settledFilter = ref('all')
+
+const settledLabel = computed(() => {
+  const option = SETTLED_OPTIONS.find(o => o.value === settledFilter.value)
+  return option?.label ?? 'All'
+})
+
+const settledMenuItems = computed(() => [
+  [
+    { label: 'Settled', type: 'label' },
+    ...SETTLED_OPTIONS.map(o => ({
+      label: o.label,
+      slot: 'check',
+      active: settledFilter.value === o.value,
+      onSelect: () => {
+        settledFilter.value = o.value
+      },
+    })),
+  ],
+])
+
+// -------- Paid By filter dropdown --------
+const paidByOptions = computed(() => [
+  { value: 'all', label: 'All' },
+  { value: householdStore.userOne?.id, label: user1Name.value },
+  { value: householdStore.userTwo?.id, label: user2Name.value },
+  { value: 'unknown', label: 'Unknown' },
+])
+const paidByFilter = ref('all')
+
+const paidByLabel = computed(() => {
+  const option = paidByOptions.value.find(o => o.value === paidByFilter.value)
+  return option?.label ?? 'All'
+})
+
+const paidByMenuItems = computed(() => [
+  [
+    { label: 'Paid By', type: 'label' },
+    ...paidByOptions.value.map(o => ({
+      label: o.label,
+      slot: 'check',
+      active: paidByFilter.value === o.value,
+      onSelect: () => {
+        paidByFilter.value = o.value
+      },
+    })),
+  ],
+])
+
+const filteredSplits = computed(() => {
+  let result = splits.value
+
+  if (settledFilter.value === 'settled') {
+    result = result.filter(s => s.isSettled)
+  }
+  else if (settledFilter.value === 'unsettled') {
+    result = result.filter(s => !s.isSettled)
+  }
+
+  if (paidByFilter.value === 'unknown') {
+    result = result.filter(s => !s.paidByUserId)
+  }
+  else if (paidByFilter.value !== 'all') {
+    result = result.filter(s => s.paidByUserId === paidByFilter.value)
+  }
+
+  return result
 })
 
 // -------- Sort dropdown --------
@@ -55,7 +130,8 @@ const sortMenuItems = computed(() => [
     { label: 'Sort by', type: 'label' },
     ...sortOptions.value.map(o => ({
       label: o.label,
-      icon: sortBy.value === o.value ? 'i-lucide-check' : undefined,
+      slot: 'check',
+      active: sortBy.value === o.value,
       onSelect: () => {
         sortBy.value = o.value
       },
@@ -65,14 +141,16 @@ const sortMenuItems = computed(() => [
     { label: 'Order', type: 'label' },
     {
       label: 'ASC',
-      icon: sortOrder.value === 'asc' ? 'i-lucide-check' : 'i-lucide-arrow-up-narrow-wide',
+      slot: 'check',
+      active: sortOrder.value === 'asc',
       onSelect: () => {
         sortOrder.value = 'asc'
       },
     },
     {
       label: 'DESC',
-      icon: sortOrder.value === 'desc' ? 'i-lucide-check' : 'i-lucide-arrow-down-wide-narrow',
+      slot: 'check',
+      active: sortOrder.value === 'desc',
       onSelect: () => {
         sortOrder.value = 'desc'
       },
@@ -265,6 +343,44 @@ watch([previewSplitId, splits, () => table.value?.tableApi], ([id, rows, api]) =
 
       <!-- Toolbar -->
       <div class="flex items-center gap-2 mb-3">
+        <UDropdownMenu :items="settledMenuItems">
+          <UButton
+            color="neutral"
+            variant="outline"
+            size="sm"
+            leading-icon="i-lucide-square-check"
+            trailing-icon="i-lucide-chevron-down"
+          >
+            Settled · {{ settledLabel }}
+          </UButton>
+
+          <template #check-leading="{ item }">
+            <UIcon
+              name="i-lucide-check"
+              class="size-4 shrink-0"
+              :class="item.active ? '' : 'invisible'"
+            />
+          </template>
+        </UDropdownMenu>
+        <UDropdownMenu :items="paidByMenuItems">
+          <UButton
+            color="neutral"
+            variant="outline"
+            size="sm"
+            leading-icon="i-lucide-user"
+            trailing-icon="i-lucide-chevron-down"
+          >
+            Paid By · {{ paidByLabel }}
+          </UButton>
+
+          <template #check-leading="{ item }">
+            <UIcon
+              name="i-lucide-check"
+              class="size-4 shrink-0"
+              :class="item.active ? '' : 'invisible'"
+            />
+          </template>
+        </UDropdownMenu>
         <UDropdownMenu :items="sortMenuItems">
           <UButton
             color="neutral"
@@ -275,12 +391,20 @@ watch([previewSplitId, splits, () => table.value?.tableApi], ([id, rows, api]) =
           >
             {{ sortLabel }}
           </UButton>
+
+          <template #check-leading="{ item }">
+            <UIcon
+              name="i-lucide-check"
+              class="size-4 shrink-0"
+              :class="item.active ? '' : 'invisible'"
+            />
+          </template>
         </UDropdownMenu>
       </div>
 
       <!-- Table -->
       <ClientOnly>
-        <div class="border bg-white border-slate-200 rounded-lg">
+        <div class="border bg-white border-slate-200">
           <UTable
             ref="table"
             v-model:pagination="pagination"
@@ -289,14 +413,15 @@ watch([previewSplitId, splits, () => table.value?.tableApi], ([id, rows, api]) =
               getPaginationRowModel: getPaginationRowModel(),
               autoResetPageIndex: false,
             }"
-            :data="splits"
+            :data="filteredSplits"
             :columns="columns"
             :meta="tableMeta"
             :ui="tableStyles"
             :loading="pending"
             loading-color="primary"
             loading-animation="carousel"
-            class="flex-1"
+            sticky
+            class="flex-1 max-h-[800px]"
             @select="openPreview"
           >
             <!-- Analysis Status -->
