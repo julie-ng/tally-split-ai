@@ -1,12 +1,33 @@
 <script setup>
 defineProps({
-  settledLabel: { type: String, required: true },
-  settledMenuItems: { type: Array, required: true },
-  paidByLabel: { type: String, required: true },
-  paidByMenuItems: { type: Array, required: true },
-  sortLabel: { type: String, required: true },
-  sortMenuItems: { type: Array, required: true },
-  hasActiveFilters: { type: Boolean, default: false },
+  settledLabel: {
+    type: String,
+    required: true,
+  },
+  settledMenuItems: {
+    type: Array,
+    required: true,
+  },
+  paidByLabel: {
+    type: String,
+    required: true,
+  },
+  paidByMenuItems: {
+    type: Array,
+    required: true,
+  },
+  sortLabel: {
+    type: String,
+    required: true,
+  },
+  sortMenuItems: {
+    type: Array,
+    required: true,
+  },
+  hasActiveFilters: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 defineEmits(['reset'])

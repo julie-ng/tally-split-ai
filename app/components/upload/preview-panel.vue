@@ -2,7 +2,10 @@
 import { useUploadsStore } from '~/stores/uploads.store'
 
 const props = defineProps({
-  hashId: { type: String, default: null },
+  hashId: {
+    type: String,
+    default: null,
+  },
 })
 
 const emit = defineEmits(['close'])

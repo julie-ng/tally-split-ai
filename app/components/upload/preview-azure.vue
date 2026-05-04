@@ -3,7 +3,10 @@ import { hasKeys } from '#shared/utils/object.utils.js'
 import { useUploadsStore } from '~/stores/uploads.store'
 
 const props = defineProps({
-  hashId: { type: String, required: true },
+  hashId: {
+    type: String,
+    required: true,
+  },
 })
 
 const uploadsStore = useUploadsStore()

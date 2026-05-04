@@ -3,12 +3,30 @@ import { getPaginationRowModel } from '@tanstack/vue-table'
 import { useHouseholdStore } from '~/stores/household.store'
 
 const props = defineProps({
-  data: { type: Array, required: true },
-  sorting: { type: Array, default: () => [] },
-  previewSplitId: { type: [Number, null], default: null },
-  pageSize: { type: Number, default: 25 },
-  showPagination: { type: Boolean, default: true },
-  maxHeight: { type: String, default: '700px' },
+  data: {
+    type: Array,
+    required: true,
+  },
+  sorting: {
+    type: Array,
+    default: () => [],
+  },
+  previewSplitId: {
+    type: [Number, null],
+    default: null,
+  },
+  pageSize: {
+    type: Number,
+    default: 25,
+  },
+  showPagination: {
+    type: Boolean,
+    default: true,
+  },
+  maxHeight: {
+    type: String,
+    default: '700px',
+  },
 })
 
 const emit = defineEmits(['select'])

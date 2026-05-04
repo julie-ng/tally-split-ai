@@ -2,7 +2,10 @@
 import { useSplitsStore } from '~/stores/splits.store'
 
 const props = defineProps({
-  splitId: { type: Number, default: null },
+  splitId: {
+    type: Number,
+    default: null,
+  },
 })
 
 const emit = defineEmits(['close'])
