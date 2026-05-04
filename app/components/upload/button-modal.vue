@@ -32,6 +32,7 @@ async function onFilesUpdate (files) {
       class="cursor-pointer"
       :variant="variant"
       :color="color"
+      size="sm"
       @click="showModal = true"
     >
       {{ label }}

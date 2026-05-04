@@ -118,18 +118,26 @@ function closePreview () {
           <UBreadcrumb :items="[{ label: 'Uploads', class: 'font-semibold text-default' }]" />
         </template>
         <template #right>
-          <UButton class="px-4 py-2 cursor-pointer" variant="subtle" @click="uploadsStore.fetchUploads(); workflowStore.fetchAll()">
-            Refresh
-          </UButton>
-          <upload-button-modal class="px-4 py-2" />
+          <upload-button-modal color="neutral" variant="subtle" />
         </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
-      <p class="text-sm text-slate-400">
-        Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} Uploads
-      </p>
+      <div class="flex items-center justify-between">
+        <p class="text-sm text-slate-400">
+          Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} Uploads
+        </p>
+        <UButton
+          class="cursor-pointer"
+          variant="outline"
+          color="neutral"
+          size="sm"
+          @click="uploadsStore.fetchUploads(); workflowStore.fetchAll()"
+        >
+          Refresh
+        </UButton>
+      </div>
 
       <ClientOnly>
         <div class="border bg-white border-slate-200">
