@@ -48,10 +48,10 @@ const jsonLinks = computed(() => [
 
 <template>
   <div v-if="upload">
-    <ui-file-property label="Status" :text="upload.analysisStatus" />
-    <ui-file-property v-if="upload.analyzedAt" label="Analyzed At" :text="timestampUtils.toShortDate(upload.analyzedAt)" />
+    <ui-label-content label="Status" :content="upload.analysisStatus" />
+    <ui-label-content v-if="upload.analyzedAt" label="Analyzed At" :content="timestampUtils.toShortDate(upload.analyzedAt)" />
 
-    <ui-file-property v-if="hasItems" label="Receipt Line Items">
+    <ui-label-content v-if="hasItems" label="Receipt Line Items">
       <div class="-mt-3">
         <receipt-items-table
           :items="validatedItems.items"
@@ -60,15 +60,15 @@ const jsonLinks = computed(() => [
           table-class="mt-2 mb-3 text-xs w-full"
         />
       </div>
-    </ui-file-property>
+    </ui-label-content>
 
-    <ui-file-property v-if="annotationsNotes" label="Annotations (gpt-4o)">
+    <ui-label-content v-if="annotationsNotes" label="Annotations (gpt-4o)">
       <div class="text-xs mt-1 mb-4 p-2 bg-elevated">
         {{ annotationsNotes }}
       </div>
-    </ui-file-property>
+    </ui-label-content>
 
-    <ui-file-property label="Raw Data (JSON)">
+    <ui-label-content label="Raw Data (JSON)">
       <ul class="pl-3.5 mt-1" style="list-style-type: circle">
         <li
           v-for="link in jsonLinks"
@@ -85,6 +85,6 @@ const jsonLinks = computed(() => [
           </a>
         </li>
       </ul>
-    </ui-file-property>
+    </ui-label-content>
   </div>
 </template>

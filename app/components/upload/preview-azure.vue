@@ -12,23 +12,23 @@ const upload = computed(() => uploadsStore.getUploadByHashId(props.hashId))
 
 <template>
   <div v-if="upload">
-    <ui-file-property label="Blob Size">
+    <ui-label-content label="Blob Size">
       <div class="text-xs mt-1">
         {{ formatBytes(upload.size) }}
       </div>
-    </ui-file-property>
-    <ui-file-property label="Blob Name">
+    </ui-label-content>
+    <ui-label-content label="Blob Name">
       <div class="text-xs mt-1">
         {{ upload.blobName }}
       </div>
-    </ui-file-property>
-    <ui-file-property label="Blob Url">
+    </ui-label-content>
+    <ui-label-content label="Blob Url">
       <div class="text-xs mt-1">
         {{ upload.blobUrl }}
       </div>
-    </ui-file-property>
+    </ui-label-content>
     <ClientOnly>
-      <ui-file-property label="Azure Blob Index Tags">
+      <ui-label-content label="Azure Blob Index Tags">
         <div class="flex flex-wrap gap-2 pt-2">
           <UBadge
             v-for="tag in azureUtils.blobTagsJsonToObject(upload.azureTags)"
@@ -43,7 +43,7 @@ const upload = computed(() => uploadsStore.getUploadByHashId(props.hashId))
             -
           </span>
         </div>
-      </ui-file-property>
+      </ui-label-content>
     </ClientOnly>
   </div>
 </template>

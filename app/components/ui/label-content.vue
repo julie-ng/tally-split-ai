@@ -1,7 +1,7 @@
 <script setup>
 const props = defineProps({
   label: String,
-  text: [String, Number],
+  content: [String, Number],
   ui: {
     type: Object,
     required: false,
@@ -11,11 +11,11 @@ const props = defineProps({
 
 const uiClasses = computed(() => props.ui.class)
 
-const displayText = computed(() => {
-  if (typeof props.text === 'number') {
-    return String(props.text)
+const displayContent = computed(() => {
+  if (typeof props.content === 'number') {
+    return String(props.content)
   }
-  return props.text
+  return props.content
 })
 </script>
 
@@ -25,7 +25,7 @@ const displayText = computed(() => {
       {{ label }}
     </p>
     <div class="text-sm text-muted">
-      {{ displayText }}
+      {{ displayContent }}
       <slot />
     </div>
   </div>

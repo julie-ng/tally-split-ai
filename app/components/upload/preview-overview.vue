@@ -11,8 +11,8 @@ const upload = computed(() => uploadsStore.getUploadByHashId(props.hashId))
 
 <template>
   <div v-if="upload">
-    <ui-file-property label="Hash ID" :text="upload.hashId" />
-    <ui-file-property label="Original Filename" :text="upload.originalFilename" />
+    <ui-label-content label="Hash ID" :content="upload.hashId" />
+    <ui-label-content label="Original Filename" :content="upload.originalFilename" />
     <UButton
       v-if="upload.receiptId"
       :to="`/receipts/${upload.receiptId}`"
