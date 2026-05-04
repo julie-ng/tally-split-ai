@@ -23,6 +23,22 @@ await Promise.all([
 // eslint-disable-next-line no-unused-vars
 const { uploads, loading: pending, error } = storeToRefs(uploadsStore)
 
+const FILTER_OPTIONS = [
+  { label: 'All uploads', value: 'all' },
+  { label: 'Completed', value: 'completed' },
+  { label: 'Has errors', value: 'errored' },
+]
+const filterValue = ref('all')
+
+const filteredUploads = computed(() => {
+  if (filterValue.value === 'all') return uploads.value
+  if (filterValue.value === 'errored') {
+    return uploads.value.filter(u => workflowStore.hasErrorsByHashId(u.hashId))
+  }
+  // 'completed' — no errors
+  return uploads.value.filter(u => !workflowStore.hasErrorsByHashId(u.hashId))
+})
+
 const table = useTemplateRef('table')
 const pagination = ref({
   pageIndex: 0,
@@ -150,15 +166,23 @@ function closePreview () {
         <p class="text-sm text-slate-400">
           Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} Uploads
         </p>
-        <UButton
-          class="cursor-pointer"
-          variant="outline"
-          color="neutral"
-          size="sm"
-          @click="uploadsStore.fetchUploads(); workflowStore.fetchAll()"
-        >
-          Refresh
-        </UButton>
+        <div class="flex items-center gap-2">
+          <UButton
+            class="cursor-pointer"
+            variant="outline"
+            color="neutral"
+            size="sm"
+            @click="uploadsStore.fetchUploads(); workflowStore.fetchAll()"
+          >
+            Refresh
+          </UButton>
+          <USelect
+            v-model="filterValue"
+            :items="FILTER_OPTIONS"
+            size="sm"
+            class="min-w-[160px]"
+          />
+        </div>
       </div>
 
       <ClientOnly>
@@ -175,7 +199,7 @@ function closePreview () {
             :sorting-options="{
               enableSortingRemoval: false,
             }"
-            :data="uploads"
+            :data="filteredUploads"
             :columns="columns"
             :meta="tableMeta"
             :ui="tableStyles"
