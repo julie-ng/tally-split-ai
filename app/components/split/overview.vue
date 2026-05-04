@@ -36,75 +36,77 @@ provide('highlightedLabel', highlightedLabel)
 <template>
   <div v-if="receipt" class="grid grid-cols-2 gap-6">
     <!-- Left column: Receipt info -->
-    <div class="space-y-5">
-      <!-- Title & Merchant -->
-      <div>
-        <h2 class="text-xl font-bold">
-          {{ receipt.title || 'Untitled' }}
-        </h2>
-        <receipt-merchant-info
-          v-if="receipt.merchantName"
-          :name="receipt.merchantName"
-          :address="receipt.merchantAddress"
-          class="mt-1"
-        />
+    <UCard>
+      <div class="space-y-5">
+        <!-- Title & Merchant -->
+        <div>
+          <h2 class="text-xl font-bold">
+            {{ receipt.title || 'Untitled' }}
+          </h2>
+          <receipt-merchant-info
+            v-if="receipt.merchantName"
+            :name="receipt.merchantName"
+            :address="receipt.merchantAddress"
+            class="mt-1"
+          />
+        </div>
+
+        <USeparator />
+
+        <!-- Transaction Date -->
+        <div>
+          <p class="text-sm text-muted">
+            Transaction Date
+          </p>
+          <p class="font-medium">
+            {{ formattedDate || '—' }}
+          </p>
+        </div>
+
+        <USeparator />
+
+        <!-- Totals -->
+        <div>
+          <p class="text-sm text-muted mb-2">
+            Totals
+          </p>
+          <data-key-value-table :items="receiptUtils.extractTotalsAsArray(receipt)" currency="EUR" />
+        </div>
+
+        <USeparator />
+
+        <!-- Split Costs (includes LLM analysis) -->
+        <div>
+          <p class="text-sm text-muted mb-2">
+            Split Costs
+          </p>
+          <receipt-split :receipt-id="receipt.id" />
+        </div>
+
+        <USeparator />
+
+        <!-- Notes -->
+        <receipt-notes :receipt="receipt" />
+
+        <!-- Actions -->
+        <div class="flex gap-2">
+          <UButton
+            :to="`/receipts/${receipt.id}`"
+            variant="subtle"
+            color="neutral"
+          >
+            Full Details
+          </UButton>
+          <UButton
+            :to="`/receipts/${receipt.id}/edit`"
+            variant="subtle"
+            color="neutral"
+          >
+            Edit
+          </UButton>
+        </div>
       </div>
-
-      <USeparator />
-
-      <!-- Transaction Date -->
-      <div>
-        <p class="text-sm text-muted">
-          Transaction Date
-        </p>
-        <p class="font-medium">
-          {{ formattedDate || '—' }}
-        </p>
-      </div>
-
-      <USeparator />
-
-      <!-- Totals -->
-      <div>
-        <p class="text-sm text-muted mb-2">
-          Totals
-        </p>
-        <data-key-value-table :items="receiptUtils.extractTotalsAsArray(receipt)" currency="EUR" />
-      </div>
-
-      <USeparator />
-
-      <!-- Split Costs (includes LLM analysis) -->
-      <div>
-        <p class="text-sm text-muted mb-2">
-          Split Costs
-        </p>
-        <receipt-split :receipt-id="receipt.id" />
-      </div>
-
-      <USeparator />
-
-      <!-- Notes -->
-      <receipt-notes :receipt="receipt" />
-
-      <!-- Actions -->
-      <div class="flex gap-2">
-        <UButton
-          :to="`/receipts/${receipt.id}`"
-          variant="subtle"
-          color="neutral"
-        >
-          Full Details
-        </UButton>
-        <UButton
-          :to="`/receipts/${receipt.id}/edit`"
-          variant="subtle"
-          color="neutral"
-        >
-          Edit
-        </UButton>
-      </div>
-    </div>
+    </UCard>
 
     <!-- Right column: Receipt image with overlay -->
     <div class="max-w-xs">
