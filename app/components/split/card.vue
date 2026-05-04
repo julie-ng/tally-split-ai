@@ -20,8 +20,8 @@ const hasNote = props.note !== ''
 </script>
 
 <template>
-  <div>
-    <UCard class="shadow-md/5">
+  <div class="h-full">
+    <UCard class="shadow-md/5 h-full">
       <div class="text-sm text-slate-500">
         {{ props.subtitle }}
       </div>

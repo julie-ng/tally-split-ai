@@ -14,6 +14,7 @@ export const useSplitsStore = defineStore('splits', () => {
   const splits = ref({}) // Map: { [splitId]: splitObject }
   const receiptToSplit = ref({}) // Map: { [receiptId]: splitId }
   const history = ref({}) // Map: { [splitId]: changeArray }
+  const summary = ref(null) // Last-fetched summary { userOneShare, userTwoShare, netBalance, ... }
   const loading = ref({}) // Map: { [splitId]: boolean }
   const saving = ref({}) // Map: { [splitId]: boolean }
   const errors = ref({}) // Map: { [splitId]: error }
@@ -189,6 +190,36 @@ export const useSplitsStore = defineStore('splits', () => {
     }
     finally {
       loading.value.all = false
+    }
+  }
+
+  /**
+   * Fetch the splits summary (totals, net balance, settled counts).
+   * Optionally scoped to a year/month.
+   * @param {Object} filters - Optional { year, month }
+   * @returns {Promise<Object|null>} Summary object
+   */
+  async function fetchSummary (filters = {}) {
+    _log('[SplitsStore] fetchSummary()', filters)
+    try {
+      const params = new URLSearchParams()
+      if (filters.year) {
+        params.append('year', filters.year)
+      }
+      if (filters.month) {
+        params.append('month', filters.month)
+      }
+      const queryString = params.toString()
+      const url = queryString
+        ? `/api/splits/summary?${queryString}`
+        : '/api/splits/summary'
+      const data = await requestFetch(url)
+      summary.value = data
+      return data
+    }
+    catch (err) {
+      console.error('[SplitsStore] ❌ failed to fetch summary:', err)
+      return null
     }
   }
 
@@ -430,6 +461,7 @@ export const useSplitsStore = defineStore('splits', () => {
     splits,
     receiptToSplit,
     history,
+    summary,
     loading,
     saving,
     errors,
@@ -450,6 +482,7 @@ export const useSplitsStore = defineStore('splits', () => {
     // Actions
     configure,
     fetchAllSplits,
+    fetchSummary,
     fetchSplit,
     fetchSplitByReceiptId,
     fetchSplitHistory,
