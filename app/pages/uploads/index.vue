@@ -1,4 +1,5 @@
 <script setup>
+import { h, resolveComponent } from 'vue'
 import { getPaginationRowModel } from '@tanstack/vue-table'
 import { useUploadsStore } from '~/stores/uploads.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
@@ -27,6 +28,27 @@ const pagination = ref({
   pageIndex: 0,
   pageSize: 50,
 })
+const sorting = ref([{ id: 'uploadedAt', desc: true }])
+
+function sortableHeader (label) {
+  return ({ column }) => {
+    const sorted = column.getIsSorted()
+    return h(resolveComponent('UButton'), {
+      variant: 'ghost',
+      color: 'neutral',
+      size: 'sm',
+      class: '-mx-2',
+      onClick: () => column.toggleSorting(),
+      label,
+      leadingIcon: sorted === 'asc'
+        ? 'i-lucide-arrow-up-narrow-wide'
+        : sorted === 'desc'
+          ? 'i-lucide-arrow-down-wide-narrow'
+          : 'i-lucide-arrow-up-down',
+      ui: sorted ? undefined : { leadingIcon: 'text-dimmed' },
+    })
+  }
+}
 
 const columns = [
   {
@@ -39,7 +61,7 @@ const columns = [
   },
   {
     accessorKey: 'size',
-    header: 'Size',
+    header: sortableHeader('Size'),
     cell: ({ row }) => `${formatBytes(row.getValue('size'))}`,
   },
   // {
@@ -48,7 +70,7 @@ const columns = [
   // },
   {
     accessorKey: 'uploadedAt',
-    header: 'Uploaded',
+    header: sortableHeader('Uploaded'),
   },
   {
     accessorKey: 'workflow',
@@ -145,9 +167,13 @@ function closePreview () {
           <UTable
             ref="table"
             v-model:pagination="pagination"
+            v-model:sorting="sorting"
             :pagination-options="{
               getPaginationRowModel: getPaginationRowModel(),
               autoResetPageIndex: false,
+            }"
+            :sorting-options="{
+              enableSortingRemoval: false,
             }"
             :data="uploads"
             :columns="columns"
@@ -173,7 +199,10 @@ function closePreview () {
             </template> -->
 
             <template #originalFilename-cell="{ row }">
-              <span class="inline-flex items-center gap-1.5">
+              <div
+                class="flex items-center gap-1.5"
+                :class="previewHashId ? 'max-w-[200px] md:max-w-[240px] xl:max-w-[320px]' : ''"
+              >
                 <UTooltip
                   v-if="row.original.receipt"
                   text="View Receipt"
@@ -189,8 +218,10 @@ function closePreview () {
                     variant="ghost"
                   />
                 </UTooltip>
-                {{ row.original.originalFilename }}
-              </span>
+                <span :title="row.original.originalFilename" class="truncate">
+                  {{ row.original.originalFilename }}
+                </span>
+              </div>
             </template>
 
             <template #uploadedAt-cell="{ row }">
