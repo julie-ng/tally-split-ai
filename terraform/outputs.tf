@@ -75,5 +75,5 @@ output "document_intelligence_endpoint" {
 # Manual construction of endpoint not in Azure API or Docs
 
 output "azure_gpt_4o_annotations_url" {
-  value = "https://${azurerm_cognitive_account.openai.custom_subdomain_name}.cognitiveservices.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=${var.openai_api_version}"
+  value = "https://${azurerm_cognitive_account.openai.custom_subdomain_name}.openai.azure.com/openai/deployments/${var.openai_deployment_name}/chat/completions?api-version=${var.openai_api_version}"
 }

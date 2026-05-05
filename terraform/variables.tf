@@ -43,6 +43,11 @@ variable "openai_gpt4o_capacity" {
   description = "TPM capacity (in thousands) for the gpt-4o deployment."
 }
 
+variable "openai_deployment_name" {
+  type        = string
+  description = "Deployment name for Azure resource."
+}
+
 variable "openai_region" {
   type        = string
   description = "Region for Azure OpenAI Cognitive Services. As of May 2026 only available in following European regions: swedencentral, uksouth, westeurope, northeurope, francecentral, germanywestcentral, switzerlandnorth, italynorth, spaincentral, norwayeast, polandcentral"

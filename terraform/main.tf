@@ -59,7 +59,7 @@ resource "azurerm_cognitive_account" "openai" {
 }
 
 resource "azurerm_cognitive_deployment" "gpt4o" {
-  name                 = "gpt-4o"
+  name                 = var.openai_deployment_name
   cognitive_account_id = azurerm_cognitive_account.openai.id
 
   model {
