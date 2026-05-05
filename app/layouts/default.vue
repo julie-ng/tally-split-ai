@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { useUserStore } from '~/stores/user.store'
 import { useHouseholdStore } from '~/stores/household.store'
 
@@ -14,7 +14,7 @@ if (loggedIn.value) {
 
 const route = useRoute()
 
-function isActive (path: string) {
+function isActive (path) {
   return route.path === path || route.path.startsWith(path + '/')
 }
 
@@ -36,7 +36,7 @@ const userMenuItems = computed(() => [
   ],
 ])
 
-function getLinks (collapsed: boolean) {
+function getLinks (collapsed) {
   const expanded = !collapsed
   return [
     [

@@ -1,5 +1,6 @@
 <script setup>
 import { getPaginationRowModel } from '@tanstack/vue-table'
+import { UCheckbox, UDropdownMenu, UButton } from '#components'
 import { useReceiptsStore } from '~/stores/receipts.store'
 
 useHead({

@@ -11,7 +11,8 @@ import stylistic from '@stylistic/eslint-plugin'
 export default withNuxt(
   globalIgnores([
     'samples/*',
-    './upload-scans.js',
+    '**/*.ts',
+    '**/*.d.ts',
   ]),
   {
     // `env` doesn't exist for flag config :-(
