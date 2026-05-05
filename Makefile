@@ -1,19 +1,11 @@
-.PHONY: list-blobs
+.PHONY: generate-salt generate-password
 
-# Load environment variables from .env file
-include .env
-export
+# 256-bit (32-byte) random secret, base64-encoded.
+# Use for WORKFLOW_CALLBACK_SALT (HMAC-SHA256 key).
+generate-salt:
+	@openssl rand -base64 32
 
-list-containers:
-	@az storage container list \
-		--account-name $(AZ_STORAGE_ACCOUNT) \
-		--account-key $(AZ_STORAGE_ACCOUNT_KEY) \
-		-o table
-
-# List all blobs in the receipts container
-list-blobs:
-	@az storage blob list \
-		--account-name $(AZ_STORAGE_ACCOUNT) \
-		--account-key $(AZ_STORAGE_ACCOUNT_KEY) \
-		--container-name $(AZ_STORAGE_CONTAINER_NAME) \
-		--output table
+# 32-byte random secret, base64-encoded.
+# Use for NUXT_SESSION_PASSWORD (requires ≥32 chars) or any session secret.
+generate-password:
+	@openssl rand -base64 32
