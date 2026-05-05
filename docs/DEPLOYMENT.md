@@ -69,7 +69,7 @@ npm run supabase:migrate:prod
 
 ### Seed First User
 
-Account sign-ups are disabled. Seed first user, who can add others to the household by configuring `SUPABASE_ENV` and `TALLY_INITIAL_GITHUB_USER` and then running:
+Account sign-ups are disabled. Seed first user, who can add others to the household by configuring `SUPABASE_ENV` to `dev` or `prod` and `TALLY_INITIAL_GITHUB_USER` and then running:
 
 ```bash
 npx tsx server/db/seeds/seed-first-user.js
