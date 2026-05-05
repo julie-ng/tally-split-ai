@@ -51,3 +51,7 @@ npx tsx server/db/seeds/seed-first-user.js
 
 - [Framework > Use Supabase with Nuxt](https://supabase.com/docs/guides/getting-started/quickstarts/nuxtjs)
 - [ORM Quickstarts > Drizzle](https://supabase.com/docs/guides/database/drizzle)
+
+### GitHub OAuth App
+
+See GitHub docs on [Creating an OAuth app](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app) to configure single sign-on (SSO).
