@@ -32,7 +32,7 @@ This project can handle both dev and prod environments
 
 Installs resource providers.
 
-```
+```bash
 terraform init
 ```
 
@@ -43,7 +43,7 @@ Review the infrastructure draft, based on configuration before deploying. Make c
 > [!TIP]
 > You must specify env specific config via `-var-file` flag, e.g. for dev:
 
-```hcl
+```bash
 terraform plan -var-file=environments/dev.tfvars -out plan.tfplan
 ```
 
@@ -51,6 +51,6 @@ terraform plan -var-file=environments/dev.tfvars -out plan.tfplan
 
 Deploy infrastructure per plan output.
 
-```hcl
+```bash
 terraform apply plan.tfplan
 ```
