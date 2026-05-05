@@ -55,3 +55,5 @@ npx tsx server/db/seeds/seed-first-user.js
 ### GitHub OAuth App
 
 See GitHub docs on [Creating an OAuth app](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app) to configure single sign-on (SSO).
+
+Add the deployment FQDN with callback path of `/api/auth/github`.
