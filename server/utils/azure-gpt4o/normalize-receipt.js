@@ -76,21 +76,33 @@ Return JSON:
     originalFilename,
   }, null, 2)
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'api-key': key,
-    },
-    body: JSON.stringify({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage },
-      ],
-      temperature: 0,
-      response_format: { type: 'json_object' },
-    }),
-  })
+  let response
+  try {
+    response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': key,
+      },
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage },
+        ],
+        temperature: 0,
+        response_format: { type: 'json_object' },
+      }),
+    })
+  }
+  catch (err) {
+    console.error('[gpt4o fetch failed]', {
+      endpoint,
+      cause: err.cause?.message,
+      code: err.cause?.code,
+      hostname: err.cause?.hostname,
+    })
+    throw err
+  }
 
   const responseText = await response.text()
 
