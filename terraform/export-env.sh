@@ -2,13 +2,43 @@
 #
 # Export Terraform outputs as a .env file in the repo root.
 # Run from terraform/ directory after `terraform apply`.
+#
+# Usage:  ./export-env.sh <env>     (e.g. dev, prod)
+#
+# Safeguards:
+#   - Requires an env arg (no implicit default — too easy to clobber prod).
+#   - Verifies the currently-initialized backend matches the requested env.
+#   - Writes to a per-env file (.env.azure.<env>) so dev + prod don't clobber.
 
 set -euo pipefail
 
-OUT_FILE="../.env.azure"
+if [[ $# -lt 1 ]]; then
+  echo "usage: $0 <env>     (e.g. dev, prod)" >&2
+  exit 1
+fi
+
+ENV_NAME="$1"
+EXPECTED_PATH="terraform.${ENV_NAME}.tfstate"
+OUT_FILE="../.env.azure.${ENV_NAME}"
 
 if ! command -v jq >/dev/null 2>&1; then
   echo "error: jq is required" >&2
+  exit 1
+fi
+
+# Verify the currently-initialized backend matches the requested env.
+BACKEND_CONFIG=".terraform/terraform.tfstate"
+if [[ ! -f "$BACKEND_CONFIG" ]]; then
+  echo "error: $BACKEND_CONFIG missing — run 'terraform init -backend-config=backends/${ENV_NAME}.hcl -reconfigure' first" >&2
+  exit 1
+fi
+
+CURRENT_PATH=$(jq -r '.backend.config.path // ""' "$BACKEND_CONFIG")
+if [[ "$CURRENT_PATH" != "$EXPECTED_PATH" ]]; then
+  echo "error: backend mismatch" >&2
+  echo "  requested env: $ENV_NAME (expected $EXPECTED_PATH)" >&2
+  echo "  currently initialized: $CURRENT_PATH" >&2
+  echo "  fix:  terraform init -backend-config=backends/${ENV_NAME}.hcl -reconfigure" >&2
   exit 1
 fi
 
@@ -19,7 +49,7 @@ get () {
 }
 
 cat > "$OUT_FILE" <<EOF
-# SENSITIVE - DO NOT COMMIT
+# SENSITIVE - DO NOT COMMIT (env: ${ENV_NAME})
 # Regenerate as needed after \`terraform apply\`
 
 # Azure Document Intelligence
@@ -37,4 +67,4 @@ export AZURE_STORAGE_CONTAINER_NAME="$(get '.storage_account.value.container_nam
 EOF
 
 chmod 600 "$OUT_FILE"
-echo "wrote $(cd .. && pwd)/.env.azure"
+echo "wrote $(cd .. && pwd)/.env.azure.${ENV_NAME}"
