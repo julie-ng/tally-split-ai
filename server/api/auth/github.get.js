@@ -35,7 +35,7 @@ export default defineOAuthGitHubEventHandler({
     })
 
     log.info({ userId: dbUser.id, githubId: dbUser.githubId }, 'GitHub OAuth login')
-    return sendRedirect(event, '/')
+    return sendRedirect(event, '/dashboard')
   },
   onError (event, error) {
     const log = useLogger('auth')
