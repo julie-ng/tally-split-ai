@@ -1,7 +1,16 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: ['@nuxt/ui', '@pinia/nuxt', '@nuxthub/core', '@nuxt/eslint', 'nuxt-auth-utils'],
-  plugins: ['@/plugins/vue-json-pretty'],
+  modules: [
+    '@nuxt/ui',
+    '@nuxt/eslint',
+    '@nuxthub/core',
+    '@pinia/nuxt',
+    'nuxt-auth-utils',
+    '@vercel/analytics',
+  ],
+  plugins: [
+    '@/plugins/vue-json-pretty',
+  ],
   devtools: { enabled: true },
   app: {
     head: {
