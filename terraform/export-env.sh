@@ -27,13 +27,13 @@ export AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT="$(get '.document_intelligence_endpo
 export AZURE_DOCUMENT_INTELLIGENCE_KEY="$(get '.doc_intelligence_key.value')"
 
 # Azure OpenAI (GPT-4o)
-export AZURE_FOUNDRY_GPT4O_ENDPOINT="$(get '.azure_gpt_4o_annotations_url.value')"
-export AZURE_FOUNDRY_GPT4O_KEY="$(get '.azure_openai_key.value')"
+export AZURE_GPT4O_ENDPOINT="$(get '.azure_gpt_4o_annotations_url.value')"
+export AZURE_GPT4O_KEY="$(get '.azure_openai_key.value')"
 
 # Azure Storage
-export AZ_STORAGE_ACCOUNT="$(get '.storage_account.value.name')"
-export AZ_STORAGE_ACCOUNT_KEY="$(get '.azure_storage_account_key.value')"
-export AZ_STORAGE_CONTAINER_NAME="$(get '.storage_account.value.container_name')"
+export AZURE_STORAGE_ACCOUNT="$(get '.storage_account.value.name')"
+export AZURE_STORAGE_ACCOUNT_KEY="$(get '.azure_storage_account_key.value')"
+export AZURE_STORAGE_CONTAINER_NAME="$(get '.storage_account.value.container_name')"
 EOF
 
 chmod 600 "$OUT_FILE"

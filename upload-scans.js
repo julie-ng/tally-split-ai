@@ -11,9 +11,9 @@ import { saveUploadResults } from './shared/utils/save-results.helper.js';
 // Load environment variables
 config();
 
-const ACCOUNT_NAME = process.env.AZ_STORAGE_ACCOUNT;
-const ACCOUNT_KEY = process.env.AZ_STORAGE_ACCOUNT_KEY;
-const CONTAINER_NAME = process.env.AZ_STORAGE_CONTAINER_NAME; // Container name for receipt uploads
+const ACCOUNT_NAME = process.env.AZURE_STORAGE_ACCOUNT;
+const ACCOUNT_KEY = process.env.AZURE_STORAGE_ACCOUNT_KEY;
+const CONTAINER_NAME = process.env.AZURE_STORAGE_CONTAINER_NAME; // Container name for receipt uploads
 const SCANS_DIR = './scans/excerpt';
 
 /**
@@ -23,7 +23,7 @@ async function uploadScans() {
   // Validate environment variables
   if (!ACCOUNT_NAME || !ACCOUNT_KEY) {
     console.error('Error: Missing required environment variables');
-    console.error('Required: AZ_STORAGE_ACCOUNT, AZ_STORAGE_ACCOUNT_KEY');
+    console.error('Required: AZURE_STORAGE_ACCOUNT, AZURE_STORAGE_ACCOUNT_KEY');
     process.exit(1);
   }
 

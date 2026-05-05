@@ -232,7 +232,7 @@ The standard `requireAuthorization(event, { uploadHashId })` is **not** suitable
 
 The path-based `_deriveResource` mapping does NOT include `/api/tokens` — derivation would yield `token:write` for a POST, which is semantically wrong (generating a SAS read URL is a read-capability action). The endpoint checks `'token:read'` directly instead of going through `requireTaskPermission`.
 
-**Why this matters operationally:** Trigger.dev workers do not need `AZ_STORAGE_ACCOUNT_KEY` in their environment. The storage key stays server-side; workers only hold their HMAC callback token + this scoped `token:read` capability.
+**Why this matters operationally:** Trigger.dev workers do not need `AZURE_STORAGE_ACCOUNT_KEY` in their environment. The storage key stays server-side; workers only hold their HMAC callback token + this scoped `token:read` capability.
 
 ## HMAC Token Mechanism
 
