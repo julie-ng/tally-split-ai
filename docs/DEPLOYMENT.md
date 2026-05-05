@@ -40,6 +40,16 @@ _Automated Deployments._ Connected to GitHub.
 
 _Manual Deployment_
 
+### Connection String
+
+Note: Because Vercel doesn't support IPv6, we need to use a Shared Pooler, which can be found in the [Project > Connect Panel](https://supabase.com/dashboard/project/_?showConnect=true), 
+
+Pluck out the info to manually construct the connection string:
+
+```
+postgresql://[USER]:[PASSWORD]]@name-1.pooler.supabase.com:5432/[DBNAME]
+```
+
 ### Migrations
 
 Ensure `SUPABASE_DATABASE_URL` is set in an environment specific file, e.g. `.env.supabase.dev`, which is used by [drizzle.supabase.ts](./../drizzle.supabase.ts).
