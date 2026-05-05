@@ -3,7 +3,6 @@ import { z } from 'zod'
 export default defineEventHandler(async (event) => {
   const log = useLogger('upload')
   const db = useDB()
-  guards.requireLocalDev(event)
   await guards.requireAuthentication(event)
   const userId = event.context.userId
   const householdId = event.context.householdId
