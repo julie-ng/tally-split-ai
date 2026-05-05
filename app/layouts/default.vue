@@ -4,10 +4,13 @@ import { useHouseholdStore } from '~/stores/household.store'
 
 const userStore = useUserStore()
 const householdStore = useHouseholdStore()
+const { loggedIn } = useUserSession()
 
 // Fetch household once per navigation. Hydrates on the server so child
 // components/pages can read members synchronously.
-await useAsyncData('household', () => householdStore.fetch())
+if (loggedIn.value) {
+  await useAsyncData('household', () => householdStore.fetch())
+}
 
 const route = useRoute()
 
