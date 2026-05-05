@@ -13,12 +13,13 @@
     "preview": "nuxt preview",
     "predev": "nuxt prepare",
     "postinstall": "nuxt prepare",
-    "trigger:dev": "npx trigger.dev@latest dev",
-    "db:generate": "npx drizzle-kit generate",
-    "db:migrate": "npx drizzle-kit migrate",
-    "db:studio": "npx drizzle-kit studio",
-    "supabase:migrate:dev": "SUPABASE_ENV=dev npx drizzle-kit migrate --config drizzle.supabase.ts",
-    "supabase:migrate:prod": "SUPABASE_ENV=prod npx drizzle-kit migrate --config drizzle.supabase.ts"
+    "trigger:dev": "trigger dev",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "supabase:migrate:dev": "SUPABASE_ENV=dev drizzle-kit migrate --config drizzle.supabase.ts",
+    "supabase:migrate:prod": "SUPABASE_ENV=prod drizzle-kit migrate --config drizzle.supabase.ts",
+    "trigger:deploy": "trigger deploy"
   },
   "imports": {
     "#shared/*": "./shared/*",
@@ -62,6 +63,7 @@
     "@types/pg": "^8.20.0",
     "drizzle-kit": "^0.31.8",
     "sass-embedded": "^1.99.0",
+    "trigger.dev": "^4.4.5",
     "vitest": "^4.0.15"
   }
 }
