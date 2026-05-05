@@ -5,19 +5,23 @@ locals {
     project = var.project_name
     env     = var.environment
   }
+  tags = merge(local.default_tags, var.default_tags)
+
+  # add env name to all resources
+  resource_group_name    = "${local.name}-${var.environment}-rg"
+  storage_account_name   = "${local.name_compact}${var.environment}"
   openai_account_name    = "${local.name}-openai-${var.environment}"
   doc_intel_account_name = "${local.name}-doc-intel-${var.environment}"
-  tags                   = merge(local.default_tags, var.default_tags)
 }
 
 resource "azurerm_resource_group" "project" {
-  name     = "${local.name}-rg"
+  name     = local.resource_group_name
   location = var.location
   tags     = local.tags
 }
 
 resource "azurerm_storage_account" "blobs" {
-  name                     = local.name_compact
+  name                     = local.storage_account_name
   resource_group_name      = azurerm_resource_group.project.name
   location                 = azurerm_resource_group.project.location
   account_tier             = "Standard"
