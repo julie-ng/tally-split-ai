@@ -5,7 +5,7 @@
 generate-salt:
 	@openssl rand -base64 32
 
-# 32-byte random secret, base64-encoded.
-# Use for NUXT_SESSION_PASSWORD (requires ≥32 chars) or any session secret.
+# 32-byte random secret, base64url-encoded (URL-safe, no =/+/).
+# Use for DB connection-string passwords or NUXT_SESSION_PASSWORD.
 generate-password:
-	@openssl rand -base64 32
+	@openssl rand -base64 32 | tr '+/' '-_' | tr -d '='
