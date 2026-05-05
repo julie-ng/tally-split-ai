@@ -3,6 +3,7 @@ import { h, resolveComponent } from 'vue'
 import { getPaginationRowModel } from '@tanstack/vue-table'
 import { useUploadsStore } from '~/stores/uploads.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
+import { useRealtimeStore } from '~/stores/realtime.store'
 
 useHead({
   title: 'Uploads',
@@ -10,8 +11,21 @@ useHead({
 
 const uploadsStore = useUploadsStore()
 const workflowStore = useWorkflowStore()
+const realtimeStore = useRealtimeStore()
 uploadsStore.debug = true
 workflowStore.debug = true
+
+// Scope SSE to /uploads only — workflow progress bars live here. Other
+// pages don't show live progress, so holding a serverless function open
+// elsewhere would just burn cost without UX benefit. Auth is checked in
+// the realtime store; SSR-safe via onMounted/onBeforeUnmount.
+const { loggedIn } = useUserSession()
+onMounted(() => {
+  if (loggedIn.value) {
+    realtimeStore.connect()
+  }
+})
+onBeforeUnmount(() => realtimeStore.disconnect())
 
 // Fetch uploads and workflows on mount
 await Promise.all([
