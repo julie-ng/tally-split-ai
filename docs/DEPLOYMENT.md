@@ -10,11 +10,16 @@ See [terraform/README.md](./terraform/README.md)
 
 _Automated Deployments._ Connected to GitHub.
 
-#### Required Environment Variables
+#### Required Infra Config
 
 - `AZURE_STORAGE_ACCOUNT`
 - `AZURE_STORAGE_ACCOUNT_KEY`
 - `AZURE_STORAGE_CONTAINER_NAME`
+- `TRIGGER_PROJECT_ID`
+- `TRIGGER_SECRET_KEY`
+- `NUXT_DATABASE_URL`
+- `NUXT_OAUTH_GITHUB_CLIENT_ID`
+- `NUXT_OAUTH_GITHUB_CLIENT_SECRET`
 
 ## Trigger
 
@@ -23,7 +28,7 @@ _Automated Deployments._ Connected to GitHub.
   - Via GitHub Workflow. See [deploy-trigger.yml](./../.github/workflows/deploy-trigger.yml).
   - Manually via `TRIGGER_PROJECT_ID="" npm run trigger:deploy`
 
-#### Required Environment Variables
+#### Required Infra Config
 
 - `AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT`
 - `AZURE_DOCUMENT_INTELLIGENCE_KEY`
