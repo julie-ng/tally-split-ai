@@ -33,6 +33,11 @@ variable "openai_model_version" {
   description = "OpenAI Model version for annotations."
 }
 
+variable "openai_api_version" {
+  type        = string
+  description = "API version for gpt4o that's included in REST endpoint. Used in outputs."
+}
+
 variable "openai_gpt4o_capacity" {
   type        = number
   description = "TPM capacity (in thousands) for the gpt-4o deployment."

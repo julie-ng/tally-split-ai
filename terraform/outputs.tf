@@ -30,7 +30,12 @@ output "azure_openai" {
 }
 
 output "azure_gpt_4o" {
-  value = azurerm_cognitive_deployment.gpt4o
+  value = {
+    id                   = azurerm_cognitive_deployment.gpt4o.id
+    name                 = azurerm_cognitive_deployment.gpt4o.name
+    model                = azurerm_cognitive_deployment.gpt4o.model
+    cognitive_account_id = azurerm_cognitive_deployment.gpt4o.cognitive_account_id
+  }
 }
 
 # Azure Document Intelligence (OCR)
@@ -59,4 +64,16 @@ output "azure_openai_key" {
 output "doc_intelligence_key" {
   value     = azurerm_cognitive_account.doc_intelligence.primary_access_key
   sensitive = true
+}
+
+# Endpoints
+
+output "document_intelligence_endpoint" {
+  value = azurerm_cognitive_account.doc_intelligence.endpoint
+}
+
+# Manual construction of endpoint not in Azure API or Docs
+
+output "azure_gpt_4o_annotations_url" {
+  value = "https://${azurerm_cognitive_account.openai.custom_subdomain_name}.cognitiveservices.azure.com/deployments/gpt-4o/chat/completions?api-version=${var.openai_api_version}"
 }

@@ -54,3 +54,20 @@ Deploy infrastructure per plan output.
 ```bash
 terraform apply plan.tfplan
 ```
+
+## Configuration for App Configuration
+
+After deployment, you can pull the needed configuration via
+
+Endpoints
+
+```bash
+terraform output document_intelligence_endpoint
+terraform output azure_gpt_4o_annotations_url
+```
+
+```bash
+terraform output -raw azure_storage_account_key
+terraform output -raw azure_openai_key
+terraform output -raw doc_intelligence_key
+```
