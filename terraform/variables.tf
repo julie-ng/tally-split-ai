@@ -38,6 +38,11 @@ variable "openai_gpt4o_capacity" {
   description = "TPM capacity (in thousands) for the gpt-4o deployment."
 }
 
+variable "openai_region" {
+  type        = string
+  description = "Region for Azure OpenAI Cognitive Services. As of May 2026 only available in following European regions: swedencentral, uksouth, westeurope, northeurope, francecentral, germanywestcentral, switzerlandnorth, italynorth, spaincentral, norwayeast, polandcentral"
+}
+
 variable "azure_doc_intelligence_model" {
   type        = string
   description = "Model name, e.g. FormRecognizer for Document Intelligence Cognitive Services."

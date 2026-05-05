@@ -6,6 +6,15 @@
 - **Azure Document Intelligence** for OCR service
 - **Azure OpenAI gpt-4o** for annotations analysis
 
+#### Regions
+
+Defaults to North Europe.
+
+> [!IMPORTANT]
+> Azure Open AI is deployed to a different region because it's not available in North Europe. We're using **swedencentral**, which has highest capacity. 
+
+Azure Open AI is also available in following European regions: uksouth, westeurope, francecentral, germanywestcentral, switzerlandnorth, italynorth, spaincentral, norwayeast, polandcentral.
+
 ## Environments
 
 This project can handle both dev and prod environments

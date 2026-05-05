@@ -45,7 +45,7 @@ resource "azurerm_storage_container" "receipts" {
 
 resource "azurerm_cognitive_account" "openai" {
   name                  = local.openai_account_name
-  location              = azurerm_resource_group.project.location
+  location              = var.openai_region
   resource_group_name   = azurerm_resource_group.project.name
   kind                  = "OpenAI"
   sku_name              = var.openai_sku
