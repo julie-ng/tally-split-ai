@@ -71,7 +71,7 @@ export const useHouseholdStore = defineStore('household', () => {
       return household.value
     }
     catch (err) {
-      error.value = err
+      error.value = toPiniaError(err)
       console.error('[HouseholdStore] failed to fetch household:', err)
       throw err
     }

@@ -28,7 +28,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
       return metrics.value
     }
     catch (err) {
-      error.value = err
+      error.value = toPiniaError(err)
       console.error('[DashboardStore] failed to fetch metrics:', err)
       throw err
     }

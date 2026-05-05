@@ -47,7 +47,7 @@ export const useUploadsStore = defineStore('uploads', () => {
       _log(`[UploadsStore] ✅ fetched ${data.length} uploads`)
     }
     catch (err) {
-      error.value = err
+      error.value = toPiniaError(err)
       console.error('[UploadsStore] ❌ failed to fetch uploads:', err)
       throw err
     }
@@ -135,7 +135,7 @@ export const useUploadsStore = defineStore('uploads', () => {
     }
     catch (err) {
       console.error(`[UploadsStore] ❌ failed to delete upload ${hashId}:`, err)
-      error.value = err
+      error.value = toPiniaError(err)
       throw err
     }
   }

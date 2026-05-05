@@ -59,7 +59,7 @@ export const useUserStore = defineStore('user', () => {
       return updated
     }
     catch (err) {
-      error.value = err
+      error.value = toPiniaError(err)
       throw err
     }
     finally {

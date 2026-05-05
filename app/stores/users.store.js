@@ -23,7 +23,7 @@ export const useUsersStore = defineStore('users', () => {
       return user.value
     }
     catch (err) {
-      error.value = err
+      error.value = toPiniaError(err)
       throw err
     }
     finally {
