@@ -8,6 +8,13 @@
       "when": 1778047428428,
       "tag": "0000_flimsy_brother_voodoo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778100000000,
+      "tag": "0001_split_metrics_view",
+      "breakpoints": true
     }
   ]
 }
