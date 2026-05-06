@@ -6,7 +6,7 @@ export default defineNuxtConfig({
     '@nuxthub/core',
     '@pinia/nuxt',
     'nuxt-auth-utils',
-    '@vercel/analytics',
+    ...(process.env.NODE_ENV === 'production' ? ['@vercel/analytics'] : []),
   ],
   plugins: [
     '@/plugins/vue-json-pretty',
