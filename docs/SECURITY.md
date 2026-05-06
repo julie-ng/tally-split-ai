@@ -103,6 +103,27 @@ If no workflow headers are present, the user auth path runs.
 > [!NOTE]
 > `householdId` lives in the session as an authZ **scope claim** — analogous to scopes in an OAuth JWT — not as domain data. It's stored there so authZ checks don't need a per-request DB lookup. Frontend stores must not expose `householdId` via `useUserStore`; household domain data lives in a separate store.
 
+### Session Cookies
+
+User sessions are sealed (encrypted + MAC'd) cookies via `nuxt-auth-utils` (which wraps `iron-webcrypto`). The session payload holds identity claims and authZ scope only — see the `toSessionUser` helper in `server/utils/`. Domain data lives in DB queries / Pinia stores.
+
+| Attribute | Value |
+|:--|:--|
+| Cookie name | `tally-split-session` |
+| `HttpOnly` | `true` |
+| `SameSite` | `Lax` |
+| `Secure` | `true` in production, `false` in dev (gated on `NODE_ENV` by `nuxt-auth-utils`) |
+| `Path` | `/` |
+| `maxAge` | 1 day (86400 seconds) |
+| Seal algorithm | AES-256-CBC + SHA-256 (iron-webcrypto defaults) |
+| Seal password | `NUXT_SESSION_PASSWORD` env var (min 32 chars; required) |
+| Seal TTL | `0` — sealed token does not self-expire; relies on cookie attributes + manual logout |
+
+> [!IMPORTANT]
+> Sessions are stateless — there is no server-side session store. A stolen cookie cannot be revoked before its `maxAge` (24 hours). Logout (`/logout`) clears the cookie on the client but does not invalidate the seal. Rotating `NUXT_SESSION_PASSWORD` invalidates all outstanding sessions globally.
+
+CSRF defense relies on `SameSite=Lax` plus the closed user set — there is no CSRF token mechanism in API endpoints. Same-origin assumption is load-bearing; do not relax `SameSite` without adding CSRF tokens.
+
 ### Workflow Auth Path
 
 Tasks send three headers with every API request:
@@ -387,8 +408,9 @@ Unit tests in `shared/config/task-permissions.test.js` additionally pin the **`t
 
 | Variable | Purpose |
 |:--|:--|
-| `WORKFLOW_CALLBACK_SALT` | Secret key for HMAC token generation/verification |
+| `WORKFLOW_CALLBACK_SALT` | Secret key for HMAC token generation/verification (required; app fails to start if missing) |
 | `WORKFLOW_TOKEN_EXPIRY_MINUTES` | Token validity window (default: 15 minutes) |
+| `NUXT_SESSION_PASSWORD` | Seal password for user session cookies (min 32 chars; required). Rotating this invalidates all outstanding sessions. |
 
 ## Future Improvements
 

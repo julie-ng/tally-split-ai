@@ -45,6 +45,16 @@ export default defineNuxtConfig({
     '~/assets/css/main.css',
   ],
   runtimeConfig: {
+    session: {
+      name: 'tally-split-session',
+      maxAge: 60 * 60 * 24, // 1 day
+      cookie: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        // secure: true, // already env-gated by nuxt-auth-utils (true in prod, false in dev)
+      },
+    },
     public: {
       environment: 'development',
       uploadMaxConcurrent: 3,
