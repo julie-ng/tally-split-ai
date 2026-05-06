@@ -6,6 +6,7 @@ export default defineEventHandler(async (event) => {
   guards.requireIdParam(event)
 
   const splitId = getRouterParam(event, 'id')
+  await guards.requireAuthorization(event, { splitId })
 
   // Fetch all history rows for this split, joined with changes metadata
   const rows = await db

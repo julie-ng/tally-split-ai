@@ -6,6 +6,7 @@ export default defineEventHandler(async (event) => {
   guards.requireIdParam(event)
 
   const receiptId = getRouterParam(event, 'id')
+  await guards.requireAuthorization(event, { receiptId })
 
   // Fetch all history rows for this receipt, joined with changes metadata
   const rows = await db

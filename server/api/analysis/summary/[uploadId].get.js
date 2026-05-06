@@ -6,6 +6,7 @@ export default defineEventHandler(async (event) => {
   guards.requireIdParam(event, 'uploadId')
 
   const uploadId = getRouterParam(event, 'uploadId')
+  await guards.requireAuthorization(event, { uploadId })
 
   const upload = await db.query.uploads.findFirst({
     where: eq(schema.uploads.id, uploadId),
