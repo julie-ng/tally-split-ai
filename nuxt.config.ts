@@ -19,9 +19,9 @@ export default defineNuxtConfig({
         lang: 'en',
       },
       link: [
-        {
-          rel: 'icon', href: '/favicon.ico',
-        },
+        process.env.NODE_ENV === 'production'
+          ? { rel: 'icon', href: '/favicon.ico' }
+          : { rel: 'icon', type: 'image/png', href: '/favicon-dev-256.png' },
         {
           rel: 'preconnect',
           href: 'https://fonts.googleapis.com',
