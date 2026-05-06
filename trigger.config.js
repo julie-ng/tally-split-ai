@@ -1,4 +1,5 @@
 import { defineConfig } from '@trigger.dev/sdk/v3'
+import { additionalFiles } from '@trigger.dev/build/extensions/core'
 
 export default defineConfig({
   project: process.env.TRIGGER_PROJECT_ID || '',
@@ -19,4 +20,9 @@ export default defineConfig({
     },
   },
   dirs: ['trigger'],
+  build: {
+    extensions: [
+      additionalFiles({ files: ['./trigger/instructions/**'] }),
+    ],
+  },
 })
