@@ -23,10 +23,28 @@ _Automated Deployments._ Connected to GitHub.
 
 ## Trigger
 
-- Infra: _manual_
-- Application:
-  - Via GitHub Workflow. See [deploy-trigger.yml](./../.github/workflows/deploy-trigger.yml).
-  - Manually via `TRIGGER_PROJECT_ID="" npm run trigger:deploy`
+### Automated
+
+Production deployments via GitHub Workflow. See [deploy-trigger.yml](./../.github/workflows/deploy-trigger.yml).
+
+### Manual Deployments
+
+Manually set the required environment variables
+
+```
+TRIGGER_PROJECT_ID_DEV="" 
+TRIGGER_PROJECT_ID_PROD=""
+```
+
+Then run accordingly
+
+```bash
+# Deploy to dev
+npm run trigger:deploy:dev
+
+# OR to production
+npm run trigger:deploy:prod
+```
 
 #### Required Infra Config
 
