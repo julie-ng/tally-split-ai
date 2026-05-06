@@ -28,6 +28,8 @@ resource "azurerm_storage_account" "blobs" {
   account_replication_type = "LRS"
   account_kind             = "StorageV2"
 
+  # Imporant - the blob container is intentionally wide open
+  # so user can upload directly to Azure, not via our app.
   blob_properties {
     cors_rule {
       allowed_origins    = ["*"]
@@ -44,7 +46,7 @@ resource "azurerm_storage_account" "blobs" {
 resource "azurerm_storage_container" "receipts" {
   name                  = var.storage_container_name
   storage_account_id    = azurerm_storage_account.blobs.id
-  container_access_type = "private"
+  container_access_type = "private" # disallow unauthenticated access
 }
 
 resource "azurerm_cognitive_account" "openai" {
