@@ -1,1 +1,0 @@
-ALTER TABLE "workflow_runs" ADD COLUMN "uuid" uuid DEFAULT gen_random_uuid() NOT NULL;
