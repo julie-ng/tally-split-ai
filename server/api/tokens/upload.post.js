@@ -1,15 +1,17 @@
 import { z } from 'zod'
 
+/**
+ * Only generate SAS tokens for blobs prefixed with user's session Id
+ */
 const requestSchema = (userId) => {
   return z.object({
     action: z.string().refine(value => value === 'create', { error: 'Invalid action' }),
-    blobPath: z.string().refine(value => value.startsWith(userId), { error: 'Blob path must start with user Id' }),
+    blobPath: z.string().refine(value => value.startsWith(`${userId}/`), { error: 'Blob path must start with user Id' }),
   })
 }
 
 export default defineEventHandler(async (event) => {
   const log = useLogger('token')
-  // ⚠️ TODO - implement security.
   await guards.requireAuthentication(event)
   const userId = event.context.userId
 

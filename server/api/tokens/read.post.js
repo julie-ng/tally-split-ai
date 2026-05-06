@@ -93,7 +93,7 @@ export default defineEventHandler(async (event) => {
   else {
     const householdId = event.context.householdId
     if (upload.householdId !== householdId) {
-      logSecurityEvent(event, 'warn', { householdId, blobName, reason: 'blob_not_household_member' }, 'Authorization denied')
+      logSecurityEvent(event, 'warn', { userId: event.context.userId, householdId, blobName, reason: 'blob_not_household_member' }, 'Authorization denied')
       throw createError({ statusCode: 404, message: 'Not found' })
     }
   }
