@@ -40,13 +40,6 @@ const validatedItems = computed(() => {
 })
 
 const hasItems = computed(() => (validatedItems.value?.items?.length ?? 0) > 0)
-
-const jsonLinks = computed(() => [
-  { label: 'Summary', href: `/api/analysis/summary/${props.id}` },
-  { label: 'Annotations', href: `/api/uploads/${props.id}/annotations` },
-  { label: 'OCR', href: `/api/uploads/${props.id}/ocr` },
-  { label: 'Polygons', href: `/api/uploads/${props.id}/polygons` },
-])
 </script>
 
 <template>
@@ -71,23 +64,6 @@ const jsonLinks = computed(() => [
       </div>
     </ui-label-content>
 
-    <ui-label-content label="Raw Data (JSON)">
-      <ul class="pl-3.5 mt-1" style="list-style-type: circle">
-        <li
-          v-for="link in jsonLinks"
-          :key="link.href"
-        >
-          <a
-            :href="link.href"
-            target="_blank"
-            rel="noopener"
-            class="inline-flex items-center gap-1 text-xs hover:underline"
-          >
-            {{ link.label }}
-            <UIcon name="i-lucide-external-link" class="size-3.5" />
-          </a>
-        </li>
-      </ul>
-    </ui-label-content>
+    <upload-json-links :upload-id="id" />
   </div>
 </template>

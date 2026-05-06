@@ -110,10 +110,10 @@ provide('highlightedLabel', highlightedLabel)
 
     <!-- Right column: Receipt image with overlay -->
     <div class="max-w-xs">
-      <receipt-upload-column
-        v-if="uploadId"
-        :id="uploadId"
-      />
+      <div v-if="uploadId">
+        <receipt-upload-column :id="uploadId" />
+        <upload-json-links :upload-id="uploadId" />
+      </div>
       <UAlert
         v-else
         color="warning"
