@@ -2,9 +2,11 @@
 
 const azureStorageAccount = process.env.AZURE_STORAGE_ACCOUNT
 if (!azureStorageAccount) {
-  throw new Error('AZURE_STORAGE_ACCOUNT must be set — used to allowlist the blob host in CSP')
+  console.warn('[nuxt.config] AZURE_STORAGE_ACCOUNT not set — CSP will not allowlist the Azure blob host. Azure blobs will be blocked at runtime.')
 }
-const azureBlobHost = `https://${azureStorageAccount}.blob.core.windows.net`
+const azureBlobHost = azureStorageAccount
+  ? `https://${azureStorageAccount}.blob.core.windows.net`
+  : null
 
 const csp = [
   `default-src 'self'`,
@@ -12,8 +14,12 @@ const csp = [
   `worker-src 'self' blob:`,
   `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
   `font-src 'self' https://fonts.gstatic.com`,
-  `img-src 'self' data: blob: ${azureBlobHost} https://avatars.githubusercontent.com`,
-  `connect-src 'self' ${azureBlobHost}`,
+  azureBlobHost
+    ? `img-src 'self' data: blob: https://avatars.githubusercontent.com ${azureBlobHost}`
+    : `img-src 'self' data: blob: https://avatars.githubusercontent.com`,
+  azureBlobHost
+    ? `connect-src 'self' ${azureBlobHost}`
+    : `connect-src 'self'`,
   `frame-ancestors 'none'`,
   `base-uri 'self'`,
   `form-action 'self'`,
