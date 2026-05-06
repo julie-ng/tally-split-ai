@@ -63,6 +63,15 @@ npm run trigger:deploy:prod
 
 _Manual Deployment_
 
+### CLI
+
+```bash
+supabase login
+supabase link --project-ref [PROJECT_ID]
+supabase db push
+supabase db pull
+```
+
 ### Connection String
 
 Note: Because Vercel doesn't support IPv6, we need to use a Shared Pooler, which can be found in the [Project > Connect Panel](https://supabase.com/dashboard/project/_?showConnect=true), 
