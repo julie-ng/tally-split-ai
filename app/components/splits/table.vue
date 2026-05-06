@@ -12,7 +12,7 @@ const props = defineProps({
     default: () => [],
   },
   previewSplitId: {
-    type: [Number, null],
+    type: [String, null],
     default: null,
   },
   paginationInfo: {
