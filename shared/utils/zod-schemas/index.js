@@ -5,7 +5,7 @@ import { currencySchema } from './currency.schema.js'
 import { householdUpdateSchema } from './household.schema.js'
 import { itemSchema } from './item.schema.js'
 import { newBlobRequestSchema } from './blob.schema.js'
-import { hashIdParamSchema, idParamSchema, uuidParamSchema } from './params.schema.js'
+import { idParamSchema } from './params.schema.js'
 import { receiptSchema, receiptInputSchema } from './receipt.schema.js'
 import { splitSchema, splitRequestSchema, splitUpdateSchema, splitTaskResolutionSchema } from './split.schema.js'
 import { tokenReadRequestSchema } from './token-read-request.schema.js'
@@ -19,10 +19,8 @@ export const zodSchemas = {
   addressSchema,
   analysisSummarySchema,
   currencySchema,
-  hashIdParamSchema,
   householdUpdateSchema,
   idParamSchema,
-  uuidParamSchema,
   itemSchema,
   newBlobRequestSchema,
   receiptSchema,

@@ -55,7 +55,7 @@ export async function requireWorkflowAuth (event) {
     return false
   }
 
-  const scope = `upload:${workflowRun.upload.hashId}`
+  const scope = `upload:${workflowRun.upload.id}`
 
   // HMAC verification (uses testable utility)
   const isValid = workflowTokenUtils.verifyCallbackToken(token, {

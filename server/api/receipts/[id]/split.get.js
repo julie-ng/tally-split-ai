@@ -4,7 +4,7 @@ export default defineEventHandler(async (event) => {
   const db = useDB()
   await guards.requireAuthentication(event)
 
-  const receiptId = parseInt(getRouterParam(event, 'id'), 10)
+  const receiptId = getRouterParam(event, 'id')
 
   // Verify household membership on the parent receipt before returning the split
   await guards.requireAuthorization(event, { receiptId })

@@ -2,7 +2,7 @@
 import { useUploadsStore } from '~/stores/uploads.store'
 
 const props = defineProps({
-  hashId: {
+  id: {
     type: String,
     default: null,
   },
@@ -13,15 +13,15 @@ const emit = defineEmits(['close'])
 const uploadsStore = useUploadsStore()
 
 const upload = computed(() =>
-  props.hashId ? uploadsStore.getUploadByHashId(props.hashId) : null,
+  props.id ? uploadsStore.getUploadById(props.id) : null,
 )
 
-// Cache-aware fetch on hashId change. Returns immediately if the full record
+// Cache-aware fetch on id change. Returns immediately if the full record
 // is already cached; otherwise fetches in the background.
 watch(
-  () => props.hashId,
-  (hashId) => {
-    if (hashId) uploadsStore.fetchUploadByHashId(hashId)
+  () => props.id,
+  (id) => {
+    if (id) uploadsStore.fetchUploadById(id)
   },
   { immediate: true },
 )
@@ -31,7 +31,7 @@ function handleClose () {
 }
 
 function onKeydown (event) {
-  if (event.key === 'Escape' && props.hashId) {
+  if (event.key === 'Escape' && props.id) {
     handleClose()
   }
 }
@@ -67,19 +67,19 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         <div class="col-span-3">
           <UCard>
             <ui-collapsible-property-group title="Overview">
-              <upload-preview-overview :hash-id="hashId" />
+              <upload-preview-overview :id="id" />
             </ui-collapsible-property-group>
 
             <hr class="text-slate-300 my-3">
 
             <ui-collapsible-property-group title="AI Analysis">
-              <upload-preview-analysis :hash-id="hashId" />
+              <upload-preview-analysis :id="id" />
             </ui-collapsible-property-group>
 
             <hr class="text-slate-300 my-3">
 
             <ui-collapsible-property-group title="Azure Info">
-              <upload-preview-azure :hash-id="hashId" />
+              <upload-preview-azure :id="id" />
             </ui-collapsible-property-group>
           </UCard>
         </div>

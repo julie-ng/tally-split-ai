@@ -18,11 +18,11 @@ const {
  *
  * @param {H3Event} event
  * @param {Object} resource - Resource IDs to check (at least one required)
- * @param {string} [resource.uploadHashId] - Upload hashId to verify
- * @param {number} [resource.receiptId] - Receipt ID to verify
- * @param {number} [resource.splitId] - Split ID to verify
+ * @param {string} [resource.uploadId] - Upload id to verify
+ * @param {string} [resource.receiptId] - Receipt id to verify
+ * @param {string} [resource.splitId] - Split id to verify
  */
-export async function requireAuthorization (event, { uploadHashId, receiptId, splitId } = {}) {
+export async function requireAuthorization (event, { uploadId, receiptId, splitId } = {}) {
   const db = useDB()
 
   const isUserRequest = !!event.context.userId
@@ -33,14 +33,14 @@ export async function requireAuthorization (event, { uploadHashId, receiptId, sp
   }
 
   if (isUserRequest) {
-    await authorizeUser(db, event, { householdId: event.context.householdId, uploadHashId, receiptId, splitId })
+    await authorizeUser(db, event, { householdId: event.context.householdId, uploadId, receiptId, splitId })
   }
   else {
-    await authorizeTask(db, event, { workflowRun: event.context.workflowRun, taskId: event.context.taskId, uploadHashId, receiptId, splitId })
+    await authorizeTask(db, event, { workflowRun: event.context.workflowRun, taskId: event.context.taskId, uploadId, receiptId, splitId })
   }
 }
 
-async function authorizeUser (db, event, { householdId, uploadHashId, receiptId, splitId }) {
+async function authorizeUser (db, event, { householdId, uploadId, receiptId, splitId }) {
   if (receiptId) {
     const [receipt] = await db
       .select({ householdId: schema.receipts.householdId })
@@ -69,27 +69,27 @@ async function authorizeUser (db, event, { householdId, uploadHashId, receiptId,
     }
   }
 
-  if (uploadHashId) {
+  if (uploadId) {
     const [upload] = await db
       .select({ householdId: schema.uploads.householdId })
       .from(schema.uploads)
-      .where(eq(schema.uploads.hashId, uploadHashId))
+      .where(eq(schema.uploads.id, uploadId))
       .limit(1)
 
     if (!upload?.householdId || upload.householdId !== householdId) {
-      logSecurityEvent(event, 'warn', { householdId, uploadHashId, reason: 'upload_not_household_member' }, 'Authorization denied')
+      logSecurityEvent(event, 'warn', { householdId, uploadId, reason: 'upload_not_household_member' }, 'Authorization denied')
       throw createError({ statusCode: 404, message: 'Not found' })
     }
   }
 }
 
-async function authorizeTask (db, event, { workflowRun, taskId, uploadHashId, receiptId, splitId }) {
+async function authorizeTask (db, event, { workflowRun, taskId, uploadId, receiptId, splitId }) {
   const upload = workflowRun.upload
 
-  if (uploadHashId) {
-    const result = checkTaskUploadScope(uploadHashId, upload?.hashId)
+  if (uploadId) {
+    const result = checkTaskUploadScope(uploadId, upload?.id)
     if (!result.ok) {
-      logSecurityEvent(event, 'warn', { taskId, uploadHashId, expected: upload?.hashId, reason: result.reason }, 'Authorization denied')
+      logSecurityEvent(event, 'warn', { taskId, uploadId, expected: upload?.id, reason: result.reason }, 'Authorization denied')
       throw createError({ statusCode: 403, message: 'Forbidden' })
     }
   }

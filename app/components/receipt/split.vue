@@ -5,7 +5,7 @@ import { useHouseholdStore } from '~/stores/household.store'
 
 const props = defineProps({
   receiptId: {
-    type: Number,
+    type: String,
     required: true,
   },
 })

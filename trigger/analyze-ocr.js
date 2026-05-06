@@ -15,7 +15,7 @@ export const analyzeOcr = task({
   id: TASK_ID,
   maxDuration: 300,
   run: async (payload) => {
-    const { uploadHashId, runUuid, callbackToken } = payload
+    const { uploadId, runUuid, callbackToken } = payload
     const authHeaders = { callbackToken, runUuid, taskId: TASK_ID }
     const api = createApiClient(authHeaders)
 
@@ -25,7 +25,7 @@ export const analyzeOcr = task({
 
     try {
       // 1. Fetch upload record via API
-      const upload = await api.get(`/api/uploads/${uploadHashId}`)
+      const upload = await api.get(`/api/uploads/${uploadId}`)
 
       // 2. Request a read-only SAS URL from the Nuxt API.
       //    The storage account key never leaves the server — see
@@ -79,7 +79,7 @@ export const analyzeOcr = task({
       })
 
       // 5. Store OCR results on upload (no receiptId — orchestrator handles receipt creation)
-      await api.put(`/api/uploads/${uploadHashId}`, {
+      await api.put(`/api/uploads/${uploadId}`, {
         ocrText: analyzeResult.content || null,
         ocrJson: azureOcrExtract.slimOcrResponse(result.body),
       })
@@ -88,7 +88,7 @@ export const analyzeOcr = task({
       await updateWorkflowStatus(authHeaders, { ocrStatus: WORKFLOW_STEP_STATUS.COMPLETED })
       await notifyStatus(runUuid, WORKFLOW_STEP.OCR, 'completed', authHeaders)
 
-      logger.log(`OCR analysis complete for ${uploadHashId}`)
+      logger.log(`OCR analysis complete for ${uploadId}`)
 
       // Return results to orchestrator for receipt creation + upload linking
       return {

@@ -5,13 +5,13 @@ import { eq } from 'drizzle-orm'
 export default defineEventHandler(async (event) => {
   const db = useDB()
   await guards.requireAuthentication(event)
-  guards.requireHashIdParam(event)
+  guards.requireIdParam(event)
 
-  const hashId = getRouterParam(event, 'hashId')
-  await guards.requireAuthorization(event, { uploadHashId: hashId })
+  const id = getRouterParam(event, 'id')
+  await guards.requireAuthorization(event, { uploadId: id })
 
   const upload = await db.query.uploads.findFirst({
-    where: eq(schema.uploads.hashId, hashId),
+    where: eq(schema.uploads.id, id),
     columns: { ocrJson: true },
   })
 
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
     analysisData = upload.ocrJson
   }
   else {
-    const contents = await readAnalysisFile(hashId)
+    const contents = await readAnalysisFile(id)
     if (contents.error) {
       setResponseStatus(event, contents.error.status)
       return contents.error

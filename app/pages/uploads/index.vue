@@ -47,10 +47,10 @@ const filterValue = ref('all')
 const filteredUploads = computed(() => {
   if (filterValue.value === 'all') return uploads.value
   if (filterValue.value === 'errored') {
-    return uploads.value.filter(u => workflowStore.hasErrorsByHashId(u.hashId))
+    return uploads.value.filter(u => workflowStore.hasErrorsById(u.id))
   }
   // 'completed' — no errors
-  return uploads.value.filter(u => !workflowStore.hasErrorsByHashId(u.hashId))
+  return uploads.value.filter(u => !workflowStore.hasErrorsById(u.id))
 })
 
 const table = useTemplateRef('table')
@@ -82,7 +82,7 @@ function sortableHeader (label) {
 
 const columns = [
   {
-    accessorKey: 'hashId',
+    accessorKey: 'id',
     header: 'ID',
   },
   {
@@ -123,7 +123,7 @@ const tableStyles = {
 
 const tableMeta = computed(() => ({
   class: {
-    tr: row => row?.original?.hashId === previewHashId.value ? 'bg-primary/10' : '',
+    tr: row => row?.original?.id === previewId.value ? 'bg-primary/10' : '',
   },
 }))
 
@@ -141,18 +141,18 @@ const paginationInfo = computed(() => {
 })
 
 // -------- Slideover preview --------
-// URL state: ?preview=<hashId> is the single source of truth. The slideover
-// component reads :hash-id and opens itself. Use router.replace so the
+// URL state: ?preview=<id> is the single source of truth. The slideover
+// component reads :id and opens itself. Use router.replace so the
 // slideover doesn't pollute browser history.
 const route = useRoute()
 const router = useRouter()
 
-const previewHashId = computed(() => route.query.preview ?? null)
+const previewId = computed(() => route.query.preview ?? null)
 
 function openPreview (event, row) {
   // console.log('openPreview()', row)
-  const hashId = row.original.hashId
-  router.replace({ query: { ...route.query, preview: hashId } })
+  const id = row.original.id
+  router.replace({ query: { ...route.query, preview: id } })
 }
 
 function closePreview () {
@@ -223,13 +223,13 @@ function closePreview () {
             class="flex-1"
             @select="openPreview"
           >
-            <template #hashId-cell="{ row }">
+            <template #id-cell="{ row }">
               <NuxtLink
-                :to="{ query: { ...route.query, preview: row.original.hashId } }"
+                :to="{ query: { ...route.query, preview: row.original.id } }"
                 replace
                 class="text-slate-400 hover:text-blue-800 hover:underline font-mono"
               >
-                {{ row.original.hashId }}
+                {{ row.original.id }}
               </NuxtLink>
             </template>
 
@@ -240,7 +240,7 @@ function closePreview () {
             <template #originalFilename-cell="{ row }">
               <div
                 class="flex items-center gap-1.5"
-                :class="previewHashId ? 'max-w-[200px] md:max-w-[240px] xl:max-w-[320px]' : ''"
+                :class="previewId ? 'max-w-[200px] md:max-w-[240px] xl:max-w-[320px]' : ''"
               >
                 <UTooltip
                   v-if="row.original.receipt"
@@ -272,7 +272,7 @@ function closePreview () {
             <template #workflow-cell="{ row }">
               <uploads-workflow-steps
                 :upload-status="row.original.status"
-                :hash-id="row.original.hashId"
+                :id="row.original.id"
               />
             </template>
 
@@ -305,8 +305,8 @@ function closePreview () {
   </UDashboardPanel>
 
   <upload-preview-panel
-    v-if="previewHashId"
-    :hash-id="previewHashId"
+    v-if="previewId"
+    :id="previewId"
     @close="closePreview"
   />
 </template>

@@ -6,7 +6,7 @@ import { WORKFLOW_STATUSES, WORKFLOW_STEP_STATUSES } from '#shared/enums/workflo
  */
 export const workflowRunSchema = z.object({
   id: z.number(),
-  uploadId: z.number().nullable(),
+  uploadId: z.string().nullable(),
   triggerRunId: z.string().nullable(),
   status: z.enum(WORKFLOW_STATUSES),
   ocrStatus: z.enum(WORKFLOW_STEP_STATUSES),
@@ -23,7 +23,7 @@ export const workflowRunSchema = z.object({
  * Workflow Run Insert Schema - validates the full object before DB insert
  */
 export const workflowRunInsertSchema = z.object({
-  uploadId: z.number(),
+  uploadId: z.string(),
   status: z.enum(WORKFLOW_STATUSES).default('queued'),
   ocrStatus: z.enum(WORKFLOW_STEP_STATUSES).default('pending'),
   annotationsStatus: z.enum(WORKFLOW_STEP_STATUSES).default('pending'),

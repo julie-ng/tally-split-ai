@@ -16,11 +16,11 @@ export const receiptWorkflow = task({
   id: TASK_ID,
   maxDuration: 600,
   run: async (payload) => {
-    const { uploadHashId, runUuid, callbackToken } = payload
+    const { uploadId, runUuid, callbackToken } = payload
     const authHeaders = { callbackToken, runUuid, taskId: TASK_ID }
     const api = createApiClient(authHeaders)
 
-    logger.log(`Starting receipt workflow for ${uploadHashId}`)
+    logger.log(`Starting receipt workflow for ${uploadId}`)
 
     // Update workflow status
     await updateWorkflowStatus(authHeaders, { status: WORKFLOW_STATUS.PROCESSING })
@@ -32,7 +32,7 @@ export const receiptWorkflow = task({
 
     // Step 1: OCR — FATAL on failure
     const ocrResult = await analyzeOcr.triggerAndWait(
-      { uploadHashId, runUuid, callbackToken: ocrTokens['analyze-ocr'] },
+      { uploadId, runUuid, callbackToken: ocrTokens['analyze-ocr'] },
     )
 
     if (!ocrResult.ok) {
@@ -64,7 +64,7 @@ export const receiptWorkflow = task({
     }
 
     // Link receipt to upload
-    await api.put(`/api/uploads/${uploadHashId}`, { receiptId })
+    await api.put(`/api/uploads/${uploadId}`, { receiptId })
 
     // Phase 2: Post-OCR tasks — request tokens now that receipt is linked
     const { tokens: postOcrTokens } = await api.post(`/api/workflows/runs/${runUuid}/tokens`, {
@@ -75,7 +75,7 @@ export const receiptWorkflow = task({
     let hasStepErrors = false
 
     const annotationsResult = await analyzeAnnotations.triggerAndWait(
-      { uploadHashId, runUuid, callbackToken: postOcrTokens['analyze-annotations'] },
+      { uploadId, runUuid, callbackToken: postOcrTokens['analyze-annotations'] },
     )
 
     if (!annotationsResult.ok) {
@@ -86,7 +86,7 @@ export const receiptWorkflow = task({
 
     // Step 3: Normalize receipt — NON-FATAL
     const normalizeResult = await normalizeReceipt.triggerAndWait(
-      { uploadHashId, runUuid, callbackToken: postOcrTokens['normalize-receipt'] },
+      { uploadId, runUuid, callbackToken: postOcrTokens['normalize-receipt'] },
     )
 
     if (!normalizeResult.ok) {
@@ -114,7 +114,7 @@ export const receiptWorkflow = task({
     // Step 5: Adjust split — NON-FATAL, requires both split and annotations
     if (splitId && annotationsResult.ok) {
       const adjustResult = await adjustSplit.triggerAndWait(
-        { uploadHashId, splitId, runUuid, callbackToken: postOcrTokens['adjust-split'] },
+        { uploadId, splitId, runUuid, callbackToken: postOcrTokens['adjust-split'] },
       )
 
       if (!adjustResult.ok) {
@@ -135,7 +135,7 @@ export const receiptWorkflow = task({
 
     await notifyStatus(runUuid, WORKFLOW_STEP.WORKFLOW, finalStatus, authHeaders)
 
-    logger.log(`Receipt workflow ${finalStatus} for ${uploadHashId}`, { receiptId, splitId })
+    logger.log(`Receipt workflow ${finalStatus} for ${uploadId}`, { receiptId, splitId })
 
     return { receiptId, splitId }
   },

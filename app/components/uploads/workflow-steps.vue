@@ -8,7 +8,7 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  hashId: {
+  id: {
     type: String,
     required: true,
   },
@@ -29,7 +29,7 @@ function uploadStepStatus (status) {
   }
 }
 
-const stepStatuses = computed(() => workflowStore.stepStatusesByHashId(props.hashId))
+const stepStatuses = computed(() => workflowStore.stepStatusesById(props.id))
 
 const steps = computed(() => [
   { label: 'Upload', status: uploadStepStatus(props.uploadStatus) },

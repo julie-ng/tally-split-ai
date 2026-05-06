@@ -32,11 +32,11 @@ export default defineEventHandler(async (event) => {
   const { step, status } = result.data
   const workflowRun = event.context.workflowRun
 
-  log.info({ runUuid, hashId: workflowRun.upload.hashId, step, status }, 'Callback received')
+  log.info({ runUuid, uploadId: workflowRun.upload.id, step, status }, 'Callback received')
 
   // Emit to event bus keyed by userId
   workflowBus.emit(workflowRun.upload.userId, {
-    uploadHashId: workflowRun.upload.hashId,
+    uploadId: workflowRun.upload.id,
     step,
     status,
   })

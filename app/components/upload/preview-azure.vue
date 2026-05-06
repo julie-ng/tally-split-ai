@@ -3,14 +3,14 @@ import { hasKeys } from '#shared/utils/object.utils.js'
 import { useUploadsStore } from '~/stores/uploads.store'
 
 const props = defineProps({
-  hashId: {
+  id: {
     type: String,
     required: true,
   },
 })
 
 const uploadsStore = useUploadsStore()
-const upload = computed(() => uploadsStore.getUploadByHashId(props.hashId))
+const upload = computed(() => uploadsStore.getUploadById(props.id))
 </script>
 
 <template>

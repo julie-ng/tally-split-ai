@@ -3,7 +3,7 @@ const props = defineProps({
   receipt: Object,
 })
 
-const uploadHashId = computed(() => props.receipt.uploads?.[0]?.hashId)
+const uploadId = computed(() => props.receipt.uploads?.[0]?.id)
 
 const dates = computed(() => {
   return [
@@ -74,7 +74,7 @@ const dates = computed(() => {
           <ui-section-subtitle>
             Azure Blob Info
           </ui-section-subtitle>
-          <blob-info v-if="uploadHashId" :hash-id="uploadHashId" />
+          <blob-info v-if="uploadId" :id="uploadId" />
         </section>
       </div>
     </div>

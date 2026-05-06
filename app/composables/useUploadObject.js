@@ -40,9 +40,9 @@ function extractAzureBlobTags (filename, userId) {
 
 /**
  * @typedef {Object} UploadObject
- * @property {string} hashId - Unique hash identifier
- * @property {string} userId - User ID (blob path prefix)
- * @property {string} blobPath - Azure blob path (e.g. userId/filename)
+ * @property {string} id - Upload id (matches server-generated id)
+ * @property {string} userId - User id (blob path prefix)
+ * @property {string} blobPath - Azure blob path (e.g. userId/uploadId/filename)
  * @property {string} originalFilename - Original file name
  * @property {string} azureFilename - Azure blob filename
  * @property {number} size - File size in bytes
@@ -73,14 +73,14 @@ export function useUploadObject () {
    * @param {Object} blobResult.blob - Blob details
    * @param {string} blobResult.blob.path - Azure blob path
    * @param {string} blobResult.blob.url - Blob URL (no SAS token)
-   * @param {string} blobResult.hashId - Unique hash identifier from server
+   * @param {string} blobResult.id - Upload id from server
    * @returns {Promise<UploadObject>} Standardized upload object with 'queued' status
    */
   async function createUploadObject (file, blobResult) {
     const azureTags = extractAzureBlobTags(file.name, userStore.userId)
 
     return {
-      hashId: blobResult.hashId,
+      id: blobResult.id,
       userId: userStore.userId,
       blobPath: blobResult.blob.path,
       originalFilename: file.name,

@@ -3,7 +3,7 @@ const props = defineProps({
   // Single tags prop - can be string or object
   tags: {
     type: [String, Object],
-    required: true,
+    default: null,
   },
   // For string type
   filter: {

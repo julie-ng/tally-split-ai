@@ -5,10 +5,10 @@ export default defineEventHandler(async (event) => {
   const db = useDB()
   await guards.requireAuthentication(event)
   guards.requireTaskPermission(event)
-  guards.requireHashIdParam(event)
+  guards.requireIdParam(event)
 
-  const hashId = getRouterParam(event, 'hashId')
-  await guards.requireAuthorization(event, { uploadHashId: hashId })
+  const id = getRouterParam(event, 'id')
+  await guards.requireAuthorization(event, { uploadId: id })
 
   const result = await readValidatedBody(event, body => zodSchemas.uploadUpdateSchema.safeParse(body))
   if (!result.success) {
@@ -38,13 +38,13 @@ export default defineEventHandler(async (event) => {
   const dbResult = await db
     .update(schema.uploads)
     .set(updates)
-    .where(eq(schema.uploads.hashId, hashId))
+    .where(eq(schema.uploads.id, id))
     .returning()
 
   if (dbResult.length === 0) {
     throw createError({
       statusCode: 404,
-      message: `Upload with hashId '${hashId}' not found`,
+      message: `Upload with id '${id}' not found`,
     })
   }
 

@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
   guards.requireTaskPermission(event)
   guards.requireIdParam(event)
 
-  const splitId = parseInt(getRouterParam(event, 'id'), 10)
+  const splitId = getRouterParam(event, 'id')
   await guards.requireAuthorization(event, { splitId })
 
   const result = await readValidatedBody(event, body => splitTaskResolutionSchema.safeParse(body))

@@ -10,12 +10,12 @@ export const useUploadsStore = defineStore('uploads', () => {
   // -------- STATE --------
 
   const uploads = ref([])
-  const polygons = ref({}) // Map: { [hashId]: { page, polygons } }
-  // Cache for OCR/Azure Document Intelligence results, keyed by upload hashId.
+  const polygons = ref({}) // Map: { [id]: { page, polygons } }
+  // Cache for OCR/Azure Document Intelligence results, keyed by upload id.
   // Only populated for succeeded analyses (failed/in-progress results bypass
   // the cache so the next access re-fetches).
   const analysisCache = ref(new Map())
-  // Cache for upload annotations (gpt-4o output), keyed by upload hashId.
+  // Cache for upload annotations (gpt-4o output), keyed by upload id.
   // Small payload (notes + annotations array); cached unconditionally since
   // a successful response means the data is final.
   const annotationsCache = ref(new Map())
@@ -27,9 +27,9 @@ export const useUploadsStore = defineStore('uploads', () => {
 
   const totalUploads = computed(() => uploads.value.length)
 
-  const getUploadByHashId = computed(() => hashId => uploads.value.find(u => u.hashId === hashId))
+  const getUploadById = computed(() => id => uploads.value.find(u => u.id === id))
 
-  const getPolygonsByHashId = computed(() => hashId => polygons.value[hashId] ?? null)
+  const getPolygonsById = computed(() => id => polygons.value[id] ?? null)
 
   // -------- ACTIONS --------
 
@@ -57,7 +57,7 @@ export const useUploadsStore = defineStore('uploads', () => {
   }
 
   // Tracks in-flight refresh promises so concurrent fetches for the same
-  // hashId share a single network call (request coalescing).
+  // id share a single network call (request coalescing).
   const inflightUploadFetches = new Map()
 
   /**
@@ -66,75 +66,75 @@ export const useUploadsStore = defineStore('uploads', () => {
    * triggers a refresh from the detail endpoint. Sentinel field for
    * slim-vs-full detection: `userId` (always set on full record, never
    * returned by the slim list endpoint).
-   * @param {string} hashId
+   * @param {string} id
    * @returns {Promise<Object|null>}
    */
-  async function fetchUploadByHashId (hashId) {
-    const existing = uploads.value.find(u => u.hashId === hashId)
+  async function fetchUploadById (id) {
+    const existing = uploads.value.find(u => u.id === id)
     if (existing?.userId) {
-      _log(`[UploadsStore] ✅ cache hit (full): ${hashId}`)
+      _log(`[UploadsStore] ✅ cache hit (full): ${id}`)
       return existing
     }
 
-    if (inflightUploadFetches.has(hashId)) {
-      _log(`[UploadsStore] ⏳ awaiting in-flight fetch: ${hashId}`)
-      await inflightUploadFetches.get(hashId)
-      return uploads.value.find(u => u.hashId === hashId) ?? null
+    if (inflightUploadFetches.has(id)) {
+      _log(`[UploadsStore] ⏳ awaiting in-flight fetch: ${id}`)
+      await inflightUploadFetches.get(id)
+      return uploads.value.find(u => u.id === id) ?? null
     }
 
-    const promise = refreshUploadByHashId(hashId).finally(() => {
-      inflightUploadFetches.delete(hashId)
+    const promise = refreshUploadById(id).finally(() => {
+      inflightUploadFetches.delete(id)
     })
-    inflightUploadFetches.set(hashId, promise)
+    inflightUploadFetches.set(id, promise)
     await promise
-    return uploads.value.find(u => u.hashId === hashId) ?? null
+    return uploads.value.find(u => u.id === id) ?? null
   }
 
   /**
    * Re-fetch a single upload and patch it into local state.
    * Adds the upload if it doesn't exist yet (e.g. created after initial fetch).
-   * @param {string} hashId
+   * @param {string} id
    */
-  async function refreshUploadByHashId (hashId) {
+  async function refreshUploadById (id) {
     try {
-      const data = await requestFetch(`/api/uploads/${hashId}`)
-      const index = uploads.value.findIndex(u => u.hashId === hashId)
+      const data = await requestFetch(`/api/uploads/${id}`)
+      const index = uploads.value.findIndex(u => u.id === id)
       if (index !== -1) {
         uploads.value.splice(index, 1, data)
       }
       else {
         uploads.value.unshift(data)
       }
-      _log(`[UploadsStore] ✅ refreshed upload: ${hashId}`)
+      _log(`[UploadsStore] ✅ refreshed upload: ${id}`)
     }
     catch (err) {
-      console.error(`[UploadsStore] ❌ failed to refresh upload ${hashId}:`, err)
+      console.error(`[UploadsStore] ❌ failed to refresh upload ${id}:`, err)
     }
   }
 
   /**
-   * Delete an upload by hashId
+   * Delete an upload by id
    * Removes from local state after successful API call
    *
-   * @param {string} hashId - The unique hash identifier for the upload
+   * @param {string} id - The upload id
    * @returns {Promise<boolean>} True if deletion succeeded
    */
-  async function deleteUpload (hashId) {
+  async function deleteUpload (id) {
     try {
-      await $fetch(`/api/uploads/${hashId}`, {
+      await $fetch(`/api/uploads/${id}`, {
         method: 'DELETE',
       })
 
       // Remove from local state (mutate in place to preserve array reference)
-      const index = uploads.value.findIndex(u => u.hashId === hashId)
+      const index = uploads.value.findIndex(u => u.id === id)
       if (index !== -1) {
         uploads.value.splice(index, 1)
       }
-      _log(`[UploadsStore] ✅ deleted upload: ${hashId}`)
+      _log(`[UploadsStore] ✅ deleted upload: ${id}`)
       return true
     }
     catch (err) {
-      console.error(`[UploadsStore] ❌ failed to delete upload ${hashId}:`, err)
+      console.error(`[UploadsStore] ❌ failed to delete upload ${id}:`, err)
       error.value = toPiniaError(err)
       throw err
     }
@@ -142,56 +142,56 @@ export const useUploadsStore = defineStore('uploads', () => {
 
   /**
    * Fetch bounding polygons for an upload (lazy loads if not in state)
-   * @param {string} hashId - Upload hash ID
+   * @param {string} id - Upload id
    * @returns {Promise<Object|null>} Polygon data { page, polygons } or null
    */
-  async function fetchPolygons (hashId) {
-    if (polygons.value[hashId]) {
-      return polygons.value[hashId]
+  async function fetchPolygons (id) {
+    if (polygons.value[id]) {
+      return polygons.value[id]
     }
 
     try {
-      const result = await requestFetch(`/api/uploads/${hashId}/polygons`)
+      const result = await requestFetch(`/api/uploads/${id}/polygons`)
       if (result.success) {
-        polygons.value[hashId] = result.data
-        _log(`[UploadsStore] ✅ fetched polygons for: ${hashId}`)
+        polygons.value[id] = result.data
+        _log(`[UploadsStore] ✅ fetched polygons for: ${id}`)
         return result.data
       }
       return null
     }
     catch (err) {
-      console.error(`[UploadsStore] ❌ failed to fetch polygons ${hashId}:`, err)
+      console.error(`[UploadsStore] ❌ failed to fetch polygons ${id}:`, err)
       return null
     }
   }
 
   /**
    * Cache-aware fetch for OCR/Azure Document Intelligence analysis results.
-   * Hits /api/analysis/summary/[hashId]. Caches only when Azure status is
+   * Hits /api/analysis/summary/[id]. Caches only when Azure status is
    * 'succeeded' — failed/in-progress results bypass the cache so the next
    * access re-fetches.
-   * @param {string} hashId
+   * @param {string} id
    * @returns {Promise<Object|null>} The envelope `data` field, or null on error
    */
-  async function fetchAnalysisByHashId (hashId) {
-    if (analysisCache.value.has(hashId)) {
-      _log(`[UploadsStore] ✅ analysis cache hit: ${hashId}`)
-      return analysisCache.value.get(hashId)
+  async function fetchAnalysisById (id) {
+    if (analysisCache.value.has(id)) {
+      _log(`[UploadsStore] ✅ analysis cache hit: ${id}`)
+      return analysisCache.value.get(id)
     }
 
     try {
-      const result = await requestFetch(`/api/analysis/summary/${hashId}`)
+      const result = await requestFetch(`/api/analysis/summary/${id}`)
       if (result.success && result.data?.azureAIDocIntel?.status === 'succeeded') {
-        analysisCache.value.set(hashId, result.data)
-        _log(`[UploadsStore] ✅ fetched + cached analysis: ${hashId}`)
+        analysisCache.value.set(id, result.data)
+        _log(`[UploadsStore] ✅ fetched + cached analysis: ${id}`)
       }
       else {
-        _log(`[UploadsStore] ⚠️ analysis not succeeded, not cached: ${hashId}`)
+        _log(`[UploadsStore] ⚠️ analysis not succeeded, not cached: ${id}`)
       }
       return result.data ?? null
     }
     catch (err) {
-      console.error(`[UploadsStore] ❌ failed to fetch analysis ${hashId}:`, err)
+      console.error(`[UploadsStore] ❌ failed to fetch analysis ${id}:`, err)
       return null
     }
   }
@@ -202,34 +202,34 @@ export const useUploadsStore = defineStore('uploads', () => {
     _log(`[UploadsStore] 🧹 cleared ${size} cached analysis result(s)`)
   }
 
-  function clearAnalysisCacheByHashId (hashId) {
-    if (analysisCache.value.delete(hashId)) {
-      _log(`[UploadsStore] 🧹 cleared cached analysis: ${hashId}`)
+  function clearAnalysisCacheById (id) {
+    if (analysisCache.value.delete(id)) {
+      _log(`[UploadsStore] 🧹 cleared cached analysis: ${id}`)
     }
   }
 
   /**
    * Cache-aware fetch for an upload's annotations (gpt-4o handwriting analysis).
    * Returns the slimmed annotations payload: { model, usage, annotations, notes }.
-   * @param {string} hashId
+   * @param {string} id
    * @returns {Promise<Object|null>} Annotations data, or null if unavailable
    */
-  async function fetchAnnotationsByHashId (hashId) {
-    if (annotationsCache.value.has(hashId)) {
-      _log(`[UploadsStore] ✅ annotations cache hit: ${hashId}`)
-      return annotationsCache.value.get(hashId)
+  async function fetchAnnotationsById (id) {
+    if (annotationsCache.value.has(id)) {
+      _log(`[UploadsStore] ✅ annotations cache hit: ${id}`)
+      return annotationsCache.value.get(id)
     }
 
     try {
-      const data = await requestFetch(`/api/uploads/${hashId}/annotations`)
-      annotationsCache.value.set(hashId, data)
-      _log(`[UploadsStore] ✅ fetched + cached annotations: ${hashId}`)
+      const data = await requestFetch(`/api/uploads/${id}/annotations`)
+      annotationsCache.value.set(id, data)
+      _log(`[UploadsStore] ✅ fetched + cached annotations: ${id}`)
       return data
     }
     catch (err) {
       // 404 is expected when annotations haven't been generated yet
       if (err?.statusCode !== 404) {
-        console.error(`[UploadsStore] ❌ failed to fetch annotations ${hashId}:`, err)
+        console.error(`[UploadsStore] ❌ failed to fetch annotations ${id}:`, err)
       }
       return null
     }
@@ -254,18 +254,18 @@ export const useUploadsStore = defineStore('uploads', () => {
 
     // Getters
     totalUploads,
-    getUploadByHashId,
-    getPolygonsByHashId,
+    getUploadById,
+    getPolygonsById,
 
     // Actions
     fetchUploads,
-    fetchUploadByHashId,
+    fetchUploadById,
     fetchPolygons,
-    fetchAnalysisByHashId,
-    fetchAnnotationsByHashId,
+    fetchAnalysisById,
+    fetchAnnotationsById,
     clearAnalysisCache,
-    clearAnalysisCacheByHashId,
-    refreshUploadByHashId,
+    clearAnalysisCacheById,
+    refreshUploadById,
     deleteUpload,
   }
 })

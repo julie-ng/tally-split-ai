@@ -4,30 +4,30 @@ import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 
 /**
  * Store for managing workflow run data.
- * Normalized map keyed by uploadHashId, fetches from /api/workflows.
+ * Normalized map keyed by uploadId, fetches from /api/workflows.
  */
 export const useWorkflowStore = defineStore('workflow', () => {
   const requestFetch = useRequestFetch()
 
   // -------- STATE --------
 
-  const runs = ref({}) // Map: { [uploadHashId]: WorkflowRun[] }
+  const runs = ref({}) // Map: { [uploadId]: WorkflowRun[] }
   const loading = ref(false)
   const debug = ref(false)
 
   // -------- GETTERS --------
 
-  const getRunsByHashId = computed(() => hashId => runs.value[hashId] ?? [])
+  const getRunsById = computed(() => id => runs.value[id] ?? [])
 
-  const latestRunByHashId = computed(() => hashId => runs.value[hashId]?.[0] ?? null)
+  const latestRunById = computed(() => id => runs.value[id]?.[0] ?? null)
 
-  const runCountByHashId = computed(() => hashId => runs.value[hashId]?.length ?? 0)
+  const runCountById = computed(() => id => runs.value[id]?.length ?? 0)
 
-  const hasErrorsByHashId = computed(() => (hashId) => {
-    const count = runs.value[hashId]?.length ?? 0
+  const hasErrorsById = computed(() => (id) => {
+    const count = runs.value[id]?.length ?? 0
     if (count >= 2) return true
 
-    const latest = runs.value[hashId]?.[0]
+    const latest = runs.value[id]?.[0]
     if (!latest) return false
 
     return latest.status === WORKFLOW_STATUS.FAILED
@@ -42,8 +42,8 @@ export const useWorkflowStore = defineStore('workflow', () => {
     adjustSplitStatus: WORKFLOW_STEP_STATUS.PENDING,
   }
 
-  const stepStatusesByHashId = computed(() => (hashId) => {
-    const latest = runs.value[hashId]?.[0]
+  const stepStatusesById = computed(() => (id) => {
+    const latest = runs.value[id]?.[0]
     if (!latest) return { ...DEFAULT_STEP_STATUSES }
 
     return {
@@ -55,8 +55,8 @@ export const useWorkflowStore = defineStore('workflow', () => {
     }
   })
 
-  const isProcessingByHashId = computed(() => (hashId) => {
-    const latest = runs.value[hashId]?.[0]
+  const isProcessingById = computed(() => (id) => {
+    const latest = runs.value[id]?.[0]
     if (!latest) return false
     return latest.status === WORKFLOW_STATUS.QUEUED
       || latest.status === WORKFLOW_STATUS.PROCESSING
@@ -85,32 +85,32 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
   /**
    * Fetch workflow runs for a single upload
-   * @param {string} hashId
+   * @param {string} id
    */
-  async function fetchByUploadHashId (hashId) {
+  async function fetchByUploadId (id) {
     try {
-      const data = await requestFetch(`/api/workflows/${hashId}`)
-      runs.value[hashId] = data
-      _log(`[WorkflowStore] ✅ fetched ${data.length} runs for ${hashId}`)
+      const data = await requestFetch(`/api/workflows/${id}`)
+      runs.value[id] = data
+      _log(`[WorkflowStore] ✅ fetched ${data.length} runs for ${id}`)
     }
     catch (err) {
-      console.error(`[WorkflowStore] ❌ failed to fetch workflows for ${hashId}:`, err)
+      console.error(`[WorkflowStore] ❌ failed to fetch workflows for ${id}:`, err)
     }
   }
 
   /**
    * Update a workflow step status in-memory from an SSE event.
-   * @param {string} hashId
+   * @param {string} id
    * @param {string} step - e.g. 'ocr', 'annotations', 'split', 'workflow'
    * @param {string} status
    */
-  function updateStepStatus (hashId, step, status) {
+  function updateStepStatus (id, step, status) {
     // Create skeleton run if none exists yet (SSE arrived before fetch)
-    if (!runs.value[hashId]?.length) {
-      runs.value[hashId] = [{ ...DEFAULT_STEP_STATUSES, status: WORKFLOW_STATUS.PROCESSING }]
+    if (!runs.value[id]?.length) {
+      runs.value[id] = [{ ...DEFAULT_STEP_STATUSES, status: WORKFLOW_STATUS.PROCESSING }]
     }
 
-    const latest = runs.value[hashId][0]
+    const latest = runs.value[id][0]
 
     if (step === WORKFLOW_STEP.WORKFLOW) {
       latest.status = status
@@ -120,31 +120,31 @@ export const useWorkflowStore = defineStore('workflow', () => {
       latest[stepKey] = status
     }
 
-    _log(`[WorkflowStore] 🔄 ${hashId} ${step}=${status}`)
+    _log(`[WorkflowStore] 🔄 ${id} ${step}=${status}`)
   }
 
   /**
    * Trigger the analysis workflow for an upload
-   * @param {string} hashId
+   * @param {string} id
    */
-  async function triggerWorkflow (hashId) {
+  async function triggerWorkflow (id) {
     try {
-      await $fetch(`/api/workflows/${hashId}`, { method: 'POST' })
-      _log(`[WorkflowStore] ✅ triggered workflow for ${hashId}`)
-      await fetchByUploadHashId(hashId)
+      await $fetch(`/api/workflows/${id}`, { method: 'POST' })
+      _log(`[WorkflowStore] ✅ triggered workflow for ${id}`)
+      await fetchByUploadId(id)
     }
     catch (err) {
-      console.error(`[WorkflowStore] ❌ failed to trigger workflow for ${hashId}:`, err)
+      console.error(`[WorkflowStore] ❌ failed to trigger workflow for ${id}:`, err)
       throw err
     }
   }
 
   /**
    * Remove workflow data for an upload
-   * @param {string} hashId
+   * @param {string} id
    */
-  function removeByHashId (hashId) {
-    delete runs.value[hashId]
+  function removeById (id) {
+    delete runs.value[id]
   }
 
   /**
@@ -163,18 +163,18 @@ export const useWorkflowStore = defineStore('workflow', () => {
     debug,
 
     // Getters
-    getRunsByHashId,
-    latestRunByHashId,
-    runCountByHashId,
-    hasErrorsByHashId,
-    isProcessingByHashId,
-    stepStatusesByHashId,
+    getRunsById,
+    latestRunById,
+    runCountById,
+    hasErrorsById,
+    isProcessingById,
+    stepStatusesById,
 
     // Actions
     fetchAll,
-    fetchByUploadHashId,
+    fetchByUploadId,
     triggerWorkflow,
     updateStepStatus,
-    removeByHashId,
+    removeById,
   }
 })

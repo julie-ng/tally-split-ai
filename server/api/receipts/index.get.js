@@ -11,7 +11,6 @@ export default defineEventHandler(async (event) => {
       uploads: {
         columns: {
           id: true,
-          hashId: true,
           analysisStatus: true,
           originalFilename: true,
           azureTags: true,

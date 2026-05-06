@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
   const uploads = await db.query.uploads.findMany({
     where: eq(schema.uploads.householdId, householdId),
     columns: {
-      hashId: true,
+      id: true,
     },
     with: {
       workflowRuns: {
@@ -28,11 +28,11 @@ export default defineEventHandler(async (event) => {
     },
   })
 
-  // Return as map keyed by uploadHashId
+  // Return as map keyed by uploadId
   const result = {}
   for (const upload of uploads) {
     if (upload.workflowRuns.length > 0) {
-      result[upload.hashId] = upload.workflowRuns
+      result[upload.id] = upload.workflowRuns
     }
   }
 

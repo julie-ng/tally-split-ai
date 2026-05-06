@@ -3,7 +3,7 @@ import { useReceiptsStore } from '~/stores/receipts.store'
 
 const route = useRoute()
 const router = useRouter()
-const id = parseInt(route.params.id)
+const id = route.params.id
 const toast = useToast()
 
 const receiptsStore = useReceiptsStore()
@@ -83,7 +83,7 @@ const handleCancel = () => {
 
     <template #body>
       <!-- Loading -->
-      <loading-placeholder v-if="pending" title="Loading Receipt" :hash-id="id" />
+      <loading-placeholder v-if="pending" title="Loading Receipt" :id="id" />
 
       <!-- Error -->
       <UAlert
@@ -118,7 +118,7 @@ const handleCancel = () => {
 
       <!-- Not found state -->
       <div v-else>
-        <not-found :title="`Receipt Not Found`" :hash-id="id" />
+        <not-found :title="`Receipt Not Found`" :id="id" />
       </div>
     </template>
   </UDashboardPanel>

@@ -4,7 +4,7 @@ import { useUploadsStore } from '~/stores/uploads.store'
 
 const props = defineProps({
   id: {
-    type: Number,
+    type: String,
     required: true,
   },
   canAnalyze: {
@@ -23,9 +23,9 @@ async function handleAnalyze () {
   try {
     await receiptsStore.analyzeReceipt(props.id)
     // Invalidate cached analysis so the next view re-fetches fresh OCR data.
-    const hashId = receiptsStore.getUploadHashId(props.id)
-    if (hashId) {
-      uploadsStore.clearAnalysisCacheByHashId(hashId)
+    const uploadId = receiptsStore.getUploadId(props.id)
+    if (uploadId) {
+      uploadsStore.clearAnalysisCacheById(uploadId)
     }
     toast.add({
       title: 'Analysis complete',

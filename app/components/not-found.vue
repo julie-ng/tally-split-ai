@@ -4,13 +4,13 @@ const props = defineProps({
     type: String,
     default: 'Loading',
   },
-  hashId: {
+  id: {
     type: [String, Number],
     default: '',
   },
 })
 
-const hasHashId = computed(() => props.hashId !== '')
+const hasId = computed(() => props.id !== '')
 </script>
 
 <template>
@@ -22,8 +22,8 @@ const hasHashId = computed(() => props.hashId !== '')
     <p class="mt-2 mb-1 font-bold">
       {{ props.title }}
     </p>
-    <p v-if="hasHashId" class="font-mono text-slate-400 text-sm">
-      {{ hashId }}
+    <p v-if="hasId" class="font-mono text-slate-400 text-sm">
+      {{ id }}
     </p>
   </div>
 </template>

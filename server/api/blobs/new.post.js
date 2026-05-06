@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { generateId } from '#shared/utils/generate-id.js'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger('upload')
@@ -23,22 +24,20 @@ export default defineEventHandler(async (event) => {
   // Generate Azure-friendly filename
   const azureFilename = createAzureFilename(filename)
 
-  // Construct blob path with userId as virtual directory
-  const blobPath = `${userId}/${azureFilename}`
+  // Pre-generate the upload's id so we can include it in the blob path.
+  // Path layout: {userId}/{uploadId}/{filename} — the per-upload subdir
+  // means re-uploading the same filename within the same second no longer
+  // collides (the old deterministic hashId scheme depended on uniqueness
+  // of (userId, filename, timestamp)).
+  const id = generateId()
 
-  // Generate thumbnail filename and path
+  const blobPath = `${userId}/${id}/${azureFilename}`
   const thumbnailFilename = createThumbnailFilename(azureFilename)
-  const thumbnailPath = `${userId}/${thumbnailFilename}`
+  const thumbnailPath = `${userId}/${id}/${thumbnailFilename}`
 
   // Generate blob URL (no SAS token — tokens are fetched just-in-time before upload)
   const blobUrl = azureStorageUtils.generateBlobUrl(blobPath)
-
-  // Generate thumbnail URL (without SAS token - will be generated on-demand for viewing)
   const thumbnailUrl = azureStorageUtils.generateBlobUrl(thumbnailPath)
-
-  // Generate deterministic hash ID
-  const timestamp = Math.floor(Date.now() / 1000) // Unix timestamp in seconds
-  const hashId = hashUploadName(userId, filename, timestamp)
 
   // Extract receipt metadata from filename
   const receiptTitle = extractReceiptTitle(filename)
@@ -47,7 +46,7 @@ export default defineEventHandler(async (event) => {
 
   // Insert record into uploads table
   const dbResult = await db.insert(schema.uploads).values({
-    hashId,
+    id,
     userId,
     householdId,
     title: receiptTitle || 'Untitled',
@@ -61,12 +60,12 @@ export default defineEventHandler(async (event) => {
     receiptTotal: receiptTotal ? parseFloat(receiptTotal) : null,
   }).returning()
 
-  log.info({ hashId, blobUrl }, 'Upload record created')
+  log.info({ id, blobUrl }, 'Upload record created')
 
   return {
     originalFilename: filename,
     filename: azureFilename,
-    hashId,
+    id,
     blob: {
       path: blobPath,
       url: blobUrl,

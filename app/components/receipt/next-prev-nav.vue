@@ -3,7 +3,7 @@ import { useReceiptsStore } from '~/stores/receipts.store'
 
 const props = defineProps({
   receiptId: {
-    type: Number,
+    type: String,
     required: true,
   },
 })

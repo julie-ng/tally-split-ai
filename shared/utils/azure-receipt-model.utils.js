@@ -5,7 +5,8 @@
  * @return {String}
  */
 function formatCurrency (valueCurrency) {
-  return `${valueCurrency.currencySymbol} ${valueCurrency.valueAmount}`
+  if (!valueCurrency) return ''
+  return `${valueCurrency.currencySymbol ?? ''} ${valueCurrency.valueAmount ?? ''}`.trim()
 }
 
 function formatAddress (valueAddress) {

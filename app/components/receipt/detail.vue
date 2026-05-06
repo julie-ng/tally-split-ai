@@ -109,7 +109,7 @@ provide('highlightedLabel', highlightedLabel)
       <div id="side-col" class="mt-12">
         <receipt-upload-column
           v-if="props.receipt.uploads?.length > 0"
-          :hash-id="props.receipt.uploads[0]?.hashId"
+          :id="props.receipt.uploads[0]?.id"
         />
       </div>
     </div><!-- /.grid -->

@@ -2,19 +2,19 @@
 import { useUploadsStore } from '~/stores/uploads.store'
 
 const props = defineProps({
-  hashId: {
+  id: {
     type: String,
     required: true,
   },
 })
 
 const uploadsStore = useUploadsStore()
-const upload = computed(() => uploadsStore.getUploadByHashId(props.hashId))
+const upload = computed(() => uploadsStore.getUploadById(props.id))
 </script>
 
 <template>
   <div v-if="upload">
-    <ui-label-content label="Hash ID" :content="upload.hashId" />
+    <ui-label-content label="ID" :content="upload.id" />
     <ui-label-content label="Original Filename" :content="upload.originalFilename" />
     <UButton
       v-if="upload.receiptId"

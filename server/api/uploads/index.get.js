@@ -10,7 +10,6 @@ export default defineEventHandler(async (event) => {
     orderBy: [desc(schema.uploads.createdAt)],
     columns: {
       id: true,
-      hashId: true,
       title: true,
       status: true,
       analysisStatus: true,

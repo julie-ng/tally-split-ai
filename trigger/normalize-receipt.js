@@ -12,7 +12,7 @@ export const normalizeReceipt = task({
   id: TASK_ID,
   maxDuration: 60,
   run: async (payload) => {
-    const { uploadHashId, runUuid, callbackToken } = payload
+    const { uploadId, runUuid, callbackToken } = payload
     const authHeaders = { callbackToken, runUuid, taskId: TASK_ID }
     const api = createApiClient(authHeaders)
 
@@ -22,12 +22,12 @@ export const normalizeReceipt = task({
 
     try {
       // 1. Fetch upload record for ocrJson and originalFilename
-      const upload = await api.get(`/api/uploads/${uploadHashId}?include=ocrJson`)
+      const upload = await api.get(`/api/uploads/${uploadId}?include=ocrJson`)
 
       // 2. Skip if no OCR data available
       if (!upload.ocrJson) {
         await updateWorkflowStatus(authHeaders, { normalizeStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-        logger.log(`Skipped normalize for ${uploadHashId} — no OCR data`)
+        logger.log(`Skipped normalize for ${uploadId} — no OCR data`)
         return { skipped: true, reason: 'no_ocr_data' }
       }
 
@@ -35,7 +35,7 @@ export const normalizeReceipt = task({
       const fields = azureOcrExtract.extractDocumentFields(upload.ocrJson)
       if (!fields) {
         await updateWorkflowStatus(authHeaders, { normalizeStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-        logger.log(`Skipped normalize for ${uploadHashId} — no document fields`)
+        logger.log(`Skipped normalize for ${uploadId} — no document fields`)
         return { skipped: true, reason: 'no_document_fields' }
       }
 
@@ -47,7 +47,7 @@ export const normalizeReceipt = task({
       const receiptId = upload.receiptId
       if (!receiptId) {
         await updateWorkflowStatus(authHeaders, { normalizeStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-        logger.log(`Skipped normalize for ${uploadHashId} — no receiptId on upload`)
+        logger.log(`Skipped normalize for ${uploadId} — no receiptId on upload`)
         return { skipped: true, reason: 'no_receipt_id' }
       }
 
@@ -62,7 +62,7 @@ export const normalizeReceipt = task({
         originalFilename: upload.originalFilename,
       })
 
-      logger.log(`Normalize result for ${uploadHashId}`, result)
+      logger.log(`Normalize result for ${uploadId}`, result)
 
       // 6. Build receipt update — always write date and time
       const updates = {
@@ -83,7 +83,7 @@ export const normalizeReceipt = task({
       await updateWorkflowStatus(authHeaders, { normalizeStatus: WORKFLOW_STEP_STATUS.COMPLETED })
       await notifyStatus(runUuid, WORKFLOW_STEP.NORMALIZE, 'completed', authHeaders)
 
-      logger.log(`Normalize complete for ${uploadHashId}`, { receiptId, ...updates })
+      logger.log(`Normalize complete for ${uploadId}`, { receiptId, ...updates })
 
       return { receiptId, ...result }
     }

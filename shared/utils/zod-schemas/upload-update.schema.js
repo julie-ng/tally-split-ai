@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 /**
  * Schema for upload update request body
- * Used in PUT /api/uploads/[hashId]
+ * Used in PUT /api/uploads/[id]
  *
  * All fields are optional since this is a partial update.
  * At least one field must be provided.
@@ -19,7 +19,7 @@ export const uploadUpdateSchema = z.object({
   ocrText: z.string().nullable().optional(),
   ocrJson: z.any().optional(), // full Azure Document Intelligence response
   annotationsJson: z.any().optional(), // GPT-4o annotation results
-  receiptId: z.number().int().positive().optional(),
+  receiptId: z.string().optional(),
 }).refine(
   data => Object.keys(data).length > 0,
   { error: 'At least one field must be provided for update' },

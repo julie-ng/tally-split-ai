@@ -9,14 +9,14 @@ export default defineEventHandler(async (event) => {
   const log = useLogger('workflow')
   const db = useDB()
   await guards.requireAuthentication(event)
-  guards.requireHashIdParam(event, 'uploadHashId')
+  guards.requireIdParam(event, 'uploadId')
 
-  const hashId = getRouterParam(event, 'uploadHashId')
-  await guards.requireAuthorization(event, { uploadHashId: hashId })
+  const uploadId = getRouterParam(event, 'uploadId')
+  await guards.requireAuthorization(event, { uploadId })
 
   const upload = await db.query.uploads.findFirst({
-    where: eq(schema.uploads.hashId, hashId),
-    columns: { id: true, status: true, hashId: true },
+    where: eq(schema.uploads.id, uploadId),
+    columns: { id: true, status: true },
   })
 
   if (!upload) {
@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
   })
 
   if (existingRun) {
-    log.warn({ hashId, workflowRunId: existingRun.id }, 'Workflow already active')
+    log.warn({ uploadId, workflowRunId: existingRun.id }, 'Workflow already active')
     return {
       success: true,
       message: 'Workflow already in progress',
@@ -62,25 +62,25 @@ export default defineEventHandler(async (event) => {
   await db
     .update(schema.uploads)
     .set({ analysisStatus: UPLOAD_ANALYSIS_STATUS.QUEUED })
-    .where(eq(schema.uploads.hashId, hashId))
+    .where(eq(schema.uploads.id, uploadId))
 
   // Generate action-scoped HMAC token for the orchestrator
   const callbackToken = workflowTokenUtils.generateCallbackToken({
     runUuid: workflowRun.uuid,
     runCreatedAt: workflowRun.createdAt.toISOString(),
-    scope: `upload:${upload.hashId}`,
+    scope: `upload:${upload.id}`,
     actions: getTaskActions('receipt-workflow'),
   })
 
   // Trigger the workflow (fire and forget)
-  log.info({ hashId, workflowRunId: workflowRun.id }, 'Triggering receipt-workflow')
+  log.info({ uploadId, workflowRunId: workflowRun.id }, 'Triggering receipt-workflow')
   const handle = await tasks.trigger('receipt-workflow', {
-    uploadHashId: hashId,
+    uploadId,
     workflowRunId: workflowRun.id,
     runUuid: workflowRun.uuid,
     callbackToken,
   })
-  log.info({ hashId, triggerRunId: handle.id }, 'Workflow triggered')
+  log.info({ uploadId, triggerRunId: handle.id }, 'Workflow triggered')
 
   // Store the Trigger.dev run ID
   await db

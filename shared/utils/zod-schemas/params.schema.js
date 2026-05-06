@@ -1,25 +1,10 @@
 import { z } from 'zod'
 
 /**
- * Schema for hashId route parameter
- * Used in /api/uploads/[hashId] and /api/analysis/[uploadHashId] endpoints
- */
-export const hashIdParamSchema = z.object({
-  hashId: z.string().min(1, 'hashId is required'),
-})
-
-/**
- * Schema for numeric id route parameter
- * Used in /api/receipts/[id] endpoints
+ * Schema for opaque id route parameter (nanoid: 18 chars, lowercase + digits).
+ * All public-facing tables (households, users, uploads, receipts, splits)
+ * share this format — see shared/utils/generate-id.js.
  */
 export const idParamSchema = z.object({
-  id: z.string().regex(/^\d+$/, 'id must be a numeric string'),
-})
-
-/**
- * Schema for UUID id route parameter
- * Used in /api/household/[id] endpoints (households, users — UUID PKs)
- */
-export const uuidParamSchema = z.object({
-  id: z.uuid('id must be a valid UUID'),
+  id: z.string().regex(/^[a-z0-9]{18}$/, 'id must be 18 lowercase alphanumeric characters'),
 })

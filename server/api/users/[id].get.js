@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   const db = useDB()
 
   await guards.requireAuthentication(event)
-  guards.requireUuidParam(event)
+  guards.requireIdParam(event)
 
   const id = getRouterParam(event, 'id')
 
