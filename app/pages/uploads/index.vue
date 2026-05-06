@@ -271,8 +271,8 @@ function closePreview () {
 
             <template #workflow-cell="{ row }">
               <uploads-workflow-steps
-                :upload-status="row.original.status"
                 :id="row.original.id"
+                :upload-status="row.original.status"
               />
             </template>
 

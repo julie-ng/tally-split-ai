@@ -49,7 +49,7 @@ const breadcrumbItems = [
 
     <template #body>
       <!-- Loading -->
-      <loading-placeholder v-if="pending" title="Loading Receipt" :id="id" />
+      <loading-placeholder v-if="pending" :id="id" title="Loading Receipt" />
 
       <!-- Error -->
       <UAlert
@@ -69,7 +69,7 @@ const breadcrumbItems = [
 
       <!-- Not found state -->
       <div v-else>
-        <not-found :title="`Receipt Not Found`" :id="id" />
+        <not-found :id="id" :title="`Receipt Not Found`" />
       </div>
 
       <!-- Prev/Next Navigation -->
