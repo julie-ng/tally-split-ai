@@ -63,11 +63,12 @@ const columns = [
   {
     accessorKey: 'total',
     header: 'Total',
+    meta: { class: { th: 'text-right' } },
   },
-  {
-    accessorKey: 'azureTags',
-    header: 'Azure Tags',
-  },
+  // {
+  //   accessorKey: 'azureTags',
+  //   header: 'Azure Tags',
+  // },
   {
     id: 'actions',
     meta: {
@@ -330,11 +331,13 @@ const paginationInfo = computed(() => {
               >
                 {{ receiptUtils.formatCurrency(row.original.total, row.original.currency || 'EUR') }}
               </div>
-              <span v-else class="text-slate-400">—</span>
+              <div v-else class="text-slate-400 text-right">
+                —
+              </div>
             </template>
 
             <!-- Azure Tags -->
-            <template #azureTags-cell="{ row }">
+            <!-- <template #azureTags-cell="{ row }">
               <blob-tags
                 v-if="row.original.azureTags"
                 :tags="row.original.azureTags"
@@ -342,7 +345,7 @@ const paginationInfo = computed(() => {
                 :totals-match="totalsMatch(row.original.azureTags, row.original.total)"
               />
               <span v-else class="text-slate-400">—</span>
-            </template>
+            </template> -->
 
             <!-- Analysis Status -->
             <template #analysisStatus-cell="{ row }">
