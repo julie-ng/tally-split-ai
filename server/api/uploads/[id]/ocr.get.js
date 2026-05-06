@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
 
   const upload = await db.query.uploads.findFirst({
     where: eq(schema.uploads.id, id),
-    columns: { ocrJson: true },
+    columns: { ocrJson: true, ocrText: true },
   })
 
   if (!upload) {
@@ -21,5 +21,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'No OCR data available' })
   }
 
-  return upload.ocrJson
+  return {
+    ocrText: upload.ocrText,
+    ocrJson: upload.ocrJson,
+  }
 })

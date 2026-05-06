@@ -7,11 +7,12 @@ import { loadInstructions } from './load-instructions.js'
  *
  * @param {Object} params
  * @param {Object} params.ocrData - Flattened OCR data from extractForLlm() ({ lineItems, total, subtotal, tax, tip })
+ * @param {string|null} [params.ocrText] - Full raw OCR text. Useful for matching things the receipt model misses (e.g., card numbers in the footer).
  * @param {Object} params.annotations - Annotations JSON from GPT-4o vision analysis
  * @param {string|null} [params.customInstructions] - Optional household-level guidance appended to system prompt
  * @returns {Promise<Object>} { originalTotal, adjustedTotal, paidBy, amountConfidence, payerConfidence, reasoning }
  */
-export async function adjustSplit ({ ocrData, annotations, customInstructions = null }) {
+export async function adjustSplit ({ ocrData, ocrText = null, annotations, customInstructions = null }) {
   const { endpoint, key } = getGpt4oConfig()
 
   const baseSystemPrompt = loadInstructions('adjust-split')
@@ -21,6 +22,7 @@ export async function adjustSplit ({ ocrData, annotations, customInstructions = 
 
   const userMessage = JSON.stringify({
     ocrData,
+    ocrText,
     annotations: annotations || { annotations: [], notes: 'No annotations' },
   }, null, 2)
 

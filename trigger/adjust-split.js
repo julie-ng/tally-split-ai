@@ -24,14 +24,17 @@ export const adjustSplit = task({
       // 1. Fetch upload for OCR and annotations data
       const upload = await api.get(`/api/uploads/${uploadId}?include=ocrJson,annotationsJson`)
 
-      // 2. Skip if no annotations — nothing to adjust
-      // Structure: annotationsJson = { model, usage, annotations: [...], notes }
-      if (!upload.annotationsJson?.annotations?.length) {
+      // 2. Skip if there's nothing for the LLM to act on — neither annotations
+      // nor custom instructions. Running the model with empty inputs would
+      // just echo the original total with low confidence.
+      const hasAnnotations = !!upload.annotationsJson?.annotations?.length
+      const hasCustomInstructions = !!customInstructions?.trim()
+      if (!hasAnnotations && !hasCustomInstructions) {
         await updateWorkflowStatus(authHeaders, { adjustSplitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
         await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_SPLIT, 'completed', authHeaders)
 
-        logger.log(`Skipped adjust-split for ${uploadId} — no annotations`)
-        return { skipped: true, reason: 'no_annotations' }
+        logger.log(`Skipped adjust-split for ${uploadId} — no annotations and no custom instructions`)
+        return { skipped: true, reason: 'no_inputs' }
       }
 
       // 3. Skip if no OCR data
@@ -54,6 +57,7 @@ export const adjustSplit = task({
       // 5. Call GPT-4o-mini to analyze annotations and determine split
       const result = await gpt4oUtils.adjustSplit({
         ocrData,
+        ocrText: upload.ocrText,
         annotations: upload.annotationsJson,
         customInstructions,
       })

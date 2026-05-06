@@ -18,7 +18,7 @@ export const TASK_PERMISSIONS = {
   'receipt-workflow': ['receipt:read', 'receipt:write', 'upload:read', 'upload:write', 'workflow:read', 'workflow:write'],
   'analyze-ocr': ['upload:read', 'upload:write', 'workflow:read', 'workflow:write', 'token:read'],
   'analyze-annotations': ['upload:read', 'upload:write', 'workflow:read', 'workflow:write', 'token:read'],
-  'create-split': ['receipt:read', 'receipt:write', 'split:write', 'workflow:read', 'workflow:write'],
+  'create-split': ['receipt:read', 'receipt:write', 'split:write', 'upload:read', 'workflow:read', 'workflow:write'],
   'normalize-receipt': ['receipt:read', 'receipt:write', 'upload:read', 'workflow:read', 'workflow:write'],
   'adjust-split': ['split:write', 'upload:read', 'workflow:read', 'workflow:write'],
 }

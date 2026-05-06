@@ -50,7 +50,7 @@ const historyLoaded = computed(() => !!splitsStore.history[props.splitId])
 
     <!-- No LLM adjustment -->
     <div v-else class="text-sm text-slate-400">
-      No annotations detected — split was not adjusted by AI.
+      AI reviewed but no adjustment applied.
     </div>
   </div>
 </template>

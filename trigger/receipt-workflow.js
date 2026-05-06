@@ -99,7 +99,7 @@ export const receiptWorkflow = task({
     let splitId = null
 
     const splitResult = await createSplit.triggerAndWait(
-      { receiptId, runUuid, callbackToken: postOcrTokens['create-split'] },
+      { receiptId, uploadId, runUuid, callbackToken: postOcrTokens['create-split'] },
     )
 
     if (splitResult.ok) {

@@ -104,8 +104,13 @@ export default defineEventHandler(async (event) => {
 })
 
 /**
- * Match raw LLM initials to one of the split's two user slots.
- * Case-insensitive comparison against users.initials.
+ * Match a raw LLM payer hint to one of the split's two user slots.
+ *
+ * The hint can be initials (from handwritten annotations) or a name
+ * (from custom-instructions context, e.g. "Matt"). Strategy:
+ *   - Length <= 3: exact case-insensitive match against users.initials
+ *   - Length > 3:  case-insensitive substring match against users.displayName.
+ *                  Ambiguous (both users match) → MISMATCHED.
  *
  * @returns {Promise<{ paidByUserId: string|null, paidByMatch: string }>}
  */
@@ -116,20 +121,27 @@ async function _resolvePaidBy (tx, { initials, userOneId, userTwoId }) {
 
   const slotIds = [userOneId, userTwoId].filter(Boolean)
   if (slotIds.length === 0) {
-    // Degenerate household state — no one to match against
     return { paidByUserId: null, paidByMatch: PAID_BY_MATCH.MISMATCHED }
   }
 
   const candidates = await tx
-    .select({ id: schema.users.id, initials: schema.users.initials })
+    .select({ id: schema.users.id, initials: schema.users.initials, displayName: schema.users.displayName })
     .from(schema.users)
     .where(inArray(schema.users.id, slotIds))
 
   const target = initials.trim().toLowerCase()
-  const matched = candidates.find(c => c.initials?.toLowerCase() === target)
 
-  if (matched) {
-    return { paidByUserId: matched.id, paidByMatch: PAID_BY_MATCH.MATCHED }
+  if (target.length <= 3) {
+    const matched = candidates.find(c => c.initials?.toLowerCase() === target)
+    if (matched) {
+      return { paidByUserId: matched.id, paidByMatch: PAID_BY_MATCH.MATCHED }
+    }
+    return { paidByUserId: null, paidByMatch: PAID_BY_MATCH.MISMATCHED }
+  }
+
+  const nameMatches = candidates.filter(c => c.displayName?.toLowerCase().includes(target))
+  if (nameMatches.length === 1) {
+    return { paidByUserId: nameMatches[0].id, paidByMatch: PAID_BY_MATCH.MATCHED }
   }
   return { paidByUserId: null, paidByMatch: PAID_BY_MATCH.MISMATCHED }
 }
