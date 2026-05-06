@@ -1,4 +1,25 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+
+const azureStorageAccount = process.env.AZURE_STORAGE_ACCOUNT
+if (!azureStorageAccount) {
+  throw new Error('AZURE_STORAGE_ACCOUNT must be set — used to allowlist the blob host in CSP')
+}
+const azureBlobHost = `https://${azureStorageAccount}.blob.core.windows.net`
+
+const csp = [
+  `default-src 'self'`,
+  `script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com`,
+  `worker-src 'self' blob:`,
+  `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
+  `font-src 'self' https://fonts.gstatic.com`,
+  `img-src 'self' data: blob: ${azureBlobHost} https://avatars.githubusercontent.com`,
+  `connect-src 'self' ${azureBlobHost}`,
+  `frame-ancestors 'none'`,
+  `base-uri 'self'`,
+  `form-action 'self'`,
+  `object-src 'none'`,
+].join('; ')
+
 export default defineNuxtConfig({
   modules: [
     '@nuxt/ui',
@@ -44,6 +65,16 @@ export default defineNuxtConfig({
   css: [
     '~/assets/css/main.css',
   ],
+  routeRules: {
+    '/**': {
+      headers: {
+        'Content-Security-Policy': csp,
+        'X-Content-Type-Options': 'nosniff',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'X-Frame-Options': 'DENY',
+      },
+    },
+  },
   runtimeConfig: {
     session: {
       name: 'tally-split-session',
