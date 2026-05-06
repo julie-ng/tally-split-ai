@@ -9,14 +9,16 @@ import { emptyToNull } from './helpers.js'
  * At least one field must be provided.
  * Empty strings are coerced to null so users can clear a field.
  */
+const noHtmlChars = z.string().regex(/^[^<>]*$/, { error: 'Must not contain < or >' })
+
 export const userUpdateSchema = z.object({
-  displayName: z.preprocess(emptyToNull, z.string()
+  displayName: z.preprocess(emptyToNull, noHtmlChars
     .trim()
     .min(1)
     .max(100)
     .nullable()
     .optional()),
-  initials: z.preprocess(emptyToNull, z.string()
+  initials: z.preprocess(emptyToNull, noHtmlChars
     .trim()
     .min(1)
     .max(5)

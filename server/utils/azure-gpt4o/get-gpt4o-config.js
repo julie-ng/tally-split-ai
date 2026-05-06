@@ -15,7 +15,5 @@ export function getGpt4oConfig () {
     throw new Error('AZURE_GPT4O_KEY environment variable is not set')
   }
 
-  console.log('[gpt4o config] endpoint:', endpoint)
-
   return { endpoint, key }
 }
