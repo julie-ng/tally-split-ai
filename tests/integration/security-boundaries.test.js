@@ -99,7 +99,7 @@ describe('Security boundaries: requireAuthorization uses correct resource parame
   const resourceTypes = [
     { dir: 'server/api/receipts', pattern: '\\[*\\].*.js', expectedParam: 'receiptId' },
     { dir: 'server/api/splits', pattern: '\\[*\\].*.js', expectedParam: 'splitId' },
-    { dir: 'server/api/uploads', pattern: '\\[*\\].*.js', expectedParam: 'uploadHashId' },
+    { dir: 'server/api/uploads', pattern: '\\[*\\].*.js', expectedParam: 'uploadId' },
   ]
 
   for (const { dir, pattern, expectedParam } of resourceTypes) {
@@ -120,8 +120,8 @@ describe('Security boundaries: task-facing endpoints call requireTaskPermission'
   // Endpoints that tasks call must enforce action-scoped permissions.
   // This list must be updated when tasks start calling new endpoints.
   const taskFacingEndpoints = [
-    'server/api/uploads/[hashId].get.js',
-    'server/api/uploads/[hashId].put.js',
+    'server/api/uploads/[id].get.js',
+    'server/api/uploads/[id].put.js',
     'server/api/receipts/index.post.js',
     'server/api/receipts/[id].get.js',
     'server/api/receipts/[id].put.js',

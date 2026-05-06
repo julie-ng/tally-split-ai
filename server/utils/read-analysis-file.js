@@ -5,14 +5,14 @@ import path from 'path'
 // Remove once all endpoints read from DB first (summary endpoint still depends on this).
 const ANALYSIS_DIR_NAME = 'tmp'
 
-export async function readAnalysisFile (hashId) {
+export async function readAnalysisFile (uploadId) {
   let analysisData
   let result = {
-    hashId,
+    uploadId,
   }
 
   try {
-    const filePath = path.join(process.cwd(), ANALYSIS_DIR_NAME, `${hashId}.json`)
+    const filePath = path.join(process.cwd(), ANALYSIS_DIR_NAME, `${uploadId}.json`)
     const fileContent = await fs.readFile(filePath, 'utf-8')
     analysisData = JSON.parse(fileContent)
     result.success = true
@@ -25,7 +25,7 @@ export async function readAnalysisFile (hashId) {
         ...result,
         error: {
           status: 404,
-          message: `Analysis file not found for upload ${hashId}. Please run analysis first.`,
+          message: `Analysis file not found for upload ${uploadId}. Please run analysis first.`,
         },
       }
     }

@@ -2,16 +2,16 @@
 import { useUploadsStore } from '~/stores/uploads.store'
 
 const props = defineProps({
-  hashId: {
+  id: {
     type: String,
     required: true,
   },
 })
 
 const uploadsStore = useUploadsStore()
-uploadsStore.refreshUploadByHashId(props.hashId)
+uploadsStore.refreshUploadById(props.id)
 
-const upload = computed(() => uploadsStore.getUploadByHashId(props.hashId))
+const upload = computed(() => uploadsStore.getUploadById(props.id))
 </script>
 
 <template>

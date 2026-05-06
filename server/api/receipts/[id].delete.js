@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   await guards.requireAuthentication(event)
   guards.requireIdParam(event)
 
-  const receiptId = parseInt(getRouterParam(event, 'id'), 10)
+  const receiptId = getRouterParam(event, 'id')
   await guards.requireAuthorization(event, { receiptId })
 
   // Fetch receipt for history tracking

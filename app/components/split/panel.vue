@@ -3,7 +3,7 @@ import { useSplitsStore } from '~/stores/splits.store'
 
 const props = defineProps({
   splitId: {
-    type: Number,
+    type: String,
     default: null,
   },
 })

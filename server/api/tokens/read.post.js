@@ -9,12 +9,12 @@ import { eq, or } from 'drizzle-orm'
  * Dual-auth, with separate AuthZ paths because the resource here is a
  * capability ("read this blob"), not one of the standard household
  * resources (upload/receipt/split). requireAuthorization is unsuitable —
- * its task path checks `workflowRun.upload.hashId` against a passed
- * uploadHashId, but our request is keyed by blobName. Special-case AuthZ
+ * its task path checks `workflowRun.upload.id` against a passed
+ * uploadId, but our request is keyed by blobName. Special-case AuthZ
  * is inlined below.
  *
  * - User principal: blob's upload must be in the user's household
- * - Task principal: blob's upload.hashId must equal workflowRun.upload.hashId
+ * - Task principal: blob's upload.id must equal workflowRun.upload.id
  *   AND task must hold the `token:read` action
  */
 export default defineEventHandler(async (event) => {
@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
    */
   const [upload] = await db
     .select({
-      hashId: schema.uploads.hashId,
+      id: schema.uploads.id,
       householdId: schema.uploads.householdId,
     })
     .from(schema.uploads)
@@ -68,7 +68,7 @@ export default defineEventHandler(async (event) => {
   const isTask = !!event.context.workflowRun
   if (isTask) {
     const taskActions = event.context.taskActions ?? []
-    const expectedHashId = event.context.workflowRun.upload?.hashId
+    const expectedUploadId = event.context.workflowRun.upload?.id
 
     if (!taskActions.includes('token:read')) {
       logSecurityEvent(event, 'warn', {
@@ -79,12 +79,12 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 403, message: 'Forbidden' })
     }
 
-    if (upload.hashId !== expectedHashId) {
+    if (upload.id !== expectedUploadId) {
       logSecurityEvent(event, 'warn', {
         taskId: event.context.taskId,
         blobName,
-        uploadHashId: upload.hashId,
-        expected: expectedHashId,
+        uploadId: upload.id,
+        expected: expectedUploadId,
         reason: 'blob_outside_workflow_scope',
       }, 'Authorization denied')
       throw createError({ statusCode: 403, message: 'Forbidden' })

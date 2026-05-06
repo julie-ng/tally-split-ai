@@ -59,7 +59,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, message: 'Workflow run has no linked resource' })
   }
 
-  const scope = `upload:${workflowRun.upload.hashId}`
+  const scope = `upload:${workflowRun.upload.id}`
 
   // Generate a token per requested task
   const tokens = {}

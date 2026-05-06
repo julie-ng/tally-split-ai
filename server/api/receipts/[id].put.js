@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
   guards.requireTaskPermission(event)
   guards.requireIdParam(event)
 
-  const receiptId = parseInt(getRouterParam(event, 'id'), 10)
+  const receiptId = getRouterParam(event, 'id')
   await guards.requireAuthorization(event, { receiptId })
 
   const result = await readValidatedBody(event, body => zodSchemas.receiptInputSchema.safeParse(body))

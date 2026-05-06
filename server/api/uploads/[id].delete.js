@@ -21,7 +21,7 @@ async function deleteAzureBlobs (log, upload) {
     }
     // eslint-disable-next-line no-unused-vars
     catch (thumbnailError) {
-      log.warn({ hashId: upload.hashId, blob: upload.thumbnailName }, 'Thumbnail not found or already deleted')
+      log.warn({ id: upload.id, blob: upload.thumbnailName }, 'Thumbnail not found or already deleted')
     }
   }
 
@@ -32,10 +32,10 @@ export default defineEventHandler(async (event) => {
   const log = useLogger('upload')
   const db = useDB()
   await guards.requireAuthentication(event)
-  guards.requireHashIdParam(event)
+  guards.requireIdParam(event)
 
-  const hashId = getRouterParam(event, 'hashId')
-  await guards.requireAuthorization(event, { uploadHashId: hashId })
+  const id = getRouterParam(event, 'id')
+  await guards.requireAuthorization(event, { uploadId: id })
 
   azureStorageUtils.useAzureStorageConfig()
 
@@ -43,13 +43,13 @@ export default defineEventHandler(async (event) => {
   const [upload] = await db
     .select()
     .from(schema.uploads)
-    .where(eq(schema.uploads.hashId, hashId))
+    .where(eq(schema.uploads.id, id))
     .limit(1)
 
   if (!upload) {
     throw createError({
       statusCode: 404,
-      message: `Upload with hashId '${hashId}' not found`,
+      message: `Upload with id '${id}' not found`,
     })
   }
 
@@ -59,7 +59,7 @@ export default defineEventHandler(async (event) => {
     blobsDeletionResults = await deleteAzureBlobs(log, upload)
   }
   catch (error) {
-    log.error({ hashId, blob: upload.blobName, err: error }, 'Failed to delete blobs from Azure')
+    log.error({ id, blob: upload.blobName, err: error }, 'Failed to delete blobs from Azure')
     throw createError({
       statusCode: 500,
       message: 'Failed to delete blobs from Azure Storage',
@@ -77,7 +77,7 @@ export default defineEventHandler(async (event) => {
       .from(schema.uploads)
       .where(and(
         eq(schema.uploads.receiptId, upload.receiptId),
-        ne(schema.uploads.hashId, hashId),
+        ne(schema.uploads.id, id),
       ))
 
     if (siblingCount === 0) {
@@ -110,7 +110,7 @@ export default defineEventHandler(async (event) => {
   if (!deletedReceipt) {
     await db
       .delete(schema.uploads)
-      .where(eq(schema.uploads.hashId, hashId))
+      .where(eq(schema.uploads.id, id))
   }
 
   // Track deletions in history (audit trail only — no UI to surface these yet)
@@ -133,14 +133,14 @@ export default defineEventHandler(async (event) => {
   }
 
   log.info({
-    hashId,
+    id,
     receiptDeleted: !!deletedReceipt,
     splitDeleted: !!deletedSplit,
   }, 'Upload deleted')
 
   return {
     success: true,
-    deleted: { hashId },
+    deleted: { id },
     receiptDeleted: !!deletedReceipt,
     splitDeleted: !!deletedSplit,
     blobsDeletionResults,

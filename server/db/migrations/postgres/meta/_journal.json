@@ -5,127 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1775494592338,
-      "tag": "0000_magical_virginia_dare",
+      "when": 1778047428428,
+      "tag": "0000_flimsy_brother_voodoo",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1775566885644,
-      "tag": "0001_yummy_pet_avengers",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1775674460378,
-      "tag": "0002_breezy_black_tarantula",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1775815243631,
-      "tag": "0003_fresh_arclight",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1775895704753,
-      "tag": "0004_mushy_rhino",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1776073399199,
-      "tag": "0005_glamorous_callisto",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1776077782692,
-      "tag": "0006_check-workflow-runs-resource",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1776088683114,
-      "tag": "0007_normal_black_queen",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1776186839192,
-      "tag": "0008_fluffy_blacklash",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1776187979283,
-      "tag": "0009_lumpy_doctor_faustus",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "7",
-      "when": 1776189217337,
-      "tag": "0010_smiling_loki",
-      "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "7",
-      "when": 1776275506065,
-      "tag": "0011_ambitious_quentin_quire",
-      "breakpoints": true
-    },
-    {
-      "idx": 12,
-      "version": "7",
-      "when": 1777187760317,
-      "tag": "0012_silent_stingray",
-      "breakpoints": true
-    },
-    {
-      "idx": 13,
-      "version": "7",
-      "when": 1777254926198,
-      "tag": "0013_shallow_nighthawk",
-      "breakpoints": true
-    },
-    {
-      "idx": 14,
-      "version": "7",
-      "when": 1777255348176,
-      "tag": "0014_short_shaman",
-      "breakpoints": true
-    },
-    {
-      "idx": 15,
-      "version": "7",
-      "when": 1777470907418,
-      "tag": "0015_brainy_blur",
-      "breakpoints": true
-    },
-    {
-      "idx": 16,
-      "version": "7",
-      "when": 1777527996908,
-      "tag": "0016_split_metrics_view",
-      "breakpoints": true
-    },
-    {
-      "idx": 17,
-      "version": "7",
-      "when": 1777606918380,
-      "tag": "0017_natural_colonel_america",
+      "when": 1778100000000,
+      "tag": "0001_split_metrics_view",
       "breakpoints": true
     }
   ]

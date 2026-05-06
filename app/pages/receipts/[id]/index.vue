@@ -2,7 +2,7 @@
 import { useReceiptsStore } from '~/stores/receipts.store'
 
 const route = useRoute()
-const id = parseInt(route.params.id)
+const id = route.params.id
 
 const receiptsStore = useReceiptsStore()
 receiptsStore.debug = true
@@ -49,7 +49,7 @@ const breadcrumbItems = [
 
     <template #body>
       <!-- Loading -->
-      <loading-placeholder v-if="pending" title="Loading Receipt" :hash-id="id" />
+      <loading-placeholder v-if="pending" :id="id" title="Loading Receipt" />
 
       <!-- Error -->
       <UAlert
@@ -69,7 +69,7 @@ const breadcrumbItems = [
 
       <!-- Not found state -->
       <div v-else>
-        <not-found :title="`Receipt Not Found`" :hash-id="id" />
+        <not-found :id="id" :title="`Receipt Not Found`" />
       </div>
 
       <!-- Prev/Next Navigation -->

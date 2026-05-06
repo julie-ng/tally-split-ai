@@ -12,7 +12,7 @@ export const adjustSplit = task({
   id: TASK_ID,
   maxDuration: 60,
   run: async (payload) => {
-    const { uploadHashId, splitId, runUuid, callbackToken } = payload
+    const { uploadId, splitId, runUuid, callbackToken } = payload
     const authHeaders = { callbackToken, runUuid, taskId: TASK_ID }
     const api = createApiClient(authHeaders)
 
@@ -22,7 +22,7 @@ export const adjustSplit = task({
 
     try {
       // 1. Fetch upload for OCR and annotations data
-      const upload = await api.get(`/api/uploads/${uploadHashId}?include=ocrJson,annotationsJson`)
+      const upload = await api.get(`/api/uploads/${uploadId}?include=ocrJson,annotationsJson`)
 
       // 2. Skip if no annotations — nothing to adjust
       // Structure: annotationsJson = { model, usage, annotations: [...], notes }
@@ -30,7 +30,7 @@ export const adjustSplit = task({
         await updateWorkflowStatus(authHeaders, { adjustSplitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
         await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_SPLIT, 'completed', authHeaders)
 
-        logger.log(`Skipped adjust-split for ${uploadHashId} — no annotations`)
+        logger.log(`Skipped adjust-split for ${uploadId} — no annotations`)
         return { skipped: true, reason: 'no_annotations' }
       }
 
@@ -39,7 +39,7 @@ export const adjustSplit = task({
         await updateWorkflowStatus(authHeaders, { adjustSplitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
         await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_SPLIT, 'completed', authHeaders)
 
-        logger.log(`Skipped adjust-split for ${uploadHashId} — no OCR data`)
+        logger.log(`Skipped adjust-split for ${uploadId} — no OCR data`)
         return { skipped: true, reason: 'no_ocr_data' }
       }
 
@@ -47,7 +47,7 @@ export const adjustSplit = task({
       const ocrData = azureOcrExtract.extractForLlm(upload.ocrJson)
       if (!ocrData) {
         await updateWorkflowStatus(authHeaders, { adjustSplitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-        logger.log(`Skipped adjust-split for ${uploadHashId} — no document fields`)
+        logger.log(`Skipped adjust-split for ${uploadId} — no document fields`)
         return { skipped: true, reason: 'no_document_fields' }
       }
 
@@ -57,7 +57,7 @@ export const adjustSplit = task({
         annotations: upload.annotationsJson,
       })
 
-      logger.log(`Adjust-split result for ${uploadHashId}`, result)
+      logger.log(`Adjust-split result for ${uploadId}`, result)
 
       // 6. Compute share amounts (50/50 default; null adjustedTotal lets the
       // endpoint keep the existing splitAmount)
@@ -89,7 +89,7 @@ export const adjustSplit = task({
       await updateWorkflowStatus(authHeaders, { adjustSplitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
       await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_SPLIT, 'completed', authHeaders)
 
-      logger.log(`Adjust-split complete for ${uploadHashId}`, {
+      logger.log(`Adjust-split complete for ${uploadId}`, {
         splitId,
         originalTotal: result.originalTotal,
         adjustedTotal: result.adjustedTotal,

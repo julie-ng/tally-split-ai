@@ -3,14 +3,14 @@ import { eq } from 'drizzle-orm'
 export default defineEventHandler(async (event) => {
   const db = useDB()
   await guards.requireAuthentication(event)
-  guards.requireHashIdParam(event, 'uploadHashId')
+  guards.requireIdParam(event, 'uploadId')
 
-  const hashId = getRouterParam(event, 'uploadHashId')
+  const uploadId = getRouterParam(event, 'uploadId')
 
   const upload = await db.query.uploads.findFirst({
-    where: eq(schema.uploads.hashId, hashId),
+    where: eq(schema.uploads.id, uploadId),
     columns: {
-      hashId: true,
+      id: true,
       blobName: true,
       ocrJson: true,
     },
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
     analysisData = upload.ocrJson
   }
   else {
-    const contents = await readAnalysisFile(hashId)
+    const contents = await readAnalysisFile(uploadId)
     if (contents.error) {
       setResponseStatus(event, contents.error.status)
       return contents.error
@@ -87,7 +87,7 @@ export default defineEventHandler(async (event) => {
     success: true,
     data: {
       upload: {
-        hashId: upload.hashId,
+        id: upload.id,
         blobName: upload.blobName,
       },
       azureAIDocIntel: {

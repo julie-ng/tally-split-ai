@@ -5,7 +5,7 @@ import { RECEIPT_ANALYSIS_STATUSES } from '#shared/enums/receipt-analysis-status
  * Receipt Object - Business/finance data extracted from receipt images
  */
 export const receiptSchema = z.object({
-  id: z.number(),
+  id: z.string(),
   title: z.string().nullable(),
   merchantName: z.string().nullable(),
   merchantAddress: z.string().nullable(),
@@ -20,7 +20,7 @@ export const receiptSchema = z.object({
   currency: z.string().nullable(),
   notes: z.string().nullable(),
   analysisStatus: z.enum(RECEIPT_ANALYSIS_STATUSES),
-  userId: z.uuid(),
+  userId: z.string(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 })

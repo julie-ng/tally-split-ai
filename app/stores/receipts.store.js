@@ -54,9 +54,9 @@ export const useReceiptsStore = defineStore('receipts', () => {
   })
 
   /**
-   * Get the upload hashId for a receipt's first upload
+   * Get the upload id for a receipt's first upload
    */
-  const getUploadHashId = computed(() => id => receiptsById.value[id]?.data?.uploads?.[0]?.hashId)
+  const getUploadId = computed(() => id => receiptsById.value[id]?.data?.uploads?.[0]?.id)
 
   /**
    * Get error for a receipt
@@ -314,13 +314,13 @@ export const useReceiptsStore = defineStore('receipts', () => {
 
   /**
    * Trigger Azure Document Intelligence analysis for a receipt
-   * Fetches hashId from cached receipt, calls analysis API, then force-refetches receipt
-   * @param {number} id - Receipt ID
+   * Fetches uploadId from cached receipt, calls analysis API, then force-refetches receipt
+   * @param {string} id - Receipt id
    */
   async function analyzeReceipt (id) {
     await _ensureReceipt(id)
-    const hashId = getUploadHashId.value(id)
-    if (!hashId) {
+    const uploadId = getUploadId.value(id)
+    if (!uploadId) {
       throw createError({ statusCode: 400, message: 'No upload found for this receipt' })
     }
 
@@ -328,7 +328,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
     errors.value[id] = null
 
     try {
-      await $fetch(`/api/analysis/ocr/${hashId}`, { method: 'POST' })
+      await $fetch(`/api/analysis/ocr/${uploadId}`, { method: 'POST' })
       await fetchReceiptById(id, true)
     }
     catch (err) {
@@ -407,7 +407,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
     isReceiptSaving,
     isReceiptAnalyzing,
     isReceiptAnalyzed,
-    getUploadHashId,
+    getUploadId,
     getReceiptError,
     allReceipts,
     totalReceipts,

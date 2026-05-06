@@ -5,14 +5,14 @@ import { PAID_BY_MATCHES } from '#shared/enums/paid-by-match.js'
  * Split Object - tracks expense splitting between two household members
  */
 export const splitSchema = z.object({
-  id: z.number(),
-  receiptId: z.number().nullable(),
+  id: z.string(),
+  receiptId: z.string().nullable(),
   splitAmount: z.number(),
   userOneShare: z.number().nullable(),
   userTwoShare: z.number().nullable(),
-  userOneId: z.uuid().nullable(),
-  userTwoId: z.uuid().nullable(),
-  paidByUserId: z.uuid().nullable(),
+  userOneId: z.string().nullable(),
+  userTwoId: z.string().nullable(),
+  paidByUserId: z.string().nullable(),
   paidByMatch: z.enum(PAID_BY_MATCHES),
   isSettled: z.boolean(),
   settledAt: z.string().nullable(),
@@ -25,12 +25,12 @@ export const splitSchema = z.object({
  * Split Request Schema - validates HTTP request body for POST /api/splits
  */
 export const splitRequestSchema = z.object({
-  receiptId: z.number().nullable().optional(),
+  receiptId: z.string().nullable().optional(),
   splitAmount: z.number(),
   userOneShare: z.number().nullable().optional(),
   userTwoShare: z.number().nullable().optional(),
-  userOneId: z.uuid().nullable().optional(),
-  userTwoId: z.uuid().nullable().optional(),
+  userOneId: z.string().nullable().optional(),
+  userTwoId: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
   isSettled: z.boolean().optional(),
 })
@@ -44,7 +44,7 @@ export const splitUpdateSchema = z.object({
   splitAmount: z.number().optional(),
   userOneShare: z.number().nullable().optional(),
   userTwoShare: z.number().nullable().optional(),
-  paidByUserId: z.uuid().nullable().optional(),
+  paidByUserId: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
   isSettled: z.boolean().optional(),
 

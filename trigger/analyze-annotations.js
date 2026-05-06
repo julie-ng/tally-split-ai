@@ -11,7 +11,7 @@ export const analyzeAnnotations = task({
   id: TASK_ID,
   maxDuration: 120,
   run: async (payload) => {
-    const { uploadHashId, runUuid, callbackToken } = payload
+    const { uploadId, runUuid, callbackToken } = payload
     const authHeaders = { callbackToken, runUuid, taskId: TASK_ID }
     const api = createApiClient(authHeaders)
 
@@ -21,8 +21,8 @@ export const analyzeAnnotations = task({
 
     try {
       // 1. Fetch upload record via API (includes ocrJson from OCR step)
-      logger.log(`Fetching upload ${uploadHashId}`)
-      const upload = await api.get(`/api/uploads/${uploadHashId}?include=ocrJson,annotationsJson`)
+      logger.log(`Fetching upload ${uploadId}`)
+      const upload = await api.get(`/api/uploads/${uploadId}?include=ocrJson,annotationsJson`)
       logger.log(`Upload fetched`, { blobName: upload.blobName, hasOcrJson: !!upload.ocrJson })
 
       // 2. Request a read-only SAS URL from the Nuxt API.
@@ -72,18 +72,18 @@ export const analyzeAnnotations = task({
       })
 
       // 6. Store slimmed result via API
-      await api.put(`/api/uploads/${uploadHashId}`, { annotationsJson: slimAnnotations })
+      await api.put(`/api/uploads/${uploadId}`, { annotationsJson: slimAnnotations })
 
       // 7. Update workflow step status
       await updateWorkflowStatus(authHeaders, { annotationsStatus: WORKFLOW_STEP_STATUS.COMPLETED })
       await notifyStatus(runUuid, WORKFLOW_STEP.ANNOTATIONS, 'completed', authHeaders)
 
-      logger.log(`Annotations analysis complete for ${uploadHashId}`)
+      logger.log(`Annotations analysis complete for ${uploadId}`)
 
       return { annotations: slimAnnotations.annotations }
     }
     catch (err) {
-      logger.error(`Annotations analysis failed for ${uploadHashId}`, {
+      logger.error(`Annotations analysis failed for ${uploadId}`, {
         error: err.message,
         stack: err.stack?.split('\n').slice(0, 3).join('\n'),
       })

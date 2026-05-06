@@ -2,14 +2,14 @@
 import { useUploadsStore } from '~/stores/uploads.store'
 
 const props = defineProps({
-  hashId: {
+  id: {
     type: String,
     required: true,
   },
 })
 
 const uploadsStore = useUploadsStore()
-const upload = computed(() => uploadsStore.getUploadByHashId(props.hashId))
+const upload = computed(() => uploadsStore.getUploadById(props.id))
 
 const analysisData = ref(null)
 const annotationsNotes = ref(null)
@@ -19,7 +19,7 @@ async function lazyLoadAnalysis () {
     analysisData.value = null
     return
   }
-  analysisData.value = await uploadsStore.fetchAnalysisByHashId(props.hashId)
+  analysisData.value = await uploadsStore.fetchAnalysisById(props.id)
 }
 
 async function lazyLoadAnnotations () {
@@ -27,7 +27,7 @@ async function lazyLoadAnnotations () {
     annotationsNotes.value = null
     return
   }
-  const data = await uploadsStore.fetchAnnotationsByHashId(props.hashId)
+  const data = await uploadsStore.fetchAnnotationsById(props.id)
   annotationsNotes.value = data?.notes ?? null
 }
 
@@ -42,10 +42,10 @@ const validatedItems = computed(() => {
 const hasItems = computed(() => (validatedItems.value?.items?.length ?? 0) > 0)
 
 const jsonLinks = computed(() => [
-  { label: 'Summary', href: `/api/analysis/summary/${props.hashId}` },
-  { label: 'Annotations', href: `/api/uploads/${props.hashId}/annotations` },
-  { label: 'OCR', href: `/api/uploads/${props.hashId}/ocr` },
-  { label: 'Polygons', href: `/api/uploads/${props.hashId}/polygons` },
+  { label: 'Summary', href: `/api/analysis/summary/${props.id}` },
+  { label: 'Annotations', href: `/api/uploads/${props.id}/annotations` },
+  { label: 'OCR', href: `/api/uploads/${props.id}/ocr` },
+  { label: 'Polygons', href: `/api/uploads/${props.id}/polygons` },
 ])
 </script>
 

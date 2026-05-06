@@ -3,7 +3,7 @@ import { addressSchema } from './address.schema.js'
 import { currencySchema } from './currency.schema.js'
 
 /**
- * Sorted fields done in /api/analysis/summary/[hashId]
+ * Sorted fields done in /api/analysis/summary/[uploadId]
  */
 export const analysisSummarySchema = z.object({
   merchant: z.object({

@@ -86,12 +86,12 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
   /**
    * Get the name of an upload by its hash ID
    *
-   * @param {string} hashId - The unique hash identifier for the upload
+   * @param {string} id - The unique hash identifier for the upload
    * @returns {string} The name of the upload
    */
-  function getName (hashId) {
-    console.log(`🍍 getName(${hashId})`)
-    const upload = uploads.value.find(u => u.hashId === hashId)
+  function getName (id) {
+    console.log(`🍍 getName(${id})`)
+    const upload = uploads.value.find(u => u.id === id)
     return upload.name
   }
 
@@ -100,12 +100,12 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
    *
    * @param {Object} uploadObj - The upload object containing file and metadata
    * @param {File} uploadObj.file - The file to upload (must be instanceof File)
-   * @param {string} uploadObj.hashId - Unique hash identifier
+   * @param {string} uploadObj.id - Unique hash identifier
    * @param {string} uploadObj.originalFilename - Original filename
    * @throws {Error} If uploadObj.file is not an instance of File
    */
   async function add (uploadObj) {
-    console.log(`🍍 [Add] (${uploadObj.hashId}) ${uploadObj.originalFilename}`)
+    console.log(`🍍 [Add] (${uploadObj.id}) ${uploadObj.originalFilename}`)
     if (!(uploadObj.file instanceof File)) {
       throw new Error('Upload must have `file` attribute of type `File`')
     }
@@ -137,31 +137,31 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
   /**
    * Remove an upload from the queue by its hash ID
    *
-   * @param {string} hashId - The unique hash identifier for the upload to remove
+   * @param {string} id - The unique hash identifier for the upload to remove
    */
-  function remove (hashId) {
-    console.log(`🍍 [Remove] (${hashId})`)
-    const index = uploads.value.findIndex(u => u.hashId === hashId)
+  function remove (id) {
+    console.log(`🍍 [Remove] (${id})`)
+    const index = uploads.value.findIndex(u => u.id === id)
     if (index !== -1) {
       uploads.value.splice(index, 1)
     }
     else {
-      console.error(`Cannot find ${hashId}.`)
+      console.error(`Cannot find ${id}.`)
     }
   }
 
   /**
    * Return an upload back to the queued status
    *
-   * @param {string} hashId - The unique hash identifier for the upload
+   * @param {string} id - The unique hash identifier for the upload
    */
-  function returnToQueue (hashId) {
-    const index = uploads.value.findIndex(u => u.hashId === hashId)
+  function returnToQueue (id) {
+    const index = uploads.value.findIndex(u => u.id === id)
     if (index !== -1) {
       uploads.value[index].status = 'queued'
     }
     else {
-      console.error(`Cannot find ${hashId}.`)
+      console.error(`Cannot find ${id}.`)
     }
   }
 
@@ -192,7 +192,7 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
 
   async function updateUploadRecord (upload) {
     try {
-      await $fetch(`/api/uploads/${upload.hashId}`, {
+      await $fetch(`/api/uploads/${upload.id}`, {
         method: 'PUT',
         body: {
           contentType: upload.file.type || 'application/octet-stream',
@@ -205,21 +205,21 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
       })
     }
     catch (error) {
-      console.error(`❌ Failed to update database for (${upload.hashId}):`, error)
+      console.error(`❌ Failed to update database for (${upload.id}):`, error)
     }
   }
 
   /**
    * Fetch a fresh SAS token and upload a file to Azure Blob Storage
    *
-   * @param {string} hashId - The unique hash identifier for the upload
+   * @param {string} id - The unique hash identifier for the upload
    * @returns {Promise<void>}
    */
-  async function uploadToAzure (hashId) {
-    const index = uploads.value.findIndex(u => u.hashId === hashId)
+  async function uploadToAzure (id) {
+    const index = uploads.value.findIndex(u => u.id === id)
 
     if (index === -1) {
-      throw new Error(`Upload ${hashId} not found`)
+      throw new Error(`Upload ${id} not found`)
     }
 
     const upload = uploads.value[index]
@@ -247,7 +247,7 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
       uploads.value[index].upload.progress = 100
 
       await updateUploadRecord(upload)
-      triggerAnalysisWorkflow(hashId)
+      triggerAnalysisWorkflow(id)
     }
     catch (error) {
       uploads.value[index].status = 'failed'
@@ -259,10 +259,10 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
   /**
    * Start uploading a file to Azure (checks concurrency limit, updates status, and uploads)
    *
-   * @param {string} hashId - The unique hash identifier for the upload
+   * @param {string} id - The unique hash identifier for the upload
    * @returns {Promise<boolean>} True if upload started and succeeded, false if limit reached or failed
    */
-  async function startUpload (hashId) {
+  async function startUpload (id) {
     // Check concurrent upload limit
     if (!canStartUpload.value) {
       console.warn(`⚠️ Max concurrent uploads (${uploadMaxConcurrent}) reached`)
@@ -270,9 +270,9 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
     }
 
     // Find the upload
-    const index = uploads.value.findIndex(u => u.hashId === hashId)
+    const index = uploads.value.findIndex(u => u.id === id)
     if (index === -1) {
-      console.error(`Cannot find ${hashId}.`)
+      console.error(`Cannot find ${id}.`)
       return false
     }
 
@@ -282,17 +282,17 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
     // Generate and upload thumbnail in the background (don't block main upload)
     const uploadObj = uploads.value[index]
     generateAndUploadThumbnail(uploadObj).catch((error) => {
-      console.error(`Failed to generate/upload thumbnail for ${hashId}:`, error)
+      console.error(`Failed to generate/upload thumbnail for ${id}:`, error)
       // Don't fail the main upload if thumbnail fails
     })
 
     // Upload to Azure
     try {
-      await uploadToAzure(hashId)
+      await uploadToAzure(id)
       return true
     }
     catch (error) {
-      console.error(`Upload failed for ${hashId}:`, error)
+      console.error(`Upload failed for ${id}:`, error)
       return false
     }
   }
@@ -300,14 +300,14 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
   /**
    * Retry a failed upload (increments retry counter and restarts upload)
    *
-   * @param {string} hashId - The unique hash identifier for the upload to retry
+   * @param {string} id - The unique hash identifier for the upload to retry
    * @returns {Promise<boolean>} True if retry succeeded, false otherwise
    */
-  async function retryUpload (hashId) {
-    const index = uploads.value.findIndex(u => u.hashId === hashId)
+  async function retryUpload (id) {
+    const index = uploads.value.findIndex(u => u.id === id)
 
     if (index === -1) {
-      console.error(`Cannot find upload ${hashId}`)
+      console.error(`Cannot find upload ${id}`)
       return false
     }
 
@@ -317,10 +317,10 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
     // Reset progress
     uploads.value[index].upload.progress = 0
 
-    console.log(`🔄 Retrying upload (${hashId}), attempt #${uploads.value[index].upload.retries}`)
+    console.log(`🔄 Retrying upload (${id}), attempt #${uploads.value[index].upload.retries}`)
 
     // Start the upload
-    return await startUpload(hashId)
+    return await startUpload(id)
   }
 
   /**
@@ -352,7 +352,7 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
     // console.log(`⏰ [Auto-upload] Starting ${itemsToUpload.length} upload(s)`)
 
     for (const upload of itemsToUpload) {
-      await startUpload(upload.hashId)
+      await startUpload(upload.id)
     }
   }
 

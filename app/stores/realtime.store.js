@@ -65,11 +65,11 @@ export const useRealtimeStore = defineStore('realtime', () => {
   }
 
   function handleWorkflowUpdate (data) {
-    const { uploadHashId, step, status } = data
+    const { uploadId, step, status } = data
 
     // Update upload queue (client-side upload progress)
     const uploadQueueStore = useUploadQueueStore()
-    const queueItem = uploadQueueStore.uploads.find(u => u.hashId === uploadHashId)
+    const queueItem = uploadQueueStore.uploads.find(u => u.id === uploadId)
     if (queueItem) {
       if (!queueItem.workflowStatus) {
         queueItem.workflowStatus = {}
@@ -79,11 +79,11 @@ export const useRealtimeStore = defineStore('realtime', () => {
 
     // Update workflow store (DB-backed workflow data)
     const workflowStore = useWorkflowStore()
-    workflowStore.updateStepStatus(uploadHashId, step, status)
+    workflowStore.updateStepStatus(uploadId, step, status)
 
     // Refresh upload record (pulls new rows into table if they don't exist yet)
     const uploadsStore = useUploadsStore()
-    uploadsStore.refreshUploadByHashId(uploadHashId)
+    uploadsStore.refreshUploadById(uploadId)
   }
 
   return {

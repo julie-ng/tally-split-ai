@@ -7,8 +7,8 @@ const props = defineProps({
 
 const uploadsStore = useUploadsStore()
 
-// Get upload hashId for fetching analysis
-const uploadHashId = computed(() => props.receipt.uploads?.[0]?.hashId)
+// Get upload id for fetching analysis
+const uploadId = computed(() => props.receipt.uploads?.[0]?.id)
 
 // Fetch analysis data via store (cache-aware). The store returns the envelope
 // `data` field directly (or null on error).
@@ -17,11 +17,11 @@ const pending = ref(false)
 const error = ref(null)
 
 watchEffect(async () => {
-  if (!uploadHashId.value) return
+  if (!uploadId.value) return
   pending.value = true
   error.value = null
   try {
-    analysisData.value = await uploadsStore.fetchAnalysisByHashId(uploadHashId.value)
+    analysisData.value = await uploadsStore.fetchAnalysisById(uploadId.value)
   }
   catch (err) {
     error.value = err
@@ -84,7 +84,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
   <div class="pt-6 px-4">
     <!-- No uploads -->
     <UAlert
-      v-if="!uploadHashId"
+      v-if="!uploadId"
       title="No Upload Available"
       description="This receipt has no uploaded image to analyze."
       class="my-5"

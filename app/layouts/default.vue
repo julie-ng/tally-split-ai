@@ -83,11 +83,11 @@ function getLinks (collapsed) {
           ? [
               { label: 'blobs/', to: '/api/blobs/', external: true, target: '_blank' },
               { label: 'receipts/', to: '/api/receipts/', external: true, target: '_blank' },
-              { label: 'receipts/[id]', to: '/api/receipts/1', external: true, target: '_blank' },
+              { label: 'receipts/[id]', to: '/api/receipts/', external: true, target: '_blank' },
               { label: 'tokens/read', to: '/api/tokens/read', external: true, target: '_blank' },
               { label: 'tokens/upload', to: '/api/tokens/upload', external: true, target: '_blank' },
               { label: 'uploads/', to: '/api/uploads/', external: true, target: '_blank' },
-              { label: 'uploads/[hashId]', to: '/api/uploads/7aaaa195168e', external: true, target: '_blank' },
+              { label: 'uploads/[id]', to: '/api/uploads/', external: true, target: '_blank' },
             ]
           : [],
       },

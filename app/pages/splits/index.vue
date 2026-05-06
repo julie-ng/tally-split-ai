@@ -45,16 +45,7 @@ const {
 const route = useRoute()
 const router = useRouter()
 
-const previewSplitId = computed(() => {
-  const raw = route.query.preview
-  if (!raw) {
-    return null
-  }
-  const id = Number(raw)
-  return Number.isFinite(id)
-    ? id
-    : null
-})
+const previewSplitId = computed(() => route.query.preview ?? null)
 
 function openPreview (event, row) {
   router.replace({ query: { ...route.query, preview: row.original.id } })

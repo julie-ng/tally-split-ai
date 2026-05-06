@@ -5,13 +5,14 @@ import { RECEIPT_ANALYSIS_STATUSES } from '#shared/enums/receipt-analysis-status
 import { UPLOAD_ANALYSIS_STATUSES } from '#shared/enums/upload-analysis-status.js'
 import { UPLOAD_STATUSES } from '#shared/enums/upload-status.js'
 import { WORKFLOW_STATUSES, WORKFLOW_STEP_STATUSES } from '#shared/enums/workflow-status.js'
+import { generateId } from '#shared/utils/generate-id.js'
 
 /**
  * Households - groups of users that share receipts/uploads/splits.
  * POC constraint: max 2 members per household, enforced at API layer (not DB).
  */
 export const households = pgTable('households', {
-  id: uuid('id').primaryKey().defaultRandom(),
+  id: text('id').primaryKey().$defaultFn(() => generateId()),
   name: text('name'),
   description: text('description'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -23,7 +24,7 @@ export const households = pgTable('households', {
  */
 // @ts-expect-error implicit return type any
 export const receipts = pgTable('receipts', {
-  id: serial('id').primaryKey(),
+  id: text('id').primaryKey().$defaultFn(() => generateId()),
 
   // User-facing fields
   title: text('title').default('Untitled'),
@@ -49,11 +50,11 @@ export const receipts = pgTable('receipts', {
 
   // Metadata — uploader (creator) of the receipt
   // @ts-expect-error implicit return type any
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
 
   // Household scope for authZ.
   // @ts-expect-error implicit return type any
-  householdId: uuid('household_id').notNull().references(() => households.id, { onDelete: 'restrict' }),
+  householdId: text('household_id').notNull().references(() => households.id, { onDelete: 'restrict' }),
 
   // Timestamps
   createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -64,14 +65,13 @@ export const receipts = pgTable('receipts', {
  * Uploads table - stores file/blob metadata for uploaded receipt images
  */
 export const uploads = pgTable('uploads', {
-  id: serial('id').primaryKey(),
-  hashId: text('hash_id').notNull().unique(),
+  id: text('id').primaryKey().$defaultFn(() => generateId()),
   // @ts-expect-error implicit return type any
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
   title: text('title').notNull().default('Untitled'),
 
   // Foreign key to receipts table
-  receiptId: integer('receipt_id').references(() => receipts.id, { onDelete: 'cascade' }),
+  receiptId: text('receipt_id').references(() => receipts.id, { onDelete: 'cascade' }),
 
   // Azure Blob Storage info
   status: text('status', { enum: UPLOAD_STATUSES }).notNull().default('initialized'),
@@ -99,7 +99,7 @@ export const uploads = pgTable('uploads', {
   // derived via receiptId, because uploads exist briefly before OCR creates
   // the receipt — during that window receiptId is null. Keeping the column
   // always-set means authZ has one code path, not two.
-  householdId: uuid('household_id').notNull().references(() => households.id, { onDelete: 'restrict' }),
+  householdId: text('household_id').notNull().references(() => households.id, { onDelete: 'restrict' }),
 
   // Timestamps
   createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -112,11 +112,11 @@ export const uploads = pgTable('uploads', {
  */
 // @ts-expect-error implicit type any
 export const splits = pgTable('splits', {
-  id: serial('id').primaryKey(),
+  id: text('id').primaryKey().$defaultFn(() => generateId()),
 
   // Optional receipt association (null for standalone splits)
   // @ts-expect-error implicit return type any
-  receiptId: integer('receipt_id').references(() => receipts.id, { onDelete: 'set null' }),
+  receiptId: text('receipt_id').references(() => receipts.id, { onDelete: 'set null' }),
 
   // Split details
   splitAmount: real('split_amount').notNull(), // Amount to split (defaults to receipt total)
@@ -126,13 +126,13 @@ export const splits = pgTable('splits', {
   // Household member slots — assigned at split-create time by users.createdAt order.
   // Nullable to support demo/portfolio uploads where the household has only 1 member.
   // @ts-expect-error implicit return type any
-  userOneId: uuid('user_one_id').references(() => users.id, { onDelete: 'restrict' }),
+  userOneId: text('user_one_id').references(() => users.id, { onDelete: 'restrict' }),
   // @ts-expect-error implicit return type any
-  userTwoId: uuid('user_two_id').references(() => users.id, { onDelete: 'restrict' }),
+  userTwoId: text('user_two_id').references(() => users.id, { onDelete: 'restrict' }),
 
   // Who paid — nullable until resolved (LLM via initials, or human edit).
   // @ts-expect-error implicit return type any
-  paidByUserId: uuid('paid_by_user_id').references(() => users.id, { onDelete: 'set null' }),
+  paidByUserId: text('paid_by_user_id').references(() => users.id, { onDelete: 'set null' }),
   // Frozen LLM signal — see docs/SCHEMA.md. Never updated by humans.
   paidByMatch: text('paid_by_match', { enum: PAID_BY_MATCHES }).notNull().default('unresolved'),
 
@@ -154,7 +154,7 @@ export const workflowRuns = pgTable('workflow_runs', {
   id: serial('id').primaryKey(),
 
   // Resource link
-  uploadId: integer('upload_id').references(() => uploads.id, { onDelete: 'cascade' }),
+  uploadId: text('upload_id').references(() => uploads.id, { onDelete: 'cascade' }),
 
   // UUID for secure callback endpoint (opaque, unguessable)
   uuid: uuid('uuid').defaultRandom().notNull(),
@@ -201,7 +201,7 @@ export const receiptHistory = pgTable('receipt_history', {
   // @ts-expect-error implicit return type any
   changeId: integer('change_id').notNull().references(() => changes.id, { onDelete: 'cascade' }),
   // @ts-expect-error implicit return type any
-  receiptId: integer('receipt_id').references(() => receipts.id, { onDelete: 'set null' }),
+  receiptId: text('receipt_id').references(() => receipts.id, { onDelete: 'set null' }),
   field: text('field').notNull(),
   oldValue: text('old_value'),
   newValue: text('new_value'),
@@ -217,7 +217,7 @@ export const splitHistory = pgTable('split_history', {
   // @ts-expect-error implicit return type any
   changeId: integer('change_id').notNull().references(() => changes.id, { onDelete: 'cascade' }),
   // @ts-expect-error implicit return type any
-  splitId: integer('split_id').references(() => splits.id, { onDelete: 'set null' }),
+  splitId: text('split_id').references(() => splits.id, { onDelete: 'set null' }),
   field: text('field').notNull(),
   oldValue: text('old_value'),
   newValue: text('new_value'),
@@ -229,10 +229,10 @@ export const splitHistory = pgTable('split_history', {
  */
 // @ts-expect-error implicit return type any
 export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
+  id: text('id').primaryKey().$defaultFn(() => generateId()),
   githubId: bigint('github_id', { mode: 'number' }).notNull(),
   // @ts-expect-error implicit return type any
-  householdId: uuid('household_id').notNull().references(() => households.id, { onDelete: 'restrict' }),
+  householdId: text('household_id').notNull().references(() => households.id, { onDelete: 'restrict' }),
   username: text('username').notNull(),
   displayName: text('display_name'),
   initials: text('initials'),

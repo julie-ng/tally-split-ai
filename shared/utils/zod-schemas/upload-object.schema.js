@@ -4,10 +4,9 @@ import { z } from 'zod'
  * Upload Object
  */
 export const uploadObject = z.object({
-  id: z.number(),
-  hashId: z.string(),
+  id: z.string(),
   title: z.string(),
-  userId: z.uuid(),
+  userId: z.string(),
   status: z.string(), // TODO
   blobName: z.string(),
   blobUrl: z.string(),

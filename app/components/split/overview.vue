@@ -4,7 +4,7 @@ import { useSplitsStore } from '~/stores/splits.store'
 
 const props = defineProps({
   splitId: {
-    type: Number,
+    type: String,
     required: true,
   },
 })
@@ -20,7 +20,7 @@ watchEffect(() => {
   if (receiptId.value) receiptsStore.fetchReceiptById(receiptId.value)
 })
 
-const uploadHashId = computed(() => receipt.value?.uploads?.[0]?.hashId)
+const uploadId = computed(() => receipt.value?.uploads?.[0]?.id)
 
 const formattedDate = computed(() => {
   return receipt.value?.date
@@ -111,8 +111,8 @@ provide('highlightedLabel', highlightedLabel)
     <!-- Right column: Receipt image with overlay -->
     <div class="max-w-xs">
       <receipt-upload-column
-        v-if="uploadHashId"
-        :hash-id="uploadHashId"
+        v-if="uploadId"
+        :id="uploadId"
       />
       <UAlert
         v-else

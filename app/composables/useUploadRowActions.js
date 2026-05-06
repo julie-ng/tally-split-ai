@@ -21,15 +21,15 @@ export function useUploadRowActions () {
 
   function canAnalyze (upload) {
     return upload.status === UPLOAD_STATUS.UPLOADED
-      && !workflowStore.isProcessingByHashId(upload.hashId)
+      && !workflowStore.isProcessingById(upload.id)
   }
 
-  async function deleteUpload (hashId, title, blobName) {
+  async function deleteUpload (id, title, blobName) {
     if (!confirm(`Are you sure you want to delete '${title}' (${blobName})?`)) {
       return
     }
     try {
-      await uploadsStore.deleteUpload(hashId)
+      await uploadsStore.deleteUpload(id)
     }
     catch (err) {
       console.error('Failed to delete upload:', err)
@@ -43,7 +43,7 @@ export function useUploadRowActions () {
 
   function getRowActions (row) {
     const upload = row.original
-    const hashId = upload.hashId
+    const id = upload.id
     const hasAnalysis = !!upload.analyzedAt
 
     return [
@@ -61,29 +61,29 @@ export function useUploadRowActions () {
           label: 'Re-run Analysis',
           disabled: !canAnalyze(upload),
           icon: 'i-lucide-bot',
-          onSelect: () => workflowStore.triggerWorkflow(hashId),
+          onSelect: () => workflowStore.triggerWorkflow(id),
         },
         ...(hasAnalysis
           ? [
               {
                 label: 'View Summary (JSON)',
                 icon: 'i-lucide-file-braces',
-                onSelect: () => window.open(`/api/analysis/summary/${hashId}`, '_blank'),
+                onSelect: () => window.open(`/api/analysis/summary/${id}`, '_blank'),
               },
               {
                 label: 'View Annotations (JSON)',
                 icon: 'i-lucide-file-braces',
-                onSelect: () => window.open(`/api/uploads/${hashId}/annotations`, '_blank'),
+                onSelect: () => window.open(`/api/uploads/${id}/annotations`, '_blank'),
               },
               {
                 label: 'View OCR (JSON)',
                 icon: 'i-lucide-file-braces',
-                onSelect: () => window.open(`/api/uploads/${hashId}/ocr`, '_blank'),
+                onSelect: () => window.open(`/api/uploads/${id}/ocr`, '_blank'),
               },
               {
                 label: 'View Polygons (JSON)',
                 icon: 'i-lucide-file-braces',
-                onSelect: () => window.open(`/api/uploads/${hashId}/polygons`, '_blank'),
+                onSelect: () => window.open(`/api/uploads/${id}/polygons`, '_blank'),
               },
             ]
           : []),
@@ -92,7 +92,7 @@ export function useUploadRowActions () {
         {
           label: 'Delete',
           icon: 'i-lucide-trash',
-          onSelect: () => deleteUpload(hashId, upload.title, upload.blobName),
+          onSelect: () => deleteUpload(id, upload.title, upload.blobName),
         },
       ],
     ]
