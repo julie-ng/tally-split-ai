@@ -11,7 +11,7 @@ export const analyzeAnnotations = task({
   id: TASK_ID,
   maxDuration: 120,
   run: async (payload) => {
-    const { uploadId, runUuid, callbackToken } = payload
+    const { uploadId, runUuid, callbackToken, customInstructions } = payload
     const authHeaders = { callbackToken, runUuid, taskId: TASK_ID }
     const api = createApiClient(authHeaders)
 
@@ -50,7 +50,7 @@ export const analyzeAnnotations = task({
       const startTime = Date.now()
 
       // 4. Call GPT-4o for annotation analysis
-      const responseData = await gpt4oUtils.analyzeAnnotations(blobUrlWithSas, ocrLineItems)
+      const responseData = await gpt4oUtils.analyzeAnnotations(blobUrlWithSas, ocrLineItems, customInstructions)
 
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
       // 5. Flatten and slim before storing — drop raw API envelope, keep only what we need

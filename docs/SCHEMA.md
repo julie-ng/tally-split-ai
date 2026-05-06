@@ -316,6 +316,9 @@ Analytics view aggregating per-split LLM signals + human override flag. Read-onl
 > [!NOTE]
 > Hand-written SQL migration (`0016_split_metrics_view.sql`) — Drizzle's relational query API does not model views. Queries use raw SQL via `db.execute(sql\`...\`)`.
 
+> [!WARNING]
+> Hand-written view migrations: use `CREATE OR REPLACE VIEW` (not `CREATE VIEW`) for idempotency. Also: drizzle-kit's migrator skips a migration unless its journal `when` is strictly greater than the max `created_at` in `__drizzle_migrations` — so if a hand-written migration has a future `when`, every later auto-generated migration's `when` must be bumped above it manually, or drizzle silently no-ops with zero output.
+
 | Column | Source | Notes |
 |:--|:--|:--|
 | `split_id` | `splits.id` | |

@@ -20,6 +20,11 @@ export const householdUpdateSchema = z.object({
     .max(500)
     .nullable()
     .optional()),
+  customInstructions: z.preprocess(emptyToNull, z.string()
+    .trim()
+    .max(2000)
+    .nullable()
+    .optional()),
 }).refine(
   data => Object.keys(data).length > 0,
   { error: 'At least one field must be provided for update' },

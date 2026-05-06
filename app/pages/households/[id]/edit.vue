@@ -19,6 +19,7 @@ if (route.params.id !== householdStore.id) {
 const formData = ref({
   name: householdStore.name ?? '',
   description: householdStore.description ?? '',
+  customInstructions: householdStore.customInstructions ?? '',
 })
 
 const fieldErrors = ref({})
@@ -31,6 +32,7 @@ async function handleSubmit () {
     await householdStore.update({
       name: formData.value.name,
       description: formData.value.description,
+      customInstructions: formData.value.customInstructions,
     })
     toast.add({
       title: 'Household updated',
@@ -105,6 +107,41 @@ async function handleSubmit () {
             <p v-if="fieldErrors.description" class="text-red-600 text-sm mt-1">
               {{ fieldErrors.description.join(', ') }}
             </p>
+          </div>
+
+          <div>
+            <label for="customInstructions" class="block text-sm font-semibold mb-1">
+              Custom AI Instructions
+              <span class="text-slate-400 font-normal">(optional)</span>
+            </label>
+            <p class="text-sm text-slate-500 mb-2">
+              Free-text guidance appended to the AI prompt when analyzing receipts. Example: "When initials are unclear, JN's credit card ends in 1234." or "Chocolate items are always JN's."
+            </p>
+            <UAlert
+              icon="i-lucide-shield-alert"
+              color="warning"
+              variant="subtle"
+              title="This text is sent to a third-party LLM"
+              description="Anything you write here leaves the app and is included in every AI receipt analysis. Avoid sensitive data."
+              class="mb-3 max-w-xl"
+            />
+            <UTextarea
+              id="customInstructions"
+              v-model="formData.customInstructions"
+              class="w-full max-w-xl"
+              :rows="6"
+              :maxlength="2000"
+              variant="outline"
+              placeholder="Optional guidance for the AI..."
+            />
+            <div class="flex justify-between max-w-xl mt-1">
+              <p v-if="fieldErrors.customInstructions" class="text-red-600 text-sm">
+                {{ fieldErrors.customInstructions.join(', ') }}
+              </p>
+              <p v-else class="text-slate-400 text-sm ml-auto">
+                {{ formData.customInstructions?.length ?? 0 }} / 2000
+              </p>
+            </div>
           </div>
         </div>
 

@@ -35,6 +35,7 @@ export default defineEventHandler(async (event) => {
     id: household.id,
     name: household.name,
     description: household.description,
+    customInstructions: household.customInstructions,
     members: household.users,
   }
 })

@@ -8,12 +8,16 @@ import { loadInstructions } from './load-instructions.js'
  * @param {Object} params
  * @param {Object} params.ocrData - Flattened OCR data from extractForLlm() ({ lineItems, total, subtotal, tax, tip })
  * @param {Object} params.annotations - Annotations JSON from GPT-4o vision analysis
+ * @param {string|null} [params.customInstructions] - Optional household-level guidance appended to system prompt
  * @returns {Promise<Object>} { originalTotal, adjustedTotal, paidBy, amountConfidence, payerConfidence, reasoning }
  */
-export async function adjustSplit ({ ocrData, annotations }) {
+export async function adjustSplit ({ ocrData, annotations, customInstructions = null }) {
   const { endpoint, key } = getGpt4oConfig()
 
-  const systemPrompt = loadInstructions('adjust-split')
+  const baseSystemPrompt = loadInstructions('adjust-split')
+  const systemPrompt = customInstructions
+    ? `${baseSystemPrompt}\n\n## Custom Household Instructions\nThe household has provided the following guidance for this analysis. Apply where relevant; ignore if not applicable to this receipt:\n\n${customInstructions}`
+    : baseSystemPrompt
 
   const userMessage = JSON.stringify({
     ocrData,

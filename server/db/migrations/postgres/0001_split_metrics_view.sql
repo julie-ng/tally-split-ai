@@ -7,7 +7,7 @@
 -- relational query API does not model views. Queries against this view use
 -- raw SQL via db.execute(sql`...`).
 
-CREATE VIEW v_split_metrics AS
+CREATE OR REPLACE VIEW v_split_metrics AS
 SELECT
   s.id AS split_id,
   s.receipt_id,

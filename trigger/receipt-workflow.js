@@ -16,7 +16,7 @@ export const receiptWorkflow = task({
   id: TASK_ID,
   maxDuration: 600,
   run: async (payload) => {
-    const { uploadId, runUuid, callbackToken } = payload
+    const { uploadId, runUuid, callbackToken, customInstructions } = payload
     const authHeaders = { callbackToken, runUuid, taskId: TASK_ID }
     const api = createApiClient(authHeaders)
 
@@ -75,7 +75,7 @@ export const receiptWorkflow = task({
     let hasStepErrors = false
 
     const annotationsResult = await analyzeAnnotations.triggerAndWait(
-      { uploadId, runUuid, callbackToken: postOcrTokens['analyze-annotations'] },
+      { uploadId, runUuid, callbackToken: postOcrTokens['analyze-annotations'], customInstructions },
     )
 
     if (!annotationsResult.ok) {
@@ -114,7 +114,7 @@ export const receiptWorkflow = task({
     // Step 5: Adjust split — NON-FATAL, requires both split and annotations
     if (splitId && annotationsResult.ok) {
       const adjustResult = await adjustSplit.triggerAndWait(
-        { uploadId, splitId, runUuid, callbackToken: postOcrTokens['adjust-split'] },
+        { uploadId, splitId, runUuid, callbackToken: postOcrTokens['adjust-split'], customInstructions },
       )
 
       if (!adjustResult.ok) {

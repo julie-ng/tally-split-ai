@@ -15,6 +15,10 @@ export const households = pgTable('households', {
   id: text('id').primaryKey().$defaultFn(() => generateId()),
   name: text('name'),
   description: text('description'),
+  // Free-text guidance appended to the system prompt of analyze-annotations
+  // and adjust-split LLM tasks. Snapshotted into the workflow payload at
+  // trigger time — in-flight runs are unaffected by edits.
+  customInstructions: text('custom_instructions'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })

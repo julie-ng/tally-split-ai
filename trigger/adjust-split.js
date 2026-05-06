@@ -12,7 +12,7 @@ export const adjustSplit = task({
   id: TASK_ID,
   maxDuration: 60,
   run: async (payload) => {
-    const { uploadId, splitId, runUuid, callbackToken } = payload
+    const { uploadId, splitId, runUuid, callbackToken, customInstructions } = payload
     const authHeaders = { callbackToken, runUuid, taskId: TASK_ID }
     const api = createApiClient(authHeaders)
 
@@ -55,6 +55,7 @@ export const adjustSplit = task({
       const result = await gpt4oUtils.adjustSplit({
         ocrData,
         annotations: upload.annotationsJson,
+        customInstructions,
       })
 
       logger.log(`Adjust-split result for ${uploadId}`, result)

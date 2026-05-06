@@ -5,12 +5,16 @@ import { loadInstructions } from './load-instructions.js'
  * Analyze a receipt image for handwritten annotations using GPT-4o.
  * @param {string} imageUrl - Fully qualified image URL (with SAS token)
  * @param {Object[]} ocrLineItems - Line items extracted by Document Intelligence
+ * @param {string|null} [customInstructions] - Optional household-level guidance appended to system prompt
  * @returns {Promise<Object>} GPT-4o response with annotation data
  */
-export async function analyzeAnnotations (imageUrl, ocrLineItems) {
+export async function analyzeAnnotations (imageUrl, ocrLineItems, customInstructions = null) {
   const { endpoint, key } = getGpt4oConfig()
 
-  const systemPrompt = loadInstructions('analyze-annotations')
+  const baseSystemPrompt = loadInstructions('analyze-annotations')
+  const systemPrompt = customInstructions
+    ? `${baseSystemPrompt}\n\n## Custom Household Instructions\nThe household has provided the following guidance for this analysis. Apply where relevant; ignore if not applicable to this receipt:\n\n${customInstructions}`
+    : baseSystemPrompt
 
   const userMessage = `Here are the line items from OCR:\n${JSON.stringify(ocrLineItems, null, 2)}\n\nPlease analyze the receipt image for handwritten annotations.`
 
