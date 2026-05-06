@@ -83,7 +83,7 @@ function sortableHeader (label) {
 const columns = [
   {
     accessorKey: 'id',
-    header: 'ID',
+    header: 'Upload ID',
   },
   {
     accessorKey: 'originalFilename',

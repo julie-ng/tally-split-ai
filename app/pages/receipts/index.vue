@@ -46,7 +46,7 @@ const columns = [
   },
   {
     accessorKey: 'id',
-    header: 'ID',
+    header: 'Receipt ID',
   },
   {
     accessorKey: 'analysisStatus',

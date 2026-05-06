@@ -35,6 +35,7 @@ const pagination = defineModel('pagination', {
   default: () => ({ pageIndex: 0, pageSize: 25 }),
 })
 
+const route = useRoute()
 const householdStore = useHouseholdStore()
 const user1Name = computed(() => householdStore.getMemberFirstName(householdStore.userOne?.id))
 const user2Name = computed(() => householdStore.getMemberFirstName(householdStore.userTwo?.id))
@@ -44,7 +45,7 @@ const table = useTemplateRef('table')
 const columns = computed(() => [
   {
     accessorKey: 'id',
-    header: 'ID',
+    header: 'Split ID',
   },
   {
     id: 'date',
@@ -141,6 +142,16 @@ function onSelect (event, row) {
         :style="{ maxHeight }"
         @select="onSelect"
       >
+        <template #id-cell="{ row }">
+          <NuxtLink
+            :to="{ query: { ...route.query, preview: row.original.id } }"
+            replace
+            class="text-slate-400 hover:text-blue-800 hover:underline font-mono"
+          >
+            {{ row.original.id }}
+          </NuxtLink>
+        </template>
+
         <template #title-cell="{ row }">
           <NuxtLink
             v-if="row.original.receipt"
