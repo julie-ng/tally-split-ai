@@ -415,5 +415,8 @@ Unit tests in `shared/config/task-permissions.test.js` additionally pin the **`t
 ## Future Improvements
 
 - **Roles within a household**: All household members currently have equal permissions on shared resources. A `GLOBAL_ADMIN_ID` env-var escape hatch is planned for cross-household admin actions (e.g. setting another member's initials).
-- **N-user splits**: The `splits` table has hardcoded `userOneId`/`userOneShare`/`userTwoId`/`userTwoShare` slots, capping households at 2 members. A future migration to a `split_shares` join table would lift this constraint.
 - **Generic workflow trigger**: Current trigger endpoint uses `[uploadHashId]` — won't scale for receipt-triggered or other non-upload workflows.
+
+## Intentional Constraints
+
+- **Two members per household**: The `splits` table's hardcoded `userOneId`/`userOneShare`/`userTwoId`/`userTwoShare` shape is by design. The product scopes to two-person households (couples, roommates) and will not be generalized to N members.

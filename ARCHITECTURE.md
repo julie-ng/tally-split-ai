@@ -92,6 +92,20 @@ sequenceDiagram
     Frontend-->>-User: Show image preview
 ```
 
+## Realtime Updates
+
+Workflow status updates stream from server → browser via Server-Sent Events (`GET /api/realtime/stream`), backed by an in-memory EventEmitter bus. The connection is authenticated by the user session.
+
+### Known limitation: SSE on Vercel
+
+SSE is a long-lived connection, which is a known mismatch with Vercel's serverless function model — function invocations are time-capped, so the stream gets killed and the client reconnects at intervals rather than holding one durable channel. It works, but the platform isn't shaped for this transport.
+
+### Why we haven't migrated
+
+The natural fix is Supabase Realtime (Postgres-change websockets). Doing it properly requires Row-Level Security policies on every table the browser subscribes to — otherwise the websocket becomes a back-door around the API's `requireAuthorization` checks.
+
+That's significant, multi-phase work: designing RLS policies that match the household-isolation model, migrating the realtime client, and verifying behavioural parity with the current SSE flow. Intentionally **not prioritized for this POC**. Decision to revisit mid-to-late June 2026.
+
 ### Example Azure URLs
 
 #### [PUT Block](https://learn.microsoft.com/en-us/rest/api/storageservices/put-block?tabs=microsoft-entra-id) 
