@@ -19,11 +19,6 @@ const tabItems = [
     slot: 'analysis',
   },
   {
-    label: 'Raw JSON',
-    value: 'raw-json',
-    slot: 'rawJson',
-  },
-  {
     label: 'History',
     value: 'history',
     slot: 'history',
@@ -93,11 +88,6 @@ provide('highlightedLabel', highlightedLabel)
           <!-- eslint-disable-next-line vue/no-unused-vars -->
           <template #analysis="{ item }">
             <receipt-analysis-tab :receipt="receipt" />
-          </template>
-
-          <!-- eslint-disable-next-line vue/no-unused-vars -->
-          <template #rawJson="{ item }">
-            <receipt-raw-json-tab :receipt="receipt" />
           </template>
 
           <!-- eslint-disable-next-line vue/no-unused-vars -->

@@ -8,9 +8,6 @@ export default defineNuxtConfig({
     'nuxt-auth-utils',
     ...(process.env.NODE_ENV === 'production' ? ['@vercel/analytics'] : []),
   ],
-  plugins: [
-    '@/plugins/vue-json-pretty',
-  ],
   devtools: { enabled: true },
   app: {
     head: {
@@ -45,7 +42,6 @@ export default defineNuxtConfig({
     },
   },
   css: [
-    'vue-json-pretty/lib/styles.css',
     '~/assets/css/main.css',
   ],
   runtimeConfig: {
@@ -66,7 +62,6 @@ export default defineNuxtConfig({
       include: [
         '@vue/devtools-core',
         '@vue/devtools-kit',
-        'vue-json-pretty',
         '@vueuse/core',
         'zod',
         '@tanstack/vue-table',

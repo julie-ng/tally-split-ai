@@ -275,19 +275,6 @@ const paginationInfo = computed(() => {
             loading-animation="carousel"
             class="flex-1"
           >
-            <!-- JSON view -->
-            <!-- <template #expanded="{ row }">
-              <div class="bg-slate-50 p-4">
-                <vue-json-pretty
-                  :data="row.original"
-                  :indent="2"
-                  :deep="4"
-                  :show-icon="true"
-                  :show-length="true"
-                />
-              </div>
-            </template> -->
-
             <!-- Receipt ID w/ Link -->
             <template #id-cell="{ row }">
               <NuxtLink

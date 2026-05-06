@@ -230,20 +230,6 @@ const upload = computed(() => props.receipt.uploads?.[0])
           </div>
         </div><!-- /.grid -->
       </div>
-
-      <!-- Raw JSON (for debugging) -->
-      <h1 class="mt-2 mb-3 font-semibold text-blue-700">
-        Analysis JSON
-      </h1>
-      <div class="bg-slate-50 p-4 rounded">
-        <vue-json-pretty
-          :data="analysisData"
-          :indent="2"
-          :deep="4"
-          :show-icon="true"
-          :show-length="true"
-        />
-      </div>
     </div>
 
     <!-- No Analysis Data -->
