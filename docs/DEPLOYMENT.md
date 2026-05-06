@@ -4,7 +4,12 @@ As of May 2026, only Azure infra deployment is automated. The other PaaS/SaaS ar
 
 ## Azure Infrastructure
 
-See [terraform/README.md](./terraform/README.md)
+See [terraform/README.md](./../terraform/README.md) to deploy dev/prod for:
+
+- Azure Resource Group, e.g. `tally-split-prod-rg`
+- Azure Document Intelligence (OCR)
+- Azure OpenAI gpt-4o (Annotations)
+- Azure Storage Account (Uploads)
 
 ## Vercel
 
