@@ -9,9 +9,14 @@ definePageMeta({
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center">
+  <div class="min-h-screen flex flex-col items-center justify-center gap-4">
     <h1 class="text-2xl font-bold">
-      Hello, world
+      Tally Split AI
     </h1>
+    <p class="block">
+      <UButton variant="solid" to="/login">
+        Login
+      </UButton>
+    </p>
   </div>
 </template>
