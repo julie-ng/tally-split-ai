@@ -18,29 +18,30 @@ const error = computed(() => receiptsStore.getReceiptError(id))
 useHead({
   title: () => {
     if (receipt.value?.title) {
-      return `${receipt.value.title} | Receipt #${id}`
+      return `${receipt.value.title} | Receipt ${id}`
     }
     else {
-      return `Receipt #${id}`
+      return `Receipt ${id}`
     }
   },
 })
 
-const breadcrumbItems = [
+const breadcrumbItems = computed(() => [
   {
     label: 'Receipts',
     to: '/receipts',
-  }, {
-    label: `#${id}`,
+  },
+  {
+    label: receipt.value?.title ?? `Receipt ${id}`,
     to: `/receipts/${id}`,
   },
-]
+])
 </script>
 
 <template>
   <UDashboardPanel>
     <template #header>
-      <UDashboardNavbar :title="receipt?.title ?? `Receipt #${id}`">
+      <UDashboardNavbar :title="receipt?.title ?? `Receipt ${id}`">
         <template #left>
           <UBreadcrumb :items="breadcrumbItems" />
         </template>

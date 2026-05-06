@@ -16,7 +16,7 @@ const nextReceipt = computed(() => adjacentIds.value.nextId ? receiptsStore.getR
 
 function receipTitle (receipt) {
   if (!receipt) return ''
-  return receipt.title || `Receipt #${receipt.id}`
+  return receipt.title || `Receipt ${receipt.id}`
 }
 
 function receiptDate (receipt) {

@@ -134,8 +134,8 @@ const tableStyles = {
 
 const deleteReceipt = async (id, title, merchantName) => {
   const displayName = (merchantName)
-    ? `Receipt #${id}: ${title} from ${merchantName}`
-    : `Receipt #${id}: ${title}`
+    ? `Receipt ${id}: ${title} from ${merchantName}`
+    : `Receipt ${id}: ${title}`
   if (!confirm(`Are you sure you want to delete "${displayName}"?`)) {
     return
   }
@@ -169,7 +169,7 @@ async function bulkDelete () {
       deleted++
     }
     catch (error) {
-      console.error(`Failed to delete receipt #${row.original.id}:`, error)
+      console.error(`Failed to delete receipt ${row.original.id}:`, error)
     }
   }
 
@@ -294,7 +294,7 @@ const paginationInfo = computed(() => {
                 :to="`/receipts/${row.original.id}`"
                 class="text-slate-400 hover:text-blue-800 hover:underline font-mono"
               >
-                #{{ row.original.id }}
+                {{ row.original.id }}
               </NuxtLink>
             </template>
 

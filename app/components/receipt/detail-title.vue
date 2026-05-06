@@ -29,7 +29,7 @@ const canAnalyze = computed(() => props.hasUploads && !props.isAnalyzed)
         {{ title }}
       </template>
       <template v-else>
-        {{ `Receipt #${id}` }}
+        {{ `Receipt ${id}` }}
       </template>
       <UBadge
         v-if="isAnalyzed"

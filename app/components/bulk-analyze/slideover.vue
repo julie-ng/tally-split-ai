@@ -48,7 +48,7 @@ const columns = [
 const rows = computed(() =>
   unanalyzedReceipts.value.map(r => ({
     id: r.id,
-    // title: r.title || `Receipt #${r.id}`,
+    // title: r.title || `Receipt ${r.id}`,
     createdAt: timestampUtils.toGermanISODate(r.createdAt),
     filename: r.uploads?.[0]?.originalFilename || '—',
     total: r.total ? `€ ${r.total}` : '—',

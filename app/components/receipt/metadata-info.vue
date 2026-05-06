@@ -10,7 +10,7 @@ defineProps({
 <template>
   <div class="grid grid-cols-2 gap-y-1 text-sm text-slate-600">
     <div>Receipt ID</div>
-    <div>#{{ receipt.id }}</div>
+    <div>{{ receipt.id }}</div>
 
     <!-- Created At -->
     <template v-if="receipt.createdAt">

@@ -20,8 +20,8 @@ const saving = computed(() => receiptsStore.isReceiptSaving(id))
 useHead({
   title: () => {
     return receipt.value?.title
-      ? `Edit #${id} - ${receipt.value?.title}`
-      : `Receipt #${id}`
+      ? `Edit ${id} - ${receipt.value?.title}`
+      : `Receipt ${id}`
   },
 })
 
@@ -31,7 +31,7 @@ const breadcrumbItems = [
     to: '/receipts',
   },
   {
-    label: `Receipt #${id}`,
+    label: `Receipt ${id}`,
     to: `/receipts/${id}`,
   },
   {
@@ -74,7 +74,7 @@ const handleCancel = () => {
 <template>
   <UDashboardPanel>
     <template #header>
-      <UDashboardNavbar :title="receipt ? `Edit ${receipt.title || `Receipt #${id}`}` : 'Edit Receipt'">
+      <UDashboardNavbar :title="receipt ? `Edit ${receipt.title || `Receipt ${id}`}` : 'Edit Receipt'">
         <template #left>
           <UBreadcrumb :items="breadcrumbItems" />
         </template>
