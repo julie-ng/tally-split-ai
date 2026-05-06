@@ -20,6 +20,7 @@ export default defineConfig({
     },
   },
   dirs: ['trigger'],
+  legacyDevProcessCwdBehaviour: false,
   build: {
     extensions: [
       additionalFiles({ files: ['./trigger/instructions/**'] }),

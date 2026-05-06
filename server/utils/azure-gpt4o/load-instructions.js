@@ -1,11 +1,7 @@
 import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
-import { dirname, resolve } from 'node:path'
+import { resolve } from 'node:path'
 
-// Resolve trigger/instructions/ relative to this module so the path is
-// stable regardless of cwd or which runtime (Nitro / Trigger worker) loads it.
-const HERE = dirname(fileURLToPath(import.meta.url))
-const INSTRUCTIONS_DIR = resolve(HERE, '../../../trigger/instructions')
+const INSTRUCTIONS_DIR = resolve(process.cwd(), 'trigger/instructions')
 
 const cache = new Map()
 
