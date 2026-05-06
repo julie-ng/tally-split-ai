@@ -7,11 +7,16 @@ const PUBLIC_ROUTES = new Set([
 ])
 
 export default defineNuxtRouteMiddleware((to) => {
+  const { loggedIn } = useUserSession()
+
+  if (to.path === '/login' && loggedIn.value) {
+    return navigateTo('/dashboard')
+  }
+
   if (PUBLIC_ROUTES.has(to.path)) {
     return
   }
 
-  const { loggedIn } = useUserSession()
   if (!loggedIn.value) {
     return navigateTo('/login')
   }
