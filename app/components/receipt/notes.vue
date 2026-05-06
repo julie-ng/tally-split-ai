@@ -6,7 +6,7 @@ defineProps({
 
 <template>
   <section>
-    <h1 class="text-base my-2 font-semibold text-primary-700">
+    <h1 class="text-base my-2 font-semibold text-primary">
       Notes
     </h1>
     <div class="text-sm">

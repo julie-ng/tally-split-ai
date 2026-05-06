@@ -141,7 +141,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
         <div class="grid grid-cols-2 gap-x-20">
           <!-- Column 1 -->
           <div>
-            <p class="font-semibold mb-2 text-primary-700">
+            <p class="font-semibold mb-2 text-primary">
               Analysis
             </p>
             <div class="grid grid-cols-2 gap-0">
@@ -155,7 +155,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
 
             <!-- Extracted Info -->
             <USeparator class="my-3" />
-            <p class="font-semibold my-2 text-primary-700">
+            <p class="font-semibold my-2 text-primary">
               Transaction Info <analyzed-by-ai-icon />
             </p>
             <!-- Receipt Date, time -->
@@ -167,7 +167,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
             <USeparator class="my-3" />
 
             <!-- Azure Blob Tags -->
-            <p class="font-semibold mt-2 mb-3 text-primary-700">
+            <p class="font-semibold mt-2 mb-3 text-primary">
               Azure Blob Tags
               <analyzed-by-human-icon color="text-slate-400" />
             </p>
@@ -181,7 +181,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
             <USeparator class="mt-5 mb-3" />
 
             <!-- Merchant -->
-            <p class="font-semibold my-2 text-primary-700">
+            <p class="font-semibold my-2 text-primary">
               Merchant
               <analyzed-by-ai-icon />
             </p>
@@ -197,7 +197,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
 
             <ui-collapsible-property-group class="py-2">
               <template #title>
-                <p class="font-semibold text-primary-700">
+                <p class="font-semibold text-primary">
                   Line Items <analyzed-by-ai-icon />
                 </p>
               </template>
@@ -213,7 +213,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
             <!-- OCR Analysis -->
             <ui-collapsible-property-group class="py-2" :is-open="false">
               <template #title>
-                <p class="font-semibold text-primary-700">
+                <p class="font-semibold text-primary">
                   OCR Analysis <analyzed-by-ai-icon />
                 </p>
               </template>

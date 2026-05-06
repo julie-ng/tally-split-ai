@@ -67,7 +67,7 @@ provide('highlightedLabel', highlightedLabel)
           variant="link"
           class="w-full"
           color="primary"
-          :ui="{ indicator: 'border-b-3 border-primary-700', trigger: 'cursor-pointer' }"
+          :ui="{ indicator: 'border-b-3 border-primary', trigger: 'cursor-pointer' }"
         >
           <!-- Overview Tab -->
           <!-- eslint-disable-next-line vue/no-unused-vars -->

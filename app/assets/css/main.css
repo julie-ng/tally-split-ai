@@ -10,60 +10,12 @@
   /* https://ui.nuxt.com/docs/getting-started/theme/design-system */
 }
 
-/* Only applies to elements with both the class AND data-state="active" */
-.data-\[state\=active\]\:text-primary[data-state="active"] {
-  color: var(--color-blue-700);
+/* Shift the `text-primary` / `bg-primary` alias to a darker shade.
+   The numbered scale (primary-50 … primary-900) is unaffected. */
+:root {
+  --ui-primary: var(--ui-color-primary-700);
 }
 
-.vjs-tree {
-  font-family: var(--font-mono) !important;
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.vjs-key {
-  color: var(--color-gray-600);
-}
-
-.vjs-value-string {
-  color: var(--color-emerald-700);
-}
-
-.vjs-value-number {
-  color: var(--color-blue-500);
-  font-weight: semibold;
-}
-
-.vjs-value-null {
-  color: var(--color-orange-600);
-}
-
-.vjs-value-boolean {
-  color: var(--color-pink-500);
-}
-
-.vjs-key>.vjs-colon,
-.vjs-tree-brackets {
-  color: var(--color-slate-700);
-}
-
-.vjs-tree-node {
-  .vjs-indent-unit {
-    &.has-line {
-      border-left-color: var(--color-slate-300);
-    }
-  }
-}
-
-.vjs-comment {
-  color: var(--color-slate-400);
-}
-
-.vjs-carets {
-  color: var(--color-slate-300);
-}
-
-.vjs-tree-node.is-highlight,
-.vjs-tree-node:hover {
-  background-color: var(--color-slate-100);
+.dark {
+  --ui-primary: var(--ui-color-primary-300);
 }

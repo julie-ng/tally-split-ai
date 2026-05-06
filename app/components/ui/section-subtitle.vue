@@ -7,7 +7,7 @@ const props = defineProps({
   ui: {
     type: Object,
     required: false,
-    default: () => ({ class: 'mt-2 mb-4 font-semibold text-primary-700',
+    default: () => ({ class: 'mt-2 mb-4 font-semibold text-primary',
     }),
   },
 })
