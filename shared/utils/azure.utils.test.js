@@ -288,3 +288,10 @@ describe('azureUtils.excludeInternalBlobTags', () => {
     })
   })
 })
+
+describe('azureUtils.buildBlobPath', () => {
+  it('should join userId, uploadId, and filename with slashes', () => {
+    const result = azureUtils.buildBlobPath('user-abc', 'upload-123', 'receipt.jpg')
+    expect(result).toBe('user-abc/upload-123/receipt.jpg')
+  })
+})

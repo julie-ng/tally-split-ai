@@ -31,6 +31,23 @@ function removeUsernamePrefixFromBlobname (blobName) {
 }
 
 /**
+ * Builds the canonical Azure blob path for an upload's file (original or thumbnail).
+ * Layout: {userId}/{uploadId}/{filename}
+ *
+ * Used by both the server (to mint paths in /api/blobs/new) and the client
+ * (to upload thumbnails). Keep these in lockstep — divergence here means
+ * thumbnails land somewhere the rest of the app can't find them.
+ *
+ * @param {string} userId - Owner user id
+ * @param {string} uploadId - Server-generated upload nanoid
+ * @param {string} filename - Azure-safe filename
+ * @returns {string} The blob path
+ */
+function buildBlobPath (userId, uploadId, filename) {
+  return `${userId}/${uploadId}/${filename}`
+}
+
+/**
  * Internal blob tag keys that should be excluded from UI display
  */
 const INTERNAL_BLOB_TAGS = ['user-id']
@@ -87,4 +104,5 @@ export const azureUtils = {
   getReceiptTotalBlobTag,
   removeUsernamePrefixFromBlobname,
   excludeInternalBlobTags,
+  buildBlobPath,
 }

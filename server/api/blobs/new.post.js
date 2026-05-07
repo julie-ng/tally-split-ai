@@ -31,9 +31,9 @@ export default defineEventHandler(async (event) => {
   // of (userId, filename, timestamp)).
   const id = generateId()
 
-  const blobPath = `${userId}/${id}/${azureFilename}`
+  const blobPath = azureUtils.buildBlobPath(userId, id, azureFilename)
   const thumbnailFilename = createThumbnailFilename(azureFilename)
-  const thumbnailPath = `${userId}/${id}/${thumbnailFilename}`
+  const thumbnailPath = azureUtils.buildBlobPath(userId, id, thumbnailFilename)
 
   // Generate blob URL (no SAS token — tokens are fetched just-in-time before upload)
   const blobUrl = azureStorageUtils.generateBlobUrl(blobPath)
