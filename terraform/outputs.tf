@@ -34,6 +34,7 @@ output "azure_gpt_4o" {
     id                   = azurerm_cognitive_deployment.gpt4o.id
     name                 = azurerm_cognitive_deployment.gpt4o.name
     model                = azurerm_cognitive_deployment.gpt4o.model
+    capacity             = azurerm_cognitive_deployment.gpt4o.sku[0].capacity
     cognitive_account_id = azurerm_cognitive_deployment.gpt4o.cognitive_account_id
   }
 }
