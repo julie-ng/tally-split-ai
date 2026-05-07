@@ -1,9 +1,11 @@
-import { getGpt4oConfig } from './get-gpt4o-config.js'
+import { gpt4oFetch } from './gpt4o-fetch.js'
 import { loadInstructions } from './load-instructions.js'
 
 /**
  * Normalize receipt data using GPT-4o-mini (text-only, no vision).
  * Reconciles inconsistent OCR date/time fields and generates a receipt title.
+ *
+ * TRIGGER.DEV-ONLY — see `gpt4o-fetch.js` for details.
  *
  * @param {Object} params
  * @param {Object} params.transactionDate - OCR TransactionDate field ({ content, valueDate })
@@ -14,8 +16,6 @@ import { loadInstructions } from './load-instructions.js'
  * @returns {Promise<Object>} { date, time, title, filenameIsHumanNamed }
  */
 export async function normalizeReceipt ({ transactionDate, transactionTime, merchantName, lineItems, originalFilename }) {
-  const { endpoint, key } = getGpt4oConfig()
-
   const systemPrompt = loadInstructions('normalize-receipt')
 
   const userMessage = JSON.stringify({
@@ -26,43 +26,16 @@ export async function normalizeReceipt ({ transactionDate, transactionTime, merc
     originalFilename,
   }, null, 2)
 
-  let response
-  try {
-    response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-key': key,
-      },
-      body: JSON.stringify({
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage },
-        ],
-        temperature: 0,
-        response_format: { type: 'json_object' },
-      }),
-    })
-  }
-  catch (err) {
-    console.error('[gpt4o fetch failed]', {
-      endpoint,
-      cause: err.cause?.message,
-      code: err.cause?.code,
-      hostname: err.cause?.hostname,
-    })
-    throw err
-  }
+  const result = await gpt4oFetch({
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userMessage },
+    ],
+    temperature: 0,
+    response_format: { type: 'json_object' },
+  }, 'normalize')
 
-  const responseText = await response.text()
-
-  if (!response.ok) {
-    throw new Error(`GPT-4o normalize failed (${response.status}): ${responseText}`)
-  }
-
-  const result = JSON.parse(responseText)
   const content = result.choices?.[0]?.message?.content
-
   if (!content) {
     throw new Error('GPT-4o normalize returned empty content')
   }
