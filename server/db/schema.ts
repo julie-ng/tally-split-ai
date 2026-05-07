@@ -118,7 +118,6 @@ export const uploads = pgTable('uploads', {
 export const splits = pgTable('splits', {
   id: text('id').primaryKey().$defaultFn(() => generateId()),
 
-  // Optional receipt association (null for standalone splits)
   // @ts-expect-error implicit return type any
   receiptId: text('receipt_id').references(() => receipts.id, { onDelete: 'cascade' }),
 
@@ -298,8 +297,6 @@ export const uploadsRelations = relations(uploads, ({ one, many }) => ({
   }),
 }))
 
-// Split belongs to one receipt (optional) and references up to 3 users
-// (userOne, userTwo as slots; paidByUser as resolution).
 export const splitsRelations = relations(splits, ({ one }) => ({
   receipt: one(receipts, {
     fields: [splits.receiptId],

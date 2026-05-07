@@ -175,12 +175,12 @@ Upload-level convenience field updated by the workflow orchestrator so the front
 Expense splitting between two household members.
 
 > [!NOTE]
-> POC schema hardcodes 2 users (`userOne`/`userTwo` slots). N-user splits would migrate to a `split_shares` join table. The 2-user cap is enforced at the household level (max 2 members).
+> Schema hardcodes 2 users (`userOne`/`userTwo` slots). The 2-user cap is intentional and enforced at the household level (max 2 members) — see `docs/SECURITY.md` "Intentional Constraints".
 
 | Column | Type | Notes |
 |:--|:--|:--|
 | `id` | `serial` PK | |
-| `receiptId` | `integer` FK → `receipts.id` (set null) | Canonical link; splits are always created with a receipt today |
+| `receiptId` | `integer` FK → `receipts.id` (cascade) | Canonical link; deleting the receipt deletes the split |
 | `splitAmount` | `real` NOT NULL | Total to split (defaults to receipt total) |
 | `userOneId` | `uuid` FK → `users.id` | First household member (oldest by `users.createdAt`) |
 | `userOneShare` | `real` | Amount this user owes |
