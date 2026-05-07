@@ -1,1 +1,0 @@
-ALTER TABLE `uploads` ADD `created_at` integer DEFAULT (unixepoch()) NOT NULL;

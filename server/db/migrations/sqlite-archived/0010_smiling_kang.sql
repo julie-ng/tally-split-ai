@@ -1,1 +1,0 @@
-ALTER TABLE `receipts` ADD `tip` real;

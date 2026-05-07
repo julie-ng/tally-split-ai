@@ -9,40 +9,20 @@ export default defineEventHandler(async (event) => {
   const receiptId = getRouterParam(event, 'id')
   await guards.requireAuthorization(event, { receiptId })
 
-  // Fetch receipt for history tracking
-  const receipt = await db
-    .select()
-    .from(schema.receipts)
+  // FK cascade removes splits, uploads, and history rows in one statement.
+  const result = await db
+    .delete(schema.receipts)
     .where(eq(schema.receipts.id, receiptId))
-    .limit(1)
+    .returning()
 
-  if (receipt.length === 0) {
+  if (result.length === 0) {
     throw createError({
       statusCode: 404,
       message: `Receipt with ID '${receiptId}' not found`,
     })
   }
 
-  // Track deletion history before deleting
-  await historyUtils.trackDelete(db, {
-    historyTable: schema.receiptHistory,
-    entityId: receiptId,
-    entityIdColumn: 'receiptId',
-    source: event.context.securityPrincipal,
-  }, receipt[0])
-
-  // Delete associated uploads first
-  await db
-    .delete(schema.uploads)
-    .where(eq(schema.uploads.receiptId, receiptId))
-
-  // Now delete the receipt
-  const result = await db
-    .delete(schema.receipts)
-    .where(eq(schema.receipts.id, receiptId))
-    .returning()
-
-  log.info({ receiptId }, 'Receipt deleted')
+  log.info({ receiptId }, 'Receipt deleted (splits, uploads, history cascaded)')
 
   return {
     success: true,

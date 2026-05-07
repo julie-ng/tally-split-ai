@@ -67,8 +67,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  let deletedReceipt = null
-  let deletedSplit = null
+  let receiptDeleted = false
 
   if (upload.receiptId) {
     // Count sibling uploads for the same receipt (excluding this one)
@@ -81,68 +80,30 @@ export default defineEventHandler(async (event) => {
       ))
 
     if (siblingCount === 0) {
-      // Last upload for this receipt — delete receipt and split too
-      const [receipt] = await db
-        .select()
-        .from(schema.receipts)
+      // Last upload for this receipt — delete the receipt; FK cascade
+      // removes the split, this upload, and all related history rows.
+      await db
+        .delete(schema.receipts)
         .where(eq(schema.receipts.id, upload.receiptId))
-        .limit(1)
 
-      if (receipt) {
-        const [split] = await db
-          .delete(schema.splits)
-          .where(eq(schema.splits.receiptId, receipt.id))
-          .returning()
-        deletedSplit = split || null
-
-        // Deleting the receipt cascade-deletes this upload via FK
-        await db
-          .delete(schema.receipts)
-          .where(eq(schema.receipts.id, upload.receiptId))
-
-        deletedReceipt = receipt
-        log.info({ receiptId: receipt.id, splitId: deletedSplit?.id }, 'Deleted associated receipt and split (last upload)')
-      }
+      receiptDeleted = true
+      log.info({ receiptId: upload.receiptId }, 'Deleted receipt (last upload) — splits, uploads, and history cascaded')
     }
   }
 
   // If receipt was not deleted (siblings exist, or no receipt), delete just this upload
-  if (!deletedReceipt) {
+  if (!receiptDeleted) {
     await db
       .delete(schema.uploads)
       .where(eq(schema.uploads.id, id))
   }
 
-  // Track deletions in history (audit trail only — no UI to surface these yet)
-  if (deletedReceipt) {
-    await historyUtils.trackDelete(db, {
-      historyTable: schema.receiptHistory,
-      entityId: deletedReceipt.id,
-      entityIdColumn: 'receiptId',
-      source: event.context.securityPrincipal,
-    }, deletedReceipt)
-  }
-
-  if (deletedSplit) {
-    await historyUtils.trackDelete(db, {
-      historyTable: schema.splitHistory,
-      entityId: deletedSplit.id,
-      entityIdColumn: 'splitId',
-      source: event.context.securityPrincipal,
-    }, deletedSplit)
-  }
-
-  log.info({
-    id,
-    receiptDeleted: !!deletedReceipt,
-    splitDeleted: !!deletedSplit,
-  }, 'Upload deleted')
+  log.info({ id, receiptDeleted }, 'Upload deleted')
 
   return {
     success: true,
     deleted: { id },
-    receiptDeleted: !!deletedReceipt,
-    splitDeleted: !!deletedSplit,
+    receiptDeleted,
     blobsDeletionResults,
   }
 })

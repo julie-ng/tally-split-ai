@@ -6,26 +6,28 @@ import { globSync } from 'glob'
 /**
  * History Tracking Coverage Tests
  *
- * Ensures all mutating API endpoints (POST, PUT, DELETE) for receipts
- * and splits call the appropriate history tracking function.
+ * Ensures POST and PUT API endpoints for receipts and splits call the
+ * appropriate history tracking function. DELETE endpoints are excluded —
+ * deletion is handled by FK cascade at the schema layer (see
+ * project_change_history.md), so handlers no longer write history.
  *
  * This is a static analysis test — it reads source files and checks
- * for the presence of trackChanges/trackCreate/trackDelete/trackBatchChanges
- * calls. It catches the case where someone adds or modifies an endpoint
+ * for the presence of trackChanges/trackCreate/trackBatchChanges calls.
+ * It catches the case where someone adds or modifies an endpoint
  * without wiring up history tracking.
  *
  * KNOWN LIMITATION: This is a regex match against source text, not runtime
  * verification. A commented-out call containing the function name (e.g.
- * `// await trackDelete(...)`) will pass the test. This test catches
+ * `// await trackChanges(...)`) will pass the test. This test catches
  * accidental omissions, not intentional bypasses. A true integration test
  * against a running server + database would be needed for full coverage.
  */
 
-const TRACK_FUNCTIONS = ['trackChanges', 'trackCreate', 'trackDelete', 'trackBatchChanges']
+const TRACK_FUNCTIONS = ['trackChanges', 'trackCreate', 'trackBatchChanges']
 const TRACK_PATTERN = new RegExp(`(${TRACK_FUNCTIONS.join('|')})\\(`)
 
 function getMutatingEndpoints (dir) {
-  const pattern = resolve(dir, '*.{post,put,delete}.js')
+  const pattern = resolve(dir, '*.{post,put}.js')
   return globSync(pattern)
 }
 
