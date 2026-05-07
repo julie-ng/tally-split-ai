@@ -1,1 +1,0 @@
-ALTER TABLE `receipts` ADD `split_id` integer REFERENCES splits(id);

@@ -1,1 +1,0 @@
-ALTER TABLE `uploads` ADD `azure_tags` text;

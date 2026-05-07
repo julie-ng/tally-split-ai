@@ -1,1 +1,0 @@
-ALTER TABLE `receipts` ADD `title` text DEFAULT 'Untitled';
