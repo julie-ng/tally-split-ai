@@ -405,52 +405,59 @@ export const useSplitsStore = defineStore('splits', () => {
   }
 
   /**
-   * Mark all splits in a given month as settled
-   * @param {number} year - Full year (e.g. 2025)
-   * @param {number} month - Month 1-12
-   * @returns {Promise<Object>} Result with updatedCount
+   * Mark a specific list of splits as settled.
+   * Server silently drops IDs the caller doesn't own, IDs already settled,
+   * and IDs without a paidByUserId.
+   *
+   * @param {string[]} splitIds
+   * @returns {Promise<Object>} Result with updatedCount + settledIds
    */
-  async function markMonthAsSettled (year, month) {
-    _log(`[SplitsStore] markMonthAsSettled(${year}, ${month})`)
+  async function markSettled (splitIds) {
+    _log(`[SplitsStore] markSettled(${splitIds.length} ids)`)
 
-    // 1. Get affected splits
-    const monthSplits = getSplitsByMonth.value(year, month)
-
-    if (monthSplits.length === 0) {
-      _log('[SplitsStore] ℹ No splits to settle for this month')
-      return { success: true, updatedCount: 0 }
+    if (splitIds.length === 0) {
+      return { success: true, updatedCount: 0, settledIds: [] }
     }
 
-    // 2. Store originals for rollback
+    // Snapshot for rollback
     const originals = {}
-    for (const split of monthSplits) {
-      originals[split.id] = { ...splits.value[split.id] }
-    }
-
-    // 3. Optimistic update: mark all as settled in state
-    // Note: settledAt will be set by the backend
-    for (const split of monthSplits) {
-      splits.value[split.id] = {
-        ...splits.value[split.id],
-        isSettled: true,
+    for (const id of splitIds) {
+      if (splits.value[id]) {
+        originals[id] = { ...splits.value[id] }
       }
     }
 
-    // 4. Call batch API
+    // Optimistic update — server will only confirm the eligible ones via
+    // settledIds in the response; we reconcile after success.
+    for (const id of splitIds) {
+      if (splits.value[id]) {
+        splits.value[id] = { ...splits.value[id], isSettled: true }
+      }
+    }
+
     try {
       const result = await $fetch('/api/splits/batch-settle', {
         method: 'PUT',
-        body: { year, month },
+        body: { splitIds },
       })
-      _log(`[SplitsStore] ✅ marked ${result.updatedCount} splits as settled`)
+      _log(`[SplitsStore] ✅ settled ${result.updatedCount}/${splitIds.length} splits`)
+
+      // Reconcile: roll back any ID we optimistically flipped that the server
+      // didn't actually settle (e.g. unattributed slipped through client filter).
+      const confirmed = new Set(result.settledIds ?? [])
+      for (const id of splitIds) {
+        if (!confirmed.has(id) && originals[id]) {
+          splits.value[id] = originals[id]
+        }
+      }
+
       return result
     }
     catch (err) {
-      // 5. Rollback on error
       for (const id in originals) {
         splits.value[id] = originals[id]
       }
-      console.error('[SplitsStore] ❌ failed to mark month as settled:', err)
+      console.error('[SplitsStore] ❌ failed to mark splits as settled:', err)
       throw err
     }
   }
@@ -488,6 +495,6 @@ export const useSplitsStore = defineStore('splits', () => {
     fetchSplitHistory,
     updateSplit,
     clearSplitError,
-    markMonthAsSettled,
+    markSettled,
   }
 })

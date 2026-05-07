@@ -1,10 +1,8 @@
-import { eq, and, isNotNull, sql } from 'drizzle-orm'
+import { eq, and, isNotNull, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 
-// Validation schema for batch settle request
 const batchSettleSchema = z.object({
-  year: z.number().int().min(2020).max(2100),
-  month: z.number().int().min(1).max(12),
+  splitIds: z.array(z.string()).min(1).max(500),
 })
 
 export default defineEventHandler(async (event) => {
@@ -13,7 +11,6 @@ export default defineEventHandler(async (event) => {
   await guards.requireAuthentication(event)
   const householdId = event.context.householdId
 
-  // Validate request body
   const result = await readValidatedBody(event, body => batchSettleSchema.safeParse(body))
   if (!result.success) {
     setResponseStatus(event, 400)
@@ -24,11 +21,12 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const { year, month } = result.data
+  const { splitIds } = result.data
 
   try {
     const updated = await db.transaction(async (tx) => {
-      // Lock + read full rows for before state — filter via receipt's householdId
+      // Lock + read full rows scoped to caller's household; require paidBy and not-yet-settled.
+      // The household join silently drops any IDs the caller doesn't own.
       const beforeRows = await tx
         .select({ splits: schema.splits })
         .from(schema.splits)
@@ -36,18 +34,17 @@ export default defineEventHandler(async (event) => {
         .where(
           and(
             eq(schema.receipts.householdId, householdId),
+            eq(schema.splits.isSettled, false),
             isNotNull(schema.splits.paidByUserId),
-            sql`EXTRACT(YEAR FROM ${schema.receipts.date}::date)::int = ${year}`,
-            sql`EXTRACT(MONTH FROM ${schema.receipts.date}::date)::int = ${month}`,
+            inArray(schema.splits.id, splitIds),
           ),
         )
         .for('update')
 
       if (beforeRows.length === 0) return []
 
-      const splitIds = beforeRows.map(r => r.splits.id)
+      const targetIds = beforeRows.map(r => r.splits.id)
 
-      // Batch update all splits to mark as settled
       const afterRows = await tx
         .update(schema.splits)
         .set({
@@ -55,10 +52,9 @@ export default defineEventHandler(async (event) => {
           settledAt: new Date(),
           updatedAt: new Date(),
         })
-        .where(sql`${schema.splits.id} IN ${splitIds}`)
+        .where(inArray(schema.splits.id, targetIds))
         .returning()
 
-      // Match before → after by ID for diffing
       const afterById = Object.fromEntries(afterRows.map(r => [r.id, r]))
       const entities = beforeRows.map(r => ({
         entityId: r.splits.id,
@@ -75,16 +71,17 @@ export default defineEventHandler(async (event) => {
       return afterRows
     })
 
-    log.info({ year, month, count: updated.length }, 'Batch settled')
+    log.info({ requested: splitIds.length, settled: updated.length }, 'Batch settled')
 
     return {
       success: true,
       updatedCount: updated.length,
+      settledIds: updated.map(r => r.id),
       message: `Successfully marked ${updated.length} split(s) as settled`,
     }
   }
   catch (err) {
-    log.error({ year, month, err }, 'Failed to batch settle')
+    log.error({ requested: splitIds.length, err }, 'Failed to batch settle')
     throw createError({
       statusCode: 500,
       message: 'Failed to mark splits as settled',

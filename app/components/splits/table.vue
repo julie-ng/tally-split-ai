@@ -1,5 +1,6 @@
 <script setup>
 import { getPaginationRowModel } from '@tanstack/vue-table'
+import { UCheckbox } from '#components'
 import { useHouseholdStore } from '~/stores/household.store'
 
 const props = defineProps({
@@ -34,6 +35,14 @@ const pagination = defineModel('pagination', {
   type: Object,
   default: () => ({ pageIndex: 0, pageSize: 25 }),
 })
+const rowSelection = defineModel('rowSelection', {
+  type: Object,
+  default: () => ({}),
+})
+
+function isSettleable (split) {
+  return !split.isSettled && !!split.paidByUserId
+}
 
 const route = useRoute()
 const householdStore = useHouseholdStore()
@@ -43,6 +52,17 @@ const user2Name = computed(() => householdStore.getMemberFirstName(householdStor
 const table = useTemplateRef('table')
 
 const columns = computed(() => [
+  {
+    id: 'select',
+    header: '',
+    cell: ({ row }) => h(UCheckbox, {
+      'modelValue': row.getIsSelected(),
+      'disabled': !isSettleable(row.original),
+      'onUpdate:modelValue': value => row.toggleSelected(!!value),
+      'ariaLabel': 'Select row',
+      'onClick': e => e.stopPropagation(),
+    }),
+  },
   {
     accessorKey: 'id',
     header: 'Split ID',
@@ -128,11 +148,13 @@ function onSelect (event, row) {
       <UTable
         ref="table"
         v-model:pagination="pagination"
+        v-model:row-selection="rowSelection"
         :sorting="sorting"
         :pagination-options="{
           getPaginationRowModel: getPaginationRowModel(),
           autoResetPageIndex: false,
         }"
+        :get-row-id="(row) => row.id"
         :data="data"
         :columns="columns"
         :meta="tableMeta"

@@ -72,13 +72,9 @@ function closePreview () {
 
 const hasSplits = computed(() => splits.value.length > 0)
 
-const allSettled = computed(() =>
-  splits.value.length > 0 && splits.value.every(s => s.isSettled),
-)
-
-const settleableCount = computed(() =>
-  splits.value.filter(s => !s.isSettled && s.paidByUserId).length,
-)
+const rowSelection = ref({})
+const selectedSplitIds = computed(() => Object.keys(rowSelection.value))
+const selectedCount = computed(() => selectedSplitIds.value.length)
 
 async function refreshAll () {
   await Promise.all([
@@ -90,13 +86,18 @@ async function refreshAll () {
   ])
 }
 
-async function handleMarkAllSettled () {
-  if (!confirm(`Mark all ${splits.value.length} splits for ${monthName.value} ${year.value} as settled?`)) {
+async function handleMarkSelectedSettled () {
+  if (selectedCount.value === 0) {
+    return
+  }
+
+  if (!confirm(`Mark ${selectedCount.value} split(s) as settled?`)) {
     return
   }
 
   try {
-    await splitsStore.markMonthAsSettled(year.value, month.value)
+    await splitsStore.markSettled(selectedSplitIds.value)
+    rowSelection.value = {}
     await splitsStore.fetchSummary({
       year: year.value,
       month: month.value,
@@ -163,6 +164,7 @@ async function handleMarkAllSettled () {
 
         <splits-table
           v-model:pagination="pagination"
+          v-model:row-selection="rowSelection"
           :data="filteredSplits"
           :sorting="sorting"
           :pagination-info="paginationInfo"
@@ -174,13 +176,13 @@ async function handleMarkAllSettled () {
           <template #footer>
             <div class="px-4 py-3 border-t border-default">
               <UButton
+                v-if="selectedCount > 0"
                 color="primary"
                 variant="solid"
                 icon="i-lucide-check-check"
-                :disabled="splits.length === 0 || allSettled || settleableCount === 0"
-                @click="handleMarkAllSettled"
+                @click="handleMarkSelectedSettled"
               >
-                Mark All as Settled
+                Mark {{ selectedCount > 0 ? selectedCount : '' }} as Settled
               </UButton>
             </div>
           </template>
