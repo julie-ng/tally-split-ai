@@ -229,12 +229,12 @@ function onSelect (event, row) {
         </template>
 
         <template #isSettled-cell="{ row }">
-          <UIcon
-            :name="row.original.isSettled ? 'i-lucide-square-check' : 'i-lucide-square'"
-            class="size-4"
-            :class="row.original.isSettled ? 'text-emerald-600' : 'text-slate-300'"
-            :title="row.original.isSettled ? 'Settled Up' : 'Unsettled'"
-          />
+          <UBadge v-if="row.original.isSettled" color="success" variant="soft">
+            Settled Up
+          </UBadge>
+          <UBadge v-else color="warning" variant="soft">
+            Not settled
+          </UBadge>
         </template>
       </UTable>
 
