@@ -15,6 +15,7 @@ const upload = computed(() => uploadsStore.getUploadById(props.id))
 <template>
   <div v-if="upload">
     <ui-label-content label="ID" :content="upload.id" />
+    <ui-label-content label="Created At" :content="dateUtils.formatDate(new Date(upload.createdAt))" />
     <ui-label-content label="Original Filename" :content="upload.originalFilename" />
     <UButton
       v-if="upload.receiptId"
