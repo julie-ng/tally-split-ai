@@ -1,12 +1,22 @@
 import { z } from 'zod'
-import { WORKFLOW_STEPS } from '#shared/enums/workflow-step.js'
-import { WORKFLOW_STEP_STATUSES } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_STEP, WORKFLOW_STEPS } from '#shared/enums/workflow-step.js'
+import { WORKFLOW_STATUSES, WORKFLOW_STEP_STATUSES } from '#shared/enums/workflow-status.js'
 
+// The orchestrator step (`_orchestrator`) emits run-level statuses
+// (`partial`, `completed`, `processing`, `queued`, `failed`); per-step
+// callbacks emit step-level statuses (`pending`, `processing`,
+// `completed`, `failed`). Validate against the appropriate enum so a
+// `partial` orchestrator notify isn't rejected as an invalid step status.
 const callbackSchema = z.object({
   step: z.enum(WORKFLOW_STEPS),
-  status: z.enum(WORKFLOW_STEP_STATUSES),
+  status: z.string(),
   error: z.string().optional(),
-})
+}).refine(
+  data => data.step === WORKFLOW_STEP.ORCHESTRATOR
+    ? WORKFLOW_STATUSES.includes(data.status)
+    : WORKFLOW_STEP_STATUSES.includes(data.status),
+  { message: 'Invalid status for step', path: ['status'] },
+)
 
 export default defineEventHandler(async (event) => {
   const log = useLogger('workflow')

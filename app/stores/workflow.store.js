@@ -103,7 +103,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
    * Update a workflow step status in-memory from an SSE event.
    *
    * @param {string} id
-   * @param {string} step - e.g. 'ocr', 'annotations', 'split', 'workflow'
+   * @param {string} step - One of `WORKFLOW_STEP` values (see #shared/enums/workflow-step.js)
    * @param {string} status
    * @param {string} [error] - Error message for failed steps
    */

@@ -40,7 +40,7 @@ const JITTER_RANGE_SECONDS = 5
  * occupy a worker during the wait).
  *
  * Reads Azure's `Retry-After` header when present; falls back to a
- * 30s default plus 0–5s jitter to avoid lockstep retries when
+ * 30s default plus 0–4s jitter to avoid lockstep retries when
  * multiple concurrent uploads all hit the TPM ceiling at once.
  *
  * @param {Object} requestBody - The OpenAI-shape request body
