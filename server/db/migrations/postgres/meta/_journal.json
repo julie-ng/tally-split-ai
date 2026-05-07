@@ -29,6 +29,13 @@
       "when": 1778127036477,
       "tag": "0003_wealthy_madame_hydra",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1778142803789,
+      "tag": "0004_first_whizzer",
+      "breakpoints": true
     }
   ]
 }

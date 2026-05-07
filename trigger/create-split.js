@@ -70,7 +70,7 @@ export const createSplit = task({
     catch (err) {
       await updateWorkflowStatus(authHeaders, {
         createSplitStatus: WORKFLOW_STEP_STATUS.FAILED,
-        error: err.message,
+        errors: { [WORKFLOW_STEP.SPLIT]: err.message },
       })
       await notifyStatus(runUuid, WORKFLOW_STEP.SPLIT, 'failed', authHeaders, err.message)
       throw err

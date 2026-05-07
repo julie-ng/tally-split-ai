@@ -115,7 +115,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
     const latest = runs.value[id][0]
 
-    if (step === WORKFLOW_STEP.WORKFLOW) {
+    if (step === WORKFLOW_STEP.ORCHESTRATOR) {
       latest.status = status
     }
     else {
@@ -123,7 +123,10 @@ export const useWorkflowStore = defineStore('workflow', () => {
       latest[stepKey] = status
     }
 
-    if (error) latest.error = error
+    if (error) {
+      if (!latest.errors) latest.errors = {}
+      latest.errors[step] = error
+    }
 
     _log(`[WorkflowStore] 🔄 ${id} ${step}=${status}${error ? ` error="${error}"` : ''}`)
   }

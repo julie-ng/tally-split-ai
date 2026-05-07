@@ -17,8 +17,10 @@ const statusUpdateSchema = z.object({
   // Upload analysis status (orchestrator sets this on completion)
   analysisStatus: z.enum(UPLOAD_ANALYSIS_STATUSES).optional(),
 
-  // Optional fields
-  error: z.string().nullable().optional(),
+  // Per-step errors to merge into the workflow_runs.errors jsonb column.
+  // Shape: { [stepKey]: errorMessage }. Keys: WORKFLOW_STEP values
+  // (e.g. ocr, annotations, adjustSplit, _orchestrator).
+  errors: z.record(z.string(), z.string()).optional(),
   completedAt: z.string().datetime().nullable().optional(),
 })
 
@@ -61,8 +63,19 @@ export default defineEventHandler(async (event) => {
   if (workflowUpdates.createSplitStatus !== undefined) runUpdates.createSplitStatus = workflowUpdates.createSplitStatus
   if (workflowUpdates.adjustSplitStatus !== undefined) runUpdates.adjustSplitStatus = workflowUpdates.adjustSplitStatus
   if (workflowUpdates.normalizeStatus !== undefined) runUpdates.normalizeStatus = workflowUpdates.normalizeStatus
-  if (workflowUpdates.error !== undefined) runUpdates.error = workflowUpdates.error
   if (workflowUpdates.completedAt !== undefined) runUpdates.completedAt = workflowUpdates.completedAt ? new Date(workflowUpdates.completedAt) : null
+
+  // Merge per-step errors into the existing jsonb column. Read-modify-write
+  // is acceptable here because each task writes one key and steps don't
+  // contend for the same key in practice.
+  if (workflowUpdates.errors !== undefined) {
+    const [existing] = await db
+      .select({ errors: schema.workflowRuns.errors })
+      .from(schema.workflowRuns)
+      .where(eq(schema.workflowRuns.id, workflowRun.id))
+      .limit(1)
+    runUpdates.errors = { ...(existing?.errors ?? {}), ...workflowUpdates.errors }
+  }
 
   // Update workflow run if there are fields to update
   if (Object.keys(runUpdates).length > 0) {
