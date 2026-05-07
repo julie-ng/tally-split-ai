@@ -40,6 +40,7 @@ export const receiptWorkflow = task({
         status: WORKFLOW_STATUS.FAILED,
         error: `OCR failed: ${ocrResult.error}`,
       })
+      await notifyStatus(runUuid, WORKFLOW_STEP.WORKFLOW, 'failed', authHeaders, `OCR failed: ${ocrResult.error}`)
 
       throw new Error(`OCR analysis failed: ${ocrResult.error}`)
     }
@@ -84,6 +85,7 @@ export const receiptWorkflow = task({
         annotationsStatus: WORKFLOW_STEP_STATUS.FAILED,
         error: annotationsResult.error,
       })
+      await notifyStatus(runUuid, WORKFLOW_STEP.ANNOTATIONS, 'failed', authHeaders, annotationsResult.error)
       logger.warn(`Annotations analysis failed, continuing`, { error: annotationsResult.error })
     }
 
@@ -98,6 +100,7 @@ export const receiptWorkflow = task({
         normalizeStatus: WORKFLOW_STEP_STATUS.FAILED,
         error: normalizeResult.error,
       })
+      await notifyStatus(runUuid, WORKFLOW_STEP.NORMALIZE, 'failed', authHeaders, normalizeResult.error)
       logger.warn(`Normalize failed, continuing`, { error: normalizeResult.error })
     }
 
@@ -117,6 +120,7 @@ export const receiptWorkflow = task({
         createSplitStatus: WORKFLOW_STEP_STATUS.FAILED,
         error: splitResult.error,
       })
+      await notifyStatus(runUuid, WORKFLOW_STEP.SPLIT, 'failed', authHeaders, splitResult.error)
       logger.warn(`Split creation failed`, { error: splitResult.error })
     }
 
@@ -132,6 +136,7 @@ export const receiptWorkflow = task({
           adjustSplitStatus: WORKFLOW_STEP_STATUS.FAILED,
           error: adjustResult.error,
         })
+        await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_SPLIT, 'failed', authHeaders, adjustResult.error)
         logger.warn(`Adjust-split failed, continuing`, { error: adjustResult.error })
       }
     }

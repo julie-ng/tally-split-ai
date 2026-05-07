@@ -5,6 +5,7 @@ import { WORKFLOW_STEP_STATUSES } from '#shared/enums/workflow-status.js'
 const callbackSchema = z.object({
   step: z.enum(WORKFLOW_STEPS),
   status: z.enum(WORKFLOW_STEP_STATUSES),
+  error: z.string().optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -29,16 +30,17 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const { step, status } = result.data
+  const { step, status, error } = result.data
   const workflowRun = event.context.workflowRun
 
-  log.info({ runUuid, uploadId: workflowRun.upload.id, step, status }, 'Callback received')
+  log.info({ runUuid, uploadId: workflowRun.upload.id, step, status, error }, 'Callback received')
 
   // Emit to event bus keyed by userId
   workflowBus.emit(workflowRun.upload.userId, {
     uploadId: workflowRun.upload.id,
     step,
     status,
+    ...(error ? { error } : {}),
   })
 
   return { success: true }

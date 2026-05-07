@@ -113,6 +113,7 @@ export const adjustSplit = task({
         adjustSplitStatus: WORKFLOW_STEP_STATUS.FAILED,
         error: err.message,
       })
+      await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_SPLIT, 'failed', authHeaders, err.message)
       throw err
     }
   },

@@ -91,6 +91,7 @@ export const analyzeAnnotations = task({
         annotationsStatus: WORKFLOW_STEP_STATUS.FAILED,
         error: err.message,
       })
+      await notifyStatus(runUuid, WORKFLOW_STEP.ANNOTATIONS, 'failed', authHeaders, err.message)
       throw err
     }
   },

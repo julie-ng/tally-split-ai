@@ -103,6 +103,7 @@ export const analyzeOcr = task({
         ocrStatus: WORKFLOW_STEP_STATUS.FAILED,
         error: err.message,
       })
+      await notifyStatus(runUuid, WORKFLOW_STEP.OCR, 'failed', authHeaders, err.message)
       throw err
     }
   },

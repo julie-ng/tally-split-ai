@@ -10,13 +10,16 @@ const NUXT_PUBLIC_URL = process.env.NUXT_PUBLIC_URL || 'http://localhost:3000'
  * @param {string} step - Workflow step name
  * @param {string} status - Step status
  * @param {Object} auth - Auth params { callbackToken, runUuid, taskId }
+ * @param {string} [errorMessage] - Optional error message (only sent when status === 'failed')
  */
-export async function notifyStatus (runUuid, step, status, auth) {
+export async function notifyStatus (runUuid, step, status, auth, errorMessage) {
   try {
+    const body = { step, status }
+    if (errorMessage) body.error = errorMessage
     await fetch(`${NUXT_PUBLIC_URL}/api/workflows/callback/${runUuid}`, {
       method: 'POST',
       headers: createAuthHeaders(auth),
-      body: JSON.stringify({ step, status }),
+      body: JSON.stringify(body),
     })
   }
   catch (error) {
