@@ -217,44 +217,54 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
    * @returns {Promise<void>}
    */
   async function uploadToAzure (id) {
-    const index = uploads.value.findIndex(u => u.id === id)
+    // Re-find by id (not by cached index) on each access. Other uploads can
+    // call remove() while this one is awaiting, splicing the array and
+    // invalidating any cached index. Returns null when the row is gone —
+    // callers should treat that as "upload was cancelled / removed."
+    const findUpload = () => uploads.value.find(u => u.id === id) ?? null
 
-    if (index === -1) {
+    const initial = findUpload()
+    if (!initial) {
       throw new Error(`Upload ${id} not found`)
     }
 
-    const upload = uploads.value[index]
-
-    // Fetch fresh SAS token just-in-time
     const tokenResponse = await $fetch('/api/tokens/upload', {
       method: 'POST',
       body: {
         action: 'create',
-        blobPath: upload.blobPath,
+        blobPath: initial.blobPath,
       },
     })
 
     try {
       await uploadBlobToAzure({
         url: tokenResponse.upload.url,
-        file: upload.file,
-        tags: upload.azureTags,
+        file: initial.file,
+        tags: initial.azureTags,
         onProgress: (percent) => {
-          uploads.value[index].upload.progress = percent
+          const u = findUpload()
+          if (u) {
+            u.upload.progress = percent
+          }
         },
       })
 
-      uploads.value[index].status = 'completed'
-      uploads.value[index].upload.progress = 100
+      const u = findUpload()
+      if (u) {
+        u.status = 'completed'
+        u.upload.progress = 100
+        await updateUploadRecord(u)
+      }
 
-      await updateUploadRecord(upload)
-      // on complete, remove from queue
       remove(id)
       triggerAnalysisWorkflow(id)
     }
     catch (error) {
-      uploads.value[index].status = 'failed'
-      uploads.value[index].errors.push(error.message)
+      const u = findUpload()
+      if (u) {
+        u.status = 'failed'
+        u.errors.push(error.message)
+      }
       throw error
     }
   }
