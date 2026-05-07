@@ -1,13 +1,14 @@
 <script setup>
-// TODO: add styling for net negative/positive, etc.
-const props = defineProps({
+defineProps({
   subtitle: {
     type: String,
-    required: true,
+    required: false,
+    default: '',
   },
   title: {
     type: [String, Number],
-    required: true,
+    required: false,
+    default: '',
   },
   note: {
     type: String,
@@ -15,21 +16,25 @@ const props = defineProps({
     default: '',
   },
 })
-
-const hasNote = props.note !== ''
 </script>
 
 <template>
   <div class="h-full">
     <UCard class="shadow-md/5 h-full">
-      <div class="text-sm text-slate-500">
-        {{ props.subtitle }}
+      <div class="text-sm text-slate-600">
+        <slot name="subtitle">
+          {{ subtitle }}
+        </slot>
       </div>
       <div class="text-2xl font-medium text-slate-600">
-        {{ props.title }}
-        <span v-if="hasNote" class="text-sm font-normal text-slate-500">
-          ({{ props.note }})
-        </span>
+        <slot name="title">
+          {{ title }}
+        </slot>
+        <div v-if="$slots.note || note" class="text-sm font-normal text-slate-500">
+          <slot name="note">
+            {{ note }}
+          </slot>
+        </div>
       </div>
     </UCard>
   </div>

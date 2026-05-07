@@ -62,6 +62,14 @@ export const useHouseholdStore = defineStore('household', () => {
     return source.split(/\s+/)[0]
   })
 
+  /**
+   * Profile page URL for a household member.
+   */
+  function getUserProfileUrl (id) {
+    if (!id) return null
+    return `/users/${id}`
+  }
+
   // -------- ACTIONS --------
 
   async function fetch () {
@@ -137,6 +145,7 @@ export const useHouseholdStore = defineStore('household', () => {
     getMemberById,
     getMemberName,
     getMemberFirstName,
+    getUserProfileUrl,
     fetch,
     refresh,
     addMember,
