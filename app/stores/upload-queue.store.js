@@ -5,6 +5,13 @@ import { fileStripSerializer } from '~/utils/local-storage-serializer.utils'
 import { uploadBlobToAzure } from '~/utils/azure-upload.utils'
 import { generateThumbnail, uploadThumbnailToAzure } from '~/utils/thumbnail.utils'
 
+// Module-scope guard against double-firing startUpload(sameId) across
+// concurrent processQueue() invocations. Belt-and-suspenders alongside
+// the synchronous status flip — protects against the case where the
+// reactive status got mutated by something else (e.g. a localStorage
+// round-trip) between the claim and the await.
+const claimedIds = new Set()
+
 export const useUploadQueueStore = defineStore('upload-queue', () => {
   // -------- STATE --------
   const {
@@ -253,48 +260,67 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
   }
 
   /**
-   * Start uploading a file to Azure (checks concurrency limit, updates status, and uploads)
+   * Start uploading a file to Azure (checks concurrency limit, updates status, and uploads).
+   *
+   * Concurrency model:
+   *  - `claimedIds` (module Set) blocks parallel callers for the same id.
+   *  - The synchronous status flip from 'queued' → 'in-progress' is the primary
+   *    guard: a second `startUpload(sameId)` observes 'in-progress' and bails.
    *
    * @param {string} id - The unique hash identifier for the upload
-   * @returns {Promise<boolean>} True if upload started and succeeded, false if limit reached or failed
+   * @returns {Promise<boolean>} True if upload started and succeeded, false otherwise
    */
   async function startUpload (id) {
-    // Check concurrent upload limit
-    if (!canStartUpload.value) {
-      console.warn(`⚠️ Max concurrent uploads (${uploadMaxConcurrent}) reached`)
+    if (claimedIds.has(id)) {
       return false
     }
+    claimedIds.add(id)
 
-    // Find the upload
-    const index = uploads.value.findIndex(u => u.id === id)
-    if (index === -1) {
-      console.error(`Cannot find ${id}.`)
-      return false
-    }
-
-    // Mark as in-progress
-    uploads.value[index].status = 'in-progress'
-
-    // Generate and upload thumbnail in the background (don't block main upload)
-    const uploadObj = uploads.value[index]
-    generateAndUploadThumbnail(uploadObj).catch((error) => {
-      console.error(`Failed to generate/upload thumbnail for ${id}:`, error)
-      // Don't fail the main upload if thumbnail fails
-    })
-
-    // Upload to Azure
     try {
-      await uploadToAzure(id)
-      return true
+      const index = uploads.value.findIndex(u => u.id === id)
+      if (index === -1) {
+        console.error(`Cannot find ${id}.`)
+        return false
+      }
+
+      const upload = uploads.value[index]
+
+      // Atomic claim: only the caller that observes status === 'queued' here
+      // proceeds. Synchronous in single-threaded JS, so a second concurrent
+      // caller sees the flipped status below and returns false.
+      if (upload.status !== 'queued') {
+        return false
+      }
+
+      if (!canStartUpload.value) {
+        console.warn(`⚠️ Max concurrent uploads (${uploadMaxConcurrent}) reached`)
+        return false
+      }
+
+      uploads.value[index].status = 'in-progress'
+
+      // Generate and upload thumbnail in the background (don't block main upload)
+      const uploadObj = uploads.value[index]
+      generateAndUploadThumbnail(uploadObj).catch((error) => {
+        console.error(`Failed to generate/upload thumbnail for ${id}:`, error)
+      })
+
+      try {
+        await uploadToAzure(id)
+        return true
+      }
+      catch (error) {
+        console.error(`Upload failed for ${id}:`, error)
+        return false
+      }
     }
-    catch (error) {
-      console.error(`Upload failed for ${id}:`, error)
-      return false
+    finally {
+      claimedIds.delete(id)
     }
   }
 
   /**
-   * Retry a failed upload (increments retry counter and restarts upload)
+   * Retry a failed upload (increments retry counter, resets status to queued, restarts upload)
    *
    * @param {string} id - The unique hash identifier for the upload to retry
    * @returns {Promise<boolean>} True if retry succeeded, false otherwise
@@ -307,15 +333,14 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
       return false
     }
 
-    // Increment retry counter
     uploads.value[index].upload.retries += 1
-
-    // Reset progress
     uploads.value[index].upload.progress = 0
+    // startUpload's atomic claim only runs on 'queued' status, so we reset it
+    // here. Failed/interrupted retries enter the same path as a fresh upload.
+    uploads.value[index].status = 'queued'
 
     console.log(`🔄 Retrying upload (${id}), attempt #${uploads.value[index].upload.retries}`)
 
-    // Start the upload
     return await startUpload(id)
   }
 

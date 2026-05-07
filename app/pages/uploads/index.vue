@@ -57,7 +57,32 @@ const inFlightQueueRows = computed(() =>
     })),
 )
 
-const mergedUploads = computed(() => [...inFlightQueueRows.value, ...uploads.value])
+const mergedUploads = computed(() => {
+  const merged = new Map()
+
+  // DB rows are the base — they provide canonical fields like size,
+  // uploadedAt, receipt link.
+  for (const dbRow of uploads.value) {
+    merged.set(dbRow.id, dbRow)
+  }
+
+  // Queue's status ('queued'/'in-progress'/'failed'/'interrupted') is more
+  // current than DB's coarse 'initialized'/'uploaded'/'failed', so it wins
+  // on the status field while the queue row exists. A queue row without a
+  // matching DB row gets used as-is (brief window between drop and
+  // /api/blobs/new returning).
+  for (const queueRow of inFlightQueueRows.value) {
+    const existing = merged.get(queueRow.id)
+    if (existing) {
+      merged.set(queueRow.id, { ...existing, status: queueRow.status })
+    }
+    else {
+      merged.set(queueRow.id, queueRow)
+    }
+  }
+
+  return Array.from(merged.values())
+})
 
 const FILTER_OPTIONS = [
   { label: 'All uploads', value: 'all' },
