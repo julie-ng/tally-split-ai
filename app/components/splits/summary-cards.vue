@@ -45,7 +45,7 @@ const netBalanceColor = computed(() => {
     return 'text-gray-600'
   }
   if (!isComplete.value) {
-    return 'text-warning'
+    return 'text-gray-600'
   }
   return loggedInIsOwed.value
     ? 'text-emerald-600'
@@ -86,7 +86,7 @@ const isComplete = computed(() => {
           <span>{{ netBalanceText }}</span>
           <UPopover v-if="!isComplete" arrow mode="hover">
             <UButton
-              icon="i-lucide-circle-alert"
+              icon="i-lucide-triangle-alert"
               color="warning"
               variant="ghost"
               size="xs"
