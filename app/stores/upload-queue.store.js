@@ -247,6 +247,8 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
       uploads.value[index].upload.progress = 100
 
       await updateUploadRecord(upload)
+      // on complete, remove from queue
+      remove(id)
       triggerAnalysisWorkflow(id)
     }
     catch (error) {

@@ -1,4 +1,5 @@
 import { useUploadsStore } from '~/stores/uploads.store'
+import { useUploadQueueStore } from '~/stores/upload-queue.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
 import { UPLOAD_STATUS } from '~~/shared/enums/upload-status.js'
 
@@ -16,6 +17,7 @@ import { UPLOAD_STATUS } from '~~/shared/enums/upload-status.js'
  */
 export function useUploadRowActions () {
   const uploadsStore = useUploadsStore()
+  const uploadQueueStore = useUploadQueueStore()
   const workflowStore = useWorkflowStore()
   const toast = useToast()
 
@@ -24,7 +26,28 @@ export function useUploadRowActions () {
       && !workflowStore.isProcessingById(upload.id)
   }
 
-  async function deleteUpload (id, title, blobName, originalFilename) {
+  // Queue rows (status === 'queued' | 'in-progress' | 'failed' | 'interrupted')
+  // have no DB record yet — DELETE /api/uploads/:id would 404.
+  function isQueueRow (upload) {
+    return upload.status !== UPLOAD_STATUS.UPLOADED
+      && upload.status !== UPLOAD_STATUS.INITIALIZED
+  }
+
+  async function deleteUpload (upload) {
+    const { id, title, blobName, originalFilename } = upload
+    const label = originalFilename ?? title
+
+    if (isQueueRow(upload)) {
+      if (!confirm(`Remove '${label}' from the queue?`)) return
+      uploadQueueStore.remove(id)
+      toast.add({
+        title: 'Removed from queue',
+        description: `Removed ${label}`,
+        color: 'success',
+      })
+      return
+    }
+
     if (!confirm(`Are you sure you want to delete '${title}' (${blobName})?`)) {
       return
     }
@@ -97,7 +120,7 @@ export function useUploadRowActions () {
         {
           label: 'Delete',
           icon: 'i-lucide-trash',
-          onSelect: () => deleteUpload(id, upload.title, upload.blobName, upload.originalFilename),
+          onSelect: () => deleteUpload(upload),
         },
       ],
     ]

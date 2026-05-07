@@ -2,6 +2,7 @@
 import { h, resolveComponent } from 'vue'
 import { getPaginationRowModel } from '@tanstack/vue-table'
 import { useUploadsStore } from '~/stores/uploads.store'
+import { useUploadQueueStore } from '~/stores/upload-queue.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
 import { useRealtimeStore } from '~/stores/realtime.store'
 
@@ -10,6 +11,7 @@ useHead({
 })
 
 const uploadsStore = useUploadsStore()
+const uploadQueueStore = useUploadQueueStore()
 const workflowStore = useWorkflowStore()
 const realtimeStore = useRealtimeStore()
 uploadsStore.debug = true
@@ -36,6 +38,26 @@ await Promise.all([
 // Get reactive refs from store (preserves reactivity without creating new computed)
 // eslint-disable-next-line no-unused-vars
 const { uploads, loading: pending, error } = storeToRefs(uploadsStore)
+const { uploads: queueUploads } = storeToRefs(uploadQueueStore)
+
+// Queue rows whose blob upload to Azure hasn't finished yet — render them
+// alongside DB rows so the user sees in-flight progress immediately. Successful
+// uploads self-evict from the queue (see upload-queue.store on-complete remove),
+// so id collisions with DB rows shouldn't happen by design.
+const inFlightQueueRows = computed(() =>
+  queueUploads.value
+    .filter(q => q.status !== 'completed')
+    .map(q => ({
+      id: q.id,
+      originalFilename: q.originalFilename,
+      size: q.size,
+      uploadedAt: null,
+      status: q.status,
+      receipt: null,
+    })),
+)
+
+const mergedUploads = computed(() => [...inFlightQueueRows.value, ...uploads.value])
 
 const FILTER_OPTIONS = [
   { label: 'All uploads', value: 'all' },
@@ -45,12 +67,12 @@ const FILTER_OPTIONS = [
 const filterValue = ref('all')
 
 const filteredUploads = computed(() => {
-  if (filterValue.value === 'all') return uploads.value
+  if (filterValue.value === 'all') return mergedUploads.value
   if (filterValue.value === 'errored') {
-    return uploads.value.filter(u => workflowStore.hasErrorsById(u.id))
+    return mergedUploads.value.filter(u => workflowStore.hasErrorsById(u.id))
   }
   // 'completed' — no errors
-  return uploads.value.filter(u => !workflowStore.hasErrorsById(u.id))
+  return mergedUploads.value.filter(u => !workflowStore.hasErrorsById(u.id))
 })
 
 const table = useTemplateRef('table')

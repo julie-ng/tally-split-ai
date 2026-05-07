@@ -17,14 +17,17 @@ const props = defineProps({
 const workflowStore = useWorkflowStore()
 
 /**
- * Map upload status to a step-like status for the first circle
- * TODO: Add processing status + spin animation for upload step
- *       once uploads store and uploadQueue store are combined.
+ * Map upload status to a step-like status for the first circle.
+ * Accepts both DB-side UPLOAD_STATUS values and queue-side strings
+ * ('queued' / 'in-progress' / 'failed' / 'interrupted') since
+ * uploads/index.vue merges queue rows with DB rows.
  */
 function uploadStepStatus (status) {
   switch (status) {
     case UPLOAD_STATUS.UPLOADED: return WORKFLOW_STEP_STATUS.COMPLETED
-    case UPLOAD_STATUS.FAILED: return WORKFLOW_STEP_STATUS.FAILED
+    case 'in-progress': return WORKFLOW_STEP_STATUS.PROCESSING
+    case UPLOAD_STATUS.FAILED:
+    case 'interrupted': return WORKFLOW_STEP_STATUS.FAILED
     default: return WORKFLOW_STEP_STATUS.PENDING
   }
 }
