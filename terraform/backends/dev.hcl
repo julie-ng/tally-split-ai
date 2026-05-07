@@ -1,1 +1,1 @@
-path = "terraform.dev.tfstate"
+key = "terraform.dev.tfstate"

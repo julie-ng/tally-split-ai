@@ -6,7 +6,7 @@
 # Pattern targets — `make plan-dev`, `make apply-prod`, etc.
 
 init-%:
-	terraform init -backend-config=backends/$*.hcl -reconfigure
+	terraform init -backend-config=backends/$*.hcl -backend-config="backends/tfstate.hcl" -reconfigure
 
 plan-%:
 	terraform plan -var-file=environments/$*.tfvars -out plan.tfplan
