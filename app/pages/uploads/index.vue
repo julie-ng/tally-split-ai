@@ -57,17 +57,30 @@ const inFlightQueueRows = computed(() =>
     })),
 )
 
-// Dedupe by id — a queue item that failed mid-flight has both a queue row
-// (status=failed, file stripped → null Bytes) and a DB row (created at
-// /api/blobs/new). DB row wins; it's authoritative once that endpoint ran.
 const mergedUploads = computed(() => {
   const merged = new Map()
-  for (const row of inFlightQueueRows.value) {
-    merged.set(row.id, row)
+
+  // DB rows are the base — they provide canonical fields like size,
+  // uploadedAt, receipt link.
+  for (const dbRow of uploads.value) {
+    merged.set(dbRow.id, dbRow)
   }
-  for (const row of uploads.value) {
-    merged.set(row.id, row)
+
+  // Queue's status ('queued'/'in-progress'/'failed'/'interrupted') is more
+  // current than DB's coarse 'initialized'/'uploaded'/'failed', so it wins
+  // on the status field while the queue row exists. A queue row without a
+  // matching DB row gets used as-is (brief window between drop and
+  // /api/blobs/new returning).
+  for (const queueRow of inFlightQueueRows.value) {
+    const existing = merged.get(queueRow.id)
+    if (existing) {
+      merged.set(queueRow.id, { ...existing, status: queueRow.status })
+    }
+    else {
+      merged.set(queueRow.id, queueRow)
+    }
   }
+
   return Array.from(merged.values())
 })
 
