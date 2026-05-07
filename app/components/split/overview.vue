@@ -1,6 +1,7 @@
 <script setup>
 import { useReceiptsStore } from '~/stores/receipts.store'
 import { useSplitsStore } from '~/stores/splits.store'
+import { useUploadsStore } from '~/stores/uploads.store'
 
 const props = defineProps({
   splitId: {
@@ -11,6 +12,7 @@ const props = defineProps({
 
 const splitsStore = useSplitsStore()
 const receiptsStore = useReceiptsStore()
+const uploadsStore = useUploadsStore()
 
 const split = computed(() => splitsStore.getSplitById(props.splitId))
 const receiptId = computed(() => split.value?.receiptId ?? split.value?.receipt?.id ?? null)
@@ -21,6 +23,9 @@ watchEffect(() => {
 })
 
 const uploadId = computed(() => receipt.value?.uploads?.[0]?.id)
+const upload = computed(() =>
+  uploadId.value ? uploadsStore.getUploadById(uploadId.value) : null,
+)
 
 const formattedDate = computed(() => {
   return receipt.value?.date
@@ -37,6 +42,12 @@ provide('highlightedLabel', highlightedLabel)
   <div v-if="receipt" class="grid grid-cols-2 gap-6">
     <!-- Left column: Receipt info -->
     <UCard>
+      <div>
+        <p class="text-sm text-muted">
+          <span class="font-mono">{{ receipt.id }}</span>
+        </p>
+      </div>
+
       <div class="space-y-5">
         <!-- Title & Merchant -->
         <div>
@@ -112,6 +123,16 @@ provide('highlightedLabel', highlightedLabel)
     <div class="max-w-xs">
       <div v-if="uploadId">
         <receipt-upload-column :id="uploadId" />
+        <ui-label-content label="Upload ID">
+          <div class="font-mono">
+            {{ upload?.id }}
+          </div>
+        </ui-label-content>
+        <ui-label-content label="Uploaded At">
+          <div class="text-xs">
+            {{ dateUtils.formatDate(new Date(upload?.createdAt)) }}
+          </div>
+        </ui-label-content>
         <upload-json-links :upload-id="uploadId" />
       </div>
       <UAlert

@@ -31,7 +31,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   <UDashboardPanel id="split-detail">
     <template #header>
       <UDashboardNavbar
-        :title="split?.receipt?.title ?? 'Split'"
+        title="Receipt"
         :description="split?.receipt?.merchantName"
       >
         <template #right>
