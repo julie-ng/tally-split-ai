@@ -80,7 +80,10 @@ export const receiptWorkflow = task({
 
     if (!annotationsResult.ok) {
       hasStepErrors = true
-      await updateWorkflowStatus(authHeaders, { annotationsStatus: WORKFLOW_STEP_STATUS.FAILED })
+      await updateWorkflowStatus(authHeaders, {
+        annotationsStatus: WORKFLOW_STEP_STATUS.FAILED,
+        error: annotationsResult.error,
+      })
       logger.warn(`Annotations analysis failed, continuing`, { error: annotationsResult.error })
     }
 
@@ -91,7 +94,10 @@ export const receiptWorkflow = task({
 
     if (!normalizeResult.ok) {
       hasStepErrors = true
-      await updateWorkflowStatus(authHeaders, { normalizeStatus: WORKFLOW_STEP_STATUS.FAILED })
+      await updateWorkflowStatus(authHeaders, {
+        normalizeStatus: WORKFLOW_STEP_STATUS.FAILED,
+        error: normalizeResult.error,
+      })
       logger.warn(`Normalize failed, continuing`, { error: normalizeResult.error })
     }
 
@@ -107,7 +113,10 @@ export const receiptWorkflow = task({
     }
     else {
       hasStepErrors = true
-      await updateWorkflowStatus(authHeaders, { createSplitStatus: WORKFLOW_STEP_STATUS.FAILED })
+      await updateWorkflowStatus(authHeaders, {
+        createSplitStatus: WORKFLOW_STEP_STATUS.FAILED,
+        error: splitResult.error,
+      })
       logger.warn(`Split creation failed`, { error: splitResult.error })
     }
 
@@ -119,7 +128,10 @@ export const receiptWorkflow = task({
 
       if (!adjustResult.ok) {
         hasStepErrors = true
-        await updateWorkflowStatus(authHeaders, { adjustSplitStatus: WORKFLOW_STEP_STATUS.FAILED })
+        await updateWorkflowStatus(authHeaders, {
+          adjustSplitStatus: WORKFLOW_STEP_STATUS.FAILED,
+          error: adjustResult.error,
+        })
         logger.warn(`Adjust-split failed, continuing`, { error: adjustResult.error })
       }
     }

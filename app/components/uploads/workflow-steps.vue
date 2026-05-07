@@ -33,6 +33,7 @@ function uploadStepStatus (status) {
 }
 
 const stepStatuses = computed(() => workflowStore.stepStatusesById(props.id))
+const latestRun = computed(() => workflowStore.latestRunById(props.id))
 
 const steps = computed(() => [
   { label: 'Upload', status: uploadStepStatus(props.uploadStatus) },
@@ -42,6 +43,14 @@ const steps = computed(() => [
   { label: 'Create Split', status: stepStatuses.value.createSplitStatus },
   { label: 'Adjust Split', status: stepStatuses.value.adjustSplitStatus },
 ])
+
+function tooltipText (step) {
+  const base = `${step.label}: ${step.status}`
+  if (step.status === WORKFLOW_STEP_STATUS.FAILED && latestRun.value?.error) {
+    return `${base} — ${latestRun.value.error}`
+  }
+  return base
+}
 
 function stepIcon (status) {
   switch (status) {
@@ -67,7 +76,7 @@ function stepColor (status) {
     <UTooltip
       v-for="step in steps"
       :key="step.label"
-      :text="`${step.label}: ${step.status}`"
+      :text="tooltipText(step)"
       arrow
     >
       <span

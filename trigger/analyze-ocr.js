@@ -99,7 +99,10 @@ export const analyzeOcr = task({
       }
     }
     catch (err) {
-      await updateWorkflowStatus(authHeaders, { ocrStatus: WORKFLOW_STEP_STATUS.FAILED })
+      await updateWorkflowStatus(authHeaders, {
+        ocrStatus: WORKFLOW_STEP_STATUS.FAILED,
+        error: err.message,
+      })
       throw err
     }
   },

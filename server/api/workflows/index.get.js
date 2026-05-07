@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
           normalizeStatus: true,
           createSplitStatus: true,
           adjustSplitStatus: true,
+          error: true,
           createdAt: true,
           completedAt: true,
         },

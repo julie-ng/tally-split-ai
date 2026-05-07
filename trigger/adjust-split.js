@@ -109,7 +109,10 @@ export const adjustSplit = task({
       }
     }
     catch (err) {
-      await updateWorkflowStatus(authHeaders, { adjustSplitStatus: WORKFLOW_STEP_STATUS.FAILED })
+      await updateWorkflowStatus(authHeaders, {
+        adjustSplitStatus: WORKFLOW_STEP_STATUS.FAILED,
+        error: err.message,
+      })
       throw err
     }
   },
