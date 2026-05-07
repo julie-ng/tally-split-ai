@@ -24,12 +24,17 @@ export function useUploadRowActions () {
       && !workflowStore.isProcessingById(upload.id)
   }
 
-  async function deleteUpload (id, title, blobName) {
+  async function deleteUpload (id, title, blobName, originalFilename) {
     if (!confirm(`Are you sure you want to delete '${title}' (${blobName})?`)) {
       return
     }
     try {
       await uploadsStore.deleteUpload(id)
+      toast.add({
+        title: 'Upload deleted',
+        description: `Successfully deleted ${originalFilename}`,
+        color: 'success',
+      })
     }
     catch (err) {
       console.error('Failed to delete upload:', err)
@@ -92,7 +97,7 @@ export function useUploadRowActions () {
         {
           label: 'Delete',
           icon: 'i-lucide-trash',
-          onSelect: () => deleteUpload(id, upload.title, upload.blobName),
+          onSelect: () => deleteUpload(id, upload.title, upload.blobName, upload.originalFilename),
         },
       ],
     ]
