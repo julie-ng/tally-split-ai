@@ -25,103 +25,132 @@ export const receiptWorkflow = task({
     // Update workflow status
     await updateWorkflowStatus(authHeaders, { status: WORKFLOW_STATUS.PROCESSING })
 
-    // Phase 1: OCR — request token before receipt exists
-    const { tokens: ocrTokens } = await api.post(`/api/workflows/runs/${runUuid}/tokens`, {
-      taskIds: ['analyze-ocr'],
-    })
-
-    // Step 1: OCR — FATAL on failure
-    const ocrResult = await analyzeOcr.triggerAndWait(
-      { uploadId, runUuid, callbackToken: ocrTokens['analyze-ocr'] },
-    )
-
-    if (!ocrResult.ok) {
-      await updateWorkflowStatus(authHeaders, {
-        status: WORKFLOW_STATUS.FAILED,
-        error: `OCR failed: ${ocrResult.error}`,
-      })
-
-      throw new Error(`OCR analysis failed: ${ocrResult.error}`)
-    }
-
-    const { receiptData, title, tags, existingReceiptId } = ocrResult.output
-
-    // Create or update receipt from OCR results, then link to upload
-    let receiptId = existingReceiptId
-
-    if (receiptId) {
-      await api.put(`/api/receipts/${receiptId}`, receiptData)
-      logger.log(`Updated existing receipt ${receiptId}`)
-    }
-    else {
-      const createResult = await api.post('/api/receipts', {
-        ...receiptData,
-        title,
-        tags,
-      })
-      receiptId = createResult.created.id
-      logger.log(`Created new receipt ${receiptId}`)
-    }
-
-    // Link receipt to upload
-    await api.put(`/api/uploads/${uploadId}`, { receiptId })
-
-    // Phase 2: Post-OCR tasks — request tokens now that receipt is linked
-    const { tokens: postOcrTokens } = await api.post(`/api/workflows/runs/${runUuid}/tokens`, {
-      taskIds: ['analyze-annotations', 'normalize-receipt', 'create-split', 'adjust-split'],
-    })
-
-    // Step 2: Annotations — NON-FATAL
     let hasStepErrors = false
-
-    const annotationsResult = await analyzeAnnotations.triggerAndWait(
-      { uploadId, runUuid, callbackToken: postOcrTokens['analyze-annotations'], customInstructions },
-    )
-
-    if (!annotationsResult.ok) {
-      hasStepErrors = true
-      await updateWorkflowStatus(authHeaders, { annotationsStatus: WORKFLOW_STEP_STATUS.FAILED })
-      logger.warn(`Annotations analysis failed, continuing`, { error: annotationsResult.error })
-    }
-
-    // Step 3: Normalize receipt — NON-FATAL
-    const normalizeResult = await normalizeReceipt.triggerAndWait(
-      { uploadId, runUuid, callbackToken: postOcrTokens['normalize-receipt'] },
-    )
-
-    if (!normalizeResult.ok) {
-      hasStepErrors = true
-      await updateWorkflowStatus(authHeaders, { normalizeStatus: WORKFLOW_STEP_STATUS.FAILED })
-      logger.warn(`Normalize failed, continuing`, { error: normalizeResult.error })
-    }
-
-    // Step 4: Create split — NON-FATAL
+    let receiptId = null
     let splitId = null
 
-    const splitResult = await createSplit.triggerAndWait(
-      { receiptId, uploadId, runUuid, callbackToken: postOcrTokens['create-split'] },
-    )
+    try {
+      // Phase 1: OCR — request token before receipt exists
+      const { tokens: ocrTokens } = await api.post(`/api/workflows/runs/${runUuid}/tokens`, {
+        taskIds: ['analyze-ocr'],
+      })
 
-    if (splitResult.ok) {
-      splitId = splitResult.output.splitId
-    }
-    else {
-      hasStepErrors = true
-      await updateWorkflowStatus(authHeaders, { createSplitStatus: WORKFLOW_STEP_STATUS.FAILED })
-      logger.warn(`Split creation failed`, { error: splitResult.error })
-    }
-
-    // Step 5: Adjust split — NON-FATAL, requires both split and annotations
-    if (splitId && annotationsResult.ok) {
-      const adjustResult = await adjustSplit.triggerAndWait(
-        { uploadId, splitId, runUuid, callbackToken: postOcrTokens['adjust-split'], customInstructions },
+      // Step 1: OCR — FATAL on failure
+      const ocrResult = await analyzeOcr.triggerAndWait(
+        { uploadId, runUuid, callbackToken: ocrTokens['analyze-ocr'] },
       )
 
-      if (!adjustResult.ok) {
-        hasStepErrors = true
-        await updateWorkflowStatus(authHeaders, { adjustSplitStatus: WORKFLOW_STEP_STATUS.FAILED })
-        logger.warn(`Adjust-split failed, continuing`, { error: adjustResult.error })
+      if (!ocrResult.ok) {
+        throw new Error(`OCR failed: ${ocrResult.error}`)
       }
+
+      const { receiptData, title, tags, existingReceiptId } = ocrResult.output
+
+      // Create or update receipt from OCR results, then link to upload
+      receiptId = existingReceiptId
+
+      if (receiptId) {
+        await api.put(`/api/receipts/${receiptId}`, receiptData)
+        logger.log(`Updated existing receipt ${receiptId}`)
+      }
+      else {
+        const createResult = await api.post('/api/receipts', {
+          ...receiptData,
+          title,
+          tags,
+        })
+        receiptId = createResult.created.id
+        logger.log(`Created new receipt ${receiptId}`)
+      }
+
+      // Link receipt to upload
+      await api.put(`/api/uploads/${uploadId}`, { receiptId })
+
+      // Phase 2: Post-OCR tasks — request tokens now that receipt is linked
+      const { tokens: postOcrTokens } = await api.post(`/api/workflows/runs/${runUuid}/tokens`, {
+        taskIds: ['analyze-annotations', 'normalize-receipt', 'create-split', 'adjust-split'],
+      })
+
+      // Step 2: Annotations — NON-FATAL
+      const annotationsResult = await analyzeAnnotations.triggerAndWait(
+        { uploadId, runUuid, callbackToken: postOcrTokens['analyze-annotations'], customInstructions },
+      )
+
+      if (!annotationsResult.ok) {
+        hasStepErrors = true
+        await updateWorkflowStatus(authHeaders, {
+          annotationsStatus: WORKFLOW_STEP_STATUS.FAILED,
+          errors: { [WORKFLOW_STEP.ANNOTATIONS]: annotationsResult.error },
+        })
+        await notifyStatus(runUuid, WORKFLOW_STEP.ANNOTATIONS, 'failed', authHeaders, annotationsResult.error)
+        logger.warn(`Annotations analysis failed, continuing`, { error: annotationsResult.error })
+      }
+
+      // Step 3: Normalize receipt — NON-FATAL
+      const normalizeResult = await normalizeReceipt.triggerAndWait(
+        { uploadId, runUuid, callbackToken: postOcrTokens['normalize-receipt'] },
+      )
+
+      if (!normalizeResult.ok) {
+        hasStepErrors = true
+        await updateWorkflowStatus(authHeaders, {
+          normalizeStatus: WORKFLOW_STEP_STATUS.FAILED,
+          errors: { [WORKFLOW_STEP.NORMALIZE]: normalizeResult.error },
+        })
+        await notifyStatus(runUuid, WORKFLOW_STEP.NORMALIZE, 'failed', authHeaders, normalizeResult.error)
+        logger.warn(`Normalize failed, continuing`, { error: normalizeResult.error })
+      }
+
+      // Step 4: Create split — NON-FATAL
+      const splitResult = await createSplit.triggerAndWait(
+        { receiptId, uploadId, runUuid, callbackToken: postOcrTokens['create-split'] },
+      )
+
+      if (splitResult.ok) {
+        splitId = splitResult.output.splitId
+      }
+      else {
+        hasStepErrors = true
+        await updateWorkflowStatus(authHeaders, {
+          createSplitStatus: WORKFLOW_STEP_STATUS.FAILED,
+          errors: { [WORKFLOW_STEP.SPLIT]: splitResult.error },
+        })
+        await notifyStatus(runUuid, WORKFLOW_STEP.SPLIT, 'failed', authHeaders, splitResult.error)
+        logger.warn(`Split creation failed`, { error: splitResult.error })
+      }
+
+      // Step 5: Adjust split — NON-FATAL, requires both split and annotations
+      if (splitId && annotationsResult.ok) {
+        const adjustResult = await adjustSplit.triggerAndWait(
+          { uploadId, splitId, runUuid, callbackToken: postOcrTokens['adjust-split'], customInstructions },
+        )
+
+        if (!adjustResult.ok) {
+          hasStepErrors = true
+          await updateWorkflowStatus(authHeaders, {
+            adjustSplitStatus: WORKFLOW_STEP_STATUS.FAILED,
+            errors: { [WORKFLOW_STEP.ADJUST_SPLIT]: adjustResult.error },
+          })
+          await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_SPLIT, 'failed', authHeaders, adjustResult.error)
+          logger.warn(`Adjust-split failed, continuing`, { error: adjustResult.error })
+        }
+      }
+    }
+    catch (err) {
+      // Orchestrator-level failure (fatal step error, network glitch,
+      // unexpected exception). Always finalize status so the UI can
+      // re-trigger; never leave a run stuck in 'processing'.
+      logger.error(`Receipt workflow failed for ${uploadId}`, { error: err.message })
+
+      await updateWorkflowStatus(authHeaders, {
+        status: WORKFLOW_STATUS.FAILED,
+        completedAt: new Date().toISOString(),
+        analysisStatus: UPLOAD_ANALYSIS_STATUS.COMPLETED,
+        errors: { [WORKFLOW_STEP.ORCHESTRATOR]: err.message },
+      })
+      await notifyStatus(runUuid, WORKFLOW_STEP.ORCHESTRATOR, 'failed', authHeaders, err.message)
+
+      throw err
     }
 
     // Finalize: update workflow first, then upload (prevents false positives)
@@ -133,7 +162,7 @@ export const receiptWorkflow = task({
       analysisStatus: UPLOAD_ANALYSIS_STATUS.COMPLETED,
     })
 
-    await notifyStatus(runUuid, WORKFLOW_STEP.WORKFLOW, finalStatus, authHeaders)
+    await notifyStatus(runUuid, WORKFLOW_STEP.ORCHESTRATOR, finalStatus, authHeaders)
 
     logger.log(`Receipt workflow ${finalStatus} for ${uploadId}`, { receiptId, splitId })
 

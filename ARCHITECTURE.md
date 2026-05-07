@@ -106,6 +106,63 @@ The natural fix is Supabase Realtime (Postgres-change websockets). Doing it prop
 
 That's significant, multi-phase work: designing RLS policies that match the household-isolation model, migrating the realtime client, and verifying behavioural parity with the current SSE flow. Intentionally **not prioritized for this POC**. Decision to revisit mid-to-late June 2026.
 
+## Handling Azure 429 Rate Limits
+
+The Azure GPT-4o deployment has a fixed tokens-per-minute (TPM) ceiling. Concurrent uploads can exceed it in bursts. Azure responds with HTTP 429 and a `Retry-After` header indicating how long to wait.
+
+### Why this matters
+
+Each upload runs **3 GPT-4o calls** post-OCR:
+
+| Step | Type | Approx. tokens |
+|:--|:--|:--|
+| `analyze-annotations` | vision (image + structured output) | ~5,000 |
+| `normalize-receipt` | text-only | ~1,500 |
+| `adjust-split` | text-only | ~1,500 |
+
+A 5-file batch = 15 calls (~45K tokens) in one minute — far past a `capacity = 10` deployment's 10K TPM.
+
+**Before this fix:**
+- All 5 uploads hit at least one failed step
+- ~35 errors surfaced to the user → looks like a broken app
+
+**After:**
+- Same batch succeeds on first run
+- Trigger logs show very few runs hit even one outer retry; none hit `maxAttempts: 3`
+- Most 429s recover on the second inner attempt, before Trigger's outer retry kicks in
+
+The pipeline has two layers of resilience:
+
+**Inner: per-call retry inside `gpt4oFetch`.** All GPT-4o utilities (`adjust-split`, `analyze-annotations`, `normalize-receipt`) route through a shared helper that catches 429 responses, reads the `Retry-After` header, and retries up to two times after waiting. Wait uses Trigger.dev's `wait.for` rather than `setTimeout` — the task is checkpointed during the wait and the worker is freed for other runs, so this does not consume concurrency.
+
+**Outer: Trigger.dev's task-level retry** (`maxAttempts: 3` configured in `trigger.config.js`). If the inner retries are exhausted and the helper rethrows, Trigger.dev retries the entire task with exponential backoff. Combined with the inner layer, a single task survives up to 9 GPT-4o calls before final failure (3 outer attempts × 3 inner attempts).
+
+A small jitter (0–5s) is added on top of `Retry-After` to break lockstep retries — without it, three simultaneous uploads that all 429'd at the same moment would all retry at the same later moment, re-colliding.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Task as Trigger.dev task
+    participant Util as gpt4oFetch
+    participant Azure as Azure OpenAI
+    Task->>+Util: call(prompt)
+    Util->>+Azure: POST /chat/completions
+    Azure-->>-Util: 429 (Retry-After: 30s)
+    Note over Util: attempt 1 failed
+    Util->>Util: wait.for(30s + jitter)
+    Util->>+Azure: POST /chat/completions (retry)
+    Azure-->>-Util: 429 (Retry-After: 20s)
+    Note over Util: attempt 2 failed
+    Util->>Util: wait.for(20s + jitter)
+    Util->>+Azure: POST /chat/completions (retry)
+    Azure-->>-Util: 200 OK
+    Util-->>-Task: response
+```
+
+If all three inner attempts return 429, the helper throws `Gpt4oError` with `status`, `headers`, and `body` preserved. Trigger.dev then handles the outer retry — typically the next outer attempt succeeds because the TPM window has rolled over by then.
+
+When all retries are exhausted, the failure surfaces in the UI: the workflow run's `errors` JSON column gains an entry under the relevant step key (`adjustSplit`, `annotations`, etc.), an SSE event fires, and the failed-step circle in the upload table tooltip shows the underlying 429 message.
+
 ### Example Azure URLs
 
 #### [PUT Block](https://learn.microsoft.com/en-us/rest/api/storageservices/put-block?tabs=microsoft-entra-id) 

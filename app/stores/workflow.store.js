@@ -85,6 +85,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
   /**
    * Fetch workflow runs for a single upload
+   *
    * @param {string} id
    */
   async function fetchByUploadId (id) {
@@ -100,11 +101,13 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
   /**
    * Update a workflow step status in-memory from an SSE event.
+   *
    * @param {string} id
-   * @param {string} step - e.g. 'ocr', 'annotations', 'split', 'workflow'
+   * @param {string} step - One of `WORKFLOW_STEP` values (see #shared/enums/workflow-step.js)
    * @param {string} status
+   * @param {string} [error] - Error message for failed steps
    */
-  function updateStepStatus (id, step, status) {
+  function updateStepStatus (id, step, status, error) {
     // Create skeleton run if none exists yet (SSE arrived before fetch)
     if (!runs.value[id]?.length) {
       runs.value[id] = [{ ...DEFAULT_STEP_STATUSES, status: WORKFLOW_STATUS.PROCESSING }]
@@ -112,7 +115,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
     const latest = runs.value[id][0]
 
-    if (step === WORKFLOW_STEP.WORKFLOW) {
+    if (step === WORKFLOW_STEP.ORCHESTRATOR) {
       latest.status = status
     }
     else {
@@ -120,11 +123,17 @@ export const useWorkflowStore = defineStore('workflow', () => {
       latest[stepKey] = status
     }
 
-    _log(`[WorkflowStore] 🔄 ${id} ${step}=${status}`)
+    if (error) {
+      if (!latest.errors) latest.errors = {}
+      latest.errors[step] = error
+    }
+
+    _log(`[WorkflowStore] 🔄 ${id} ${step}=${status}${error ? ` error="${error}"` : ''}`)
   }
 
   /**
    * Trigger the analysis workflow for an upload
+   *
    * @param {string} id
    */
   async function triggerWorkflow (id) {

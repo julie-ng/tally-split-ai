@@ -175,8 +175,9 @@ export const workflowRuns = pgTable('workflow_runs', {
   adjustSplitStatus: text('adjust_split_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
   normalizeStatus: text('normalize_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
 
-  // Error tracking
-  error: text('error'),
+  // Per-step error messages, keyed by step name (e.g. { ocr, annotations,
+  // adjustSplit, _orchestrator }). Null when the run has no errors.
+  errors: jsonb('errors'),
 
   // Timestamps
   createdAt: timestamp('created_at').notNull().defaultNow(),

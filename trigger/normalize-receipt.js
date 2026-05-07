@@ -88,7 +88,11 @@ export const normalizeReceipt = task({
       return { receiptId, ...result }
     }
     catch (err) {
-      await updateWorkflowStatus(authHeaders, { normalizeStatus: WORKFLOW_STEP_STATUS.FAILED })
+      await updateWorkflowStatus(authHeaders, {
+        normalizeStatus: WORKFLOW_STEP_STATUS.FAILED,
+        errors: { [WORKFLOW_STEP.NORMALIZE]: err.message },
+      })
+      await notifyStatus(runUuid, WORKFLOW_STEP.NORMALIZE, 'failed', authHeaders, err.message)
       throw err
     }
   },

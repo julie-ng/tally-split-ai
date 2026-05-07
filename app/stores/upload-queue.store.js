@@ -122,16 +122,10 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
    * @returns {Promise<void>}
    */
   async function generateAndUploadThumbnail (uploadObj) {
-    try {
-      const thumbnailBlob = await generateThumbnail(uploadObj.file)
-      const thumbnailFilename = createThumbnailFilename(uploadObj.azureFilename)
-      const thumbnailBlobPath = azureUtils.buildBlobPath(uploadObj.userId, uploadObj.id, thumbnailFilename)
-      await uploadThumbnailToAzure(thumbnailBlob, thumbnailBlobPath, uploadObj.userId)
-    }
-    catch (error) {
-      console.error(`❌ Thumbnail generation/upload failed:`, error)
-      throw error
-    }
+    const thumbnailBlob = await generateThumbnail(uploadObj.file)
+    const thumbnailFilename = createThumbnailFilename(uploadObj.azureFilename)
+    const thumbnailBlobPath = azureUtils.buildBlobPath(uploadObj.userId, uploadObj.id, thumbnailFilename)
+    await uploadThumbnailToAzure(thumbnailBlob, thumbnailBlobPath, uploadObj.userId)
   }
 
   /**

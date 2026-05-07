@@ -87,7 +87,11 @@ export const analyzeAnnotations = task({
         error: err.message,
         stack: err.stack?.split('\n').slice(0, 3).join('\n'),
       })
-      await updateWorkflowStatus(authHeaders, { annotationsStatus: WORKFLOW_STEP_STATUS.FAILED })
+      await updateWorkflowStatus(authHeaders, {
+        annotationsStatus: WORKFLOW_STEP_STATUS.FAILED,
+        errors: { [WORKFLOW_STEP.ANNOTATIONS]: err.message },
+      })
+      await notifyStatus(runUuid, WORKFLOW_STEP.ANNOTATIONS, 'failed', authHeaders, err.message)
       throw err
     }
   },
