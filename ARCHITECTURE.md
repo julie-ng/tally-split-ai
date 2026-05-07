@@ -108,9 +108,30 @@ That's significant, multi-phase work: designing RLS policies that match the hous
 
 ## Handling Azure 429 Rate Limits
 
-The Azure GPT-4o deployment has a fixed tokens-per-minute (TPM) ceiling. Concurrent uploads can exceed it in bursts — three uploads each running annotations (vision call, ~5K tokens) and adjust-split simultaneously is enough to trip the quota. Azure responds with HTTP 429 and a `Retry-After` header indicating how long to wait.
+The Azure GPT-4o deployment has a fixed tokens-per-minute (TPM) ceiling. Concurrent uploads can exceed it in bursts. Azure responds with HTTP 429 and a `Retry-After` header indicating how long to wait.
 
-The pipeline has two layers of resilience around this:
+### Why this matters
+
+Each upload runs **3 GPT-4o calls** post-OCR:
+
+| Step | Type | Approx. tokens |
+|:--|:--|:--|
+| `analyze-annotations` | vision (image + structured output) | ~5,000 |
+| `normalize-receipt` | text-only | ~1,500 |
+| `adjust-split` | text-only | ~1,500 |
+
+A 5-file batch = 15 calls (~45K tokens) in one minute — far past a `capacity = 10` deployment's 10K TPM.
+
+**Before this fix:**
+- All 5 uploads hit at least one failed step
+- ~35 errors surfaced to the user → looks like a broken app
+
+**After:**
+- Same batch succeeds on first run
+- Trigger logs show very few runs hit even one outer retry; none hit `maxAttempts: 3`
+- Most 429s recover on the second inner attempt, before Trigger's outer retry kicks in
+
+The pipeline has two layers of resilience:
 
 **Inner: per-call retry inside `gpt4oFetch`.** All GPT-4o utilities (`adjust-split`, `analyze-annotations`, `normalize-receipt`) route through a shared helper that catches 429 responses, reads the `Retry-After` header, and retries up to two times after waiting. Wait uses Trigger.dev's `wait.for` rather than `setTimeout` — the task is checkpointed during the wait and the worker is freed for other runs, so this does not consume concurrency.
 
