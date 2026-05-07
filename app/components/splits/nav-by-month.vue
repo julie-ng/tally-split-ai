@@ -22,11 +22,11 @@ const items = useSplitMonths()
     >
       <UButton
         :label="label"
-        class="w-42 cursor-pointer"
+        class="w-40 cursor-pointer"
         color="neutral"
-        variant="subtle"
+        variant="outline"
         leading-icon="i-lucide-calendar-range"
-        :ui="{ base: 'justify-start' }"
+        trailing-icon="i-lucide-chevron-down"
       />
     </UDropdownMenu>
   </div>

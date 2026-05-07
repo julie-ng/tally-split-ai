@@ -39,7 +39,7 @@ defineProps({
     default: () => ({ start: 0, end: 0, total: 0 }),
   },
 })
-defineEmits(['reset'])
+defineEmits(['reset', 'refresh'])
 
 const householdStore = useHouseholdStore()
 </script>
@@ -52,6 +52,15 @@ const householdStore = useHouseholdStore()
     </p>
 
     <div class="flex items-center gap-2">
+      <UButton
+        color="neutral"
+        variant="outline"
+        size="sm"
+        class="cursor-pointer"
+        icon="i-lucide-refresh-cw"
+        @click="$emit('refresh')"
+      />
+
       <UDropdownMenu :items="settledMenuItems">
         <UButton
           color="neutral"

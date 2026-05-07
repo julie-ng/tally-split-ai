@@ -123,30 +123,18 @@ async function handleMarkSelectedSettled () {
             ]"
           />
         </template>
-        <template #right>
-          <UButton
-            color="neutral"
-            variant="subtle"
-            class="cursor-pointer"
-            icon="i-lucide-refresh-cw"
-            @click="refreshAll"
-          >
-            Refresh
-          </UButton>
-        </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
+      <div class="flex items-center justify-between">
+        <h1 class="font-bold text-2xl">
+          {{ monthName }} {{ year }}
+        </h1>
+        <splits-nav-by-month :label="`${monthName} ${year}`" />
+      </div>
       <div v-if="hasSplits">
-        <div class="flex items-center justify-between mb-3">
-          <h1 class="font-bold text-2xl">
-            {{ monthName }} {{ year }}
-          </h1>
-          <splits-nav-by-month :label="`${monthName} ${year}`" />
-        </div>
-
-        <splits-summary-cards :summary="summary" class="my-4" />
+        <splits-summary-cards :summary="summary" class="mb-4" />
 
         <splits-toolbar
           :settled-label="settledLabel"
@@ -160,6 +148,7 @@ async function handleMarkSelectedSettled () {
           :pagination-info="paginationInfo"
           class="mt-6 mb-3"
           @reset="reset"
+          @refresh="refreshAll"
         />
 
         <splits-table
@@ -188,12 +177,9 @@ async function handleMarkSelectedSettled () {
           </template>
         </splits-table>
       </div>
-      <div v-else class="my-6">
-        <h1 class="mb-1 font-bold text-xl">
-          No splits for {{ monthName }} {{ year }}
-        </h1>
-        <p class="mb-4">
-          Please upload receipts to get some data.
+      <div v-else class="-mt-2 mb-6">
+        <p class="text-sm mb-4">
+          No splits found for {{ monthName }} {{ year }}. Please upload receipts for analysis.
         </p>
         <upload-button-modal label="Upload Receipts" />
       </div>
