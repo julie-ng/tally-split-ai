@@ -49,4 +49,4 @@ POST /api/analysis/annotations/{uploadId}
 ```
 
 > [!IMPORTANT]
-> These endpoints are for dev/manual testing. They create a workflow run record and trigger a single task. TODO: Add dev/admin-only guards.
+> These endpoints are for dev/manual testing. They create a workflow run record and trigger a single task. Not exposed in production.
