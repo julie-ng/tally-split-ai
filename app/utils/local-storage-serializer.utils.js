@@ -1,7 +1,16 @@
 /**
  * Custom serializer for useLocalStorage that strips File objects.
- * File objects cannot be serialized to JSON, so they are removed on write
- * and set to null on read (files can't be restored after page refresh).
+ *
+ * File objects can't be JSON-serialized, so they're removed on write and read
+ * back as null (the user has to re-attach files for queued items that survive
+ * a refresh).
+ *
+ * Only `queued` and `interrupted` items are persisted. Persisting in-flight
+ * (`in-progress`) items is unsafe: VueUse's `useLocalStorage` can re-read its
+ * own writes back into the ref, and a null `file` mid-upload causes
+ * `URL.createObjectURL(null)` to throw and the upload to fail. `completed`
+ * items are also skipped — they self-evict from the queue, so re-hydrating
+ * them would just bring back ghost rows.
  */
 export const fileStripSerializer = {
   read: (v) => {
@@ -17,7 +26,10 @@ export const fileStripSerializer = {
     }
   },
   write: (v) => {
-    const serializable = v.map((item) => {
+    const persistable = v.filter(item =>
+      item.status === 'queued' || item.status === 'interrupted',
+    )
+    const serializable = persistable.map((item) => {
       /* eslint-disable-next-line no-unused-vars */
       const { file, ...rest } = item
       return rest

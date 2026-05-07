@@ -57,7 +57,19 @@ const inFlightQueueRows = computed(() =>
     })),
 )
 
-const mergedUploads = computed(() => [...inFlightQueueRows.value, ...uploads.value])
+// Dedupe by id — a queue item that failed mid-flight has both a queue row
+// (status=failed, file stripped → null Bytes) and a DB row (created at
+// /api/blobs/new). DB row wins; it's authoritative once that endpoint ran.
+const mergedUploads = computed(() => {
+  const merged = new Map()
+  for (const row of inFlightQueueRows.value) {
+    merged.set(row.id, row)
+  }
+  for (const row of uploads.value) {
+    merged.set(row.id, row)
+  }
+  return Array.from(merged.values())
+})
 
 const FILTER_OPTIONS = [
   { label: 'All uploads', value: 'all' },
