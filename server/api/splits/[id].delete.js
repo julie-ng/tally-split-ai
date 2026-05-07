@@ -9,34 +9,20 @@ export default defineEventHandler(async (event) => {
   const splitId = getRouterParam(event, 'id')
   await guards.requireAuthorization(event, { splitId })
 
-  // Fetch split before deleting for history tracking
-  const split = await db
-    .select()
-    .from(schema.splits)
+  // FK cascade removes split history rows.
+  const dbResult = await db
+    .delete(schema.splits)
     .where(eq(schema.splits.id, splitId))
-    .limit(1)
+    .returning()
 
-  if (split.length === 0) {
+  if (dbResult.length === 0) {
     throw createError({
       statusCode: 404,
       message: `Split with ID '${splitId}' not found`,
     })
   }
 
-  // Track deletion history before deleting
-  await historyUtils.trackDelete(db, {
-    historyTable: schema.splitHistory,
-    entityId: splitId,
-    entityIdColumn: 'splitId',
-    source: event.context.securityPrincipal,
-  }, split[0])
-
-  const dbResult = await db
-    .delete(schema.splits)
-    .where(eq(schema.splits.id, splitId))
-    .returning()
-
-  log.info({ splitId }, 'Split deleted')
+  log.info({ splitId }, 'Split deleted (history cascaded)')
 
   return {
     success: true,

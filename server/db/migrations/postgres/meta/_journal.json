@@ -19,8 +19,15 @@
     {
       "idx": 2,
       "version": "7",
-      "when": 1778200000000,
+      "when": 1778110000000,
       "tag": "0002_pink_dark_phoenix",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778127036477,
+      "tag": "0003_wealthy_madame_hydra",
       "breakpoints": true
     }
   ]

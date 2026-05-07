@@ -120,7 +120,7 @@ export const splits = pgTable('splits', {
 
   // Optional receipt association (null for standalone splits)
   // @ts-expect-error implicit return type any
-  receiptId: text('receipt_id').references(() => receipts.id, { onDelete: 'set null' }),
+  receiptId: text('receipt_id').references(() => receipts.id, { onDelete: 'cascade' }),
 
   // Split details
   splitAmount: real('split_amount').notNull(), // Amount to split (defaults to receipt total)
@@ -205,7 +205,7 @@ export const receiptHistory = pgTable('receipt_history', {
   // @ts-expect-error implicit return type any
   changeId: integer('change_id').notNull().references(() => changes.id, { onDelete: 'cascade' }),
   // @ts-expect-error implicit return type any
-  receiptId: text('receipt_id').references(() => receipts.id, { onDelete: 'set null' }),
+  receiptId: text('receipt_id').references(() => receipts.id, { onDelete: 'cascade' }),
   field: text('field').notNull(),
   oldValue: text('old_value'),
   newValue: text('new_value'),
@@ -221,7 +221,7 @@ export const splitHistory = pgTable('split_history', {
   // @ts-expect-error implicit return type any
   changeId: integer('change_id').notNull().references(() => changes.id, { onDelete: 'cascade' }),
   // @ts-expect-error implicit return type any
-  splitId: text('split_id').references(() => splits.id, { onDelete: 'set null' }),
+  splitId: text('split_id').references(() => splits.id, { onDelete: 'cascade' }),
   field: text('field').notNull(),
   oldValue: text('old_value'),
   newValue: text('new_value'),
