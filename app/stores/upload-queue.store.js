@@ -253,6 +253,7 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
       if (u) {
         u.status = 'completed'
         u.upload.progress = 100
+        console.log(`🍍 [Uploaded] (${id}) ${u.originalFilename}`)
         await updateUploadRecord(u)
       }
 
