@@ -25,19 +25,22 @@ As part of my pivot to AI Engineering and Architecture, I decided to build my ow
 
 | Component | Role |
 |:--|:--|
-| Nuxt | Full-stack web app (UI + API) |
-| Postgres | Database for receipts, splits, and workflow state |
-| Drizzle Studio | Optional UI for inspecting the database |
+| [Nuxt](https://nuxt.com) | Full-stack web app (UI + API) |
+| [Postgres](https://www.postgresql.org) | Database for receipts, splits, and workflow state |
 
 ### Infrastructure
 
 | Component | Role |
 |:--|:--|
-| Trigger.dev | Workflow (agent) orchestration |
-| Azure Blob Storage | Receipt photo storage (direct client uploads via SAS) |
-| Azure Document Intelligence | OCR for receipts (`prebuilt-receipt` model) |
-| GPT-4o | Handwritten annotation detection |
-| GPT-4o-mini | Receipt normalization & split adjustment |
+| [Vercel](https://vercel.com) | App Platform that automatically deploys my application as serverless functions. |
+| [Trigger.dev](https://trigger.dev) | Platform for fully managed workflows (agent) and orchestration. |
+| [Supabase](https://supabase.com) | Postgres development platform with built-in features and optimizations for serverless functions. |
+| [Azure Blob Storage](https://learn.microsoft.com/en-us/azure/storage/blobs/) | Receipt photo storage (direct client uploads via SAS) |
+| [Azure Document Intelligence](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/) | OCR for receipts (`prebuilt-receipt` model) |
+| [GPT-4o](https://openai.com/gpt-4o) | Handwritten annotation detection |
+| [GPT-4o-mini](https://openai.com/gpt-4o-mini) | Receipt normalization & split adjustment |
+
+Note: I chose [Trigger.dev](https://trigger.dev) over [Vercel Workflows](https://vercel.com/workflows) for its developer experience and stronger feature set, for example, durable compute, remote-controlled execution.
 
 ## Security
 
