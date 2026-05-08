@@ -1,24 +1,39 @@
 # Tally Split AI
 
-A proof of concept app for learning AI Engineering.
+Analyze receipts incl. handwritten annotations with AI analysis to auto-adjust totals and assign payers based on custom instructions.
 
-## Use Case
+![](./public/images/screenshots/v0-preview-medium.webp)
 
-Analyze scans (photos) of receipts, which also have handwritten adjustments for purpose of splitting expenses.
+#### Example Analysis
 
-### Scenario
+> The original total is 23.23 as per the OCR data. Handwritten annotations indicate that Julie paid, and MM owes. Two items, PUTENSTEAK (8.08) and SPEZI KROMBACHER (0.99), are circled, which defines the adjusted total as their sum: 9.07. The handwritten note 'Julie paid' clearly identifies the payer, and the annotations are unambiguous, leading to high confidence in both the adjusted total and payer determination.
+> - Overall: 90%
+> - splitAmount: 90%
 
-- Without a joint bank account, how can expenses be split between people?
+#### Use Case
+
+European banks are often hesitant to open bank accounts to U.S. citizens due to [FACTA](https://en.wikipedia.org/wiki/Fair_and_Accurate_Credit_Transactions_Act).
+
+- Without a joint bank account, how can we best split shared households expenses?
 - For receipts with shared and individual items, how can we indicate that some items are to be split between persons and others not?
+
+As part of my pivot to AI Engineering and Architecture, I decided to build my own app instead of using existing commercial apps, which has added privacy benefit.
 
 ## Stack
 
+### Application
+
 | Component | Role |
 |:--|:--|
+| Nuxt | Full-stack web app (UI + API) |
 | Postgres | Database for receipts, splits, and workflow state |
 | Drizzle Studio | Optional UI for inspecting the database |
-| Nuxt | Full-stack web app (UI + API) |
-| Trigger.dev | Async workflow orchestration |
+
+### Infrastructure
+
+| Component | Role |
+|:--|:--|
+| Trigger.dev | Workflow (agent) orchestration |
 | Azure Blob Storage | Receipt photo storage (direct client uploads via SAS) |
 | Azure Document Intelligence | OCR for receipts (`prebuilt-receipt` model) |
 | GPT-4o | Handwritten annotation detection |
