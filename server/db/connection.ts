@@ -1,24 +1,29 @@
-import { drizzle } from 'drizzle-orm/node-postgres'
-import pg from 'pg'
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
 import * as schema from './schema'
 
 let _db: ReturnType<typeof drizzle> | null = null
-let _pool: InstanceType<typeof pg.Pool> | null = null
+let _client: ReturnType<typeof postgres> | null = null
 
 /**
- * Get database connection (singleton pattern)
+ * Use Supabase's transaction-mode pooler (port 6543),
+ *
+ * Required for serverless:
+ * - `prepare: false` — prepared statements break across pooled connections
+ * - `max: 1` — high per-instance pool sizes exhaust the pooler
  */
 export function useDB () {
   if (_db) {
     return _db
   }
 
-  const connectionString = process.env.NUXT_DATABASE_URL
-    || process.env.DATABASE_URL
-    || 'postgresql://receipts:localdev@localhost:5432/ai_receipts'
+  const connectionString = process.env.NUXT_DATABASE_URL || process.env.DATABASE_URL
 
-  _pool = new pg.Pool({ connectionString })
-  _db = drizzle(_pool, { schema })
+  _client = postgres(connectionString, {
+    prepare: false,
+    max: 1,
+  })
+  _db = drizzle(_client, { schema })
 
   return _db
 }
