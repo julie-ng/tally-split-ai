@@ -2,6 +2,30 @@
 
 Note: "chunks" (generic) and "blocks" (Azure specific) are used interchangeably.
 
+## Database
+
+I chose Supabase for Postgres and Web Sockets support.
+
+### Database Connections in Serverless 
+
+Postgres expects long-lived connections but serverless is ephemeral and short-lived, which can quickly exhaust connections.
+
+- Use Supabase's server-side pooler to maintain hot connections and share with short lived clients.
+- Configure postgres to use `prepare: false` because pooler reuses connections and `PREPARE` and `EXECUTE` statements are not guaranteed to land on same session - biggest performance gain.
+- Setting `max: 1` connections will create a bottleneck. We'll split the difference and use 5. 
+
+![Supabase's "Supavisor" Connection Pooler](https://supabase.com/docs/_next/image?url=%2Fdocs%2Fimg%2Fguides%2Fdatabase%2Fconnecting-to-postgres%2Fhow-connection-pooling-works--light.png&w=3840&q=75)
+
+_Diagram - "Supavisor" Connection Pooler (Source: Supabase)_
+
+> [!NOTE]
+- We are not using Fluid compute referenced in Vercel article. But some best practices still apply.
+
+#### References
+
+- [Supabase: Connecting via Transaction Mode](https://supabase.com/docs/guides/database/connecting-to-postgres#pooler-transaction-mode)
+- [Vercel: Best Practices for Connection Pooling with Vercel Functions](https://vercel.com/kb/guide/connection-pooling-with-functions)
+
 ## Frontend Architecture
 
 - SAS URLs/tokens always fetched from backend for security purposes, i.e. account access keys are never exposed to frontend
