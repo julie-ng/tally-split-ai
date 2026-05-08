@@ -69,5 +69,8 @@
     "sass-embedded": "^1.99.0",
     "trigger.dev": "^4.4.5",
     "vitest": "^4.0.15"
+  },
+  "overrides": {
+    "@depot/cli": "0.0.1-cli.2.81.0"
   }
 }
