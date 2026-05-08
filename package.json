@@ -1,6 +1,7 @@
 {
-  "name": "ai-receipts-poc",
-  "version": "1.0.0",
+  "name": "tally-split-ai",
+  "private": true,
+  "author": "Julie Ng",
   "description": "POC for analyzing receipt scans with handwritten expense splitting",
   "scripts": {
     "test": "vitest run",
@@ -36,8 +37,6 @@
     "receipts",
     "ocr"
   ],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@azure-rest/ai-document-intelligence": "^1.0.0",
     "@azure/storage-blob": "^12.25.0",
