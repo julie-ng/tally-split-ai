@@ -265,6 +265,7 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
       if (u) {
         u.status = 'failed'
         u.errors.push(error.message)
+        console.error(`🍍 [Failed:inner] (${id}) ${u.originalFilename}:`, error.message)
       }
       throw error
     }
@@ -321,7 +322,7 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
         return true
       }
       catch (error) {
-        console.error(`Upload failed for ${id}:`, error)
+        console.error(`🍍 [Failed:outer] (${id}):`, error)
         return false
       }
     }
