@@ -19,9 +19,11 @@ export function useDB () {
 
   const connectionString = process.env.NUXT_DATABASE_URL || process.env.DATABASE_URL
 
+  // see ARCHITECTURE.md for details
   _client = postgres(connectionString, {
     prepare: false,
-    max: 1,
+    max: 5,  // 1 is a bottleneck, 10 is default. split the diff.
+    idle_timeout: 5, // low timeout per Decerl docs
   })
   _db = drizzle(_client, { schema })
 
