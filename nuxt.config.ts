@@ -99,6 +99,14 @@ export default defineNuxtConfig({
       uploadAutoEnabled: true,
     },
   },
+  // Bundle icon collections locally — without this, Nuxt UI fetches icons
+  // from api.iconify.design at runtime, which the CSP blocks (and would be a
+  // privacy/availability liability anyway).
+  icon: {
+    serverBundle: {
+      collections: ['lucide'],
+    },
+  },
   watch: [
     '~~/shared/**/*',
   ],
