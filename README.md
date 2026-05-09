@@ -4,20 +4,19 @@ Analyze receipts incl. handwritten annotations with AI analysis to auto-adjust t
 
 ![](./public/images/screenshots/v0-preview-medium.webp)
 
+#### Use Case
+
+It is challenging for me as a U.S. citizen to open a bank account in Germany due to [FACTA](https://en.wikipedia.org/wiki/Fair_and_Accurate_Credit_Transactions_Act). **So without a joint bank account, how can we best split shared households expenses?**
+
+For receipts with shared and individual items, how can we indicate that some items are to be split between persons and others not?
+
+As part of my pivot to AI Engineering and Architecture, I decided to build my own app instead of using existing commercial apps, which has added privacy benefit.
+
 #### Example Analysis
 
 > The original total is 23.23 as per the OCR data. Handwritten annotations indicate that Julie paid, and MM owes. Two items, PUTENSTEAK (8.08) and SPEZI KROMBACHER (0.99), are circled, which defines the adjusted total as their sum: 9.07. The handwritten note 'Julie paid' clearly identifies the payer, and the annotations are unambiguous, leading to high confidence in both the adjusted total and payer determination.
 > - Overall: 90%
 > - splitAmount: 90%
-
-#### Use Case
-
-European banks are often hesitant to open bank accounts to U.S. citizens due to [FACTA](https://en.wikipedia.org/wiki/Fair_and_Accurate_Credit_Transactions_Act).
-
-- Without a joint bank account, how can we best split shared households expenses?
-- For receipts with shared and individual items, how can we indicate that some items are to be split between persons and others not?
-
-As part of my pivot to AI Engineering and Architecture, I decided to build my own app instead of using existing commercial apps, which has added privacy benefit.
 
 ## Stack
 
@@ -51,7 +50,7 @@ Highlights of the AuthN / AuthZ design (see [`docs/SECURITY.md`](./docs/SECURITY
 - **Cryptographic scope binding.** The token's scope is part of the signed HMAC payload, not a separate header — tampering invalidates the token. Verification uses `crypto.timingSafeEqual` and enforces a server-side expiry window.
 - **Household isolation at the query layer.** Every resource read filters by the caller's household; resource-by-id reads go through a `requireAuthorization` guard that returns 404 (not 403) on mismatch to avoid leaking existence.
 - **Sessions hold identity + authZ scope only.** Domain data lives in Pinia stores / DB queries, not in the session.
-- **PII boundary at trigger tasks.** Tasks never see household member identities; payer initials → userId resolution happens server-side inside the API.
+- **User decides what personal information to send.** The app can only send user initials to AI and agents with receipts. However, the user can ***choose*** to provide that information in **custom instructions** for their household to increase receipt analysis and payer assignment accuraacy.
 
 ### Local Development
 
