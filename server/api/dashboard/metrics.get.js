@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
     WHERE household_id = ${householdId}
   `)
 
-  const row = result.rows[0] ?? {}
+  const row = result[0] ?? {}
 
   // pg returns BIGINT counts as strings; coerce to number
   const n = v => v == null ? 0 : Number(v)
