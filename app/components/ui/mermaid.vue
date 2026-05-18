@@ -33,6 +33,7 @@ watch(() => props.code, render, { immediate: true })
     <div v-if="error" class="text-error text-sm font-mono whitespace-pre-wrap">
       {{ error }}
     </div>
+    <!-- eslint-disable-next-line vue/no-v-html -->
     <div v-else class="mermaid-diagram" v-html="svg" />
   </ClientOnly>
 </template>
