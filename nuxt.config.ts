@@ -8,9 +8,13 @@ const azureBlobHost = azureStorageAccount
   ? `https://${azureStorageAccount}.blob.core.windows.net`
   : null
 
+const isDev = process.env.NODE_ENV !== 'production'
+
 const csp = [
   `default-src 'self'`,
-  `script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com`,
+  // 'wasm-unsafe-eval' in dev only: Nuxt Content's HMR loads sqlite3 via WASM
+  // in the browser, which CSP would otherwise block.
+  `script-src 'self' 'unsafe-inline'${isDev ? ` 'wasm-unsafe-eval'` : ''} https://va.vercel-scripts.com`,
   `worker-src 'self' blob:`,
   `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
   `font-src 'self' https://fonts.gstatic.com`,
