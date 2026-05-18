@@ -1,0 +1,45 @@
+sequenceDiagram
+    autonumber
+    participant DB@{ "type" : "database" } as Database
+    participant API as TallySplit API
+    box rgb(245, 243, 255) Agent Infrastructure
+      participant Orch as Orchestrator task
+      participant Child@{ "type" : "collections" } as Child task(s)
+    end
+    box rgb(240, 246, 255) Azure
+      participant AI as AI Service(s)
+      participant Storage@{ "type" : "database" } as Blob Storage
+    end
+
+    Note over API: POST /api/workflows/:uploadHashId
+    activate API
+    API->>+DB: INSERT workflow_runs (UUID, createdAt)
+    DB-->>-API: row
+    API->>API: Generate orchestrator token<br/>(scope + orchestrator actions)
+    API->>+Orch: enqueue (fire-and-forget)<br/>{ callbackToken, runUuid, runCreatedAt, scope }
+    Orch-->>-API: 202 Accepted
+    deactivate API
+
+    activate Orch
+    Orch->>Orch: Generate task specific tokens<br/>
+    Orch->>Child: Dispatch (fire-and-forget)
+    deactivate Orch
+
+    opt Child needs blob content (e.g. analyze-ocr, analyze-annotations)
+      Child->>+API: POST /api/tokens/read<br/>(token:read action)
+      API-->>-Child: SAS read URL (5 min TTL)
+      rect rgb(254, 252, 232)
+        Note over Child,Storage: AI service uses SAS URL
+        Child->>+AI: Request inference
+        AI->>+Storage: GET blob via SAS URL
+        Storage-->>-AI: blob bytes
+        AI-->>-Child: inference result
+      end
+    end
+
+    Child->>+API: Apply task outcomes (e.g. results, mutations)
+    API->>API: Security Checks
+    Note over API: See AuthN + AuthZ flowchart
+    API->>+DB: Persist
+    DB-->>-API: OK
+    API-->>-Child: 200 OK / 403 Forbidden

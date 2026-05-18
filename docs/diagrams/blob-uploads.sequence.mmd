@@ -1,0 +1,21 @@
+sequenceDiagram
+    autonumber
+    participant Azure
+    actor User
+    participant Frontend
+    participant Backend
+    User->>+Frontend: Drag and drop file
+    Frontend->>+Backend: Request Azure upload URL
+    Backend-->>Backend: Generate read/write SAS token
+    Backend-->>-Frontend: Azure upload URL
+    Frontend-->>-User: Azure upload URL
+    note over User, Azure: Upload directly to Azure
+    rect rgb(248, 249, 250)
+        User->>+Azure: [PUT] Blob
+        Azure-->>-User: 201 Created
+    end
+    User->>+Frontend: Notify upload completion
+    Frontend->>+Backend: Get image read-only URL
+    Backend->>Backend: Generate read-only SAS token
+    Backend-->>-Frontend: URL with SAS token
+    Frontend-->>-User: Show image

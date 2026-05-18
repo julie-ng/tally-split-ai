@@ -1,0 +1,33 @@
+sequenceDiagram
+    autonumber
+    participant Azure
+    actor User
+    participant Frontend
+    participant Backend
+    User->>+Frontend: Drag and drop file
+    Frontend->>+Backend: Request Azure upload URL
+    Backend-->>Backend: Generate URL with read/write SAS token
+    Backend-->>-Frontend: Return Azure upload URL
+    Frontend-->>-User: Return Azure upload URL
+    note over User, Azure: Upload directly to Azure
+    rect rgb(248, 249, 250)
+        par Upload
+            User->>+Azure: [PUT] Block 1
+            Azure-->>-User: 201 Created
+            User->>+Azure: [PUT] Block …N
+            Azure-->>-User: 201 Created
+        end
+    end
+    note over User, Azure: After all blocks are uploaded
+    rect rgb(248, 249, 250)
+        critical Commit Upload
+            User->>+Azure: [PUT] Block List
+            Azure->>Azure: Combine N blocks into 1 blob file
+            Azure-->>-User: 201 Created
+        end
+    end
+    User->>+Frontend: Notify upload completion
+    Frontend->>+Backend: Get image URL
+    Backend->>Backend: Generate new read-only SAS token
+    Backend-->>-Frontend: image URL with token
+    Frontend-->>-User: Show image preview

@@ -1,0 +1,58 @@
+---
+config:
+  htmlLabels: false
+---
+flowchart TD
+    Req(["`**Authenticated request**
+    (event.context)`"])
+    Req -->|"resourceId + event.context"| AuthZ("`**requireAuthorization()**`")
+    AuthZ -->Principal{"`**Security
+    Principal
+    type?**`"}
+
+    subgraph user ["`**User AuthZ**`"]
+        UScope("`**Find resource household** via
+        • _receipt.householdId_
+        • _upload.householdId_
+        • _split.receiptId.householdId_`")
+        UMatch{"`**Matches
+        user's _householdId_?**
+        (via session)`"}
+        UOk("`Continue to handler`")
+        URej(["`**404 Not Found**
+        (do not reveal existence)`"])
+
+        UScope -->|resource householdId| UMatch
+        UMatch -->|Yes| UOk
+        UMatch -->|No| URej
+    end
+
+    subgraph task ["`**Task AuthZ**`"]
+        TScope{"`**_resourceId_ matches
+        _workflowRun.resourceId_?**`"}
+        TPerm{"`**requireTaskPermission()**
+        action, e.g. _receipt:write_
+        permitted on _resourceId_?`"}
+        TOk("`Continue to handler`")
+        TRejScope(["`**403 Forbidden**
+        (scope mismatch)`"])
+        TRejPerm(["`**403 Forbidden**
+        (insufficient permissions)`"])
+
+        TScope -->|Yes| TPerm
+        TScope -->|No| TRejScope
+        TPerm -->|Yes| TOk
+        TPerm -->|No| TRejPerm
+    end
+
+    Principal -->|User| UScope
+    Principal -->|Task| TScope
+
+    classDef reject fill:#fee,stroke:#c33,color:#900
+    class URej,TRejScope,TRejPerm reject
+
+    classDef ok fill:#efe,stroke:#3a3,color:#060
+    class UOk,TOk ok
+
+    classDef cluster fill:#f8f9fa,stroke:#cbd5e1,color:#475569
+    class user,task cluster

@@ -1,0 +1,57 @@
+---
+config:
+  htmlLabels: false
+---
+flowchart TD
+    Req(["`**Incoming request**`"])
+    Headers{"`**Has Workflow Headers?**
+• _Authorization: Bearer_
+• _X-Workflow-Run-UUID_`"}
+
+    Req --> AuthN("`**requireAuthentication()**`")
+    AuthN --> Headers
+
+    subgraph one ["`**Workflow AuthN**`"]
+        TaskAuth{"`**Verify Token**`"}
+        TaskCtx("`**Sets event.context**:
+        • _workflowRun_
+        • _taskId_
+        • _taskActions_
+        • _securityPrincipal_`")
+        Reject401a(["`**401 Unauthorized**`"])
+
+        TaskAuth -->|HMAC valid| TaskCtx
+        TaskAuth -->|HMAC invalid| Reject401a
+    end
+
+    subgraph two ["`**User AuthN**`"]
+        UserAuth{"`**Check User Session**`"}
+        UserCtx("`**Sets event.context**:
+        • _userId_
+        • _householdId_
+        • _securityPrincipal_`")
+        Reject401c(["`**401 Unauthorized**
+        Clear session to force re-login`"])
+        Reject401b(["`**401 Unauthorized**`"])
+
+        UserAuth -->|"Session valid<br/>+ has 'householdId'"| UserCtx
+        UserAuth -->|"Stale session<br/>missing 'householdId'"| Reject401c
+        UserAuth -->|No session| Reject401b
+    end
+
+    Headers -->|Yes| TaskAuth
+    Headers -->|No| UserAuth
+
+    TaskCtx --> AuthZ
+    UserCtx --> AuthZ
+    AuthZ("`**requireAuthorization()**
+    (per handler)`") --> NextLayer("`**Scope check**
+    (per resource)
+    • User: _householdId_
+    • Task: _workflowRun.upload_`")
+
+    classDef reject fill:#fee,stroke:#c33,color:#900
+    class Reject401a,Reject401b,Reject401c reject
+
+    classDef cluster fill:#f8f9fa,stroke:#cbd5e1,color:#475569
+    class one,two cluster

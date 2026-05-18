@@ -1,0 +1,17 @@
+sequenceDiagram
+    autonumber
+    participant Task as Trigger.dev task
+    participant Util as gpt4oFetch
+    participant Azure as Azure OpenAI
+    Task->>+Util: call(prompt)
+    Util->>+Azure: POST /chat/completions
+    Azure-->>-Util: 429 (Retry-After: 30s)
+    Note over Util: attempt 1 failed
+    Util->>Util: wait.for(30s + jitter)
+    Util->>+Azure: POST /chat/completions (retry)
+    Azure-->>-Util: 429 (Retry-After: 20s)
+    Note over Util: attempt 2 failed
+    Util->>Util: wait.for(20s + jitter)
+    Util->>+Azure: POST /chat/completions (retry)
+    Azure-->>-Util: 200 OK
+    Util-->>-Task: response
