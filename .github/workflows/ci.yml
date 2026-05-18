@@ -53,4 +53,6 @@ jobs:
           npm ci
 
       - name: Build Nuxt app
-        run: npm run build
+        run: npm run build -- --no-sourcemap
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
