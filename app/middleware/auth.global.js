@@ -9,6 +9,12 @@ const PUBLIC_ROUTES = new Set([
 export default defineNuxtRouteMiddleware((to) => {
   const { loggedIn } = useUserSession()
 
+  if (to.path.startsWith('/images/')
+    || to.path.startsWith('/public/')
+    || to.path.startsWith('/_nuxt/')) {
+    return
+  }
+
   if (to.path === '/login' && loggedIn.value) {
     return navigateTo('/dashboard')
   }
