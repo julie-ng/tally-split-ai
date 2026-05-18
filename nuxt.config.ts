@@ -33,6 +33,8 @@ const csp = [
 export default defineNuxtConfig({
   modules: [
     '@nuxt/ui',
+    '@nuxt/image',
+    '@nuxt/content',
     '@nuxt/eslint',
     '@nuxthub/core',
     '@pinia/nuxt',
@@ -108,7 +110,7 @@ export default defineNuxtConfig({
   // privacy/availability liability anyway).
   icon: {
     serverBundle: {
-      collections: ['lucide'],
+      collections: ['lucide', 'simple-icons', 'material-icon-theme'],
     },
   },
   watch: [
@@ -124,6 +126,7 @@ export default defineNuxtConfig({
         '@vueuse/core',
         'zod',
         '@tanstack/vue-table',
+        'mermaid'
       ],
     },
   },
