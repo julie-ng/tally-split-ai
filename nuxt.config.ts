@@ -30,6 +30,15 @@ const csp = [
   `object-src 'none'`,
 ].join('; ')
 
+const contentConfig = isDev
+  ? {}
+  : {
+    database: {
+      type: 'postgres',
+      url: process.env.NUXT_DATABASE_URL,
+    },
+  }
+
 export default defineNuxtConfig({
   modules: [
     '@nuxt/ui',
@@ -138,4 +147,5 @@ export default defineNuxtConfig({
   pinia: {
     storesDirs: ['~/stores/**'],
   },
+  content: contentConfig
 })
