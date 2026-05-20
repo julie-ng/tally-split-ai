@@ -26,9 +26,9 @@ function formatDate (date) {
  */
 function formatISODate (isoDate) {
   const date = new Date(isoDate)
-  const day = date.getDate().toString().padStart(2, '0')
-  const month = date.toLocaleDateString('en-US', { month: 'short' })
-  const year = date.getFullYear()
+  const day = date.getUTCDate().toString().padStart(2, '0')
+  const month = date.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' })
+  const year = date.getUTCFullYear()
 
   return `${day} ${month} ${year}`
 }
