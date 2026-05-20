@@ -34,9 +34,10 @@ const contentConfig = isDev
   ? {}
   : {
     database: {
-      type: 'postgres',
-      url: process.env.NUXT_DATABASE_URL,
-    },
+       type: 'libsql',
+       url: process.env.TURSO_DATABASE_URL,
+       authToken: process.env.TURSO_AUTH_TOKEN,
+     }
   }
 
 export default defineNuxtConfig({
