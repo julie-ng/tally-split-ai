@@ -12,9 +12,11 @@ const isDev = process.env.NODE_ENV !== 'production'
 
 const csp = [
   `default-src 'self'`,
-  // 'wasm-unsafe-eval' in dev only: Nuxt Content's HMR loads sqlite3 via WASM
-  // in the browser, which CSP would otherwise block.
-  `script-src 'self' 'unsafe-inline'${isDev ? ` 'wasm-unsafe-eval'` : ''} https://va.vercel-scripts.com`,
+  // 'wasm-unsafe-eval' allows WebAssembly compilation. Nuxt Content's client-side
+  // query layer loads wa-sqlite (WASM) on SPA navigations; without this, queries
+  // return undefined on client-side route transitions and content pages break.
+  // Narrower than 'unsafe-eval' — does NOT enable eval() or string-to-code.
+  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://va.vercel-scripts.com`,
   `worker-src 'self' blob:`,
   `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
   `font-src 'self' https://fonts.gstatic.com`,
