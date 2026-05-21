@@ -1,6 +1,10 @@
 export function useSplitMonths () {
   return [
     {
+      label: 'May 2026',
+      to: '/splits/2026/05/',
+    },
+    {
       label: 'April 2026',
       to: '/splits/2026/04/',
     },
