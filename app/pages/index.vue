@@ -47,5 +47,13 @@ definePageMeta({
     <!-- Token Design -->
     <HomepageTokenDesign />
     <USeparator class="my-12" />
+
+    <!-- Built with AI -->
+    <HomepageBuiltWithAi />
+    <USeparator class="my-12" />
+
+    <!-- Lessons Learned -->
+    <HomepageLessonsLearned />
+    <!-- <USeparator class="my-12" /> -->
   </div>
 </template>

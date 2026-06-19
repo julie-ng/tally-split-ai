@@ -52,7 +52,7 @@ const items = [
   },
   {
     label: 'Lessons Learned',
-    to: '#learnings',
+    to: '#lessons-learned',
   },
 ]
 </script>

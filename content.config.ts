@@ -52,6 +52,28 @@ export default defineContentConfig({
         description: z.string().optional(),
       })
     }),
+    builtWithAI: defineCollection({
+      type: 'page',
+      source: 'homepage/built-with-ai/*.md',
+      schema: z.object({
+        title: z.string().optional(),
+        icon: z.string().optional(),
+      })
+    }),
+    lessonsLearned: defineCollection({
+      type: 'page',
+      source: 'homepage/lessons-learned.md',
+      schema: z.object({
+        heading: z.string().optional(),
+        subheading: z.string().optional(),
+        description: z.string().optional(),
+        sections: z.array(z.object({
+          heading: z.string().optional(),
+          description: z.string().optional(),
+          icon: z.string().optional(),
+        })).optional(),
+      })
+    }),
     tokenDesign: defineCollection({
       type: 'page',
       source: 'homepage/token-design.md',
