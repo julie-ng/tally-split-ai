@@ -1,4 +1,10 @@
 <script setup>
+const colorMode = useColorMode()
+
+function toggleColorMode () {
+  colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
+}
+
 const items = [
   {
     label: 'Architecture',
@@ -87,6 +93,19 @@ const items = [
           size="md"
           aria-label="View source on GitHub"
         />
+        <ClientOnly>
+          <UButton
+            :icon="colorMode.value === 'dark' ? 'i-lucide-moon' : 'i-lucide-sun'"
+            color="neutral"
+            variant="ghost"
+            size="md"
+            :aria-label="`Switch to ${colorMode.value === 'dark' ? 'light' : 'dark'} mode`"
+            @click="toggleColorMode"
+          />
+          <template #fallback>
+            <div class="size-8" />
+          </template>
+        </ClientOnly>
         <UButton variant="soft" to="/login" class="ml-2">
           Login
         </UButton>

@@ -129,6 +129,13 @@ export default defineNuxtConfig({
     '~~/shared/**/*',
   ],
   compatibilityDate: '2025-07-15',
+  // App-specific key so the color mode preference doesn't collide with other
+  // Nuxt apps sharing the localhost origin (default key is 'nuxt-color-mode').
+  colorMode: {
+    preference: 'light',
+    fallback: 'light',
+    storageKey: 'tally-split:color-mode',
+  },
   hub: {},
   vite: {
     optimizeDeps: {
