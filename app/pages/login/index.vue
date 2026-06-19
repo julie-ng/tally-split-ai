@@ -6,7 +6,13 @@ useHead({
 })
 
 const route = useRoute()
-const hasError = computed(() => route.query.error === 'github_oauth_error')
+
+const errorMessages = {
+  github_oauth_error: 'GitHub authentication failed. Please try again.',
+  server_error: 'Something went wrong on our end. Please try again in a moment.',
+}
+
+const errorMessage = computed(() => errorMessages[route.query.error] ?? null)
 </script>
 
 <template>
@@ -30,9 +36,9 @@ const hasError = computed(() => route.query.error === 'github_oauth_error')
           class="py-3"
         />
         <UAlert
-          v-if="hasError"
+          v-if="errorMessage"
           title="Login failed"
-          description="GitHub authentication failed. Please try again."
+          :description="errorMessage"
           color="error"
           variant="subtle"
           icon="i-lucide-alert-circle"
