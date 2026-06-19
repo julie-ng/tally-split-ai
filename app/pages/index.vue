@@ -53,7 +53,7 @@ definePageMeta({
     <USeparator class="my-12" />
 
     <!-- Lessons Learned -->
-    <HomepageLessonsLearned />
+    <HomepageLessonsLearned class="mb-12" />
     <!-- <USeparator class="my-12" /> -->
   </div>
 </template>
