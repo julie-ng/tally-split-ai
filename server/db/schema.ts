@@ -121,6 +121,14 @@ export const splits = pgTable('splits', {
   // @ts-expect-error implicit return type any
   receiptId: text('receipt_id').references(() => receipts.id, { onDelete: 'cascade' }),
 
+  // Household scope for authZ. Stamped once at split creation and never changed
+  // (a split never moves households). Set explicitly rather than derived via
+  // receiptId so standalone splits (receiptId null) are still reachable and
+  // authZ has one code path. Write-once: no request/update schema accepts it.
+  // TEMPORARILY NULLABLE for the backfill — re-add .notNull() after running
+  // seed-split-household-ids.js. See run sequence in JOURNAL.md / SCHEMA.md.
+  householdId: text('household_id').references(() => households.id, { onDelete: 'restrict' }),
+
   // Split details
   splitAmount: real('split_amount').notNull(), // Amount to split (defaults to receipt total)
   userOneShare: real('user_one_share'), // userOne's share
@@ -256,6 +264,7 @@ export const householdsRelations = relations(households, ({ many }) => ({
   users: many(users),
   receipts: many(receipts),
   uploads: many(uploads),
+  splits: many(splits),
 }))
 
 // User belongs to one household
@@ -302,6 +311,10 @@ export const splitsRelations = relations(splits, ({ one }) => ({
   receipt: one(receipts, {
     fields: [splits.receiptId],
     references: [receipts.id],
+  }),
+  household: one(households, {
+    fields: [splits.householdId],
+    references: [households.id],
   }),
   userOne: one(users, {
     fields: [splits.userOneId],

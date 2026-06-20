@@ -36,6 +36,13 @@
       "when": 1778142803789,
       "tag": "0004_first_whizzer",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1781962668579,
+      "tag": "0005_numerous_sue_storm",
+      "breakpoints": true
     }
   ]
 }

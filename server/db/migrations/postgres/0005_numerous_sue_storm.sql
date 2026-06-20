@@ -1,0 +1,2 @@
+ALTER TABLE "splits" ADD COLUMN "household_id" text;--> statement-breakpoint
+ALTER TABLE "splits" ADD CONSTRAINT "splits_household_id_households_id_fk" FOREIGN KEY ("household_id") REFERENCES "public"."households"("id") ON DELETE restrict ON UPDATE no action;

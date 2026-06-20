@@ -180,7 +180,8 @@ Expense splitting between two household members.
 | Column | Type | Notes |
 |:--|:--|:--|
 | `id` | `serial` PK | |
-| `receiptId` | `integer` FK → `receipts.id` (cascade) | Canonical link; deleting the receipt deletes the split |
+| `receiptId` | `integer` FK → `receipts.id` (cascade) | Canonical link; deleting the receipt deletes the split. Nullable — supports standalone splits |
+| `householdId` | `uuid` NOT NULL FK → `households.id` | AuthZ scope; stamped once at creation, write-once. See note below |
 | `splitAmount` | `real` NOT NULL | Total to split (defaults to receipt total) |
 | `userOneId` | `uuid` FK → `users.id` | First household member (oldest by `users.createdAt`) |
 | `userOneShare` | `real` | Amount this user owes |
@@ -211,7 +212,7 @@ Expense splitting between two household members.
 `MATCHED` does **not** mean "the LLM was correct." It means "the LLM extracted something we could map to a member." Whether that mapping was *correct* is answered by human edit history in the `changes` table. See `v_split_metrics` (below) for the LLM-accuracy-vs-human-correction metric.
 
 > [!NOTE]
-> AuthZ for splits derives `householdId` via `splits.receiptId → receipts.householdId`. Splits do not carry their own `householdId` column.
+> AuthZ for splits reads `splits.householdId` directly. The column is **denormalized and write-once**: stamped at creation (inherited from the receipt when linking one, otherwise the acting principal's household) and never changed, because a split never moves households. This mirrors `uploads.householdId` and is what makes standalone splits (`receiptId` null) reachable — deriving via the receipt join would 404 them. No request/update schema accepts `householdId`, so it cannot be set or changed by clients (same immutability pattern as `paidByMatch`).
 
 ## workflow_runs
 
