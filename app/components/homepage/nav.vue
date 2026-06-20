@@ -68,7 +68,12 @@ const items = [
 
       <!-- Center: nav with submenus -->
       <div class="flex justify-center">
-        <UNavigationMenu :items="items" orientation="horizontal" content-orientation="vertical" />
+        <UNavigationMenu
+          :items="items"
+          orientation="horizontal"
+          content-orientation="vertical"
+          variant="link"
+        />
       </div>
 
       <!-- Right: icon links -->
