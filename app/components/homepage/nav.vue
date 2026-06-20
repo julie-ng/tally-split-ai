@@ -48,11 +48,11 @@ const items = [
   },
   {
     label: 'Built with AI',
-    to: '#built-with-ai',
+    to: '/#built-with-ai',
   },
   {
     label: 'Lessons Learned',
-    to: '#lessons-learned',
+    to: '/#lessons-learned',
   },
 ]
 </script>

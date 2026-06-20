@@ -13,6 +13,13 @@ export default defineContentConfig({
         description: z.string().optional(),
       })
     }),
+    pages: defineCollection({
+      type: 'page',
+      source: '*.md',
+      schema: z.object({
+        title: z.string()
+      })
+    }),
     pipeline: defineCollection({
       type: 'page',
       source: 'homepage/pipeline.md',

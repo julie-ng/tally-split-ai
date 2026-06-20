@@ -11,6 +11,8 @@ export default defineNuxtRouteMiddleware((to) => {
 
   if (to.path.startsWith('/images/')
     || to.path.startsWith('/public/')
+    || to.path.startsWith('/impressum')
+    || to.path.startsWith('/privacy')
     || to.path.startsWith('/_nuxt/')) {
     return
   }
