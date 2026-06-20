@@ -18,7 +18,12 @@ useSeoMeta({
 })
 
 definePageMeta({
-  layout: 'homepage',
+  layout: {
+    name: 'logged-out',
+    props: {
+      containerClass: 'max-w-5xl',
+    },
+  },
 })
 </script>
 
