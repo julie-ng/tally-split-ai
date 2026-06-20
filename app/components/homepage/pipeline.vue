@@ -60,21 +60,23 @@ const fallbackIcon = 'i-lucide-circle'
               group-data-[active=true]:bg-primary
               group-data-[active=true]:text-white
               group-data-[active=true]:ring-primary
+              dark:group-data-[active=true]:bg-primary-600
+              dark:group-data-[active=true]:text-white
+              dark:group-data-[active=true]:ring-primary-600
             "
           >
             <UIcon :name="step.icon || fallbackIcon" class="size-5" />
           </div>
 
-          <!-- Connector line — hidden on the last step. Two layers: a static
-               gray rail and a primary-colored overlay that grows from 0 → full
-               height when this step becomes active. -->
+          <!-- Line: Inactive color -->
           <div
             v-if="i < content.workflow.length - 1"
-            class="relative flex-1 w-1 mt-2 bg-default overflow-hidden rounded-full"
+            class="relative flex-1 w-1 mt-2  overflow-hidden rounded-full"
           >
+            <!-- Line: Active color -->
             <div
               class="
-                absolute inset-x-0 top-0 bg-primary-100 origin-top
+                absolute inset-x-0 top-0 bg-primary-200 dark:bg-primary-950 origin-top
                 transition-transform duration-700 ease-out
                 group-data-[active=true]:scale-y-100
                 scale-y-0 h-full

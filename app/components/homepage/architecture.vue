@@ -39,8 +39,8 @@ const layers = computed(() => {
         class="flex items-stretch gap-4"
       >
         <!-- Rotated label column — fixed width so both rows align -->
-        <div class="w-12 flex items-center justify-center bg-neutral-100 rounded-md shrink-0">
-          <h2 class="text-sm font-medium tracking-wider text-neutral-600 -rotate-90 whitespace-nowrap">
+        <div class="w-12 flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 rounded-md shrink-0">
+          <h2 class="text-sm font-medium tracking-wider text-neutral-600 dark:text-neutral-400 -rotate-90 whitespace-nowrap">
             {{ row.label }}
           </h2>
         </div>

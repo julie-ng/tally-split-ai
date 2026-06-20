@@ -16,7 +16,7 @@ const { data: content } = await useAsyncData('landing-token-design', () =>
       </HomepageSectionHeading>
 
       <div class="text-center">
-        <UCard class="shadow-md/5 bg-linear-to-br from-neutral-0 to-neutral-50 ring-1 ring-neutral-200">
+        <UCard class="shadow-md/5 bg-linear-to-b from-neutral-0 to-neutral-50 ring-1 ring-neutral-200 dark:from-neutral-800 dark:to-neutral-900 dark:ring-neutral-700">
           <div class="flex items-center justify-center gap-2 mb-6">
             <UIcon name="i-lucide-text-initial" />Pipe Separated Input String
           </div>
@@ -27,7 +27,7 @@ const { data: content } = await useAsyncData('landing-token-design', () =>
                   color="neutral"
                   variant="soft"
                   size="3"
-                  class="block bg-neutral-100 px-2 py-1 rounded font-mono text-muted"
+                  class="block bg-neutral-100 dark:bg-neutral-800 px-2 py-1 rounded font-mono text-muted"
                 >
                   {{ c.example }}
                 </UBadge>
@@ -50,14 +50,14 @@ const { data: content } = await useAsyncData('landing-token-design', () =>
           </div>
         </UCard>
         <UIcon name="i-lucide-arrow-down" class="mt-10 mb-6 text-primary size-6" />
-        <UCard class="shadow-md/5 max-w-sm mx-auto bg-linear-to-br from-neutral-0 to-neutral-50 ring-1 ring-neutral-200">
+        <UCard class="shadow-md/5 max-w-sm mx-auto bg-linear-to-b from-neutral-0 to-neutral-50 ring-1 ring-neutral-200 dark:from-neutral-800 dark:to-neutral-900 dark:ring-neutral-700">
           <div class="flex items-center justify-center gap-2">
             <UIcon name="i-lucide-key-round" />
             HMAC-SHA256 Algorithm + Salt
           </div>
         </UCard>
         <UIcon name="i-lucide-arrow-down" class="my-6 text-primary size-6" />
-        <UCard class="shadow-md/5 max-w-sm mx-auto  bg-linear-to-br from-primary-0 to-primary-50 ring-1 ring-primary-200">
+        <UCard class="shadow-md/5 max-w-sm mx-auto  bg-linear-to-b from-primary-0 to-primary-50 ring-1 ring-primary-200 dark:from-primary-900 dark:to-primary-950 dark:ring-neutral-700">
           <div class="flex items-center justify-center gap-1 font-semibold">
             <UIcon name="i-lucide-qr-code" />
             Deterministic and Signed Token
