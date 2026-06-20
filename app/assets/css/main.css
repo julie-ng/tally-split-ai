@@ -10,6 +10,12 @@
   /* https://ui.nuxt.com/docs/getting-started/theme/design-system */
 }
 
+/* Offset in-page anchor scrolling by the fixed header height so section
+   targets land below the sticky <UHeader> instead of underneath it. */
+html {
+  scroll-padding-top: calc(var(--ui-header-height) + 1rem);
+}
+
 /* Shift the `text-primary` / `bg-primary` alias to a darker shade.
    The numbered scale (primary-50 … primary-900) is unaffected. */
 :root {
