@@ -1,4 +1,4 @@
-import { eq, inArray } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const db = useDB()
@@ -9,14 +9,8 @@ export default defineEventHandler(async (event) => {
   const year = query.year ? parseInt(query.year) : null
   const month = query.month ? parseInt(query.month) : null
 
-  // splits has no householdId column; filter via the linked receipt
   const splits = await db.query.splits.findMany({
-    where: inArray(
-      schema.splits.receiptId,
-      db.select({ id: schema.receipts.id })
-        .from(schema.receipts)
-        .where(eq(schema.receipts.householdId, householdId)),
-    ),
+    where: eq(schema.splits.householdId, householdId),
     with: {
       receipt: {
         columns: {

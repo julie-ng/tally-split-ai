@@ -125,9 +125,7 @@ export const splits = pgTable('splits', {
   // (a split never moves households). Set explicitly rather than derived via
   // receiptId so standalone splits (receiptId null) are still reachable and
   // authZ has one code path. Write-once: no request/update schema accepts it.
-  // TEMPORARILY NULLABLE for the backfill — re-add .notNull() after running
-  // seed-split-household-ids.js. See run sequence in JOURNAL.md / SCHEMA.md.
-  householdId: text('household_id').references(() => households.id, { onDelete: 'restrict' }),
+  householdId: text('household_id').notNull().references(() => households.id, { onDelete: 'restrict' }),
 
   // Split details
   splitAmount: real('split_amount').notNull(), // Amount to split (defaults to receipt total)

@@ -55,15 +55,13 @@ async function authorizeUser (db, event, { householdId, uploadId, receiptId, spl
   }
 
   if (splitId) {
-    // splits has no householdId column — derive via receipt
-    const [row] = await db
-      .select({ householdId: schema.receipts.householdId })
+    const [split] = await db
+      .select({ householdId: schema.splits.householdId })
       .from(schema.splits)
-      .leftJoin(schema.receipts, eq(schema.splits.receiptId, schema.receipts.id))
       .where(eq(schema.splits.id, splitId))
       .limit(1)
 
-    if (!row?.householdId || row.householdId !== householdId) {
+    if (!split?.householdId || split.householdId !== householdId) {
       logSecurityEvent(event, 'warn', { householdId, splitId, reason: 'split_not_household_member' }, 'Authorization denied')
       throw createError({ statusCode: 404, message: 'Not found' })
     }
@@ -134,15 +132,14 @@ async function authorizeTask (db, event, { workflowRun, taskId, uploadId, receip
 
       receiptSplitId = existingSplit?.id ?? null
 
-      // For first-time linking, derive split's householdId via its receipt
+      // For first-time linking, read the split's own householdId column
       if (!receiptSplitId) {
-        const [row] = await db
-          .select({ householdId: schema.receipts.householdId })
+        const [split] = await db
+          .select({ householdId: schema.splits.householdId })
           .from(schema.splits)
-          .leftJoin(schema.receipts, eq(schema.splits.receiptId, schema.receipts.id))
           .where(eq(schema.splits.id, splitId))
           .limit(1)
-        splitHouseholdId = row?.householdId ?? null
+        splitHouseholdId = split?.householdId ?? null
       }
     }
 

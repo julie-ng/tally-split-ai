@@ -1,0 +1,1 @@
+ALTER TABLE "splits" ALTER COLUMN "household_id" SET NOT NULL;
