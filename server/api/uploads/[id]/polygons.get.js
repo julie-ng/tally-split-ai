@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // TODO: Remove tmp file fallback once all uploads have ocrJson in DB
+  // eslint-disable-next-line no-useless-assignment
   let analysisData = null
 
   if (upload.ocrJson) {

@@ -26,6 +26,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Try DB first (new workflow stores ocrJson), fall back to tmp file (legacy)
+  // eslint-disable-next-line no-useless-assignment
   let analysisData = null
 
   if (upload.ocrJson) {

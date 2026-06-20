@@ -26,6 +26,7 @@ export const receiptWorkflow = task({
     await updateWorkflowStatus(authHeaders, { status: WORKFLOW_STATUS.PROCESSING })
 
     let hasStepErrors = false
+    // eslint-disable-next-line no-useless-assignment
     let receiptId = null
     let splitId = null
 

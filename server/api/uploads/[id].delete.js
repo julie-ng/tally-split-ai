@@ -54,6 +54,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Delete Azure blobs for this upload
+  // eslint-disable-next-line no-useless-assignment
   let blobsDeletionResults = { originalBlob: false, thumbnail: false }
   try {
     blobsDeletionResults = await deleteAzureBlobs(log, upload)
