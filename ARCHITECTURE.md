@@ -19,7 +19,7 @@ Postgres expects long-lived connections but serverless is ephemeral and short-li
 _Diagram - "Supavisor" Connection Pooler (Source: Supabase)_
 
 > [!NOTE]
-- We are not using Fluid compute referenced in Vercel article. But some best practices still apply.
+> We are **not** using Fluid compute referenced in Vercel article. But some best practices still apply.
 
 #### References
 
