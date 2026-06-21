@@ -62,7 +62,13 @@ export const normalizeReceipt = task({
         originalFilename: upload.originalFilename,
       })
 
-      logger.log(`Normalize result for ${uploadId}`, result)
+      logger.log(`Normalize result for ${uploadId}`, {
+        hasTitle: !!result.title,
+        filenameIsHumanNamed: result.filenameIsHumanNamed,
+        hasDate: !!result.date,
+        hasTime: !!result.time,
+        model: result.model,
+      })
 
       // 6. Build receipt update — always write date and time
       const updates = {
@@ -83,7 +89,12 @@ export const normalizeReceipt = task({
       await updateWorkflowStatus(authHeaders, { normalizeStatus: WORKFLOW_STEP_STATUS.COMPLETED })
       await notifyStatus(runUuid, WORKFLOW_STEP.NORMALIZE, 'completed', authHeaders)
 
-      logger.log(`Normalize complete for ${uploadId}`, { receiptId, ...updates })
+      logger.log(`Normalize complete for ${uploadId}`, {
+        receiptId,
+        date: updates.date,
+        time: updates.time,
+        titleUpdated: 'title' in updates,
+      })
 
       return { receiptId, ...result }
     }

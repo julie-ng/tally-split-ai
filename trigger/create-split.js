@@ -63,7 +63,7 @@ export const createSplit = task({
       await updateWorkflowStatus(authHeaders, { createSplitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
       await notifyStatus(runUuid, WORKFLOW_STEP.SPLIT, 'completed', authHeaders)
 
-      logger.log(`Split created for receipt ${receiptId}`, { splitId, splitAmount, amountSource })
+      logger.log(`Split created for receipt ${receiptId}`, { splitId, amountSource })
 
       return { splitId, splitAmount, amountSource }
     }

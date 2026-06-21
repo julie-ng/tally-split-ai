@@ -62,7 +62,14 @@ export const adjustSplit = task({
         customInstructions,
       })
 
-      logger.log(`Adjust-split result for ${uploadId}`, result)
+      logger.log(`Adjust-split result for ${uploadId}`, {
+        hasPaidBy: result.paidBy != null,
+        hasAdjustedTotal: result.adjustedTotal != null,
+        confidence: result.confidence,
+        amountConfidence: result.amountConfidence,
+        payerConfidence: result.payerConfidence,
+        model: result.model,
+      })
 
       // 6. Compute share amounts (50/50 default; null adjustedTotal lets the
       // endpoint keep the existing splitAmount)
@@ -96,9 +103,8 @@ export const adjustSplit = task({
 
       logger.log(`Adjust-split complete for ${uploadId}`, {
         splitId,
-        originalTotal: result.originalTotal,
-        adjustedTotal: result.adjustedTotal,
-        paidByInitials: result.paidBy,
+        hasAdjustedTotal: result.adjustedTotal != null,
+        hasPaidBy: result.paidBy != null,
         amountConfidence: result.amountConfidence,
         payerConfidence: result.payerConfidence,
       })
