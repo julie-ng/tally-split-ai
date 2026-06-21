@@ -39,7 +39,8 @@ As part of my pivot to AI Engineering and Architecture, I decided to build my ow
 | [GPT-4o](https://openai.com/gpt-4o) | Handwritten annotation detection |
 | [GPT-4o-mini](https://openai.com/gpt-4o-mini) | Receipt normalization & split adjustment |
 
-Note: I chose [Trigger.dev](https://trigger.dev) over [Vercel Workflows](https://vercel.com/workflows) for its developer experience and stronger feature set, for example, durable compute, remote-controlled execution.
+> [!NOTE] 
+> I chose [Trigger.dev](https://trigger.dev) over [Vercel Workflows](https://vercel.com/workflows) for its developer experience and stronger feature set, for example, durable compute, remote-controlled execution.
 
 ## Security
 
@@ -50,7 +51,7 @@ Highlights of the AuthN / AuthZ design (see [`docs/SECURITY.md`](./docs/SECURITY
 - **Cryptographic scope binding.** The token's scope is part of the signed HMAC payload, not a separate header — tampering invalidates the token. Verification uses `crypto.timingSafeEqual` and enforces a server-side expiry window.
 - **Household isolation at the query layer.** Every resource read filters by the caller's household; resource-by-id reads go through a `requireAuthorization` guard that returns 404 (not 403) on mismatch to avoid leaking existence.
 - **Sessions hold identity + authZ scope only.** Domain data lives in Pinia stores / DB queries, not in the session.
-- **User decides what personal information to send.** The app can only send user initials to AI and agents with receipts. However, the user can ***choose*** to provide that information in **custom instructions** for their household to increase receipt analysis and payer assignment accuraacy.
+- **User decides what personal information to send.** The app can only send user initials to AI and agents with receipts. However, the user can ***choose*** to provide that information in **custom instructions** for their household to increase receipt analysis and payer assignment accuracy.
 
 ### Local Development
 
@@ -59,7 +60,7 @@ Note: offline development is not possible due to Azure, LLM, and Trigger.dev dep
 #### Postgres
 
 ```bash
-docker compose up -f docker-compose.dev.yaml -d
+docker compose -f docker-compose.dev.yaml up -d
 ```
 
 #### Nuxt App
@@ -94,7 +95,7 @@ Open https://local.drizzle.studio/
 
 ## Docs
 
-_As of April 2025, docs are scattered brain dumps. Clean up needed._
+The docs are semi-scattered brain dumps. 
 
 | Path | Target Audience |
 |:--|:--|
@@ -133,7 +134,7 @@ _As of April 2025, docs are scattered brain dumps. Clean up needed._
 
 #### Workflow Orchestration
 
-- [x] Trigger.dev orchestrator: OCR → annotations → split creation → adjust split
+- [x] Trigger.dev orchestrator: OCR → annotations → normalize → split creation → adjust split
 - [x] Per-step progress tracking in `workflow_runs` table
 - [x] HMAC-authenticated HTTP API for tasks (no direct DB access)
 - [x] Action-scoped tokens — minimum permissions per child task
