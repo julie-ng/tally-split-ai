@@ -2,6 +2,9 @@
 
 Analyze receipts incl. handwritten annotations with AI analysis to auto-adjust totals and assign payers based on custom instructions.
 
+> [!IMPORTANT]
+> This is a personal app I built to solve a personal problem. It is open-sourced under the MIT license **for learning purposes**. On a best-effort basis, it aims to demonstrate sound architecture and engineering practices. It is **not** a product, not intended for distribution, and not meant to run out-of-the-box for others.
+
 ![](./public/images/screenshots/v0-preview-medium.webp)
 
 #### Use Case
@@ -55,7 +58,10 @@ Highlights of the AuthN / AuthZ design (see [`docs/SECURITY.md`](./docs/SECURITY
 - **Sessions hold identity + authZ scope only.** Domain data lives in Pinia stores / DB queries, not in the session.
 - **User decides what personal information to send.** The app can only send user initials to AI and agents with receipts. However, the user can ***choose*** to provide that information in **custom instructions** for their household to increase receipt analysis and payer assignment accuracy.
 
-### Local Development
+> [!IMPORTANT]
+> If you find a security issue or bug, please feel free to [open an issue](https://github.com/julie-ng/tally-split-ai/issues/new) or [email me](mailto:hello@julie.io). Cheers.
+
+## Local Development
 
 Note: offline development is not possible due to Azure, LLM, and Trigger.dev dependencies.
 
