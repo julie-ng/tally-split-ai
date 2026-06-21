@@ -97,10 +97,9 @@ export default defineEventHandler(async (event) => {
 
   log.info({ splitId, paidByMatch: after.paidByMatch }, 'Resolved split via task callback')
 
-  return {
-    success: true,
-    updated: after,
-  }
+  // Task-only endpoint (HMAC principal). Return an acknowledgment, not the row —
+  // a write-scoped token must not gain an incidental read of the full split.
+  return { success: true }
 })
 
 /**
