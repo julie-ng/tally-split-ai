@@ -26,6 +26,7 @@ As part of my pivot to AI Engineering and Architecture, I decided to build my ow
 |:--|:--|
 | [Nuxt](https://nuxt.com) | Full-stack web app (UI + API) |
 | [Postgres](https://www.postgresql.org) | Database for receipts, splits, and workflow state |
+| [SQLite](https://www.sqlite.org) | SQLite DB for [@nuxt/content](https://content.nuxt.com/) to serve the landing page. |
 
 ### Infrastructure
 
@@ -34,6 +35,7 @@ As part of my pivot to AI Engineering and Architecture, I decided to build my ow
 | [Vercel](https://vercel.com) | App Platform that automatically deploys my application as serverless functions. |
 | [Trigger.dev](https://trigger.dev) | Platform for fully managed workflows (agent) and orchestration. |
 | [Supabase](https://supabase.com) | Postgres development platform with built-in features and optimizations for serverless functions. |
+| [Turso](https://turso.tech) | Hosted libSQL for [@nuxt/content](https://content.nuxt.com/), not Postgres: Nuxt Content needs the `pg` driver, which conflicts with the `postgres-js` driver Supabase's pooler requires. |
 | [Azure Blob Storage](https://learn.microsoft.com/en-us/azure/storage/blobs/) | Receipt photo storage (direct client uploads via SAS) |
 | [Azure Document Intelligence](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/) | OCR for receipts (`prebuilt-receipt` model) |
 | [GPT-4o](https://openai.com/gpt-4o) | Handwritten annotation detection |

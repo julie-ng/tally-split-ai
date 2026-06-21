@@ -4,7 +4,15 @@ Note: "chunks" (generic) and "blocks" (Azure specific) are used interchangeably.
 
 ## Database
 
-I chose Supabase for Postgres and Web Sockets support.
+Two databases, split by purpose:
+
+| Data | Engine | Infra provider |
+|:--|:--|:--|
+| Application data ) | Postgres | [Supabase](https://supabase.com/) |
+| Static website content | SQLite | [Turso](https://turso.tech/) |
+
+> [!NOTE]
+> Content uses Turso (not Supabase) because [@nuxt/content](https://content.nuxt.com/)'s Postgres adapter needs the `pg` driver, which conflicts with the `postgres-js` driver Supabase's transaction pooler requires.
 
 ### Database Connections in Serverless 
 
