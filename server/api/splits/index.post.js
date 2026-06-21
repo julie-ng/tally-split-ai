@@ -41,6 +41,28 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Cannot resolve household for split' })
   }
 
+  // Idempotency: a receipt has at most one split. The create-split task can
+  // retry (Trigger.dev maxAttempts), so if a split already exists for this
+  // receipt, return it instead of inserting a duplicate. Standalone splits
+  // (no receiptId) have no uniqueness key and always insert.
+  if (result.data.receiptId) {
+    const [existing] = await db
+      .select()
+      .from(schema.splits)
+      .where(eq(schema.splits.receiptId, result.data.receiptId))
+      .limit(1)
+
+    if (existing) {
+      log.info({ splitId: existing.id, receiptId: result.data.receiptId }, 'Split already exists for receipt — returning existing')
+      setResponseStatus(event, 200)
+      return {
+        success: true,
+        alreadyExisted: true,
+        created: existing,
+      }
+    }
+  }
+
   // Auto-assign userOneId/userTwoId slots from the split's household.
   // Slot order is users.createdAt ASC — stable across all splits in a household.
   // Demo households may have only one member; userTwoId stays null in that case.
@@ -84,8 +106,10 @@ export default defineEventHandler(async (event) => {
 
   log.info({ splitId: created.id }, 'Split created')
 
+  setResponseStatus(event, 201)
   return {
     success: true,
+    alreadyExisted: false,
     created,
   }
 })
