@@ -23,12 +23,13 @@ const props = defineProps({
 
 const textSize = computed(() => props.relaxedLineHeight ? 'text-sm/relaxed' : 'text-sm')
 
-// Format address: if it has a single comma followed by space and 5 digits (postal code),
-// replace ", " with a line break
-const formattedAddress = computed(() => {
-  if (!props.address) return ''
-  // Match: single comma, space, then 5 digits (German postal code pattern)
-  return props.address.replace(/, (\d{5})/, '<br>$1')
+// Split the address into lines for display: break before a German postal code
+// (single comma, space, then 5 digits). Returned as an array so the template
+// renders each line as escaped text — never raw HTML.
+const addressLines = computed(() => {
+  if (!props.address) return []
+  // Insert a delimiter before the postal code, then split on it.
+  return props.address.replace(/, (\d{5})/, '\n$1').split('\n')
 })
 </script>
 
@@ -37,8 +38,11 @@ const formattedAddress = computed(() => {
     <h1 class="text-slate-500 font-medium">
       {{ name }}
     </h1>
-    <!-- eslint-disable-next-line vue/no-v-html -->
-    <p v-if="address" class="text-slate-500" v-html="formattedAddress" />
+    <p v-if="address" class="text-slate-500">
+      <template v-for="(line, i) in addressLines" :key="i">
+        <br v-if="i > 0">{{ line }}
+      </template>
+    </p>
     <p v-if="phone" class="text-slate-500">
       {{ phone }}
     </p>
