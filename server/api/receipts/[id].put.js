@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
     updatedAt: new Date(),
   }
 
-  const after = await db.transaction(async (tx) => {
+  await db.transaction(async (tx) => {
     // Lock + read current state
     const [before] = await tx
       .select()
@@ -60,14 +60,11 @@ export default defineEventHandler(async (event) => {
       source: event.context.securityPrincipal,
       sourceVersion: llm?.sourceVersion ?? null,
     }, before, updated)
-
-    return updated
   })
 
   log.info({ receiptId }, 'Updated receipt')
 
-  return {
-    success: true,
-    updated: after,
-  }
+  // Acknowledgment only — do not return the row. A write-scoped token must not
+  // gain an incidental read of the full receipt. The client re-fetches.
+  return { success: true }
 })

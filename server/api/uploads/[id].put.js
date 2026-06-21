@@ -48,8 +48,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  return {
-    success: true,
-    updated: dbResult[0],
-  }
+  // Acknowledgment only — do not return the row. A write-scoped token must not
+  // gain an incidental read of the full upload. The client re-fetches.
+  return { success: true }
 })

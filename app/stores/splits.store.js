@@ -333,21 +333,20 @@ export const useSplitsStore = defineStore('splits', () => {
     errors.value[id] = null
 
     try {
-      // Call backend API
-      const result = await $fetch(`/api/splits/${id}`, {
+      // Call backend API. The PUT returns only { success: true } — it does not
+      // echo the row back (so a write-scoped token can't read it). Re-fetch the
+      // authoritative split (with its receipt join) to reconcile the optimistic
+      // update. Clear the cache entry first so fetchSplit doesn't short-circuit.
+      await $fetch(`/api/splits/${id}`, {
         method: 'PUT',
         body: payload,
       })
 
-      // Merge server response onto the existing entry. The PUT endpoint
-      // returns a bare split (no `receipt` join), so a full replacement
-      // would clobber nested fields populated by the list endpoint.
-      if (result.updated) {
-        splits.value[id] = { ...splits.value[id], ...result.updated }
-      }
+      delete splits.value[id]
+      const fresh = await fetchSplit(id)
 
       _log(`[SplitsStore] ✅ updated split: ${id}`)
-      return result.updated
+      return fresh
     }
     catch (err) {
       // Rollback optimistic update on error

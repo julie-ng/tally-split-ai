@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
     updates.settledAt = null
   }
 
-  const after = await db.transaction(async (tx) => {
+  await db.transaction(async (tx) => {
     // Lock + read current state
     const [before] = await tx
       .select()
@@ -84,14 +84,11 @@ export default defineEventHandler(async (event) => {
       reasoning: llm?.reasoning ?? null,
       fieldConfidence: llm?.fieldConfidence ?? null,
     }, before, updated)
-
-    return updated
   })
 
   log.info({ splitId }, 'Updated split')
 
-  return {
-    success: true,
-    updated: after,
-  }
+  // Acknowledgment only — do not return the row. A write-scoped token must not
+  // gain an incidental read of the full split. The client re-fetches.
+  return { success: true }
 })
