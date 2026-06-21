@@ -50,6 +50,13 @@
       "when": 1781963311667,
       "tag": "0006_fine_texas_twister",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1782046176831,
+      "tag": "0007_pretty_sabretooth",
+      "breakpoints": true
     }
   ]
 }

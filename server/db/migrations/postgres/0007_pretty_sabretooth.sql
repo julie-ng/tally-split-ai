@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "splits_receipt_id_unique" ON "splits" USING btree ("receipt_id") WHERE "splits"."receipt_id" IS NOT NULL;

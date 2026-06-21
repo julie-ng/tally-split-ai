@@ -1,5 +1,5 @@
 import { pgTable, text, integer, bigint, serial, real, boolean, timestamp, jsonb, uuid, uniqueIndex } from 'drizzle-orm/pg-core'
-import { relations } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 import { PAID_BY_MATCHES } from '#shared/enums/paid-by-match.js'
 import { RECEIPT_ANALYSIS_STATUSES } from '#shared/enums/receipt-analysis-status.js'
 import { UPLOAD_ANALYSIS_STATUSES } from '#shared/enums/upload-analysis-status.js'
@@ -154,7 +154,15 @@ export const splits = pgTable('splits', {
   // Timestamps
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
-})
+}, table => [
+  // A receipt has at most one split (permanent invariant). Partial index so
+  // standalone splits (receiptId null) are exempt — multiple null-receiptId
+  // splits are allowed. Belt-and-suspenders with the check-first guard in
+  // POST /api/splits.
+  uniqueIndex('splits_receipt_id_unique')
+    .on(table.receiptId)
+    .where(sql`${table.receiptId} IS NOT NULL`),
+])
 
 /**
  * Workflow runs table - tracks analysis workflow orchestration
