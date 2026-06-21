@@ -2,19 +2,10 @@
 
 Julie written for human understanding.
 
----
-
 ## Database Schema
 
 - [SCHEMA.md](./SCHEMA.md)  
   Tables, relationships, and status enums. Single source of truth for the data model.
-
----
-
-## Frontend Architecture
-
-- [frontend-architecture.md](./frontend-architecture.md)  
-  Component and Pinia store roles in the upload flow, with sequence diagram
 
 #### References
 
