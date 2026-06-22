@@ -21,12 +21,13 @@ resource "azurerm_resource_group" "project" {
 }
 
 resource "azurerm_storage_account" "blobs" {
-  name                     = local.storage_account_name
-  resource_group_name      = azurerm_resource_group.project.name
-  location                 = azurerm_resource_group.project.location
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
-  account_kind             = "StorageV2"
+  name                      = local.storage_account_name
+  resource_group_name       = azurerm_resource_group.project.name
+  location                  = azurerm_resource_group.project.location
+  account_tier              = "Standard"
+  account_replication_type  = "LRS"
+  account_kind              = "StorageV2"
+  shared_access_key_enabled = true # needed for SAS tokens
 
   # Imporant - the blob container is intentionally wide open
   # so user can upload directly to Azure, not via our app.
