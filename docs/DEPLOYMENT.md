@@ -26,30 +26,11 @@ _Automated Deployments._ Connected to GitHub.
 - `NUXT_OAUTH_GITHUB_CLIENT_ID`
 - `NUXT_OAUTH_GITHUB_CLIENT_SECRET`
 
-## Trigger
+## Trigger.dev
 
-### Automated
+### GitHub Integration
 
-Production deployments via GitHub Workflow. See [deploy-trigger.yml](./../.github/workflows/deploy-trigger.yml).
-
-### Manual Deployments
-
-Manually set the required environment variables
-
-```
-TRIGGER_PROJECT_ID_DEV="" 
-TRIGGER_PROJECT_ID_PROD=""
-```
-
-Then run accordingly
-
-```bash
-# Deploy to dev
-npm run trigger:deploy:dev
-
-# OR to production
-npm run trigger:deploy:prod
-```
+Production deployments are automated via [GitHub integration](https://trigger.dev/docs/github-integration). 
 
 #### Required Infra Config
 
