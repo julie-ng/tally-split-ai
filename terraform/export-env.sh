@@ -18,7 +18,7 @@ if [[ $# -lt 1 ]]; then
 fi
 
 ENV_NAME="$1"
-EXPECTED_PATH="terraform.${ENV_NAME}.tfstate"
+EXPECTED_KEY="terraform.${ENV_NAME}.tfstate"
 OUT_FILE="../.env.azure.${ENV_NAME}"
 
 if ! command -v jq >/dev/null 2>&1; then
@@ -28,17 +28,18 @@ fi
 
 # Verify the currently-initialized backend matches the requested env.
 BACKEND_CONFIG=".terraform/terraform.tfstate"
+INIT_CMD="terraform init -backend-config=backends/${ENV_NAME}.hcl -backend-config=backends/tfstate.hcl -reconfigure"
 if [[ ! -f "$BACKEND_CONFIG" ]]; then
-  echo "error: $BACKEND_CONFIG missing — run 'terraform init -backend-config=backends/${ENV_NAME}.hcl -reconfigure' first" >&2
+  echo "error: $BACKEND_CONFIG missing — run '${INIT_CMD}' first" >&2
   exit 1
 fi
 
-CURRENT_PATH=$(jq -r '.backend.config.path // ""' "$BACKEND_CONFIG")
-if [[ "$CURRENT_PATH" != "$EXPECTED_PATH" ]]; then
+CURRENT_KEY=$(jq -r '.backend.config.key // ""' "$BACKEND_CONFIG")
+if [[ "$CURRENT_KEY" != "$EXPECTED_KEY" ]]; then
   echo "error: backend mismatch" >&2
-  echo "  requested env: $ENV_NAME (expected $EXPECTED_PATH)" >&2
-  echo "  currently initialized: $CURRENT_PATH" >&2
-  echo "  fix:  terraform init -backend-config=backends/${ENV_NAME}.hcl -reconfigure" >&2
+  echo "  requested env: $ENV_NAME (expected $EXPECTED_KEY)" >&2
+  echo "  currently initialized: $CURRENT_KEY" >&2
+  echo "  fix:  ${INIT_CMD}" >&2
   exit 1
 fi
 
