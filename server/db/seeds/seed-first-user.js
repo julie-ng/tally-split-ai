@@ -5,41 +5,38 @@
  * set — OAuth login only refreshes existing users, so the very first user
  * has to be inserted out-of-band).
  *
- * Loads .env.supabase.<SUPABASE_ENV> (defaults to "dev") and reads:
- *   - SUPABASE_DATABASE_URL — required
+ * Reads from the runtime environment (injected per-environment, e.g. via password management tool):
+ *   - NUXT_DATABASE_URL — required, Postgres connection string
  *   - TALLY_INITIAL_GITHUB_USER — required, GitHub username (login)
+ *
+ * The target database (local / dev / prod) is selected by the environment the
+ * command runs under, not by a flag.
  *
  * Idempotent: skips if a user with the resolved githubId already exists.
  *
  * Run with:
- *   SUPABASE_ENV=dev  npx tsx server/db/seeds/seed-first-user.js
- *   SUPABASE_ENV=prod npx tsx server/db/seeds/seed-first-user.js
+ *   npm run db:init-user
  */
 
 import pg from 'pg'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { eq } from 'drizzle-orm'
-import { config } from 'dotenv'
 import * as schema from '#server/db/schema.ts'
 import { deriveInitials } from '#shared/utils/initials.utils.js'
 
-const env = process.env.SUPABASE_ENV ?? 'dev'
-const envFile = `.env.supabase.${env}`
-config({ path: envFile })
-
-if (!process.env.SUPABASE_DATABASE_URL) {
-  throw new Error(`SUPABASE_DATABASE_URL is not set in ${envFile}`)
+if (!process.env.NUXT_DATABASE_URL) {
+  throw new Error('NUXT_DATABASE_URL is not set')
 }
 if (!process.env.TALLY_INITIAL_GITHUB_USER) {
-  throw new Error(`TALLY_INITIAL_GITHUB_USER is not set in ${envFile}`)
+  throw new Error('TALLY_INITIAL_GITHUB_USER is not set')
 }
 
 const githubUsername = process.env.TALLY_INITIAL_GITHUB_USER
-const pool = new pg.Pool({ connectionString: process.env.SUPABASE_DATABASE_URL })
+const pool = new pg.Pool({ connectionString: process.env.NUXT_DATABASE_URL })
 const db = drizzle(pool, { schema })
 
 async function seedFirstUser () {
-  console.log(`Seeding first user from ${envFile}: ${githubUsername}\n`)
+  console.log(`Seeding first user: ${githubUsername}\n`)
 
   const ghResponse = await fetch(`https://api.github.com/users/${encodeURIComponent(githubUsername)}`, {
     headers: {

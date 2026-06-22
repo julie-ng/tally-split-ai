@@ -17,11 +17,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "db:init-user:local": "SUPABASE_ENV=local tsx server/db/seeds/seed-first-user.js",
-    "db:init-user:dev": "SUPABASE_ENV=dev tsx server/db/seeds/seed-first-user.js",
-    "db:init-user:prod": "SUPABASE_ENV=prod tsx server/db/seeds/seed-first-user.js",
-    "supabase:migrate:dev": "SUPABASE_ENV=dev drizzle-kit migrate --config drizzle.supabase.ts",
-    "supabase:migrate:prod": "SUPABASE_ENV=prod drizzle-kit migrate --config drizzle.supabase.ts",
+    "db:init-user": "tsx server/db/seeds/seed-first-user.js",
     "trigger:dev": "trigger dev"
   },
   "imports": {

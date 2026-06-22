@@ -40,52 +40,39 @@ Production deployments are automated via [GitHub integration](https://trigger.de
 - `AZURE_GPT4O_KEY`
 - `NUXT_PUBLIC_URL` (the deployed Vercel URL — used for API callbacks)
 
-## Database/Supabase
+## Supabase (DB)
 
-_Manual Deployment_
-
-### CLI
-
-```bash
-supabase login
-supabase link --project-ref [PROJECT_ID]
-supabase db push
-supabase db pull
-```
+The Supabase Postgres databases (dev / prod) are the app's primary datastore. There is nothing to "deploy" — schema changes are applied as Drizzle migrations, and the target database is selected by the environment the command runs under (injected via password management tool), not by a flag.
 
 ### Connection String
 
-Note: Because Vercel doesn't support IPv6, we need to use a Shared Pooler, which can be found in the [Project > Connect Panel](https://supabase.com/dashboard/project/_?showConnect=true), 
+Note: Because Vercel doesn't support IPv6, we need to use a Shared Pooler, which can be found in the [Project > Connect Panel](https://supabase.com/dashboard/project/_?showConnect=true).
 
 Pluck out the info to manually construct the connection string:
 
 ```
-postgresql://[USER]:[PASSWORD]]@name-1.pooler.supabase.com:5432/[DBNAME]
+postgresql://[USER]:[PASSWORD]@name-1.pooler.supabase.com:5432/[DBNAME]
 ```
+
+Set this as `NUXT_DATABASE_URL` — the single connection-string variable used everywhere (app, migrations, and seeds).
 
 ### Migrations
 
-Ensure `SUPABASE_DATABASE_URL` is set in an environment specific file, e.g. `.env.supabase.dev`, which is used by [drizzle.supabase.ts](./../drizzle.supabase.ts).
-
-Then use these npm scripts to use `drizzle-kit` with Supabase.
+Migrations are Drizzle-driven (`drizzle.config.ts` reads `NUXT_DATABASE_URL`). Run under the environment that injects the target database's `NUXT_DATABASE_URL` (e.g. via password management tool):
 
 ```bash
-# Migrate dev
-npm run supabase:migrate:dev
-
-# OR migrate prod
-npm run supabase:migrate:prod
+npm run db:migrate
 ```
 
 > [!TIP]
-> **Security Tip** - do not inline environment variables that contain secrets, e.g. database URLs, which will be saved in your bash history and/or logged by shell tools, hooks and monitoring. Hence my workflow above.
+> **Security Tip** - do not inline environment variables that contain secrets, e.g. database URLs, which will be saved in your bash history and/or logged by shell tools, hooks and monitoring. Inject them at runtime (e.g. via password management tool) instead.
 
 ### Seed First User
 
-Account sign-ups are disabled. Seed first user, who can add others to the household by configuring `SUPABASE_ENV` to `dev` or `prod` and `TALLY_INITIAL_GITHUB_USER` and then running:
+Account sign-ups are disabled. Seed the first user (who can then add others to the household) by setting `TALLY_INITIAL_GITHUB_USER` and running the script under the environment for the target database (e.g. injected via password management tool):
 
 ```bash
-npx tsx server/db/seeds/seed-first-user.js
+npm run db:init-user
 ```
 
 #### Drizzle Docs

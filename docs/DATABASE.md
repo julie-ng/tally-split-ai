@@ -10,23 +10,15 @@ Day-to-day commands for schema changes, migrations, backfills, and seeds.
 - PostgreSQL + Drizzle ORM, `postgres` (postgres-js) driver
 - Local Postgres: `docker compose -f docker-compose.dev.yaml up -d`
 
-## Two Drizzle configs
+## Drizzle config
 
-| Config | Env var | Used by | Target |
-|:--|:--|:--|:--|
-| `drizzle.config.ts` | `NUXT_DATABASE_URL` | `db:generate`, `db:migrate`, `db:studio` | Local |
-| `drizzle.supabase.ts` | `SUPABASE_DATABASE_URL` (from `.env.supabase.${SUPABASE_ENV}`) | `supabase:migrate:dev`, `supabase:migrate:prod` | Supabase dev / prod |
-
-> [!NOTE]
-> Goal: move local dev onto Supabase too, collapsing to one config.
+One config — `drizzle.config.ts` — reads `NUXT_DATABASE_URL` for every target. The target database (local Docker / Supabase dev / Supabase prod) is selected by the environment the command runs under (e.g. injected via password management tool), not by a flag or a separate config.
 
 ## Commands
 
 ```bash
 npm run db:generate               # schema.ts change → migration SQL
-npm run db:migrate                # apply (local)
-npm run supabase:migrate:dev      # apply (Supabase dev)
-npm run supabase:migrate:prod     # apply (Supabase prod)
+npm run db:migrate                # apply (target = whichever NUXT_DATABASE_URL is injected)
 npm run db:studio                 # inspect (refresh after migrating — it caches schema)
 ```
 

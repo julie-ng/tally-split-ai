@@ -65,6 +65,28 @@ Highlights of the AuthN / AuthZ design (see [`docs/SECURITY.md`](./docs/SECURITY
 
 Note: offline development is not possible due to Azure, LLM, and Trigger.dev dependencies.
 
+#### `.env` configuration
+
+The `.env.sample` file describes which configuration is needed for the app to run. First, copy the file.
+
+```bash
+cp .env.sample .env 
+```
+
+Then open `.env` and fill in your own config values
+
+> [!TIP]
+> You can use the scripts in this repo's [Makefile](./Makefile) to generate some of the secret values.
+
+Finally, load the configuration.
+
+```bash
+. ./.env
+```
+
+> [!IMPORTANT]
+> You need to load the env config ***before*** every command below - except for `docker`.
+
 #### Postgres
 
 ```bash
@@ -73,10 +95,9 @@ docker compose -f docker-compose.dev.yaml up -d
 
 #### Nuxt App
 
-Load the `.env` configuration and start the app.
+After loading configuration from your custom `.env`, start the app.
 
 ```bash
-. ./.env
 npm run dev
 ```
 Open http://localhost:3000/
@@ -85,7 +106,7 @@ Open http://localhost:3000/
 
 Connect to trigger.dev (orchestrator) to use local machine as a worker/agent.
 
-```
+```bash
 npm run trigger:dev
 ```
 
