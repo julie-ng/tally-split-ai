@@ -1,12 +1,12 @@
 import crypto from 'node:crypto'
 import { serializeActions } from '#shared/config/task-permissions.js'
 
-function getSalt () {
-  const salt = process.env.WORKFLOW_CALLBACK_SALT
-  if (!salt) {
-    throw new Error('WORKFLOW_CALLBACK_SALT environment variable is not set')
+function getSecret () {
+  const secret = process.env.WORKFLOW_CALLBACK_SECRET
+  if (!secret) {
+    throw new Error('WORKFLOW_CALLBACK_SECRET environment variable is not set')
   }
-  return salt
+  return secret
 }
 
 /**
@@ -27,5 +27,5 @@ export function generateCallbackToken ({ runUuid, runCreatedAt, scope, actions }
     throw new Error('scope and actions are required for token generation')
   }
   const input = `${runUuid}|${runCreatedAt}|${scope}|${serializeActions(actions)}`
-  return crypto.createHmac('sha256', getSalt()).update(input).digest('hex')
+  return crypto.createHmac('sha256', getSecret()).update(input).digest('hex')
 }

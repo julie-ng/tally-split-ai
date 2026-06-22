@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { generateCallbackToken } from './generate-callback-token.js'
 
 beforeAll(() => {
-  process.env.WORKFLOW_CALLBACK_SALT = 'test-salt-for-unit-tests'
+  process.env.WORKFLOW_CALLBACK_SECRET = 'test-secret-for-unit-tests'
 })
 
 const sampleActions = ['upload:read', 'receipt:write']

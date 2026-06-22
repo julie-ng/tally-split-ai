@@ -263,7 +263,7 @@ Tokens are generated server-side when a user triggers a workflow (`POST /api/wor
 
 ```
 HMAC-SHA256(
-  key = WORKFLOW_CALLBACK_SALT,
+  key = WORKFLOW_CALLBACK_SECRET,
   input = "${runUuid}|${runCreatedAt}|${scope}|${sortedActions}"
 )
 ```
@@ -314,7 +314,7 @@ The scope is derived from the workflow run's linked upload. A token scoped to on
 | Scoped to | A single workflow run + resource + task actions (`runUuid + createdAt + scope + actions`) |
 | Expiry | `WORKFLOW_TOKEN_EXPIRY_MINUTES` (default 15 min) from `workflowRun.createdAt` |
 | Comparison | `crypto.timingSafeEqual` (prevents timing side-channel attacks) |
-| Secret | `WORKFLOW_CALLBACK_SALT` env var (server-side only) |
+| Secret | `WORKFLOW_CALLBACK_SECRET` env var (server-side only) |
 | Scope required | Yes — generating without scope or actions throws an error |
 
 ### Token Scoping Philosophy
@@ -408,7 +408,7 @@ Unit tests in `shared/config/task-permissions.test.js` additionally pin the **`t
 
 | Variable | Purpose |
 |:--|:--|
-| `WORKFLOW_CALLBACK_SALT` | Secret key for HMAC token generation/verification (required; app fails to start if missing) |
+| `WORKFLOW_CALLBACK_SECRET` | Secret key for HMAC token generation/verification (required; app fails to start if missing) |
 | `WORKFLOW_TOKEN_EXPIRY_MINUTES` | Token validity window (default: 15 minutes) |
 | `NUXT_SESSION_PASSWORD` | Seal password for user session cookies (min 32 chars; required). Rotating this invalidates all outstanding sessions. |
 

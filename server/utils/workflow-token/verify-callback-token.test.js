@@ -3,7 +3,7 @@ import { generateCallbackToken } from './generate-callback-token.js'
 import { verifyCallbackToken } from './verify-callback-token.js'
 
 beforeAll(() => {
-  process.env.WORKFLOW_CALLBACK_SALT = 'test-salt-for-unit-tests'
+  process.env.WORKFLOW_CALLBACK_SECRET = 'test-secret-for-unit-tests'
 })
 
 const sampleParams = {
