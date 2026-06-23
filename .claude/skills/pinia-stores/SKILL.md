@@ -11,7 +11,7 @@ A store is a data management layer between frontend and backend that is scoped t
 
 `app/stores/{name}.store.js`
 
-Existing stores: `receipts.store.js`, `splits.store.js`, `uploads.store.js`, `upload-queue.store.js`, `user.store.js`
+Existing stores: `receipts.store.js`, `expenses.store.js`, `uploads.store.js`, `upload-queue.store.js`, `user.store.js`
 
 ## 2. Standard Structure
 

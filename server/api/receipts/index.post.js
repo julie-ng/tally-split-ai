@@ -23,11 +23,6 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // AuthZ: if linking to a split, verify principal can act on it
-  if (result.data.splitId) {
-    await guards.requireAuthorization(event, { splitId: result.data.splitId })
-  }
-
   const insertData = {
     userId,
     householdId,
