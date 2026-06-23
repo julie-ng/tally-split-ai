@@ -39,10 +39,8 @@ export default defineEventHandler(async (event) => {
   const blobUrl = azureStorageUtils.generateBlobUrl(blobPath)
   const thumbnailUrl = azureStorageUtils.generateBlobUrl(thumbnailPath)
 
-  // Extract receipt metadata from filename
+  // Extract receipt title from filename
   const receiptTitle = extractReceiptTitle(filename)
-  const receiptDate = extractReceiptDate(filename)
-  const receiptTotal = extractReceiptTotal(filename)
 
   // Insert record into uploads table
   const dbResult = await db.insert(schema.uploads).values({
@@ -56,8 +54,6 @@ export default defineEventHandler(async (event) => {
     thumbnailName: thumbnailPath,
     thumbnailUrl,
     originalFilename: filename,
-    receiptDate,
-    receiptTotal: receiptTotal ? parseFloat(receiptTotal) : null,
   }).returning()
 
   log.info({ id, blobUrl }, 'Upload record created')
