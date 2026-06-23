@@ -97,7 +97,7 @@ useHead({
 
           <div>
             <dt class="text-sm text-muted mb-1">
-              Splits paid
+              Expenses paid
             </dt>
             <dd class="text-sm font-medium">
               {{ usersStore.user.paidCount }}

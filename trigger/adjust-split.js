@@ -3,7 +3,7 @@ import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { azureOcrExtract } from '#server/utils/azure-ocr.utils.js'
 import { gpt4oUtils } from '#server/utils/azure-gpt4o.utils.js'
-import { calculateHalfAmount } from '#shared/utils/splits/half-amount.utils.js'
+import { calculateHalfAmount } from '#shared/utils/expenses/half-amount.utils.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
 import { notifyStatus } from './utils/notify-status.js'
 
@@ -13,13 +13,13 @@ export const adjustSplit = task({
   id: TASK_ID,
   maxDuration: 60,
   run: async (payload) => {
-    const { uploadId, splitId, runUuid, callbackToken, customInstructions } = payload
+    const { uploadId, expenseId, runUuid, callbackToken, customInstructions } = payload
     const authHeaders = { callbackToken, runUuid, taskId: TASK_ID }
     const api = createApiClient(authHeaders)
 
     // Update workflow step status
-    await updateWorkflowStatus(authHeaders, { adjustSplitStatus: WORKFLOW_STEP_STATUS.PROCESSING })
-    await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_SPLIT, 'processing', authHeaders)
+    await updateWorkflowStatus(authHeaders, { adjustExpenseStatus: WORKFLOW_STEP_STATUS.PROCESSING })
+    await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_EXPENSE, 'processing', authHeaders)
 
     try {
       // 1. Fetch upload for OCR and annotations data
@@ -31,8 +31,8 @@ export const adjustSplit = task({
       const hasAnnotations = !!upload.annotationsJson?.annotations?.length
       const hasCustomInstructions = !!customInstructions?.trim()
       if (!hasAnnotations && !hasCustomInstructions) {
-        await updateWorkflowStatus(authHeaders, { adjustSplitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-        await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_SPLIT, 'completed', authHeaders)
+        await updateWorkflowStatus(authHeaders, { adjustExpenseStatus: WORKFLOW_STEP_STATUS.COMPLETED })
+        await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_EXPENSE, 'completed', authHeaders)
 
         logger.log(`Skipped adjust-split for ${uploadId} — no annotations and no custom instructions`)
         return { skipped: true, reason: 'no_inputs' }
@@ -40,8 +40,8 @@ export const adjustSplit = task({
 
       // 3. Skip if no OCR data
       if (!upload.ocrJson) {
-        await updateWorkflowStatus(authHeaders, { adjustSplitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-        await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_SPLIT, 'completed', authHeaders)
+        await updateWorkflowStatus(authHeaders, { adjustExpenseStatus: WORKFLOW_STEP_STATUS.COMPLETED })
+        await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_EXPENSE, 'completed', authHeaders)
 
         logger.log(`Skipped adjust-split for ${uploadId} — no OCR data`)
         return { skipped: true, reason: 'no_ocr_data' }
@@ -50,7 +50,7 @@ export const adjustSplit = task({
       // 4. Extract condensed OCR data for LLM consumption
       const ocrData = azureOcrExtract.extractForLlm(upload.ocrJson)
       if (!ocrData) {
-        await updateWorkflowStatus(authHeaders, { adjustSplitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
+        await updateWorkflowStatus(authHeaders, { adjustExpenseStatus: WORKFLOW_STEP_STATUS.COMPLETED })
         logger.log(`Skipped adjust-split for ${uploadId} — no document fields`)
         return { skipped: true, reason: 'no_document_fields' }
       }
@@ -85,7 +85,7 @@ export const adjustSplit = task({
       if (result.adjustedTotal != null) fieldConfidence.splitAmount = result.amountConfidence
       if (result.paidBy != null) fieldConfidence.paidByUserId = result.payerConfidence
 
-      await api.post(`/api/splits/${splitId}/task`, {
+      await api.post(`/api/expenses/${expenseId}/task`, {
         adjustedTotal: result.adjustedTotal ?? null,
         userOneShare: halfAmount,
         userTwoShare: halfAmount,
@@ -99,11 +99,11 @@ export const adjustSplit = task({
       })
 
       // 8. Update workflow step status
-      await updateWorkflowStatus(authHeaders, { adjustSplitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-      await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_SPLIT, 'completed', authHeaders)
+      await updateWorkflowStatus(authHeaders, { adjustExpenseStatus: WORKFLOW_STEP_STATUS.COMPLETED })
+      await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_EXPENSE, 'completed', authHeaders)
 
       logger.log(`Adjust-split complete for ${uploadId}`, {
-        splitId,
+        expenseId,
         hasAdjustedTotal: result.adjustedTotal != null,
         hasPaidBy: result.paidBy != null,
         amountConfidence: result.amountConfidence,
@@ -111,16 +111,16 @@ export const adjustSplit = task({
       })
 
       return {
-        splitId,
+        expenseId,
         ...result,
       }
     }
     catch (err) {
       await updateWorkflowStatus(authHeaders, {
-        adjustSplitStatus: WORKFLOW_STEP_STATUS.FAILED,
-        errors: { [WORKFLOW_STEP.ADJUST_SPLIT]: err.message },
+        adjustExpenseStatus: WORKFLOW_STEP_STATUS.FAILED,
+        errors: { [WORKFLOW_STEP.ADJUST_EXPENSE]: err.message },
       })
-      await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_SPLIT, 'failed', authHeaders, err.message)
+      await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_EXPENSE, 'failed', authHeaders, err.message)
       throw err
     }
   },

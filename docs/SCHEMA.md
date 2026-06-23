@@ -31,10 +31,10 @@ Single source of truth for table structure, relationships, and status enums. Sch
                                      │                   │
                                      ◄───────────────────┘
                                      │
-                                  1:1 (canonical: splits.receiptId)
+                                  1:1 (canonical: expenses.receiptId)
                                      │
                               ┌──────▼───────┐
-                              │    splits    │
+                              │   expenses   │
                               └──────────────┘
 ```
 
@@ -45,13 +45,13 @@ Single source of truth for table structure, relationships, and status enums. Sch
 
    ┌──────────────┐          ┌──────────────────┐
    │   changes    │── 1:many │  receipt_history │  (per-field, per-mutation)
-   │              │── 1:many │  split_history   │
+   │              │── 1:many │  expense_history   │
    └──────────────┘          └──────────────────┘
 ```
 
 ## Households
 
-Groups of users that share receipts/uploads/splits.
+Groups of users that share receipts/uploads/expenses.
 
 > [!NOTE]
 > POC constraint: max 2 members per household. Enforced at API layer (the add-user endpoint), not DB.
@@ -166,7 +166,7 @@ Upload-level convenience field updated by the workflow orchestrator so the front
 | `COMPLETED` | `completed` | Orchestrator when workflow finishes |
 | `FAILED` | `failed` | (not yet implemented) |
 
-## Splits
+## Expenses
 
 Expense splitting between two household members.
 
@@ -176,7 +176,7 @@ Expense splitting between two household members.
 | Column | Type | Notes |
 |:--|:--|:--|
 | `id` | `text` PK | Generated via `generateId()` |
-| `receiptId` | `text` FK → `receipts.id` (cascade) | Canonical link; deleting the receipt deletes the split. Nullable — supports standalone splits |
+| `receiptId` | `text` FK → `receipts.id` (cascade) | Canonical link; deleting the receipt deletes the expense. Nullable — supports standalone expenses |
 | `householdId` | `text` NOT NULL FK → `households.id` | AuthZ scope; stamped once at creation, write-once. See note below |
 | `title` | `text` NOT NULL | User-facing label. Default `Untitled`; copied from the receipt's title at creation when linked, human-editable |
 | `splitAmount` | `real` NOT NULL | Total to split (defaults to receipt total) |
@@ -194,7 +194,7 @@ Expense splitting between two household members.
 ### `PAID_BY_MATCH`
 
 - **File:** `shared/enums/paid-by-match.js`
-- **Used in:** `splits.paid_by_match`
+- **Used in:** `expenses.paid_by_match`
 
 > [!IMPORTANT]
 > This enum is **frozen at LLM run time**. It is *not* updated when a human edits `paidByUserId`. It tracks LLM matching behavior only — analytics derive "human disagreed with LLM" from the `changes` history, not from this column.
@@ -206,10 +206,10 @@ Expense splitting between two household members.
 | `MISMATCHED` | `mismatched` | LLM ran, found initials, but no household member matched |
 | `MATCHED` | `matched` | LLM ran, found initials, mapped to a household member |
 
-`MATCHED` does **not** mean "the LLM was correct." It means "the LLM extracted something we could map to a member." Whether that mapping was *correct* is answered by human edit history in the `changes` table. See `v_split_metrics` (below) for the LLM-accuracy-vs-human-correction metric.
+`MATCHED` does **not** mean "the LLM was correct." It means "the LLM extracted something we could map to a member." Whether that mapping was *correct* is answered by human edit history in the `changes` table. See `v_expense_metrics` (below) for the LLM-accuracy-vs-human-correction metric.
 
 > [!NOTE]
-> AuthZ for splits reads `splits.householdId` directly. The column is **denormalized and write-once**: stamped at creation (inherited from the receipt when linking one, otherwise the acting principal's household) and never changed, because a split never moves households. This mirrors `uploads.householdId` and is what makes standalone splits (`receiptId` null) reachable — deriving via the receipt join would 404 them. No request/update schema accepts `householdId`, so it cannot be set or changed by clients (same immutability pattern as `paidByMatch`).
+> AuthZ for expenses reads `expenses.householdId` directly. The column is **denormalized and write-once**: stamped at creation (inherited from the receipt when linking one, otherwise the acting principal's household) and never changed, because an expense never moves households. This mirrors `uploads.householdId` and is what makes standalone expenses (`receiptId` null) reachable — deriving via the receipt join would 404 them. No request/update schema accepts `householdId`, so it cannot be set or changed by clients (same immutability pattern as `paidByMatch`).
 
 ## workflow_runs
 
@@ -224,10 +224,10 @@ Tracks Trigger.dev workflow orchestration. One row per workflow run.
 | `status` | enum | `WORKFLOW_STATUS` — overall state |
 | `ocrStatus` | enum | `WORKFLOW_STEP_STATUS` |
 | `annotationsStatus` | enum | `WORKFLOW_STEP_STATUS` |
-| `createSplitStatus` | enum | `WORKFLOW_STEP_STATUS` |
-| `adjustSplitStatus` | enum | `WORKFLOW_STEP_STATUS` |
+| `createExpenseStatus` | enum | `WORKFLOW_STEP_STATUS` |
+| `adjustExpenseStatus` | enum | `WORKFLOW_STEP_STATUS` |
 | `normalizeStatus` | enum | `WORKFLOW_STEP_STATUS` |
-| `errors` | `jsonb` | Per-step error messages keyed by step name (e.g. `{ ocr, annotations, adjustSplit, _orchestrator }`); null when no errors |
+| `errors` | `jsonb` | Per-step error messages keyed by step name (e.g. `{ ocr, annotations, adjustExpense, _orchestrator }`); null when no errors |
 | `createdAt`, `completedAt` | `timestamp` | |
 
 ### `WORKFLOW_STATUS`
@@ -248,7 +248,7 @@ These are **our own enums** — not mirroring Trigger.dev's internal statuses. T
 ### `WORKFLOW_STEP_STATUS`
 
 - **File:** `shared/enums/workflow-status.js`
-- **Used in:** `workflow_runs.ocr_status`, `annotations_status`, `create_split_status`, `adjust_split_status`, `normalize_status`
+- **Used in:** `workflow_runs.ocr_status`, `annotations_status`, `create_expense_status`, `adjust_expense_status`, `normalize_status`
 
 Tracks individual steps within a workflow run. Each step task updates its own column.
 
@@ -271,19 +271,19 @@ Names of individual workflow steps for UI/realtime updates.
 | `OCR` | `ocr` |
 | `ANNOTATIONS` | `annotations` |
 | `NORMALIZE` | `normalize` |
-| `SPLIT` | `createSplit` |
-| `ADJUST_SPLIT` | `adjustSplit` |
+| `EXPENSE` | `createExpense` |
+| `ADJUST_EXPENSE` | `adjustExpense` |
 | `WORKFLOW` | `workflow` |
 
 ## Changes + history tables
 
-Field-level audit trail for mutations on receipts and splits.
+Field-level audit trail for mutations on receipts and expenses.
 
 | Table | Purpose |
 |:--|:--|
 | `changes` | One row per mutation. Records `source` (`user:<userId>` or `task:<taskName>`), `sourceVersion` (e.g. model version), `confidence`, `reasoning`. |
 | `receipt_history` | One row per (changed field × change). Tracks `field`, `oldValue`, `newValue`, per-field `confidence`. |
-| `split_history` | Same shape, for splits. |
+| `expense_history` | Same shape, for expenses. |
 
 A single mutation creates one `changes` row + N `*_history` rows (one per changed field).
 
@@ -296,7 +296,7 @@ A single mutation creates one `changes` row + N `*_history` rows (one per change
    │  ...         │             ▼
    └──────────────┘     ┌──────────────────┐
                         │  receipt_history │
-                        │  split_history   │
+                        │  expense_history   │
                         │                  │
                         │  field           │
                         │  oldValue        │
@@ -305,29 +305,29 @@ A single mutation creates one `changes` row + N `*_history` rows (one per change
 ```
 
 > [!NOTE]
-> The `changes.source` format (`user:<userId>` vs `task:<taskName>`) is the basis for AI-vs-human attribution in `v_split_metrics`.
+> The `changes.source` format (`user:<userId>` vs `task:<taskName>`) is the basis for AI-vs-human attribution in `v_expense_metrics`.
 
-## `v_split_metrics` (view)
+## `v_expense_metrics` (view)
 
-Analytics view aggregating per-split LLM signals + human override flag. Read-only, joined from `splits`, `receipts`, `changes`, and `split_history`. Used by `GET /api/dashboard/metrics`.
+Analytics view aggregating per-expense LLM signals + human override flag. Read-only, joined from `expenses`, `receipts`, `changes`, and `expense_history`. Used by `GET /api/dashboard/metrics`.
 
 > [!NOTE]
-> Hand-written SQL migration (`0016_split_metrics_view.sql`) — Drizzle's relational query API does not model views. Queries use raw SQL via `db.execute(sql\`...\`)`.
+> Hand-written SQL migration (`the expense_metrics view migration`) — Drizzle's relational query API does not model views. Queries use raw SQL via `db.execute(sql\`...\`)`.
 
 > [!WARNING]
 > Hand-written view migrations: use `CREATE OR REPLACE VIEW` (not `CREATE VIEW`) for idempotency. Also: drizzle-kit's migrator skips a migration unless its journal `when` is strictly greater than the max `created_at` in `__drizzle_migrations` — so if a hand-written migration has a future `when`, every later auto-generated migration's `when` must be bumped above it manually, or drizzle silently no-ops with zero output.
 
 | Column | Source | Notes |
 |:--|:--|:--|
-| `split_id` | `splits.id` | |
-| `receipt_id` | `splits.receipt_id` | |
+| `expense_id` | `expenses.id` | |
+| `receipt_id` | `expenses.receipt_id` | |
 | `household_id` | `receipts.household_id` | Scope filter for all dashboard queries |
 | `receipt_date` | `receipts.date` | |
-| `paid_by_match` | `splits.paid_by_match` | Frozen LLM signal |
-| `is_settled` | `splits.is_settled` | |
-| `split_created_at` | `splits.created_at` | Used for activity windows |
-| `llm_confidence` | latest `task:*` row in `changes` joined via `split_history` | Null if LLM never ran |
-| `paid_by_overridden_by_human` | EXISTS check on `split_history.field = 'paidByUserId'` with `user:*` source | Boolean |
+| `paid_by_match` | `expenses.paid_by_match` | Frozen LLM signal |
+| `is_settled` | `expenses.is_settled` | |
+| `expense_created_at` | `expenses.created_at` | Used for activity windows |
+| `llm_confidence` | latest `task:*` row in `changes` joined via `expense_history` | Null if LLM never ran |
+| `paid_by_overridden_by_human` | EXISTS check on `expense_history.field = 'paidByUserId'` with `user:*` source | Boolean |
 
 ## Status enum cross-reference
 
@@ -339,9 +339,9 @@ Quick lookup for "where is this status used":
 | `UPLOAD_ANALYSIS_STATUS` | `uploads.analysis_status` |
 | `RECEIPT_ANALYSIS_STATUS` | `receipts.analysis_status` |
 | `WORKFLOW_STATUS` | `workflow_runs.status` |
-| `WORKFLOW_STEP_STATUS` | `workflow_runs.ocr_status`, `annotations_status`, `create_split_status`, `adjust_split_status`, `normalize_status` |
+| `WORKFLOW_STEP_STATUS` | `workflow_runs.ocr_status`, `annotations_status`, `create_expense_status`, `adjust_expense_status`, `normalize_status` |
 | `WORKFLOW_STEP` | (SSE payloads, not a column) |
-| `PAID_BY_MATCH` | `splits.paid_by_match` |
+| `PAID_BY_MATCH` | `expenses.paid_by_match` |
 
 > [!NOTE]
 > **Naming inconsistencies (TODO):** `pending` vs `queued`, `completed` vs `analyzed`, `processing` vs (implied) — these evolved organically across phases. Not critical for the POC.

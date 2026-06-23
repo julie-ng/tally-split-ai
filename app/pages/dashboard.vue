@@ -52,7 +52,7 @@ function pct (n) {
           </h2>
           <p class="text-sm text-dimmed">
             How often the adjust-split task matched handwritten initials to a household member.
-            Out of {{ metrics.llmAccuracy.llmRan }} splits the LLM has run on
+            Out of {{ metrics.llmAccuracy.llmRan }} expenses the LLM has run on
             ({{ metrics.llmAccuracy.unresolved }} pending,
             {{ metrics.llmAccuracy.total }} total).
           </p>
@@ -93,7 +93,7 @@ function pct (n) {
             AI Confidence
           </h2>
           <p class="text-sm text-dimmed mb-4">
-            Per-split overall confidence reported by the LLM.
+            Per-expense overall confidence reported by the LLM.
             Buckets: high ≥ 0.8, medium 0.5–0.8, low &lt; 0.5.
           </p>
           <dashboard-confidence-graph class="mb-8" />
@@ -106,8 +106,8 @@ function pct (n) {
           </h2>
           <div class="grid grid-cols-4 gap-4 mb-8">
             <dashboard-card
-              :metric="metrics.activity.splitsLast30Days"
-              subtitle="Splits in last 30 days"
+              :metric="metrics.activity.expensesLast30Days"
+              subtitle="Expenses in last 30 days"
               icon="i-lucide-coins"
             />
           </div>

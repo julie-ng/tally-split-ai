@@ -61,7 +61,7 @@ export function requireTaskPermission (event) {
 export function _deriveResource (path) {
   if (path.startsWith('/api/receipts')) return 'receipt'
   if (path.startsWith('/api/uploads')) return 'upload'
-  if (path.startsWith('/api/splits')) return 'split'
+  if (path.startsWith('/api/expenses')) return 'split' // HMAC scope stays 'split' (deferred); only the route path changed
   if (path.startsWith('/api/workflows')) return 'workflow'
   return null
 }

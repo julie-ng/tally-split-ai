@@ -10,8 +10,8 @@ const statusUpdateSchema = z.object({
   // Per-step statuses
   ocrStatus: z.enum(WORKFLOW_STEP_STATUSES).optional(),
   annotationsStatus: z.enum(WORKFLOW_STEP_STATUSES).optional(),
-  createSplitStatus: z.enum(WORKFLOW_STEP_STATUSES).optional(),
-  adjustSplitStatus: z.enum(WORKFLOW_STEP_STATUSES).optional(),
+  createExpenseStatus: z.enum(WORKFLOW_STEP_STATUSES).optional(),
+  adjustExpenseStatus: z.enum(WORKFLOW_STEP_STATUSES).optional(),
   normalizeStatus: z.enum(WORKFLOW_STEP_STATUSES).optional(),
 
   // Upload analysis status (orchestrator sets this on completion)
@@ -60,8 +60,8 @@ export default defineEventHandler(async (event) => {
   if (workflowUpdates.status !== undefined) runUpdates.status = workflowUpdates.status
   if (workflowUpdates.ocrStatus !== undefined) runUpdates.ocrStatus = workflowUpdates.ocrStatus
   if (workflowUpdates.annotationsStatus !== undefined) runUpdates.annotationsStatus = workflowUpdates.annotationsStatus
-  if (workflowUpdates.createSplitStatus !== undefined) runUpdates.createSplitStatus = workflowUpdates.createSplitStatus
-  if (workflowUpdates.adjustSplitStatus !== undefined) runUpdates.adjustSplitStatus = workflowUpdates.adjustSplitStatus
+  if (workflowUpdates.createExpenseStatus !== undefined) runUpdates.createExpenseStatus = workflowUpdates.createExpenseStatus
+  if (workflowUpdates.adjustExpenseStatus !== undefined) runUpdates.adjustExpenseStatus = workflowUpdates.adjustExpenseStatus
   if (workflowUpdates.normalizeStatus !== undefined) runUpdates.normalizeStatus = workflowUpdates.normalizeStatus
   if (workflowUpdates.completedAt !== undefined) runUpdates.completedAt = workflowUpdates.completedAt ? new Date(workflowUpdates.completedAt) : null
 

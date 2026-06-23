@@ -4,7 +4,7 @@ import { defineStore } from 'pinia'
  * Household store — fetches the current user's household + members.
  *
  * Members are returned ordered by users.createdAt ASC, matching the
- * userOne/userTwo slot order on splits. So:
+ * userOne/userTwo slot order on expenses. So:
  *   members[0] === userOne (first user to log in)
  *   members[1] === userTwo (second member, may be undefined for demo households)
  *

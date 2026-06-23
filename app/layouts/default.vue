@@ -18,7 +18,7 @@ function isActive (path) {
   return route.path === path || route.path.startsWith(path + '/')
 }
 
-const splitMonths = useSplitMonths()
+const expenseMonths = useExpenseMonths()
 const logout = useLogout()
 
 const userMenuItems = computed(() => [
@@ -59,12 +59,12 @@ function getLinks (collapsed) {
         active: isActive('/receipts'),
       },
       {
-        label: 'Splits',
+        label: 'Expenses',
         icon: 'i-lucide-coins',
-        to: '/splits',
-        active: isActive('/splits'),
+        to: '/expenses',
+        active: isActive('/expenses'),
         // defaultOpen: true,
-        children: expanded ? splitMonths : [],
+        children: expanded ? expenseMonths : [],
       },
       {
         label: 'Uploads',

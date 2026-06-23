@@ -6,7 +6,7 @@ import { eq, count } from 'drizzle-orm'
  *
  * Includes activity counts:
  * - uploadsCount: receipts they uploaded (FK: uploads.userId)
- * - paidCount: splits they paid for (FK: splits.paidByUserId)
+ * - paidCount: expenses they paid for (FK: expenses.paidByUserId)
  */
 export default defineEventHandler(async (event) => {
   const db = useDB()
@@ -45,8 +45,8 @@ export default defineEventHandler(async (event) => {
       .from(schema.uploads)
       .where(eq(schema.uploads.userId, user.id)),
     db.select({ paidCount: count() })
-      .from(schema.splits)
-      .where(eq(schema.splits.paidByUserId, user.id)),
+      .from(schema.expenses)
+      .where(eq(schema.expenses.paidByUserId, user.id)),
   ])
 
   return {

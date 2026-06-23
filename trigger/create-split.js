@@ -16,8 +16,8 @@ export const createSplit = task({
     const api = createApiClient(authHeaders)
 
     // Update workflow step status
-    await updateWorkflowStatus(authHeaders, { createSplitStatus: WORKFLOW_STEP_STATUS.PROCESSING })
-    await notifyStatus(runUuid, WORKFLOW_STEP.SPLIT, 'processing', authHeaders)
+    await updateWorkflowStatus(authHeaders, { createExpenseStatus: WORKFLOW_STEP_STATUS.PROCESSING })
+    await notifyStatus(runUuid, WORKFLOW_STEP.EXPENSE, 'processing', authHeaders)
 
     try {
       // 1. Fetch receipt to get total via API
@@ -49,29 +49,29 @@ export const createSplit = task({
       // them to a 50/50 split of splitAmount (single source of truth for the
       // halving logic). userOneId / userTwoId slots are auto-assigned by the
       // API from the receipt's household members (ordered by users.createdAt).
-      const splitResult = await api.post('/api/splits', {
+      const expenseResult = await api.post('/api/expenses', {
         receiptId,
         title: receipt.title,
         splitAmount,
         isSettled: false,
       })
 
-      const splitId = splitResult.created.id
+      const expenseId = expenseResult.created.id
 
       // 4. Update workflow step status
-      await updateWorkflowStatus(authHeaders, { createSplitStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-      await notifyStatus(runUuid, WORKFLOW_STEP.SPLIT, 'completed', authHeaders)
+      await updateWorkflowStatus(authHeaders, { createExpenseStatus: WORKFLOW_STEP_STATUS.COMPLETED })
+      await notifyStatus(runUuid, WORKFLOW_STEP.EXPENSE, 'completed', authHeaders)
 
-      logger.log(`Split created for receipt ${receiptId}`, { splitId, amountSource })
+      logger.log(`Expense created for receipt ${receiptId}`, { expenseId, amountSource })
 
-      return { splitId, splitAmount, amountSource }
+      return { expenseId, splitAmount, amountSource }
     }
     catch (err) {
       await updateWorkflowStatus(authHeaders, {
-        createSplitStatus: WORKFLOW_STEP_STATUS.FAILED,
-        errors: { [WORKFLOW_STEP.SPLIT]: err.message },
+        createExpenseStatus: WORKFLOW_STEP_STATUS.FAILED,
+        errors: { [WORKFLOW_STEP.EXPENSE]: err.message },
       })
-      await notifyStatus(runUuid, WORKFLOW_STEP.SPLIT, 'failed', authHeaders, err.message)
+      await notifyStatus(runUuid, WORKFLOW_STEP.EXPENSE, 'failed', authHeaders, err.message)
       throw err
     }
   },

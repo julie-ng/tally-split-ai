@@ -11,8 +11,8 @@ export const WORKFLOW_STEP = {
   OCR: 'ocr',
   ANNOTATIONS: 'annotations',
   NORMALIZE: 'normalize',
-  SPLIT: 'createSplit',
-  ADJUST_SPLIT: 'adjustSplit',
+  EXPENSE: 'createExpense',
+  ADJUST_EXPENSE: 'adjustExpense',
   ORCHESTRATOR: '_orchestrator',
 }
 

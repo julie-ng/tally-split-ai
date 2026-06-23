@@ -4,7 +4,7 @@ import { authzPermissions } from '#server/utils/authz-permissions.utils.js'
 const {
   checkTaskUploadScope,
   checkTaskReceiptScope,
-  checkTaskSplitScope,
+  checkTaskExpenseScope,
 } = authzPermissions
 
 /**
@@ -20,9 +20,9 @@ const {
  * @param {Object} resource - Resource IDs to check (at least one required)
  * @param {string} [resource.uploadId] - Upload id to verify
  * @param {string} [resource.receiptId] - Receipt id to verify
- * @param {string} [resource.splitId] - Split id to verify
+ * @param {string} [resource.expenseId] - Expense id to verify
  */
-export async function requireAuthorization (event, { uploadId, receiptId, splitId } = {}) {
+export async function requireAuthorization (event, { uploadId, receiptId, expenseId } = {}) {
   const db = useDB()
 
   const isUserRequest = !!event.context.userId
@@ -33,14 +33,14 @@ export async function requireAuthorization (event, { uploadId, receiptId, splitI
   }
 
   if (isUserRequest) {
-    await authorizeUser(db, event, { householdId: event.context.householdId, uploadId, receiptId, splitId })
+    await authorizeUser(db, event, { householdId: event.context.householdId, uploadId, receiptId, expenseId })
   }
   else {
-    await authorizeTask(db, event, { workflowRun: event.context.workflowRun, taskId: event.context.taskId, uploadId, receiptId, splitId })
+    await authorizeTask(db, event, { workflowRun: event.context.workflowRun, taskId: event.context.taskId, uploadId, receiptId, expenseId })
   }
 }
 
-async function authorizeUser (db, event, { householdId, uploadId, receiptId, splitId }) {
+async function authorizeUser (db, event, { householdId, uploadId, receiptId, expenseId }) {
   if (receiptId) {
     const [receipt] = await db
       .select({ householdId: schema.receipts.householdId })
@@ -54,15 +54,15 @@ async function authorizeUser (db, event, { householdId, uploadId, receiptId, spl
     }
   }
 
-  if (splitId) {
-    const [split] = await db
-      .select({ householdId: schema.splits.householdId })
-      .from(schema.splits)
-      .where(eq(schema.splits.id, splitId))
+  if (expenseId) {
+    const [expense] = await db
+      .select({ householdId: schema.expenses.householdId })
+      .from(schema.expenses)
+      .where(eq(schema.expenses.id, expenseId))
       .limit(1)
 
-    if (!split?.householdId || split.householdId !== householdId) {
-      logSecurityEvent(event, 'warn', { householdId, splitId, reason: 'split_not_household_member' }, 'Authorization denied')
+    if (!expense?.householdId || expense.householdId !== householdId) {
+      logSecurityEvent(event, 'warn', { householdId, expenseId, reason: 'expense_not_household_member' }, 'Authorization denied')
       throw createError({ statusCode: 404, message: 'Not found' })
     }
   }
@@ -81,7 +81,7 @@ async function authorizeUser (db, event, { householdId, uploadId, receiptId, spl
   }
 }
 
-async function authorizeTask (db, event, { workflowRun, taskId, uploadId, receiptId, splitId }) {
+async function authorizeTask (db, event, { workflowRun, taskId, uploadId, receiptId, expenseId }) {
   const upload = workflowRun.upload
 
   if (uploadId) {
@@ -117,40 +117,40 @@ async function authorizeTask (db, event, { workflowRun, taskId, uploadId, receip
     }
   }
 
-  if (splitId) {
+  if (expenseId) {
     const linkedReceiptId = upload?.receiptId
 
-    // Derive splitId from splits table (canonical direction: splits.receiptId → receipts.id)
-    let receiptSplitId = null
-    let splitHouseholdId = null
+    // Derive expenseId from expenses table (canonical direction: expenses.receiptId → receipts.id)
+    let receiptExpenseId = null
+    let expenseHouseholdId = null
     if (linkedReceiptId) {
-      const [existingSplit] = await db
-        .select({ id: schema.splits.id })
-        .from(schema.splits)
-        .where(eq(schema.splits.receiptId, linkedReceiptId))
+      const [existingExpense] = await db
+        .select({ id: schema.expenses.id })
+        .from(schema.expenses)
+        .where(eq(schema.expenses.receiptId, linkedReceiptId))
         .limit(1)
 
-      receiptSplitId = existingSplit?.id ?? null
+      receiptExpenseId = existingExpense?.id ?? null
 
-      // For first-time linking, read the split's own householdId column
-      if (!receiptSplitId) {
-        const [split] = await db
-          .select({ householdId: schema.splits.householdId })
-          .from(schema.splits)
-          .where(eq(schema.splits.id, splitId))
+      // For first-time linking, read the expense's own householdId column
+      if (!receiptExpenseId) {
+        const [expense] = await db
+          .select({ householdId: schema.expenses.householdId })
+          .from(schema.expenses)
+          .where(eq(schema.expenses.id, expenseId))
           .limit(1)
-        splitHouseholdId = split?.householdId ?? null
+        expenseHouseholdId = expense?.householdId ?? null
       }
     }
 
-    const result = checkTaskSplitScope(splitId, {
+    const result = checkTaskExpenseScope(expenseId, {
       linkedReceiptId,
-      receiptSplitId,
-      splitHouseholdId,
+      receiptExpenseId,
+      expenseHouseholdId,
       uploadHouseholdId: upload?.householdId,
     })
     if (!result.ok) {
-      logSecurityEvent(event, 'warn', { taskId, splitId, expected: receiptSplitId, reason: result.reason }, 'Authorization denied')
+      logSecurityEvent(event, 'warn', { taskId, expenseId, expected: receiptExpenseId, reason: result.reason }, 'Authorization denied')
       throw createError({ statusCode: 403, message: 'Forbidden' })
     }
   }

@@ -6,8 +6,8 @@ import { diffFields } from '#shared/utils/diff.utils.js'
  *
  * @param {object} tx - Drizzle transaction object
  * @param {object} opts
- * @param {object} opts.historyTable - Drizzle table (schema.splitHistory)
- * @param {string} opts.entityIdColumn - Column name for the FK ('splitId')
+ * @param {object} opts.historyTable - Drizzle table (schema.expenseHistory)
+ * @param {string} opts.entityIdColumn - Column name for the FK ('expenseId')
  * @param {string} opts.source - Actor identifier
  * @param {string|null} [opts.sourceVersion] - Version string
  * @param {Array<{ entityId: number, before: object, after: object }>} entities

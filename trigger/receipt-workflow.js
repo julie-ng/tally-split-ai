@@ -28,7 +28,7 @@ export const receiptWorkflow = task({
     let hasStepErrors = false
     // eslint-disable-next-line no-useless-assignment
     let receiptId = null
-    let splitId = null
+    let expenseId = null
 
     try {
       // Phase 1: OCR — request token before receipt exists
@@ -101,37 +101,37 @@ export const receiptWorkflow = task({
         logger.warn(`Normalize failed, continuing`, { error: normalizeResult.error })
       }
 
-      // Step 4: Create split — NON-FATAL
-      const splitResult = await createSplit.triggerAndWait(
+      // Step 4: Create expense — NON-FATAL
+      const expenseResult = await createSplit.triggerAndWait(
         { receiptId, uploadId, runUuid, callbackToken: postOcrTokens['create-split'] },
       )
 
-      if (splitResult.ok) {
-        splitId = splitResult.output.splitId
+      if (expenseResult.ok) {
+        expenseId = expenseResult.output.expenseId
       }
       else {
         hasStepErrors = true
         await updateWorkflowStatus(authHeaders, {
-          createSplitStatus: WORKFLOW_STEP_STATUS.FAILED,
-          errors: { [WORKFLOW_STEP.SPLIT]: splitResult.error },
+          createExpenseStatus: WORKFLOW_STEP_STATUS.FAILED,
+          errors: { [WORKFLOW_STEP.EXPENSE]: expenseResult.error },
         })
-        await notifyStatus(runUuid, WORKFLOW_STEP.SPLIT, 'failed', authHeaders, splitResult.error)
-        logger.warn(`Split creation failed`, { error: splitResult.error })
+        await notifyStatus(runUuid, WORKFLOW_STEP.EXPENSE, 'failed', authHeaders, expenseResult.error)
+        logger.warn(`Expense creation failed`, { error: expenseResult.error })
       }
 
-      // Step 5: Adjust split — NON-FATAL, requires both split and annotations
-      if (splitId && annotationsResult.ok) {
+      // Step 5: Adjust expense — NON-FATAL, requires both split and annotations
+      if (expenseId && annotationsResult.ok) {
         const adjustResult = await adjustSplit.triggerAndWait(
-          { uploadId, splitId, runUuid, callbackToken: postOcrTokens['adjust-split'], customInstructions },
+          { uploadId, expenseId, runUuid, callbackToken: postOcrTokens['adjust-split'], customInstructions },
         )
 
         if (!adjustResult.ok) {
           hasStepErrors = true
           await updateWorkflowStatus(authHeaders, {
-            adjustSplitStatus: WORKFLOW_STEP_STATUS.FAILED,
-            errors: { [WORKFLOW_STEP.ADJUST_SPLIT]: adjustResult.error },
+            adjustExpenseStatus: WORKFLOW_STEP_STATUS.FAILED,
+            errors: { [WORKFLOW_STEP.ADJUST_EXPENSE]: adjustResult.error },
           })
-          await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_SPLIT, 'failed', authHeaders, adjustResult.error)
+          await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_EXPENSE, 'failed', authHeaders, adjustResult.error)
           logger.warn(`Adjust-split failed, continuing`, { error: adjustResult.error })
         }
       }
@@ -164,8 +164,8 @@ export const receiptWorkflow = task({
 
     await notifyStatus(runUuid, WORKFLOW_STEP.ORCHESTRATOR, finalStatus, authHeaders)
 
-    logger.log(`Receipt workflow ${finalStatus} for ${uploadId}`, { receiptId, splitId })
+    logger.log(`Receipt workflow ${finalStatus} for ${uploadId}`, { receiptId, expenseId })
 
-    return { receiptId, splitId }
+    return { receiptId, expenseId }
   },
 })

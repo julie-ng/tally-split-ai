@@ -148,7 +148,7 @@ All AuthN failures are logged to the `security` domain with IP, user-agent, meth
 
 ## Authorization (AuthZ)
 
-AuthZ is handled by `requireAuthorization(event, { uploadId?, receiptId?, splitId? })`, called after AuthN in every protected handler that operates on a specific resource.
+AuthZ is handled by `requireAuthorization(event, { uploadId?, receiptId?, expenseId? })`, called after AuthN in every protected handler that operates on a specific resource.
 
 ```mermaid
 ---
@@ -167,7 +167,7 @@ flowchart TD
         UScope("`**Find resource household** via
         • _receipt.householdId_
         • _upload.householdId_
-        • _split.householdId_`")
+        • _expense.householdId_`")
         UMatch{"`**Matches 
         user's _householdId_?**
         (via session)`"}
@@ -215,18 +215,18 @@ flowchart TD
 
 - Verifies the resource's `householdId` matches `event.context.householdId` — i.e. the principal is a member of the household that owns the resource
 - For **receipts** and **uploads**: direct column lookup (`receipts.householdId`, `uploads.householdId`)
-- For **splits**: direct column lookup (`splits.householdId`) — splits carry their own write-once `householdId`, stamped at creation (inherited from the receipt when linking one, else the acting principal's household). This is what makes standalone splits (`receiptId` null) reachable
+- For **expenses**: direct column lookup (`expenses.householdId`) — expenses carry their own write-once `householdId`, stamped at creation (inherited from the receipt when linking one, else the acting principal's household). This is what makes standalone expenses (`receiptId` null) reachable
 - Returns **404** on mismatch — do not reveal resource existence to non-members
 
 > [!NOTE]
-> The `userId` columns on receipts/uploads/splits are retained as `createdBy` metadata only — they are no longer used for authZ. AuthZ flows entirely through household membership.
+> The `userId` columns on receipts/uploads/expenses are retained as `createdBy` metadata only — they are no longer used for authZ. AuthZ flows entirely through household membership.
 
 ### Task AuthZ (Resource Scope)
 
 - Verifies the requested resource belongs to this workflow run's linked resources
 - `uploadId`: must match `workflowRun.upload.id`
 - `receiptId`: must match `workflowRun.upload.receiptId`. For first-time linking (no `upload.receiptId` yet), the receipt's `householdId` must match the upload's `householdId`
-- `splitId`: must match the split linked to this workflow's receipt (looked up via `splits.receiptId → receipts.id`). For first-time linking, the split's own `householdId` column must match the upload's `householdId`
+- `expenseId`: must match the expense linked to this workflow's receipt (looked up via `expenses.receiptId → receipts.id`). For first-time linking, the expense's own `householdId` column must match the upload's `householdId`
 - Returns **403** on mismatch — tasks know their own scope, no need to hide resource existence
 
 ### Task AuthZ (Action Permissions)
@@ -395,7 +395,7 @@ Integration tests in `tests/integration/security-boundaries.test.js` enforce:
 1. **No direct DB access in trigger tasks** — no `server/db/connection`, `useDB`, or `drizzle-orm` imports in `trigger/**/*.js`
 2. **No legacy auth** — no `requireUserId` calls in any API endpoint
 3. **AuthZ on resource endpoints** — every `[id]` endpoint calls `requireAuthorization`
-4. **Correct AuthZ parameters** — receipt endpoints pass `receiptId`, split endpoints pass `splitId`, upload endpoints pass `uploadId`
+4. **Correct AuthZ parameters** — receipt endpoints pass `receiptId`, expense endpoints pass `expenseId`, upload endpoints pass `uploadId`
 5. **Task permission enforcement** — all task-facing endpoints call `requireTaskPermission`
 6. **Permissions map coverage** — every task ID found in trigger files has an entry in `TASK_PERMISSIONS`
 7. **Valid action format** — all entries in `TASK_PERMISSIONS` use valid `resource:permission` format
@@ -419,8 +419,8 @@ Unit tests in `shared/config/task-permissions.test.js` additionally pin the **`t
 
 ## Intentional Constraints
 
-- **Two members per household**: The `splits` table's hardcoded `userOneId`/`userOneShare`/`userTwoId`/`userTwoShare` shape is by design. The product scopes to two-person households (couples, roommates) and will not be generalized to N members.
+- **Two members per household**: The `expenses` table's hardcoded `userOneId`/`userOneShare`/`userTwoId`/`userTwoShare` shape is by design. The product scopes to two-person households (couples, roommates) and will not be generalized to N members.
 
-- **The household is the sole authZ boundary**: Every household-scoped resource (receipts, uploads, splits) has a write-once `householdId`, and all user-facing authZ is decided against the principal's household membership.
+- **The household is the sole authZ boundary**: Every household-scoped resource (receipts, uploads, expenses) has a write-once `householdId`, and all user-facing authZ is decided against the principal's household membership.
 
   AuthZ not finer-grained than `householdId`. The `userId` columns on those tables are _creator/provenance metadata only_; they never gate access.

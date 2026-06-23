@@ -3,7 +3,7 @@ import { asyncUtils } from '#shared/utils/async.utils.js'
 
 /**
  * Store for managing receipts with map-based caching and freshness tracking
- * Follows the pattern from splits.store.js for consistency
+ * Follows the pattern from expenses.store.js for consistency
  */
 export const useReceiptsStore = defineStore('receipts', () => {
   const requestFetch = useRequestFetch()
@@ -261,7 +261,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
         body: updates,
       })
 
-      // Force refetch to get complete data with relations (uploads, split)
+      // Force refetch to get complete data with relations (uploads, expense)
       const freshReceipt = await fetchReceiptById(id, true)
 
       _log(`[ReceiptsStore] ✅ updated receipt: ${id}`)

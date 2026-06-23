@@ -1,13 +1,13 @@
 <script setup>
-import { useSplitsStore } from '~/stores/splits.store'
+import { useExpensesStore } from '~/stores/expenses.store'
 
 const props = defineProps({
   receipt: Object,
 })
 
-const splitsStore = useSplitsStore()
-const splitId = computed(() => splitsStore.getSplitIdByReceiptId(props.receipt.id))
-const { history, pending } = await useReceiptHistory(props.receipt.id, splitId)
+const expensesStore = useExpensesStore()
+const expenseId = computed(() => expensesStore.getExpenseIdByReceiptId(props.receipt.id))
+const { history, pending } = await useReceiptHistory(props.receipt.id, expenseId)
 
 function displayValue (val) {
   return val === null || val === undefined ? '\u2014' : val

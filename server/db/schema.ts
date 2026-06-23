@@ -8,7 +8,7 @@ import { WORKFLOW_STATUSES, WORKFLOW_STEP_STATUSES } from '#shared/enums/workflo
 import { generateId } from '#shared/utils/generate-id.js'
 
 /**
- * Households - groups of users that share receipts/uploads/splits.
+ * Households - groups of users that share receipts/uploads/expenses.
  * POC constraint: max 2 members per household, enforced at API layer (not DB).
  */
 export const households = pgTable('households', {
@@ -103,26 +103,26 @@ export const uploads = pgTable('uploads', {
 })
 
 /**
- * Splits table - tracks expense splitting between two household members
+ * Expenses table - tracks expense splitting between two household members
  */
 // @ts-expect-error implicit type any
-export const splits = pgTable('splits', {
+export const expenses = pgTable('expenses', {
   id: text('id').primaryKey().$defaultFn(() => generateId()),
 
   // @ts-expect-error implicit return type any
   receiptId: text('receipt_id').references(() => receipts.id, { onDelete: 'cascade' }),
 
-  // Household scope for authZ. Stamped once at split creation and never changed
-  // (a split never moves households). Set explicitly rather than derived via
-  // receiptId so standalone splits (receiptId null) are still reachable and
+  // Household scope for authZ. Stamped once at expense creation and never changed
+  // (an expense never moves households). Set explicitly rather than derived via
+  // receiptId so standalone expenses (receiptId null) are still reachable and
   // authZ has one code path. Write-once: no request/update schema accepts it.
   householdId: text('household_id').notNull().references(() => households.id, { onDelete: 'restrict' }),
 
   // User-facing label. Copied from the receipt's title at creation when linked;
-  // human-editable. Default 'Untitled' for standalone splits.
+  // human-editable. Default 'Untitled' for standalone expenses.
   title: text('title').notNull().default('Untitled'),
 
-  // Split details
+  // Expense details
   splitAmount: real('split_amount').notNull(), // Amount to split (defaults to receipt total)
   userOneShare: real('user_one_share'), // userOne's share
   userTwoShare: real('user_two_share'), // userTwo's share
@@ -150,11 +150,11 @@ export const splits = pgTable('splits', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, table => [
-  // A receipt has at most one split (permanent invariant). Partial index so
-  // standalone splits (receiptId null) are exempt — multiple null-receiptId
-  // splits are allowed. Belt-and-suspenders with the check-first guard in
-  // POST /api/splits.
-  uniqueIndex('splits_receipt_id_unique')
+  // A receipt has at most one expense (permanent invariant). Partial index so
+  // standalone expenses (receiptId null) are exempt — multiple null-receiptId
+  // expenses are allowed. Belt-and-suspenders with the check-first guard in
+  // POST /api/expenses.
+  uniqueIndex('expenses_receipt_id_unique')
     .on(table.receiptId)
     .where(sql`${table.receiptId} IS NOT NULL`),
 ])
@@ -180,8 +180,8 @@ export const workflowRuns = pgTable('workflow_runs', {
   // Per-step statuses
   ocrStatus: text('ocr_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
   annotationsStatus: text('annotations_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
-  createSplitStatus: text('create_split_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
-  adjustSplitStatus: text('adjust_split_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
+  createExpenseStatus: text('create_expense_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
+  adjustExpenseStatus: text('adjust_expense_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
   normalizeStatus: text('normalize_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
 
   // Per-step error messages, keyed by step name (e.g. { ocr, annotations,
@@ -222,15 +222,15 @@ export const receiptHistory = pgTable('receipt_history', {
 })
 
 /**
- * Split history - per-field change tracking for splits
+ * Expense history - per-field change tracking for expenses
  */
 // @ts-expect-error implicit return type any
-export const splitHistory = pgTable('split_history', {
+export const expenseHistory = pgTable('expense_history', {
   id: serial('id').primaryKey(),
   // @ts-expect-error implicit return type any
   changeId: integer('change_id').notNull().references(() => changes.id, { onDelete: 'cascade' }),
   // @ts-expect-error implicit return type any
-  splitId: text('split_id').references(() => splits.id, { onDelete: 'cascade' }),
+  expenseId: text('expense_id').references(() => expenses.id, { onDelete: 'cascade' }),
   field: text('field').notNull(),
   oldValue: text('old_value'),
   newValue: text('new_value'),
@@ -265,7 +265,7 @@ export const householdsRelations = relations(households, ({ many }) => ({
   users: many(users),
   receipts: many(receipts),
   uploads: many(uploads),
-  splits: many(splits),
+  expenses: many(expenses),
 }))
 
 // User belongs to one household
@@ -304,29 +304,29 @@ export const uploadsRelations = relations(uploads, ({ one, many }) => ({
   }),
 }))
 
-export const splitsRelations = relations(splits, ({ one }) => ({
+export const expensesRelations = relations(expenses, ({ one }) => ({
   receipt: one(receipts, {
-    fields: [splits.receiptId],
+    fields: [expenses.receiptId],
     references: [receipts.id],
   }),
   household: one(households, {
-    fields: [splits.householdId],
+    fields: [expenses.householdId],
     references: [households.id],
   }),
   userOne: one(users, {
-    fields: [splits.userOneId],
+    fields: [expenses.userOneId],
     references: [users.id],
-    relationName: 'splitUserOne',
+    relationName: 'expenseUserOne',
   }),
   userTwo: one(users, {
-    fields: [splits.userTwoId],
+    fields: [expenses.userTwoId],
     references: [users.id],
-    relationName: 'splitUserTwo',
+    relationName: 'expenseUserTwo',
   }),
   paidByUser: one(users, {
-    fields: [splits.paidByUserId],
+    fields: [expenses.paidByUserId],
     references: [users.id],
-    relationName: 'splitPaidBy',
+    relationName: 'expensePaidBy',
   }),
 }))
 
@@ -338,10 +338,10 @@ export const workflowRunsRelations = relations(workflowRuns, ({ one }) => ({
   }),
 }))
 
-// Change has many receipt history and split history entries
+// Change has many receipt history and expense history entries
 export const changesRelations = relations(changes, ({ many }) => ({
   receiptHistory: many(receiptHistory),
-  splitHistory: many(splitHistory),
+  expenseHistory: many(expenseHistory),
 }))
 
 // Receipt history belongs to a change and a receipt
@@ -356,14 +356,14 @@ export const receiptHistoryRelations = relations(receiptHistory, ({ one }) => ({
   }),
 }))
 
-// Split history belongs to a change and a split
-export const splitHistoryRelations = relations(splitHistory, ({ one }) => ({
+// Expense history belongs to a change and an expense
+export const expenseHistoryRelations = relations(expenseHistory, ({ one }) => ({
   change: one(changes, {
-    fields: [splitHistory.changeId],
+    fields: [expenseHistory.changeId],
     references: [changes.id],
   }),
-  split: one(splits, {
-    fields: [splitHistory.splitId],
-    references: [splits.id],
+  expense: one(expenses, {
+    fields: [expenseHistory.expenseId],
+    references: [expenses.id],
   }),
 }))

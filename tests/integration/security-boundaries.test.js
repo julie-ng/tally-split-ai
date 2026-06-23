@@ -77,7 +77,7 @@ describe('Security boundaries: resource-specific endpoints call requireAuthoriza
   // Endpoints that handle a specific resource ID (param in brackets) must authorize
   const resourceEndpoints = [
     ...getFiles('server/api/receipts', '\\[*\\].*.js'),
-    ...getFiles('server/api/splits', '\\[*\\].*.js'),
+    ...getFiles('server/api/expenses', '\\[*\\].*.js'),
     ...getFiles('server/api/uploads', '\\[*\\].*.js'),
   ]
 
@@ -98,7 +98,7 @@ describe('Security boundaries: requireAuthorization uses correct resource parame
   // This catches bugs like passing {} or the wrong resource ID.
   const resourceTypes = [
     { dir: 'server/api/receipts', pattern: '\\[*\\].*.js', expectedParam: 'receiptId' },
-    { dir: 'server/api/splits', pattern: '\\[*\\].*.js', expectedParam: 'splitId' },
+    { dir: 'server/api/expenses', pattern: '\\[*\\].*.js', expectedParam: 'expenseId' },
     { dir: 'server/api/uploads', pattern: '\\[*\\].*.js', expectedParam: 'uploadId' },
   ]
 
@@ -125,7 +125,7 @@ describe('Security boundaries: task-facing endpoints call requireTaskPermission'
     'server/api/receipts/index.post.js',
     'server/api/receipts/[id].get.js',
     'server/api/receipts/[id].put.js',
-    'server/api/splits/index.post.js',
+    'server/api/expenses/index.post.js',
     'server/api/workflows/runs/[runUuid]/status.put.js',
     'server/api/workflows/runs/[runUuid]/tokens.post.js',
     'server/api/workflows/callback/[runUuid].post.js',
@@ -192,9 +192,9 @@ describe('Security boundaries: task AuthZ handles first-time receipt linking', (
     expect(content).toContain('receiptHouseholdId !== uploadHouseholdId')
   })
 
-  it('authz-permissions should handle first-time split linking with household check', () => {
-    const content = readFileSync(resolve('server/utils/authz-permissions/check-task-split-scope.js'), 'utf-8')
-    expect(content).toContain('split_household_mismatch')
-    expect(content).toContain('splitHouseholdId !== uploadHouseholdId')
+  it('authz-permissions should handle first-time expense linking with household check', () => {
+    const content = readFileSync(resolve('server/utils/authz-permissions/check-task-expense-scope.js'), 'utf-8')
+    expect(content).toContain('expense_household_mismatch')
+    expect(content).toContain('expenseHouseholdId !== uploadHouseholdId')
   })
 })

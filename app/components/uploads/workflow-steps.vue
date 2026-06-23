@@ -61,14 +61,14 @@ const steps = computed(() => [
     errorKey: WORKFLOW_STEP.NORMALIZE,
   },
   {
-    label: 'Create Split',
-    status: stepStatuses.value.createSplitStatus,
-    errorKey: WORKFLOW_STEP.SPLIT,
+    label: 'Create Expense',
+    status: stepStatuses.value.createExpenseStatus,
+    errorKey: WORKFLOW_STEP.EXPENSE,
   },
   {
-    label: 'Adjust Split',
-    status: stepStatuses.value.adjustSplitStatus,
-    errorKey: WORKFLOW_STEP.ADJUST_SPLIT,
+    label: 'Adjust Expense',
+    status: stepStatuses.value.adjustExpenseStatus,
+    errorKey: WORKFLOW_STEP.ADJUST_EXPENSE,
   },
 ])
 

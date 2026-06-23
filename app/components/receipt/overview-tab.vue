@@ -46,12 +46,12 @@ const dates = computed(() => {
 
         <USeparator class="my-4" />
 
-        <!-- Split Costs -->
+        <!-- Expense Costs -->
         <section>
           <ui-section-subtitle>
-            Split Costs
+            Expense Costs
           </ui-section-subtitle>
-          <receipt-split
+          <receipt-expense
             :receipt-id="props.receipt.id"
           />
         </section>

@@ -6,7 +6,7 @@ import { globSync } from 'glob'
 /**
  * History Tracking Coverage Tests
  *
- * Ensures POST and PUT API endpoints for receipts and splits call the
+ * Ensures POST and PUT API endpoints for receipts and expenses call the
  * appropriate history tracking function. DELETE endpoints are excluded —
  * deletion is handled by FK cascade at the schema layer (see
  * project_change_history.md), so handlers no longer write history.
@@ -52,8 +52,8 @@ describe('History tracking coverage', () => {
     }
   })
 
-  describe('splits endpoints', () => {
-    const endpoints = getMutatingEndpoints('server/api/splits')
+  describe('expenses endpoints', () => {
+    const endpoints = getMutatingEndpoints('server/api/expenses')
 
     it('should have mutating endpoints to test', () => {
       expect(endpoints.length).toBeGreaterThan(0)
