@@ -108,7 +108,7 @@ function getLinks (collapsed) {
       <template #header="{ collapsed }">
         <UButton
           v-if="!collapsed"
-          to="/"
+          to="/dashboard"
           icon="i-lucide-scan-barcode"
           label="TallySplit AI"
           color="neutral"
