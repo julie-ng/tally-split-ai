@@ -11,6 +11,11 @@ See [terraform/README.md](./../terraform/README.md) to deploy dev/prod for:
 - Azure OpenAI gpt-4o (Annotations)
 - Azure Storage Account (Uploads)
 
+See also [terraform/Makefile](./../terraform/Makefile) for scripts to easily:
+- Deploy
+- Export secret keys to a `.env.*` file
+- Rotate keys
+
 ## Vercel
 
 _Automated Deployments._ Connected to GitHub.
@@ -46,12 +51,13 @@ The Supabase Postgres databases (dev / prod) are the app's primary datastore. Th
 
 ### Connection String
 
-Note: Because Vercel doesn't support IPv6, we need to use a Shared Pooler, which can be found in the [Project > Connect Panel](https://supabase.com/dashboard/project/_?showConnect=true).
+> [!IMPORTANT]
+> Because Vercel doesn't support outbound IPv6, we need to use port `6543` for **Transaction Pooler**, which can be found in the [Project > Connect Panel](https://supabase.com/dashboard/project/_?showConnect=true).
 
 Pluck out the info to manually construct the connection string:
 
 ```
-postgresql://[USER]:[PASSWORD]@name-1.pooler.supabase.com:5432/[DBNAME]
+postgresql://[USER]:[PASSWORD]@[AWS_REGION_NAME].pooler.supabase.com:6543/[DBNAME]
 ```
 
 Set this as `NUXT_DATABASE_URL` — the single connection-string variable used everywhere (app, migrations, and seeds).
