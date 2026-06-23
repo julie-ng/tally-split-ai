@@ -37,7 +37,6 @@ export const receipts = pgTable('receipts', {
   merchantName: text('merchant_name'),
   merchantAddress: text('merchant_address'),
   merchantPhone: text('merchant_phone'),
-  tags: text('tags'), // Comma-separated tags
   date: text('date'), // ISO date string (e.g. "2025-11-07")
   time: text('time'), // ISO time string (e.g. "17:45:00"), null if not available
   subtotal: real('subtotal'),
@@ -46,15 +45,8 @@ export const receipts = pgTable('receipts', {
   total: real('total'),
   currency: text('currency'),
 
-  // User fields
-  notes: text('notes'), // User-editable notes
-
   // Status tracking
   analysisStatus: text('analysis_status', { enum: RECEIPT_ANALYSIS_STATUSES }).notNull().default('unanalyzed'),
-
-  // Metadata — uploader (creator) of the receipt
-  // @ts-expect-error implicit return type any
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
 
   // Household scope for authZ.
   // @ts-expect-error implicit return type any
@@ -126,6 +118,10 @@ export const splits = pgTable('splits', {
   // receiptId so standalone splits (receiptId null) are still reachable and
   // authZ has one code path. Write-once: no request/update schema accepts it.
   householdId: text('household_id').notNull().references(() => households.id, { onDelete: 'restrict' }),
+
+  // User-facing label. Copied from the receipt's title at creation when linked;
+  // human-editable. Default 'Untitled' for standalone splits.
+  title: text('title').notNull().default('Untitled'),
 
   // Split details
   splitAmount: real('split_amount').notNull(), // Amount to split (defaults to receipt total)
@@ -287,10 +283,6 @@ export const receiptsRelations = relations(receipts, ({ one, many }) => ({
   household: one(households, {
     fields: [receipts.householdId],
     references: [households.id],
-  }),
-  user: one(users, {
-    fields: [receipts.userId],
-    references: [users.id],
   }),
 }))
 

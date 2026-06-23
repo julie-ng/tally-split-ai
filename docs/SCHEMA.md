@@ -93,13 +93,10 @@ Business/finance data extracted from receipt uploads.
 | `id` | `text` PK | Generated via `generateId()` |
 | `title` | `text` | Default `Untitled`; LLM-normalized or user-edited |
 | `merchantName`, `merchantAddress`, `merchantPhone` | `text` | OCR-extracted |
-| `tags` | `text` | Comma-separated; derived from upload's azureTags |
 | `date`, `time` | `text` | ISO strings; nullable if not extracted |
 | `subtotal`, `tax`, `tip`, `total` | `real` | EUR (POC assumption) |
 | `currency` | `text` | |
-| `notes` | `text` | User-editable |
 | `analysisStatus` | enum | `RECEIPT_ANALYSIS_STATUS` — see below |
-| `userId` | `text` NOT NULL FK → `users.id` | Createdby metadata only — **not used for authZ** |
 | `householdId` | `text` NOT NULL FK → `households.id` | AuthZ scope |
 | `createdAt`, `updatedAt` | `timestamp` | |
 
@@ -182,6 +179,7 @@ Expense splitting between two household members.
 | `id` | `text` PK | Generated via `generateId()` |
 | `receiptId` | `text` FK → `receipts.id` (cascade) | Canonical link; deleting the receipt deletes the split. Nullable — supports standalone splits |
 | `householdId` | `text` NOT NULL FK → `households.id` | AuthZ scope; stamped once at creation, write-once. See note below |
+| `title` | `text` NOT NULL | User-facing label. Default `Untitled`; copied from the receipt's title at creation when linked, human-editable |
 | `splitAmount` | `real` NOT NULL | Total to split (defaults to receipt total) |
 | `userOneId` | `text` FK → `users.id` | First household member (oldest by `users.createdAt`) |
 | `userOneShare` | `real` | Amount this user owes |

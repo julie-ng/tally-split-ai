@@ -82,11 +82,6 @@ const dates = computed(() => {
     <div class="px-4">
       <hr class="my-6 border-slate-300">
 
-      <!-- Notes -->
-      <section>
-        <receipt-notes :receipt="props.receipt" />
-      </section>
-
       <!-- Edit Button -->
       <div class="my-3">
         <NuxtLink :to="`/receipts/${receipt.id}/edit`">

@@ -12,15 +12,12 @@ export const receiptSchema = z.object({
   merchantPhone: z.string().nullable(),
   date: z.string().nullable(), // ISO date string (e.g., "2024-01-09")
   time: z.string().nullable(), // ISO time string (e.g., "17:45:00")
-  tags: z.string().nullable(),
   subtotal: z.number().nullable(),
   tax: z.number().nullable(),
   tip: z.number().nullable(),
   total: z.number().nullable(),
   currency: z.string().nullable(),
-  notes: z.string().nullable(),
   analysisStatus: z.enum(RECEIPT_ANALYSIS_STATUSES),
-  userId: z.string(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 })
@@ -36,13 +33,11 @@ export const receiptInputSchema = z.object({
   merchantPhone: z.string().nullable().optional(),
   date: z.iso.date().nullable().optional(), // nullable: OCR may fail to extract; normalize-receipt task can fix later
   time: z.string().nullable().optional(), // nullable: not all receipts have time; normalize-receipt task extracts when available
-  tags: z.string().nullable().optional(),
   subtotal: z.number().nullable().optional(),
   tax: z.number().nullable().optional(),
   tip: z.number().nullable().optional(),
   total: z.number().nullable().optional(),
   currency: z.string().nullable().optional(),
-  notes: z.string().nullable().optional(),
   analysisStatus: z.enum(RECEIPT_ANALYSIS_STATUSES).optional(),
 
   // Change tracking metadata (not persisted on the receipt itself)

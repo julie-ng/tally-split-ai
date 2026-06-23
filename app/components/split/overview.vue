@@ -96,9 +96,6 @@ provide('highlightedLabel', highlightedLabel)
 
         <USeparator />
 
-        <!-- Notes -->
-        <receipt-notes :receipt="receipt" />
-
         <!-- Actions -->
         <div class="flex gap-2">
           <UButton

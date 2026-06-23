@@ -7,6 +7,7 @@ import { PAID_BY_MATCHES } from '#shared/enums/paid-by-match.js'
 export const splitSchema = z.object({
   id: z.string(),
   receiptId: z.string().nullable(),
+  title: z.string(),
   splitAmount: z.number(),
   userOneShare: z.number().nullable(),
   userTwoShare: z.number().nullable(),
@@ -26,6 +27,7 @@ export const splitSchema = z.object({
  */
 export const splitRequestSchema = z.object({
   receiptId: z.string().nullable().optional(),
+  title: z.string().optional(),
   splitAmount: z.number(),
   userOneShare: z.number().nullable().optional(),
   userTwoShare: z.number().nullable().optional(),

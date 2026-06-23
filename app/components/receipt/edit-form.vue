@@ -75,21 +75,6 @@ const handleCancel = () => {
             variant="subtle"
           />
         </div>
-
-        <!-- Receipt Tags -->
-        <div>
-          <label for="tags">
-            Tags (comma separated)
-          </label>
-        </div>
-        <div class="col-span-2">
-          <UInput
-            id="tags"
-            v-model="formData.tags"
-            class="w-80"
-            variant="subtle"
-          />
-        </div>
       </div>
 
       <hr class="my-4 border-slate-200">
@@ -152,32 +137,6 @@ const handleCancel = () => {
               id="total"
               v-model="formData.total"
               type="number"
-              class="w-80"
-              variant="subtle"
-            />
-          </div>
-        </div>
-      </section>
-
-      <hr class="my-4 border-slate-200">
-
-      <!-- Notes -->
-      <section>
-        <!-- <h1 class="text-lg mb-4 font-semibold">
-          Notes
-        </h1> -->
-        <div class="grid grid-cols-3 gap-4">
-          <div>
-            <label for="notes">
-              Notes
-            </label>
-          </div>
-          <div class="col-span-2">
-            <UTextarea
-              id="notes"
-              v-model="formData.notes"
-              placeholder="Add any additional notes about this receipt..."
-              :rows="6"
               class="w-80"
               variant="subtle"
             />

@@ -31,12 +31,5 @@ defineProps({
         </time>
       </div>
     </template>
-
-    <template v-if="receipt.tags">
-      <div>Tags</div>
-      <div>
-        <receipt-tags-list :tags="receipt.tags" color="neutral" />
-      </div>
-    </template>
   </div>
 </template>

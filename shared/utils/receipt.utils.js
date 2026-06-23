@@ -35,28 +35,7 @@ function extractTotalsAsArray (receipt) {
   ]
 }
 
-/**
- * Convert Azure blob tags to comma-separated receipt tags
- * @param {Object|null} azureTags - The azureTags jsonb object from uploads table
- * @returns {string|null} - Comma-separated tags string, or null
- */
-function azureTagsToReceiptTags (azureTags) {
-  return azureTags?.['receipt-tags']?.replace(/\+/g, ', ') || null
-}
-
-/**
- * Split comma-separated receipt tags into a trimmed array for display
- * @param {string|null} tags - Comma-separated tags string from receipts.tags
- * @returns {string[]} - Array of trimmed tag strings
- */
-function receiptTagsToDisplayArray (tags) {
-  if (!tags) return []
-  return tags.split(',').map(t => t.trim())
-}
-
 export const receiptUtils = {
-  azureTagsToReceiptTags,
   extractTotalsAsArray,
   formatCurrency,
-  receiptTagsToDisplayArray,
 }

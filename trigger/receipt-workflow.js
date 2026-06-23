@@ -45,7 +45,7 @@ export const receiptWorkflow = task({
         throw new Error(`OCR failed: ${ocrResult.error}`)
       }
 
-      const { receiptData, title, tags, existingReceiptId } = ocrResult.output
+      const { receiptData, title, existingReceiptId } = ocrResult.output
 
       // Create or update receipt from OCR results, then link to upload
       receiptId = existingReceiptId
@@ -58,7 +58,6 @@ export const receiptWorkflow = task({
         const createResult = await api.post('/api/receipts', {
           ...receiptData,
           title,
-          tags,
         })
         receiptId = createResult.created.id
         logger.log(`Created new receipt ${receiptId}`)

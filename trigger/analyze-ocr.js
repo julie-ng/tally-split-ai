@@ -4,7 +4,6 @@ import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { azureOcrExtract } from '#server/utils/azure-ocr.utils.js'
 import { getAzureDocumentIntelligenceConfig } from '#server/utils/azure-document-intelligence.js'
-import { receiptUtils } from '#shared/utils/receipt.utils.js'
 import { receiptInputSchema } from '#shared/utils/zod-schemas/receipt.schema.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
 import { notifyStatus } from './utils/notify-status.js'
@@ -94,7 +93,6 @@ export const analyzeOcr = task({
       return {
         receiptData,
         title: upload.title || 'Untitled',
-        tags: receiptUtils.azureTagsToReceiptTags(upload.azureTags),
         existingReceiptId: upload.receiptId,
       }
     }

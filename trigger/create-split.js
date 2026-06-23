@@ -51,6 +51,7 @@ export const createSplit = task({
       // API from the receipt's household members (ordered by users.createdAt).
       const splitResult = await api.post('/api/splits', {
         receiptId,
+        title: receipt.title,
         splitAmount,
         isSettled: false,
       })
