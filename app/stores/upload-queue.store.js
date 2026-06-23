@@ -132,7 +132,7 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
     const thumbnailBlob = await generateThumbnail(uploadObj.file)
     const thumbnailFilename = createThumbnailFilename(uploadObj.azureFilename)
     const thumbnailBlobPath = azureUtils.buildBlobPath(uploadObj.userId, uploadObj.id, thumbnailFilename)
-    await uploadThumbnailToAzure(thumbnailBlob, thumbnailBlobPath, uploadObj.userId)
+    await uploadThumbnailToAzure(thumbnailBlob, thumbnailBlobPath)
   }
 
   /**
@@ -200,7 +200,6 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
           size: upload.file.size,
           status: 'uploaded',
           uploadedAt: new Date().toISOString(),
-          azureTags: upload.azureTags,
           title: extractReceiptTitle(upload.originalFilename),
         },
       })
@@ -240,7 +239,6 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
       await uploadBlobToAzure({
         url: tokenResponse.upload.url,
         file: initial.file,
-        tags: initial.azureTags,
         onProgress: (percent) => {
           const u = findUpload()
           if (u) {

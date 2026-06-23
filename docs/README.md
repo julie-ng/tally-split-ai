@@ -43,26 +43,6 @@ Nuxt uses SSR + client hydration. Choosing the wrong fetch function causes doubl
 
 ## Testing
 
-### Tags Pipeline Tests
-
-`tests/integration/tags-pipeline.test.js` tests the full data transformation chain for receipt tags across all layers:
-
-```
-filename (#special #initals)
-  → extractHashtagsForAzureBlobs()        → "special+initals"
-  → azureTags object                       → { "receipt-tags": "special+initals" }
-  → uploads.azure_tags (jsonb)             → stored as native JSON in Postgres
-  → receiptUtils.azureTagsToReceiptTags()  → "special, initals"
-  → receipts.tags (text)                   → comma-separated string
-  → receiptUtils.receiptTagsToDisplayArray() → ['special', 'initals'] as badges
-```
-
-**Why this exists:** During the SQLite→Postgres migration (2026-04-06), changing `azure_tags` from `text` (JSON string) to `jsonb` (native object) caused cascading failures across Zod schemas, utility functions, and API responses. These tests ensure format consistency between layers and catch type mismatches early.
-
-**Key utility functions** (in `shared/utils/receipt.utils.js`):
-- `azureTagsToReceiptTags(azureTags)` — converts `azureTags['receipt-tags']` plus-separated string to comma-separated receipt tags
-- `receiptTagsToDisplayArray(tags)` — splits comma-separated string into trimmed array for UI display
-
 ### Running Tests
 
 ```bash

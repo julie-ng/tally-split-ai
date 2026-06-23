@@ -1,5 +1,4 @@
 <script setup>
-import { hasKeys } from '#shared/utils/object.utils.js'
 import { useUploadsStore } from '~/stores/uploads.store'
 
 const props = defineProps({
@@ -30,23 +29,5 @@ const upload = computed(() => uploadsStore.getUploadById(props.id))
         {{ upload.blobUrl }}
       </div>
     </ui-label-content>
-    <ClientOnly>
-      <ui-label-content label="Azure Blob Index Tags">
-        <div class="flex flex-wrap gap-2 pt-2">
-          <UBadge
-            v-for="tag in azureUtils.blobTagsJsonToObject(upload.azureTags)"
-            :key="tag.key"
-            class="text-slate-500"
-            color="neutral"
-            variant="soft"
-          >
-            {{ tag.key }}: {{ tag.value }}
-          </UBadge>
-          <span v-if="!hasKeys(upload.azureTags, { silent: true })" class="-mt-1">
-            -
-          </span>
-        </div>
-      </ui-label-content>
-    </ClientOnly>
   </div>
 </template>

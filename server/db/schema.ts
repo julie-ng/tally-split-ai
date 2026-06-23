@@ -78,7 +78,6 @@ export const uploads = pgTable('uploads', {
   originalFilename: text('original_filename').notNull(),
   contentType: text('content_type'),
   size: integer('size'),
-  azureTags: jsonb('azure_tags'), // Azure blob tags as JSON
 
   // Analysis status (updated by workflow orchestrator)
   analysisStatus: text('analysis_status', { enum: UPLOAD_ANALYSIS_STATUSES }).default('pending'),

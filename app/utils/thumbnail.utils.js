@@ -48,10 +48,9 @@ export function generateThumbnail (file, maxWidth = 100) {
  *
  * @param {Blob} thumbnailBlob - The thumbnail blob to upload
  * @param {string} blobPath - The full blob path for the thumbnail
- * @param {string} userId - Owner user id, written as the only blob tag
  * @returns {Promise<void>}
  */
-export async function uploadThumbnailToAzure (thumbnailBlob, blobPath, userId) {
+export async function uploadThumbnailToAzure (thumbnailBlob, blobPath) {
   const tokenResponse = await $fetch('/api/tokens/upload', {
     method: 'POST',
     body: {
@@ -64,6 +63,5 @@ export async function uploadThumbnailToAzure (thumbnailBlob, blobPath, userId) {
     url: tokenResponse.upload.url,
     file: thumbnailBlob,
     contentType: 'image/jpeg',
-    tags: { 'user-id': userId },
   })
 }

@@ -65,7 +65,7 @@ Reference: `server/api/uploads/[hashId].put.js`
 
 ## 4. PostgreSQL Notes
 
-- `jsonb` columns (e.g., `azureTags`) accept plain JS objects — do NOT `JSON.stringify`
+- `jsonb` columns (e.g., `ocrJson`) accept plain JS objects — do NOT `JSON.stringify`
 - Always set `updatedAt` manually on updates — the schema only defines a `default` (applied on insert); PostgreSQL has no auto-update trigger:
   ```js
   updatedAt: new Date()

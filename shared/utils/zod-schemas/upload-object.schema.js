@@ -13,7 +13,6 @@ export const uploadObject = z.object({
   originalFilename: z.string(),
   contentType: z.string(),
   size: z.number(),
-  azureTags: z.union([z.object(), z.string()]).nullable(),
 
   analysisStatus: z.string(), // pending, queued, processing, completed, failed
   ocrText: z.string().nullable().optional(),

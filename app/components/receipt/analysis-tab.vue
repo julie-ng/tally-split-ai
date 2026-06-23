@@ -166,20 +166,6 @@ const upload = computed(() => props.receipt.uploads?.[0])
             <data-key-value-table :items="totals" currency="€" />
             <USeparator class="my-3" />
 
-            <!-- Azure Blob Tags -->
-            <p class="font-semibold mt-2 mb-3 text-primary">
-              Azure Blob Tags
-              <analyzed-by-human-icon color="text-slate-400" />
-            </p>
-            <blob-tags
-              v-if="upload?.azureTags"
-              :tags="upload.azureTags"
-            />
-            <p v-else class="text-slate-400 text-sm">
-              No tags
-            </p>
-            <USeparator class="mt-5 mb-3" />
-
             <!-- Merchant -->
             <p class="font-semibold my-2 text-primary">
               Merchant

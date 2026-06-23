@@ -87,7 +87,7 @@ This is a [**Nuxt 4** application](https://nuxt.com/docs/4.x/getting-started/int
 ## Core Functionality
 
 - Users upload receipt photos via drag-and-drop; uploads are queued and sent directly to Azure Blob Storage
-- Filenames encode pre-curated data: `(41.95)` for total in EUR, `#tip` for tags, `YYYY-MM-DD` for dates
+- Filenames encode pre-curated data: `(41.95)` for total in EUR, `YYYY-MM-DD` for dates
 - After upload, a Trigger.dev workflow automatically runs: OCR → annotation detection → split creation
 - Each upload creates a Receipt entry (via OCR analysis) and a Split entry (from receipt total)
 - The `workflow_runs` table tracks per-step progress; `uploads.analysisStatus` is a convenience field updated by the orchestrator

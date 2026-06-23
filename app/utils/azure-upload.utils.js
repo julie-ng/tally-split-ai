@@ -5,11 +5,10 @@
  * @param {string} options.url - Upload URL with SAS token
  * @param {File|Blob} options.file - The file or blob to upload
  * @param {string} [options.contentType] - Content-Type header (defaults to file.type)
- * @param {Object} [options.tags] - Azure blob index tags (key-value pairs)
  * @param {function} [options.onProgress] - Progress callback, receives percentage (0-100)
  * @returns {Promise<void>} Resolves on success, rejects with Error on failure
  */
-export function uploadBlobToAzure ({ url, file, contentType, tags, onProgress }) {
+export function uploadBlobToAzure ({ url, file, contentType, onProgress }) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
 
@@ -40,15 +39,6 @@ export function uploadBlobToAzure ({ url, file, contentType, tags, onProgress })
     xhr.open('PUT', url)
     xhr.setRequestHeader('x-ms-blob-type', 'BlockBlob')
     xhr.setRequestHeader('Content-Type', contentType || file.type || 'application/octet-stream')
-
-    // Set Azure blob index tags if available
-    if (tags && Object.keys(tags).length > 0) {
-      const tagPairs = Object.entries(tags).map(([key, value]) => {
-        const encodedValue = encodeURIComponent(value).replace(/%20/g, '+')
-        return `${key}=${encodedValue}`
-      })
-      xhr.setRequestHeader('x-ms-tags', tagPairs.join('&'))
-    }
 
     xhr.send(file)
   })

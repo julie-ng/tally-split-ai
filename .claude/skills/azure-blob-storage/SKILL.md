@@ -1,6 +1,6 @@
 ---
 name: azure-blob-storage
-description: Azure Blob Storage integration — SAS tokens, direct client uploads, filename conventions, blob tags, and security model. Use when working on file uploads, blob storage, SAS token generation, or filename handling.
+description: Azure Blob Storage integration — SAS tokens, direct client uploads, filename conventions, and security model. Use when working on file uploads, blob storage, SAS token generation, or filename handling.
 ---
 
 # Azure Blob Storage
@@ -40,12 +40,7 @@ Because filenames use `()` and `#` for human pre-curation, they must be sanitize
 
 Human pre-curation encoding in filenames:
 - `(41.95)` — total amount in EUR
-- `#tip` — tag (indicates actual total may differ from printed)
 - `YYYY-MM-DD` — date
-
-## Azure Blob Tags
-
-Tags are stored as Azure Blob index tags (key-value pairs). They come back from the Azure API as a **JSON string** and need to be parsed for use in the app. When saving back, serialize with `JSON.stringify()`.
 
 ## Key Files
 

@@ -65,10 +65,6 @@ const columns = [
     header: 'Total',
     meta: { class: { th: 'text-right' } },
   },
-  // {
-  //   accessorKey: 'azureTags',
-  //   header: 'Azure Tags',
-  // },
   {
     id: 'actions',
     meta: {
@@ -123,7 +119,6 @@ function getRowActionItems (row) {
   ]
 }
 
-const highlightTotals = ref(true)
 const expanded = ref({})
 
 const tableStyles = {
@@ -184,26 +179,6 @@ async function bulkDelete () {
   })
 }
 
-function totalsMatch (blobTagsString, total) {
-  const tagValue = azureUtils.getReceiptTotalBlobTag(blobTagsString)
-  if (total === null || tagValue === null) {
-    return null
-  }
-  return Number(tagValue) === total
-}
-
-function highlightTotal (isMatch) {
-  if (isMatch === null) {
-    return ''
-  }
-  else if (!highlightTotals.value || isMatch) {
-    return ''
-  }
-  else {
-    return 'text-red-400'
-  }
-}
-
 const paginationInfo = computed(() => {
   if (!table.value?.tableApi) return { start: 0, end: 0, total: 0 }
 
@@ -253,10 +228,6 @@ const paginationInfo = computed(() => {
         Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} receipts
       </p>
 
-      <div class="my-2">
-        <UCheckbox v-model="highlightTotals" label="Highlight Totals" />
-      </div>
-
       <ClientOnly>
         <div class="border bg-white border-slate-200">
           <UTable
@@ -300,14 +271,6 @@ const paginationInfo = computed(() => {
                 >
                   Missing Upload
                 </UBadge>
-                <UBadge
-                  v-if="totalsMatch(row.original.azureTags, row.original.total) === false"
-                  icon="i-lucide-euro"
-                  color="error"
-                  variant="outline"
-                >
-                  Mismatch
-                </UBadge>
               </h1>
               <p class="text-slate-400">
                 {{ row.original.merchantName || '-' }}
@@ -327,7 +290,6 @@ const paginationInfo = computed(() => {
               <div
                 v-if="row.original.total != null"
                 class="font-medium text-right"
-                :class="highlightTotal(totalsMatch(row.original.azureTags, row.original.total))"
               >
                 {{ receiptUtils.formatCurrency(row.original.total, row.original.currency || 'EUR') }}
               </div>
@@ -335,17 +297,6 @@ const paginationInfo = computed(() => {
                 —
               </div>
             </template>
-
-            <!-- Azure Tags -->
-            <!-- <template #azureTags-cell="{ row }">
-              <blob-tags
-                v-if="row.original.azureTags"
-                :tags="row.original.azureTags"
-                :highlight-total="highlightTotals"
-                :totals-match="totalsMatch(row.original.azureTags, row.original.total)"
-              />
-              <span v-else class="text-slate-400">—</span>
-            </template> -->
 
             <!-- Analysis Status -->
             <template #analysisStatus-cell="{ row }">

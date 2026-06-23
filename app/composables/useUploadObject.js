@@ -1,42 +1,4 @@
-import {
-  extractReceiptDate,
-  extractReceiptTotal,
-  extractHashtagsForAzureBlobs,
-} from '#shared/utils/filename.utils'
-
 import { useUserStore } from '~/stores/user.store'
-
-/**
- * Extract Azure blob tags from filename and user context
- * @param {string} filename - The filename to extract tags from
- * @param {string} userId - The user ID
- * @returns {Object} Object with tag keys and values for Azure
- */
-function extractAzureBlobTags (filename, userId) {
-  const tags = {}
-
-  // Add user ID tag
-  if (userId) {
-    tags['user-id'] = userId
-  }
-
-  const receiptDate = extractReceiptDate(filename)
-  if (receiptDate) {
-    tags['receipt-date'] = receiptDate
-  }
-
-  const receiptTotal = extractReceiptTotal(filename)
-  if (receiptTotal) {
-    tags['receipt-total'] = receiptTotal
-  }
-
-  const hashtags = extractHashtagsForAzureBlobs(filename)
-  if (hashtags) {
-    tags['receipt-tags'] = hashtags
-  }
-
-  return tags
-}
 
 /**
  * @typedef {Object} UploadObject
@@ -47,7 +9,6 @@ function extractAzureBlobTags (filename, userId) {
  * @property {string} azureFilename - Azure blob filename
  * @property {number} size - File size in bytes
  * @property {string} blobUrl - Azure blob URL
- * @property {Object} azureTags - Azure blob index tags extracted from filename
  * @property {UploadDetails} upload - Upload details
  * @property {'queued'|'in-progress'|'completed'|'failed'} status - Upload status
  * @property {Date} queuedAt - When upload was queued
@@ -77,8 +38,6 @@ export function useUploadObject () {
    * @returns {Promise<UploadObject>} Standardized upload object with 'queued' status
    */
   async function createUploadObject (file, blobResult) {
-    const azureTags = extractAzureBlobTags(file.name, userStore.userId)
-
     return {
       id: blobResult.id,
       userId: userStore.userId,
@@ -87,7 +46,6 @@ export function useUploadObject () {
       azureFilename: blobResult.filename,
       size: file.size,
       blobUrl: blobResult.blob.url,
-      azureTags,
       upload: {
         progress: 0,
         retries: 0,

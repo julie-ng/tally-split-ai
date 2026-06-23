@@ -50,7 +50,7 @@ Reference implementation: `server/api/uploads/[id].put.js`
 - Use `setResponseStatus(event, 400)` for validation errors (don't throw — return structured error)
 - **Never manually check field types** — use zod schemas (see `rules/zod-validation.md`)
 - `schema` is auto-imported — no import needed in handlers
-- `jsonb` columns (e.g., `azureTags`) store native JSON — do NOT `JSON.stringify`
+- `jsonb` columns (e.g., `ocrJson`) store native JSON — do NOT `JSON.stringify`
 
 ## File Naming
 

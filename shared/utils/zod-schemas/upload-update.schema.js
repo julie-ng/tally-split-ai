@@ -11,7 +11,6 @@ export const uploadUpdateSchema = z.object({
   contentType: z.string().optional(),
   title: z.string().optional(),
   size: z.number().nonnegative('size must be a non-negative number').optional(),
-  azureTags: z.record(z.string(), z.string()).optional(),
   status: z.string().optional(),
   uploadedAt: z.string().datetime().optional(),
 

@@ -22,42 +22,6 @@ export function extractReceiptTotal (filename) {
 }
 
 /**
- * Extract hashtags from filename
- * Looks for patterns like "#special #initials" and returns an Array
- * @param {string} filename - The filename to parse
- * @returns {Array} - Array of hashtag values or empty array.
- */
-export function extractHashtags (filename) {
-  const hashtagPattern = /#([a-zA-Z0-9_-]+)/g
-  const matches = [...filename.matchAll(hashtagPattern)]
-
-  if (matches.length === 0) {
-    return []
-  }
-
-  const tags = matches.map(match => match[1])
-  return tags
-}
-
-/**
- * Extract hashtags from filename for Azure Blob Storage
- * Looks for patterns like "#special #initials" and returns comma-separated values
- * @param {string} filename - The filename to parse
- * @returns {string|null} - "+"-separated hashtag values
- */
-export function extractHashtagsForAzureBlobs (filename) {
-  const hashtagPattern = /#([a-zA-Z0-9_-]+)/g
-  const matches = [...filename.matchAll(hashtagPattern)]
-
-  if (matches.length === 0) {
-    return null
-  }
-
-  const tags = matches.map(match => match[1])
-  return tags.join('+')
-}
-
-/**
  * Extract receipt title from filename by removing date, price, tags, and extension
  * @param {string} filename - The filename to parse
  * @returns {string} - The extracted title, trimmed

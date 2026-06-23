@@ -71,10 +71,10 @@ Per [request headers docs](https://learn.microsoft.com/en-us/rest/api/storageser
 | `Date` | [ISO-8601 Format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), e.g. `YYYY-MM-DD` |
 | `Content-MD5` | Optional. But we should send it too. |
 | `x-blob-type` | `BlockBlob` |
-| `x-ms-tags` | query-string encoded tags on blob. |
 
 Not required (for our scenario):
 
 - `Authorization` - because token already in URLs
 - `Content-Length` - not required for block blobs
 - `x-ms-version` - not required, because we are not doing authorized request.
+- `x-ms-tags` - query-string encoded blob index tags. No longer sent (the uploads-side tags feature was removed).

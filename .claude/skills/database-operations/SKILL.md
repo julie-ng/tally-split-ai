@@ -25,7 +25,7 @@ Connection string via env var: `NUXT_DATABASE_URL`
 
 ## Current Tables
 
-- `uploads` — Azure Blob metadata (hashId, blobPath, contentType, azureTags as jsonb, etc.)
+- `uploads` — Azure Blob metadata (hashId, blobPath, contentType, ocrJson/annotationsJson as jsonb, etc.)
 - `receipts` — Receipt business data (merchant, total, date, analysisStatus, etc.)
 - `splits` — Expense split records (receiptId, amount, person, settled, etc.)
 
@@ -68,4 +68,4 @@ export default defineEventHandler(async (event) => {
 })
 ```
 
-Note: `jsonb` columns (e.g., `azureTags`) accept plain JS objects — do NOT `JSON.stringify`.
+Note: `jsonb` columns (e.g., `ocrJson`) accept plain JS objects — do NOT `JSON.stringify`.

@@ -38,12 +38,5 @@ const upload = computed(() => uploadsStore.getUploadById(props.id))
         {{ formatBytes(upload.size) }}
       </p>
     </ui-label-content>
-
-    <!-- Azure Blob Tags -->
-    <ui-label-content label="Azure Blob Tags" :ui="{ class: 'my-4' }">
-      <div class="my-2">
-        <blob-tags :tags="upload.azureTags" />
-      </div>
-    </ui-label-content>
   </div>
 </template>

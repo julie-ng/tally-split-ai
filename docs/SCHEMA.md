@@ -128,7 +128,6 @@ File/blob metadata for uploaded receipt images. Created before the corresponding
 | `thumbnailName`, `thumbnailUrl` | `text` | Generated post-upload |
 | `originalFilename` | `text` | |
 | `contentType`, `size` | | |
-| `azureTags` | `jsonb` | Tags from filename (e.g. `#tip`) |
 | `analysisStatus` | enum | `UPLOAD_ANALYSIS_STATUS` — see below |
 | `analyzedAt` | `timestamp` | Set when full workflow completes |
 | `ocrText` | `text` | Plain text OCR output |
