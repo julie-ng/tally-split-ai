@@ -12,11 +12,11 @@ import { z } from 'zod'
 
 export default defineEventHandler(async (event) => {
   const db = useDB()                         // auto-imported via server/utils/db.utils.js
-  await requireAuthentication(event)         // AuthN — establishes principal (user or task)
-  requireHashIdParam(event)                  // or requireIdParam() for numeric IDs
-  await requireAuthorization(event, { ... }) // AuthZ — verifies principal can act on resource
+  await guards.requireAuthentication(event)  // AuthN — establishes principal (user or task)
+  guards.requireIdParam(event)               // validates the :id route param is present
+  await guards.requireAuthorization(event, { ... }) // AuthZ — verifies principal can act on resource
 
-  const hashId = getRouterParam(event, 'hashId')
+  const id = getRouterParam(event, 'id')
 
   // For POST/PUT: validate request body with zod
   const result = await readValidatedBody(event, body => zodSchemas.mySchema.safeParse(body))
@@ -40,11 +40,11 @@ export default defineEventHandler(async (event) => {
 })
 ```
 
-Reference implementation: `server/api/uploads/[hashId].put.js`
+Reference implementation: `server/api/uploads/[id].put.js`
 
 ## Key Rules
 
-- **No middleware** — use explicit utility functions (`requireAuthentication`, `requireAuthorization`, `requireHashIdParam`) at the top of each handler
+- **No middleware** — use explicit utility functions (`guards.requireAuthentication`, `guards.requireAuthorization`, `guards.requireIdParam`) at the top of each handler
 - **Guards must not return values** — they should only inspect/extend `event.context` or throw an error. Callers read results from `event.context` (e.g. `event.context.upload`). Reference: https://nuxt.com/docs/4.x/directory-structure/server#server-middleware
 - Use `createError()` for all thrown errors (Nuxt-aware, works across server and client)
 - Use `setResponseStatus(event, 400)` for validation errors (don't throw — return structured error)
@@ -55,7 +55,7 @@ Reference implementation: `server/api/uploads/[hashId].put.js`
 ## File Naming
 
 Files in `server/api/` are auto-registered as routes:
-- `[hashId].get.js` → `GET /api/resource/:hashId`
-- `[hashId].put.js` → `PUT /api/resource/:hashId`
+- `[id].get.js` → `GET /api/resource/:id`
+- `[id].put.js` → `PUT /api/resource/:id`
 - `index.get.js` → `GET /api/resource`
 - `index.post.js` → `POST /api/resource`
