@@ -148,7 +148,7 @@ All AuthN failures are logged to the `security` domain with IP, user-agent, meth
 
 ## Authorization (AuthZ)
 
-AuthZ is handled by `requireAuthorization(event, { uploadHashId?, receiptId?, splitId? })`, called after AuthN in every protected handler that operates on a specific resource.
+AuthZ is handled by `requireAuthorization(event, { uploadId?, receiptId?, splitId? })`, called after AuthN in every protected handler that operates on a specific resource.
 
 ```mermaid
 ---
@@ -167,7 +167,7 @@ flowchart TD
         UScope("`**Find resource household** via
         • _receipt.householdId_
         • _upload.householdId_
-        • _split.receiptId.householdId_`")
+        • _split.householdId_`")
         UMatch{"`**Matches 
         user's _householdId_?**
         (via session)`"}
@@ -215,7 +215,7 @@ flowchart TD
 
 - Verifies the resource's `householdId` matches `event.context.householdId` — i.e. the principal is a member of the household that owns the resource
 - For **receipts** and **uploads**: direct column lookup (`receipts.householdId`, `uploads.householdId`)
-- For **splits**: derived via the linked receipt (`splits.receiptId → receipts.householdId`) — splits do not carry their own `householdId`
+- For **splits**: direct column lookup (`splits.householdId`) — splits carry their own write-once `householdId`, stamped at creation (inherited from the receipt when linking one, else the acting principal's household). This is what makes standalone splits (`receiptId` null) reachable
 - Returns **404** on mismatch — do not reveal resource existence to non-members
 
 > [!NOTE]
@@ -224,9 +224,9 @@ flowchart TD
 ### Task AuthZ (Resource Scope)
 
 - Verifies the requested resource belongs to this workflow run's linked resources
-- `uploadHashId`: must match `workflowRun.upload.hashId`
+- `uploadId`: must match `workflowRun.upload.id`
 - `receiptId`: must match `workflowRun.upload.receiptId`. For first-time linking (no `upload.receiptId` yet), the receipt's `householdId` must match the upload's `householdId`
-- `splitId`: must match the receipt's linked splitId (via join through receipt → split). For first-time linking, the split's derived `householdId` (via its receipt) must match the upload's `householdId`
+- `splitId`: must match the split linked to this workflow's receipt (looked up via `splits.receiptId → receipts.id`). For first-time linking, the split's own `householdId` column must match the upload's `householdId`
 - Returns **403** on mismatch — tasks know their own scope, no need to hide resource existence
 
 ### Task AuthZ (Action Permissions)
@@ -247,9 +247,9 @@ All AuthZ failures are logged to the `security` domain with the specific reason,
 `POST /api/tokens/read` issues short-lived SAS read URLs for blobs and does not fit the standard `requireAuthorization` model — its resource is a *capability* ("read this blob"), not a household resource. The endpoint inlines its own AuthZ:
 
 - **User principal**: blob's parent upload must be in `event.context.householdId`. Returns 404 on mismatch.
-- **Task principal**: parent upload's `hashId` must equal `workflowRun.upload.hashId`, and `taskActions` must include `'token:read'`. Returns 403 on mismatch.
+- **Task principal**: parent upload's `id` must equal `workflowRun.upload.id`, and `taskActions` must include `'token:read'`. Returns 403 on mismatch.
 
-The standard `requireAuthorization(event, { uploadHashId })` is **not** suitable here because requests are keyed by `blobName`, not `uploadHashId` — and blobs include thumbnails, which are not the upload's primary blob.
+The standard `requireAuthorization(event, { uploadId })` is **not** suitable here because requests are keyed by `blobName`, not `uploadId` — and blobs include thumbnails, which are not the upload's primary blob.
 
 The path-based `_deriveResource` mapping does NOT include `/api/tokens` — derivation would yield `token:write` for a POST, which is semantically wrong (generating a SAS read URL is a read-capability action). The endpoint checks `'token:read'` directly instead of going through `requireTaskPermission`.
 
@@ -259,7 +259,7 @@ The path-based `_deriveResource` mapping does NOT include `/api/tokens` — deri
 
 ### Generation
 
-Tokens are generated server-side when a user triggers a workflow (`POST /api/workflows/:uploadHashId`). The orchestrator then generates per-task tokens for each child task.
+Tokens are generated server-side when a user triggers a workflow (`POST /api/workflows/:uploadId`). The orchestrator then generates per-task tokens for each child task.
 
 ```
 HMAC-SHA256(
@@ -300,7 +300,7 @@ This means `analyze-annotations` literally cannot create a split — its token w
 
 The `scope` parameter binds the token to a specific resource. It is **required** — generating a token without a scope throws an error.
 
-Scope format: `upload:<hashId>` (e.g., `upload:abc123`)
+Scope format: `upload:<id>` (e.g., `upload:abc123`)
 
 The scope is derived from the workflow run's linked upload. A token scoped to one upload cannot be used to access a different resource — the HMAC will not match.
 
@@ -328,7 +328,7 @@ Scoping layers:
 
 ### Token Lifecycle
 
-A blob upload is a prerequisite — see [blob-storage-architecture.md](./blob-storage-architecture.md). The diagram below picks up at workflow trigger. The trigger itself is shown as a generic `POST /api/workflows/:uploadHashId` — it could be initiated by a logged-in user, a cron job, or any authenticated caller.
+A blob upload is a prerequisite — see [blob-storage-architecture.md](./blob-storage-architecture.md). The diagram below picks up at workflow trigger. The trigger itself is shown as a generic `POST /api/workflows/:uploadId` — it could be initiated by a logged-in user, a cron job, or any authenticated caller.
 
 ```mermaid
 sequenceDiagram
@@ -344,7 +344,7 @@ sequenceDiagram
       participant Storage@{ "type" : "database" } as Blob Storage
     end
 
-    Note over API: POST /api/workflows/:uploadHashId
+    Note over API: POST /api/workflows/:uploadId
     activate API
     API->>+DB: INSERT workflow_runs (UUID, createdAt)
     DB-->>-API: row
@@ -394,8 +394,8 @@ Integration tests in `tests/integration/security-boundaries.test.js` enforce:
 
 1. **No direct DB access in trigger tasks** — no `server/db/connection`, `useDB`, or `drizzle-orm` imports in `trigger/**/*.js`
 2. **No legacy auth** — no `requireUserId` calls in any API endpoint
-3. **AuthZ on resource endpoints** — every `[id]`/`[hashId]` endpoint calls `requireAuthorization`
-4. **Correct AuthZ parameters** — receipt endpoints pass `receiptId`, split endpoints pass `splitId`, upload endpoints pass `uploadHashId`
+3. **AuthZ on resource endpoints** — every `[id]` endpoint calls `requireAuthorization`
+4. **Correct AuthZ parameters** — receipt endpoints pass `receiptId`, split endpoints pass `splitId`, upload endpoints pass `uploadId`
 5. **Task permission enforcement** — all task-facing endpoints call `requireTaskPermission`
 6. **Permissions map coverage** — every task ID found in trigger files has an entry in `TASK_PERMISSIONS`
 7. **Valid action format** — all entries in `TASK_PERMISSIONS` use valid `resource:permission` format
@@ -415,8 +415,12 @@ Unit tests in `shared/config/task-permissions.test.js` additionally pin the **`t
 ## Future Improvements
 
 - **Roles within a household**: All household members currently have equal permissions on shared resources. A `GLOBAL_ADMIN_ID` env-var escape hatch is planned for cross-household admin actions (e.g. setting another member's initials).
-- **Generic workflow trigger**: Current trigger endpoint uses `[uploadHashId]` — won't scale for receipt-triggered or other non-upload workflows.
+- **Generic workflow trigger**: Current trigger endpoint uses `[uploadId]` — won't scale for receipt-triggered or other non-upload workflows.
 
 ## Intentional Constraints
 
 - **Two members per household**: The `splits` table's hardcoded `userOneId`/`userOneShare`/`userTwoId`/`userTwoShare` shape is by design. The product scopes to two-person households (couples, roommates) and will not be generalized to N members.
+
+- **The household is the sole authZ boundary**: Every household-scoped resource (receipts, uploads, splits) has a write-once `householdId`, and all user-facing authZ is decided against the principal's household membership.
+
+  AuthZ not finer-grained than `householdId`. The `userId` columns on those tables are _creator/provenance metadata only_; they never gate access.
