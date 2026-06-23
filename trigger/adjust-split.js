@@ -3,6 +3,7 @@ import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { azureOcrExtract } from '#server/utils/azure-ocr.utils.js'
 import { gpt4oUtils } from '#server/utils/azure-gpt4o.utils.js'
+import { calculateHalfAmount } from '#shared/utils/splits/half-amount.utils.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
 import { notifyStatus } from './utils/notify-status.js'
 
@@ -74,7 +75,7 @@ export const adjustSplit = task({
       // 6. Compute share amounts (50/50 default; null adjustedTotal lets the
       // endpoint keep the existing splitAmount)
       const halfAmount = result.adjustedTotal != null
-        ? Math.floor(result.adjustedTotal / 2 * 100) / 100
+        ? calculateHalfAmount(result.adjustedTotal)
         : null
 
       // 7. Resolve via task endpoint — owns initials → userId mapping (PII

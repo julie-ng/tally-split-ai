@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { eq, asc } from 'drizzle-orm'
 import { splitRequestSchema } from '#shared/utils/zod-schemas/split.schema.js'
+import { calculateHalfAmount } from '#shared/utils/splits/half-amount.utils.js'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger('split')
@@ -80,13 +81,21 @@ export default defineEventHandler(async (event) => {
     userTwoId ??= members[1]?.id ?? null
   }
 
+  // Default to a 50/50 split when shares are omitted but an amount is given.
+  // The receipt-pipeline path (trigger/create-split.js) sends explicit shares,
+  // so this only kicks in for standalone splits created directly via the API.
+  // An explicitly-sent 0 share is respected (?? not ||).
+  const defaultHalf = result.data.splitAmount != null
+    ? calculateHalfAmount(result.data.splitAmount)
+    : null
+
   const insertData = {
     ...result.data,
     householdId,
     userOneId,
     userTwoId,
-    userOneShare: result.data.userOneShare ?? null,
-    userTwoShare: result.data.userTwoShare ?? null,
+    userOneShare: result.data.userOneShare ?? defaultHalf,
+    userTwoShare: result.data.userTwoShare ?? defaultHalf,
     isSettled: result.data.isSettled ?? false,
   }
 

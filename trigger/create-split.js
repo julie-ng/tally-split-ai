@@ -45,15 +45,13 @@ export const createSplit = task({
         amountSource = 'fallback_zero'
       }
 
-      // 3. Create split via API with default 50/50 shares.
-      // userOneId / userTwoId slots are auto-assigned by the API from the
-      // receipt's household members (ordered by users.createdAt).
-      const halfAmount = Math.floor(splitAmount / 2 * 100) / 100
+      // 3. Create split via API. Shares are omitted — the endpoint defaults
+      // them to a 50/50 split of splitAmount (single source of truth for the
+      // halving logic). userOneId / userTwoId slots are auto-assigned by the
+      // API from the receipt's household members (ordered by users.createdAt).
       const splitResult = await api.post('/api/splits', {
         receiptId,
         splitAmount,
-        userOneShare: halfAmount,
-        userTwoShare: halfAmount,
         isSettled: false,
       })
 
