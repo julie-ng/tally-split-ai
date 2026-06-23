@@ -6,7 +6,7 @@ Single source of truth for table structure, relationships, and status enums. Sch
 
 - All status values are defined as enums in `shared/enums/` and exported as both an object (`UPLOAD_STATUS.UPLOADED`) and an array (`UPLOAD_STATUSES` for Drizzle/Zod).
 - Never compare raw status strings — always import the constant. See `.claude/rules/enums.md`.
-- `userId` always refers to `users.id` (UUID). GitHub's user id is always called `githubId`.
+- `userId` always refers to `users.id` (a `text` id generated via `generateId()`). GitHub's user id is always called `githubId`.
 
 ## Relationships overview
 
@@ -58,9 +58,10 @@ Groups of users that share receipts/uploads/splits.
 
 | Column | Type | Notes |
 |:--|:--|:--|
-| `id` | `uuid` PK | Random UUID |
+| `id` | `text` PK | Generated via `generateId()` |
 | `name` | `text` | Nullable; auto-create uses `"{username}'s household"` |
 | `description` | `text` | Nullable; auto-create uses `"Auto-generated personal household."` |
+| `customInstructions` | `text` | Nullable; free-text guidance appended to LLM task system prompts. Snapshotted into the workflow payload at trigger time |
 | `createdAt` | `timestamp` | |
 | `updatedAt` | `timestamp` | |
 
@@ -70,9 +71,9 @@ Authenticated principals. One user belongs to one household.
 
 | Column | Type | Notes |
 |:--|:--|:--|
-| `id` | `uuid` PK | Internal user ID |
+| `id` | `text` PK | Internal user ID, generated via `generateId()` |
 | `githubId` | `bigint` UNIQUE | GitHub's numeric user id (immutable) |
-| `householdId` | `uuid` NOT NULL FK → `households.id` | AuthZ scope; restrict on delete |
+| `householdId` | `text` NOT NULL FK → `households.id` | AuthZ scope; restrict on delete |
 | `username` | `text` | Refreshed from GitHub on every login |
 | `displayName` | `text` | Nullable |
 | `initials` | `text` | User-editable; used for `paidBy` resolution |
@@ -89,7 +90,7 @@ Business/finance data extracted from receipt uploads.
 
 | Column | Type | Notes |
 |:--|:--|:--|
-| `id` | `serial` PK | |
+| `id` | `text` PK | Generated via `generateId()` |
 | `title` | `text` | Default `Untitled`; LLM-normalized or user-edited |
 | `merchantName`, `merchantAddress`, `merchantPhone` | `text` | OCR-extracted |
 | `tags` | `text` | Comma-separated; derived from upload's azureTags |
@@ -98,8 +99,8 @@ Business/finance data extracted from receipt uploads.
 | `currency` | `text` | |
 | `notes` | `text` | User-editable |
 | `analysisStatus` | enum | `RECEIPT_ANALYSIS_STATUS` — see below |
-| `userId` | `text` | Createdby metadata only — **not used for authZ** |
-| `householdId` | `uuid` NOT NULL FK → `households.id` | AuthZ scope |
+| `userId` | `text` NOT NULL FK → `users.id` | Createdby metadata only — **not used for authZ** |
+| `householdId` | `text` NOT NULL FK → `households.id` | AuthZ scope |
 | `createdAt`, `updatedAt` | `timestamp` | |
 
 ### `RECEIPT_ANALYSIS_STATUS`
@@ -120,12 +121,11 @@ File/blob metadata for uploaded receipt images. Created before the corresponding
 
 | Column | Type | Notes |
 |:--|:--|:--|
-| `id` | `serial` PK | |
-| `hashId` | `text` UNIQUE | Public-facing identifier (used in URLs) |
-| `userId` | `text` NOT NULL | Createdby metadata only — **not used for authZ** |
-| `householdId` | `uuid` NOT NULL FK → `households.id` | AuthZ scope; set explicitly because uploads exist briefly before OCR creates the receipt |
+| `id` | `text` PK | Generated via `generateId()`; public-facing identifier used in URLs |
+| `userId` | `text` NOT NULL FK → `users.id` | Createdby metadata only — **not used for authZ** |
+| `householdId` | `text` NOT NULL FK → `households.id` | AuthZ scope; set explicitly because uploads exist briefly before OCR creates the receipt |
 | `title` | `text` | Default `Untitled` |
-| `receiptId` | `integer` FK → `receipts.id` (cascade) | Nullable until OCR task links it |
+| `receiptId` | `text` FK → `receipts.id` (cascade) | Nullable until OCR task links it |
 | `status` | enum | `UPLOAD_STATUS` — see below |
 | `blobName`, `blobUrl` | `text` UNIQUE | Azure Blob Storage paths |
 | `thumbnailName`, `thumbnailUrl` | `text` | Generated post-upload |
@@ -179,15 +179,15 @@ Expense splitting between two household members.
 
 | Column | Type | Notes |
 |:--|:--|:--|
-| `id` | `serial` PK | |
-| `receiptId` | `integer` FK → `receipts.id` (cascade) | Canonical link; deleting the receipt deletes the split. Nullable — supports standalone splits |
-| `householdId` | `uuid` NOT NULL FK → `households.id` | AuthZ scope; stamped once at creation, write-once. See note below |
+| `id` | `text` PK | Generated via `generateId()` |
+| `receiptId` | `text` FK → `receipts.id` (cascade) | Canonical link; deleting the receipt deletes the split. Nullable — supports standalone splits |
+| `householdId` | `text` NOT NULL FK → `households.id` | AuthZ scope; stamped once at creation, write-once. See note below |
 | `splitAmount` | `real` NOT NULL | Total to split (defaults to receipt total) |
-| `userOneId` | `uuid` FK → `users.id` | First household member (oldest by `users.createdAt`) |
+| `userOneId` | `text` FK → `users.id` | First household member (oldest by `users.createdAt`) |
 | `userOneShare` | `real` | Amount this user owes |
-| `userTwoId` | `uuid` FK → `users.id` | Second household member; null in solo households |
+| `userTwoId` | `text` FK → `users.id` | Second household member; null in solo households |
 | `userTwoShare` | `real` | Null in solo households |
-| `paidByUserId` | `uuid` FK → `users.id` | Who actually paid (current value); set by LLM or user |
+| `paidByUserId` | `text` FK → `users.id` | Who actually paid (current value); set by LLM or user |
 | `paidByMatch` | enum | `PAID_BY_MATCH` — frozen at LLM run time, see below |
 | `isSettled` | `boolean` NOT NULL | Default `false` |
 | `settledAt` | `timestamp` | |
@@ -221,8 +221,8 @@ Tracks Trigger.dev workflow orchestration. One row per workflow run.
 | Column | Type | Notes |
 |:--|:--|:--|
 | `id` | `serial` PK | |
-| `uploadId` | `integer` FK → `uploads.id` (cascade) | |
-| `uuid` | `uuid` NOT NULL | Opaque, used in HMAC callbacks |
+| `uploadId` | `text` FK → `uploads.id` (cascade) | Nullable |
+| `uuid` | `uuid` NOT NULL | Opaque, used in HMAC callbacks; randomly generated |
 | `triggerRunId` | `text` | For Trigger.dev dashboard linking |
 | `status` | enum | `WORKFLOW_STATUS` — overall state |
 | `ocrStatus` | enum | `WORKFLOW_STEP_STATUS` |
@@ -230,7 +230,7 @@ Tracks Trigger.dev workflow orchestration. One row per workflow run.
 | `createSplitStatus` | enum | `WORKFLOW_STEP_STATUS` |
 | `adjustSplitStatus` | enum | `WORKFLOW_STEP_STATUS` |
 | `normalizeStatus` | enum | `WORKFLOW_STEP_STATUS` |
-| `error` | `text` | |
+| `errors` | `jsonb` | Per-step error messages keyed by step name (e.g. `{ ocr, annotations, adjustSplit, _orchestrator }`); null when no errors |
 | `createdAt`, `completedAt` | `timestamp` | |
 
 ### `WORKFLOW_STATUS`
