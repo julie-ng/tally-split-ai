@@ -2,6 +2,7 @@ import { tasks } from '@trigger.dev/sdk/v3'
 import { eq, and, inArray } from 'drizzle-orm'
 import { workflowRunInsertSchema } from '#shared/utils/zod-schemas/workflow-run.schema.js'
 import { WORKFLOW_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { UPLOAD_ANALYSIS_STATUS } from '#shared/enums/upload-analysis-status.js'
 import { getTaskActions } from '#shared/config/task-permissions.js'
 
@@ -80,15 +81,52 @@ export default defineEventHandler(async (event) => {
     actions: getTaskActions('receipt-workflow'),
   })
 
-  // Trigger the workflow (fire and forget)
+  // TTL = the callback-token lifetime. If no worker dequeues the run before
+  // its token expires, the run could never call back anyway — so let Trigger
+  // auto-expire it (status EXPIRED) rather than leave it queued forever. This
+  // is the "no worker available" signal; see the reconcile path on load.
+  const ttlMinutes = parseInt(process.env.WORKFLOW_TOKEN_EXPIRY_MINUTES, 10) || 15
+
+  // Trigger the workflow (fire and forget). The trigger call is an enqueue to
+  // the Trigger.dev cloud; it succeeds even if no worker is running. If the
+  // enqueue itself throws, finalize the run as FAILED so we never leave an
+  // orphaned 'queued' row the UI can't act on.
   log.info({ uploadId, workflowRunId: workflowRun.id }, 'Triggering receipt-workflow')
-  const handle = await tasks.trigger('receipt-workflow', {
-    uploadId,
-    workflowRunId: workflowRun.id,
-    runUuid: workflowRun.uuid,
-    callbackToken,
-    customInstructions,
-  })
+  let handle
+  try {
+    handle = await tasks.trigger('receipt-workflow', {
+      uploadId,
+      workflowRunId: workflowRun.id,
+      runUuid: workflowRun.uuid,
+      callbackToken,
+      customInstructions,
+    }, {
+      ttl: `${ttlMinutes}m`,
+    })
+  }
+  catch (err) {
+    log.error({ uploadId, workflowRunId: workflowRun.id, error: err.message }, 'Failed to enqueue receipt-workflow')
+
+    // The run row failed (it genuinely failed to start — this is what the
+    // retry button keys off). But the UPLOAD's analysis never started, so
+    // revert it to PENDING rather than FAILED: analysis can't have "failed"
+    // if it never began, and PENDING leaves the upload cleanly re-triggerable.
+    await db
+      .update(schema.workflowRuns)
+      .set({
+        status: WORKFLOW_STATUS.FAILED,
+        completedAt: new Date(),
+        errors: { [WORKFLOW_STEP.ORCHESTRATOR]: `Failed to enqueue workflow: ${err.message}` },
+      })
+      .where(eq(schema.workflowRuns.id, workflowRun.id))
+
+    await db
+      .update(schema.uploads)
+      .set({ analysisStatus: UPLOAD_ANALYSIS_STATUS.PENDING })
+      .where(eq(schema.uploads.id, uploadId))
+
+    throw createError({ statusCode: 502, message: 'Failed to start analysis workflow' })
+  }
   log.info({ uploadId, triggerRunId: handle.id }, 'Workflow triggered')
 
   // Store the Trigger.dev run ID

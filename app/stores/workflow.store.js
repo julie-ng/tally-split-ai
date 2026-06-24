@@ -32,6 +32,13 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
     return latest.status === WORKFLOW_STATUS.FAILED
       || latest.status === WORKFLOW_STATUS.PARTIAL
+      || latest.status === WORKFLOW_STATUS.EXPIRED
+  })
+
+  // Distinct from FAILED: the run was never dequeued by a worker (TTL expired).
+  // Set by the reconcile path, not by the workflow callback.
+  const isExpiredById = computed(() => (id) => {
+    return runs.value[id]?.[0]?.status === WORKFLOW_STATUS.EXPIRED
   })
 
   const DEFAULT_STEP_STATUSES = {
@@ -132,6 +139,21 @@ export const useWorkflowStore = defineStore('workflow', () => {
   }
 
   /**
+   * Reconcile stuck runs against Trigger.dev before fetching. A run no worker
+   * ever dequeued stays 'queued' locally forever; the server asks Trigger for
+   * the real state and finalizes expired/crashed runs so the UI can surface
+   * them. Best-effort — failure here must not block loading workflow data.
+   */
+  async function reconcile () {
+    try {
+      await $fetch('/api/workflows/reconcile', { method: 'POST' })
+    }
+    catch (err) {
+      _log(`[WorkflowStore] reconcile skipped: ${err.message}`)
+    }
+  }
+
+  /**
    * Trigger the analysis workflow for an upload
    *
    * @param {string} id
@@ -176,12 +198,14 @@ export const useWorkflowStore = defineStore('workflow', () => {
     latestRunById,
     runCountById,
     hasErrorsById,
+    isExpiredById,
     isProcessingById,
     stepStatusesById,
 
     // Actions
     fetchAll,
     fetchByUploadId,
+    reconcile,
     triggerWorkflow,
     updateStepStatus,
     removeById,

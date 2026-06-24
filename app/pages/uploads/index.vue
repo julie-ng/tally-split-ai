@@ -29,6 +29,10 @@ onMounted(() => {
 })
 onBeforeUnmount(() => realtimeStore.disconnect())
 
+// Reconcile stuck runs (no worker / expired) against Trigger.dev before
+// fetching, so the fetched statuses already reflect reality. Best-effort.
+await workflowStore.reconcile()
+
 // Fetch uploads and workflows on mount
 await Promise.all([
   uploadsStore.fetchUploads(),
