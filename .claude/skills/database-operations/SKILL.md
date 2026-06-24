@@ -25,7 +25,7 @@ Connection string via env var: `NUXT_DATABASE_URL`
 
 ## Current Tables
 
-- `uploads` — Azure Blob metadata (hashId, blobPath, contentType, ocrJson/annotationsJson as jsonb, etc.)
+- `uploads` — Azure Blob metadata (id, blobName/blobUrl, thumbnailName/thumbnailUrl, ocrJson/annotationsJson as jsonb, etc.)
 - `receipts` — Receipt business data (merchant, total, date, analysisStatus, etc.)
 - `expenses` — Shared expense records derived from a receipt (receiptId, splitAmount, userOneShare/userTwoShare, isSettled, etc.)
 

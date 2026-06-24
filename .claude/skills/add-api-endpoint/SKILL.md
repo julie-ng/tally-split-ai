@@ -26,9 +26,9 @@ import { eq } from 'drizzle-orm'
 export default defineEventHandler(async (event) => {
   const db = useDB()                          // auto-imported via server/utils/db.utils.js
   await guards.requireAuthentication(event)   // AuthN — always first
-  guards.requireHashIdParam(event)            // use requireIdParam() for numeric IDs
+  guards.requireIdParam(event)                // validates the :id route param
 
-  const hashId = getRouterParam(event, 'hashId')
+  const id = getRouterParam(event, 'id')
 
   // For POST/PUT: validate body with zod
   const result = await readValidatedBody(event, body => zodSchemas.mySchema.safeParse(body))
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
   const dbResult = await db
     .update(schema.myTable)
     .set({ ...result.data, updatedAt: new Date() })
-    .where(eq(schema.myTable.hashId, hashId))
+    .where(eq(schema.myTable.id, id))
     .returning()
 
   if (dbResult.length === 0) {
@@ -56,7 +56,9 @@ export default defineEventHandler(async (event) => {
 })
 ```
 
-Reference: `server/api/uploads/[hashId].put.js`
+> IDs are random strings from `#shared/utils/generate-id.js` (assigned at insert), addressed via the `[id]` route param. There is **no `hashId`** — an older deterministic `hashId` scheme was removed. Use `guards.requireIdParam(event)` and `getRouterParam(event, 'id')`.
+
+Reference: `server/api/uploads/[id].put.js`
 
 ## 3. Add a Zod Schema (if new data shape needed)
 
