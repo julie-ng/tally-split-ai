@@ -8,6 +8,7 @@ export const expenseSchema = z.object({
   id: z.string(),
   receiptId: z.string().nullable(),
   title: z.string(),
+  date: z.string().nullable(), // UTC ISO instant (timestamptz), null if unset
   splitAmount: z.number(),
   userOneShare: z.number().nullable(),
   userTwoShare: z.number().nullable(),
@@ -28,6 +29,7 @@ export const expenseSchema = z.object({
 export const expenseRequestSchema = z.object({
   receiptId: z.string().nullable().optional(),
   title: z.string().optional(),
+  date: z.string().nullable().optional(), // UTC ISO instant from the client (built via expense-date.utils)
   splitAmount: z.number(),
   userOneShare: z.number().nullable().optional(),
   userTwoShare: z.number().nullable().optional(),

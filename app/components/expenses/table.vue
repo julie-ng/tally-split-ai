@@ -2,6 +2,7 @@
 import { getPaginationRowModel } from '@tanstack/vue-table'
 import { UCheckbox } from '#components'
 import { useHouseholdStore } from '~/stores/household.store'
+import { toBerlinISODate, toBerlinDisplayDate } from '#shared/utils/expense-date.utils.js'
 
 const props = defineProps({
   data: {
@@ -69,8 +70,8 @@ const columns = computed(() => [
   },
   {
     id: 'date',
-    accessorFn: row => row.receipt?.date ?? null,
-    header: 'Receipt Date',
+    accessorFn: row => row.date ?? null,
+    header: 'Date',
     sortUndefined: 'last',
   },
   {
@@ -187,10 +188,10 @@ function onSelect (event, row) {
 
         <template #date-cell="{ row }">
           <time
-            v-if="row.original.receipt?.date"
-            :datetime="row.original.receipt.date"
+            v-if="row.original.date"
+            :datetime="toBerlinISODate(row.original.date)"
           >
-            {{ timestampUtils.toGermanISODate(row.original.receipt.date) }}
+            {{ toBerlinDisplayDate(row.original.date) }}
           </time>
           <span v-else class="text-slate-400">—</span>
         </template>

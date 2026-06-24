@@ -76,6 +76,7 @@ function closePreview () {
           />
         </template>
         <template #right>
+          <expense-button-modal @created="refreshAll" />
           <UButton
             color="neutral"
             variant="subtle"

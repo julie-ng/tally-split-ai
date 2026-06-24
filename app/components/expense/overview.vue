@@ -2,6 +2,7 @@
 import { useReceiptsStore } from '~/stores/receipts.store'
 import { useExpensesStore } from '~/stores/expenses.store'
 import { useUploadsStore } from '~/stores/uploads.store'
+import { toBerlinDisplayDate } from '#shared/utils/expense-date.utils.js'
 
 const props = defineProps({
   expenseId: {
@@ -27,10 +28,12 @@ const upload = computed(() =>
   uploadId.value ? uploadsStore.getUploadById(uploadId.value) : null,
 )
 
+// The expense owns its own date (copied from the receipt for linked expenses,
+// set by the user for standalone ones), so read it from the expense — not the
+// receipt — or a standalone expense would show no date here. The stored value
+// is a UTC timestamptz; format it in Berlin time.
 const formattedDate = computed(() => {
-  return receipt.value?.date
-    ? dateUtils.formatISODate(receipt.value.date)
-    : null
+  return toBerlinDisplayDate(expense.value?.date)
 })
 
 // Provide highlight state for cross-highlighting between image overlay and items

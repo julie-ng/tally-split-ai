@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
-import { expenseUpdateSchema } from '#shared/utils/zod-schemas/expense.schema.js'
+import { expenseRequestSchema, expenseUpdateSchema } from '#shared/utils/zod-schemas/expense.schema.js'
+import { toBerlinISODate } from '#shared/utils/expense-date.utils.js'
 
 /**
  * Store for managing expenses with lazy loading and optimistic updates
@@ -60,16 +61,18 @@ export const useExpensesStore = defineStore('expenses', () => {
   const allExpenses = computed(() => Object.values(expenses.value))
 
   /**
-   * Get expenses filtered by year and month (based on receipt.date)
+   * Get expenses filtered by year and month (based on expense.date)
    * @param {number} year - Full year (e.g. 2025)
    * @param {number} month - Month 1-12
    * @returns {Array} Filtered expenses
    */
   const getExpensesByMonth = computed(() => (year, month) => {
+    // expense.date is a UTC instant; bucket by its Berlin calendar day so an
+    // evening expense never lands in the wrong month/day across the offset.
+    const target = `${year}-${String(month).padStart(2, '0')}`
     return allExpenses.value.filter((expense) => {
-      if (!expense.receipt?.date) return false
-      const date = new Date(expense.receipt.date)
-      return date.getFullYear() === year && date.getMonth() + 1 === month
+      const berlinDay = toBerlinISODate(expense.date) // "YYYY-MM-DD" or null
+      return berlinDay?.slice(0, 7) === target
     })
   })
 
@@ -190,6 +193,58 @@ export const useExpensesStore = defineStore('expenses', () => {
     }
     finally {
       loading.value.all = false
+    }
+  }
+
+  /**
+   * Create a standalone expense (no receipt). The API stamps householdId from
+   * the session, auto-assigns the two member slots, and defaults the shares to
+   * a 50/50 split of splitAmount when they're omitted — so the form only needs
+   * a title + amount.
+   *
+   * @param {Object} input - { splitAmount, title?, notes?, ... } per expenseRequestSchema
+   * @returns {Promise<Object>} The created expense row
+   */
+  async function createExpense (input) {
+    _log('[ExpensesStore] createExpense()', input)
+
+    // Validate in the store (single source of truth) before hitting the API.
+    const result = expenseRequestSchema.safeParse(input)
+    if (!result.success) {
+      const error = new Error(`Invalid expense: ${JSON.stringify(result.error.errors)}`)
+      errors.value.create = error
+      throw error
+    }
+
+    saving.value.create = true
+    errors.value.create = null
+
+    try {
+      const data = await $fetch('/api/expenses', {
+        method: 'POST',
+        body: result.data,
+      })
+
+      // Cache the new row so the list reflects it without a full refetch.
+      const created = data.created
+      expenses.value[created.id] = created
+      if (created.receiptId) {
+        receiptToExpense.value[created.receiptId] = created.id
+      }
+
+      // Totals changed — refresh the summary (best-effort).
+      await fetchSummary()
+
+      _log(`[ExpensesStore] ✅ created expense: ${created.id}`)
+      return created
+    }
+    catch (err) {
+      errors.value.create = err
+      console.error('[ExpensesStore] ❌ failed to create expense:', err)
+      throw err
+    }
+    finally {
+      saving.value.create = false
     }
   }
 
@@ -487,6 +542,7 @@ export const useExpensesStore = defineStore('expenses', () => {
 
     // Actions
     configure,
+    createExpense,
     fetchAllExpenses,
     fetchSummary,
     fetchExpense,

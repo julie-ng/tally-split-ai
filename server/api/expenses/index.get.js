@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm'
+import { toBerlinISODate } from '#shared/utils/expense-date.utils.js'
 
 export default defineEventHandler(async (event) => {
   const db = useDB()
@@ -32,10 +33,11 @@ export default defineEventHandler(async (event) => {
   })
 
   if (year && month) {
+    // expense.date is a UTC instant; bucket by its Berlin calendar month.
+    const target = `${year}-${String(month).padStart(2, '0')}`
     return expenses.filter((expense) => {
-      if (!expense.receipt?.date) return false
-      const date = new Date(expense.receipt.date)
-      return date.getFullYear() === year && date.getMonth() + 1 === month
+      const berlinDay = toBerlinISODate(expense.date)
+      return berlinDay?.slice(0, 7) === target
     })
   }
 

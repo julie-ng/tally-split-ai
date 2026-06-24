@@ -122,6 +122,15 @@ export const expenses = pgTable('expenses', {
   // human-editable. Default 'Untitled' for standalone expenses.
   title: text('title').notNull().default('Untitled'),
 
+  // Expense date+time, stored as a UTC instant (timestamptz). The sort/filter/
+  // group key for the whole expenses UI — expenses own their own date so
+  // listing never joins the receipt. Always interpreted in Europe/Berlin (POC
+  // is Germany-only); see shared/utils/expense-date.utils.js for the one
+  // sanctioned Berlin↔UTC conversion path. mode:'string' keeps the wire format
+  // an ISO string. Manually-entered expenses with no time use midnight as a
+  // legible sentinel. Copied from the receipt (date+time) for linked expenses.
+  date: timestamp('date', { withTimezone: true, mode: 'string' }),
+
   // Expense details
   splitAmount: real('split_amount').notNull(), // Amount to split (defaults to receipt total)
   userOneShare: real('user_one_share'), // userOne's share

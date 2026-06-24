@@ -2,6 +2,7 @@ import { task, logger } from '@trigger.dev/sdk/v3'
 import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { azureOcrExtract } from '#server/utils/azure-ocr.utils.js'
+import { fromReceiptDateTime } from '#shared/utils/expense-date.utils.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
 import { notifyStatus } from './utils/notify-status.js'
 
@@ -49,9 +50,13 @@ export const createExpense = task({
       // them to a 50/50 split of splitAmount (single source of truth for the
       // halving logic). userOneId / userTwoId slots are auto-assigned by the
       // API from the receipt's household members (ordered by users.createdAt).
+      // Copy the receipt's date+time into the expense as a UTC instant. OCR
+      // gives a text date (+ optional text time); midnight is used when there's
+      // no time, null when the date is unusable.
       const expenseResult = await api.post('/api/expenses', {
         receiptId,
         title: receipt.title,
+        date: fromReceiptDateTime(receipt.date, receipt.time),
         splitAmount,
         isSettled: false,
       })
