@@ -148,7 +148,7 @@ async function handleSubmit () {
         <div class="mt-6 flex gap-2">
           <UButton
             type="submit"
-            color="info"
+            color="primary"
             size="lg"
             class="cursor-pointer"
             :loading="submitting"
@@ -159,7 +159,7 @@ async function handleSubmit () {
           <UButton
             :to="`/households/${householdStore.id}`"
             color="neutral"
-            variant="ghost"
+            variant="outline"
             size="lg"
           >
             Cancel

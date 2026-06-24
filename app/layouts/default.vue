@@ -121,6 +121,18 @@ function getLinks (collapsed) {
             ]
           : [],
       },
+      {
+        label: 'UI',
+        icon: 'i-lucide-palette',
+        defaultOpen: false,
+        active: isActive('/ui'),
+        children: expanded
+          ? [
+              { label: 'Colors', to: '/ui/colors', active: isActive('/ui/colors') },
+              { label: 'Buttons', to: '/ui/buttons', active: isActive('/ui/buttons') },
+            ]
+          : [],
+      },
     ],
   ]
 }
