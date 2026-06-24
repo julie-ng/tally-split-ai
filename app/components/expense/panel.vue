@@ -33,7 +33,6 @@ const open = computed({
     :description="expense?.receipt?.merchantName"
     :modal="false"
     :overlay="false"
-    :dismissible="false"
     :ui="{
       content: 'top-(--ui-header-height) h-[calc(100%-var(--ui-header-height))] max-w-3xl ring-1 ring-default',
     }"
