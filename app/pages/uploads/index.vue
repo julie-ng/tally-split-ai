@@ -356,7 +356,6 @@ function closePreview () {
   </UDashboardPanel>
 
   <upload-preview-panel
-    v-if="previewId"
     :id="previewId"
     @close="closePreview"
   />

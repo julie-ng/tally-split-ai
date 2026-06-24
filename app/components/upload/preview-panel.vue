@@ -10,6 +10,18 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 
+// USlideover drives visibility via v-model:open. The page owns the URL state
+// (?preview=<id>) and passes id; mirror that into `open` and emit `close` on
+// dismissal (X button only — dismissible is off so row-clicks don't close it).
+const open = computed({
+  get: () => !!props.id,
+  set: (value) => {
+    if (!value) {
+      emit('close')
+    }
+  },
+})
+
 const uploadsStore = useUploadsStore()
 
 const upload = computed(() =>
@@ -36,45 +48,25 @@ watch(
 
 const { highlightedLabel } = useHighlightedLabel()
 provide('highlightedLabel', highlightedLabel)
-
-function handleClose () {
-  emit('close')
-}
-
-function onKeydown (event) {
-  if (event.key === 'Escape' && props.id) {
-    handleClose()
-  }
-}
-
-onMounted(() => window.addEventListener('keydown', onKeydown))
-onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
-  <UDashboardPanel id="uploads-detail">
-    <template #header>
-      <UDashboardNavbar
-        :title="upload?.title ?? 'Upload preview'"
-        :description="upload?.originalFilename"
-      >
-        <template #right>
-          <UButton
-            icon="i-lucide-x"
-            color="neutral"
-            variant="ghost"
-            aria-label="Close"
-            @click="handleClose"
-          />
-        </template>
-      </UDashboardNavbar>
-    </template>
-
+  <USlideover
+    v-model:open="open"
+    :title="upload?.title ?? 'Upload preview'"
+    :description="upload?.originalFilename"
+    :modal="false"
+    :overlay="false"
+    :dismissible="false"
+    :ui="{
+      content: 'top-(--ui-header-height) h-[calc(100%-var(--ui-header-height))] max-w-3xl ring-1 ring-default',
+    }"
+  >
     <template #body>
-      <div v-if="!upload" class="pt-6 px-4 text-muted">
+      <div v-if="!upload" class="pt-2 px-4 text-muted">
         Loading…
       </div>
-      <div v-else class="pt-6 px-4 grid grid-cols-5 gap-6">
+      <div v-else class="pt-2 px-4 grid grid-cols-5 gap-6">
         <div class="col-span-3">
           <UCard>
             <ui-collapsible-property-group title="Overview">
@@ -113,5 +105,5 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         </div>
       </div>
     </template>
-  </UDashboardPanel>
+  </USlideover>
 </template>
