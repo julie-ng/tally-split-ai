@@ -76,7 +76,7 @@ const fallbackIcon = 'i-lucide-circle'
             <!-- Line: Active color -->
             <div
               class="
-                absolute inset-x-0 top-0 bg-primary-200 dark:bg-primary-950 origin-top
+                absolute inset-x-0 top-0 bg-neutral-200 dark:bg-neutral-800 origin-top
                 transition-transform duration-700 ease-out
                 group-data-[active=true]:scale-y-100
                 scale-y-0 h-full
