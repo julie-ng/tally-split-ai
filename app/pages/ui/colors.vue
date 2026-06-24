@@ -25,11 +25,11 @@ const brand = [
 ]
 
 const secondary = [
-  { shade: 50, bg: 'bg-secondary-50', text: 'text-secondary-950' },
-  { shade: 100, bg: 'bg-secondary-100', text: 'text-secondary-950' },
-  { shade: 200, bg: 'bg-secondary-200', text: 'text-secondary-950' },
-  { shade: 300, bg: 'bg-secondary-300', text: 'text-secondary-950' },
-  { shade: 400, bg: 'bg-secondary-400', text: 'text-secondary-950' },
+  { shade: 50, bg: 'bg-secondary-50', text: 'text-secondary-900' },
+  { shade: 100, bg: 'bg-secondary-100', text: 'text-secondary-900' },
+  { shade: 200, bg: 'bg-secondary-200', text: 'text-secondary-900' },
+  { shade: 300, bg: 'bg-secondary-300', text: 'text-secondary-900' },
+  { shade: 400, bg: 'bg-secondary-400', text: 'text-secondary-900' },
   { shade: 500, bg: 'bg-secondary-500', text: 'text-secondary-50' },
   { shade: 600, bg: 'bg-secondary-600', text: 'text-secondary-50' },
   { shade: 700, bg: 'bg-secondary-700', text: 'text-secondary-50' },
@@ -38,11 +38,11 @@ const secondary = [
 ]
 
 const neutral = [
-  { shade: 50, bg: 'bg-neutral-50', text: 'text-neutral-950' },
-  { shade: 100, bg: 'bg-neutral-100', text: 'text-neutral-950' },
-  { shade: 200, bg: 'bg-neutral-200', text: 'text-neutral-950' },
-  { shade: 300, bg: 'bg-neutral-300', text: 'text-neutral-950' },
-  { shade: 400, bg: 'bg-neutral-400', text: 'text-neutral-950' },
+  { shade: 50, bg: 'bg-neutral-50', text: 'text-neutral-900' },
+  { shade: 100, bg: 'bg-neutral-100', text: 'text-neutral-900' },
+  { shade: 200, bg: 'bg-neutral-200', text: 'text-neutral-900' },
+  { shade: 300, bg: 'bg-neutral-300', text: 'text-neutral-900' },
+  { shade: 400, bg: 'bg-neutral-400', text: 'text-neutral-900' },
   { shade: 500, bg: 'bg-neutral-500', text: 'text-neutral-50' },
   { shade: 600, bg: 'bg-neutral-600', text: 'text-neutral-50' },
   { shade: 700, bg: 'bg-neutral-700', text: 'text-neutral-50' },
