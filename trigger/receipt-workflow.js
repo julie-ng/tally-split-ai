@@ -5,8 +5,8 @@ import { UPLOAD_ANALYSIS_STATUS } from '#shared/enums/upload-analysis-status.js'
 import { analyzeOcr } from './analyze-ocr.js'
 import { analyzeAnnotations } from './analyze-annotations.js'
 import { normalizeReceipt } from './normalize-receipt.js'
-import { createSplit } from './create-split.js'
-import { adjustSplit } from './adjust-split.js'
+import { createExpense } from './create-expense.js'
+import { adjustExpense } from './adjust-expense.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
 import { notifyStatus } from './utils/notify-status.js'
 
@@ -68,7 +68,7 @@ export const receiptWorkflow = task({
 
       // Phase 2: Post-OCR tasks — request tokens now that receipt is linked
       const { tokens: postOcrTokens } = await api.post(`/api/workflows/runs/${runUuid}/tokens`, {
-        taskIds: ['analyze-annotations', 'normalize-receipt', 'create-split', 'adjust-split'],
+        taskIds: ['analyze-annotations', 'normalize-receipt', 'create-expense', 'adjust-expense'],
       })
 
       // Step 2: Annotations — NON-FATAL
@@ -102,8 +102,8 @@ export const receiptWorkflow = task({
       }
 
       // Step 4: Create expense — NON-FATAL
-      const expenseResult = await createSplit.triggerAndWait(
-        { receiptId, uploadId, runUuid, callbackToken: postOcrTokens['create-split'] },
+      const expenseResult = await createExpense.triggerAndWait(
+        { receiptId, uploadId, runUuid, callbackToken: postOcrTokens['create-expense'] },
       )
 
       if (expenseResult.ok) {
@@ -121,8 +121,8 @@ export const receiptWorkflow = task({
 
       // Step 5: Adjust expense — NON-FATAL, requires both split and annotations
       if (expenseId && annotationsResult.ok) {
-        const adjustResult = await adjustSplit.triggerAndWait(
-          { uploadId, expenseId, runUuid, callbackToken: postOcrTokens['adjust-split'], customInstructions },
+        const adjustResult = await adjustExpense.triggerAndWait(
+          { uploadId, expenseId, runUuid, callbackToken: postOcrTokens['adjust-expense'], customInstructions },
         )
 
         if (!adjustResult.ok) {

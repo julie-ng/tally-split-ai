@@ -51,7 +51,7 @@ function pct (n) {
             AI Accuracy - Handwritten Assignments
           </h2>
           <p class="text-sm text-dimmed">
-            How often the adjust-split task matched handwritten initials to a household member.
+            How often the adjust-expense task matched handwritten initials to a household member.
             Out of {{ metrics.llmAccuracy.llmRan }} expenses the LLM has run on
             ({{ metrics.llmAccuracy.unresolved }} pending,
             {{ metrics.llmAccuracy.total }} total).

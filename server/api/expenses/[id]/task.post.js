@@ -4,14 +4,14 @@ import { expenseTaskResolutionSchema } from '#shared/utils/zod-schemas/expense.s
 import { PAID_BY_MATCH } from '#shared/enums/paid-by-match.js'
 
 /**
- * Task-only endpoint for the adjust-split workflow callback.
+ * Task-only endpoint for the adjust-expense workflow callback.
  *
  * Owns the LLM contract for paidBy resolution: the trigger task posts raw
  * initials (no userId — PII boundary), and this endpoint maps initials →
  * userId by looking up household members. Sets paidByMatch in the same
  * transaction. Frozen LLM signal — never written by humans (see docs/SCHEMA.md).
  *
- * Also accepts adjusted split amount + per-user shares so all adjust-split
+ * Also accepts adjusted split amount + per-user shares so all adjust-expense
  * writes flow through one task-scoped endpoint, separate from human PUT.
  */
 export default defineEventHandler(async (event) => {

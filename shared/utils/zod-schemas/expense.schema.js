@@ -61,7 +61,7 @@ export const expenseUpdateSchema = z.object({
 
 /**
  * Expense Task Resolution Schema - validates POST /api/expenses/[id]/task body.
- * Sent by the adjust-split trigger task with raw LLM output. The endpoint
+ * Sent by the adjust-expense trigger task with raw LLM output. The endpoint
  * matches initials → userId (PII boundary) and writes paidByUserId +
  * paidByMatch + share/amount fields in one transaction.
  */

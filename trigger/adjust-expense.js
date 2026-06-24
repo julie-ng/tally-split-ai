@@ -7,9 +7,9 @@ import { calculateHalfAmount } from '#shared/utils/expenses/half-amount.utils.js
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
 import { notifyStatus } from './utils/notify-status.js'
 
-const TASK_ID = 'adjust-split'
+const TASK_ID = 'adjust-expense'
 
-export const adjustSplit = task({
+export const adjustExpense = task({
   id: TASK_ID,
   maxDuration: 60,
   run: async (payload) => {
@@ -34,7 +34,7 @@ export const adjustSplit = task({
         await updateWorkflowStatus(authHeaders, { adjustExpenseStatus: WORKFLOW_STEP_STATUS.COMPLETED })
         await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_EXPENSE, 'completed', authHeaders)
 
-        logger.log(`Skipped adjust-split for ${uploadId} — no annotations and no custom instructions`)
+        logger.log(`Skipped adjust-expense for ${uploadId} — no annotations and no custom instructions`)
         return { skipped: true, reason: 'no_inputs' }
       }
 
@@ -43,7 +43,7 @@ export const adjustSplit = task({
         await updateWorkflowStatus(authHeaders, { adjustExpenseStatus: WORKFLOW_STEP_STATUS.COMPLETED })
         await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_EXPENSE, 'completed', authHeaders)
 
-        logger.log(`Skipped adjust-split for ${uploadId} — no OCR data`)
+        logger.log(`Skipped adjust-expense for ${uploadId} — no OCR data`)
         return { skipped: true, reason: 'no_ocr_data' }
       }
 
@@ -51,19 +51,19 @@ export const adjustSplit = task({
       const ocrData = azureOcrExtract.extractForLlm(upload.ocrJson)
       if (!ocrData) {
         await updateWorkflowStatus(authHeaders, { adjustExpenseStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-        logger.log(`Skipped adjust-split for ${uploadId} — no document fields`)
+        logger.log(`Skipped adjust-expense for ${uploadId} — no document fields`)
         return { skipped: true, reason: 'no_document_fields' }
       }
 
       // 5. Call GPT-4o-mini to analyze annotations and determine split
-      const result = await gpt4oUtils.adjustSplit({
+      const result = await gpt4oUtils.adjustExpense({
         ocrData,
         ocrText: upload.ocrText,
         annotations: upload.annotationsJson,
         customInstructions,
       })
 
-      logger.log(`Adjust-split result for ${uploadId}`, {
+      logger.log(`Adjust-expense result for ${uploadId}`, {
         hasPaidBy: result.paidBy != null,
         hasAdjustedTotal: result.adjustedTotal != null,
         confidence: result.confidence,
@@ -102,7 +102,7 @@ export const adjustSplit = task({
       await updateWorkflowStatus(authHeaders, { adjustExpenseStatus: WORKFLOW_STEP_STATUS.COMPLETED })
       await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_EXPENSE, 'completed', authHeaders)
 
-      logger.log(`Adjust-split complete for ${uploadId}`, {
+      logger.log(`Adjust-expense complete for ${uploadId}`, {
         expenseId,
         hasAdjustedTotal: result.adjustedTotal != null,
         hasPaidBy: result.paidBy != null,

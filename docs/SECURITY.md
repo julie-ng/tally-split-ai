@@ -283,15 +283,15 @@ TASK_PERMISSIONS = {
   'receipt-workflow': ['receipt:read', 'receipt:write', 'upload:read', 'upload:write', 'workflow:read', 'workflow:write'],
   'analyze-ocr': ['upload:read', 'upload:write', 'workflow:read', 'workflow:write', 'token:read'],
   'analyze-annotations': ['upload:read', 'upload:write', 'workflow:read', 'workflow:write', 'token:read'],
-  'create-split': ['receipt:read', 'receipt:write', 'split:write', 'upload:read', 'workflow:read', 'workflow:write'],
+  'create-expense': ['receipt:read', 'receipt:write', 'expense:write', 'upload:read', 'workflow:read', 'workflow:write'],
   'normalize-receipt': ['receipt:read', 'receipt:write', 'upload:read', 'workflow:read', 'workflow:write'],
-  'adjust-split': ['split:write', 'upload:read', 'workflow:read', 'workflow:write'],
+  'adjust-expense': ['expense:write', 'upload:read', 'workflow:read', 'workflow:write'],
 }
 ```
 
 The orchestrator generates a unique token per child task by including that task's actions in the HMAC input. The server reconstructs the expected actions from the `X-Task-Id` header + the permissions map. No extra headers needed.
 
-This means `analyze-annotations` literally cannot create a split — its token won't verify against an endpoint that requires `split:write`.
+This means `analyze-annotations` literally cannot create an expense — its token won't verify against an endpoint that requires `expense:write`.
 
 > [!NOTE]
 > `token:read` is granted only to `analyze-ocr` and `analyze-annotations` — the only tasks that need to fetch blob content. It permits calling `POST /api/tokens/read` to obtain a short-lived (5 min) Azure Blob Storage SAS read URL for the workflow's scoped blob. Workers do not hold the storage account key — that secret stays on the Nuxt server. See "Special-case AuthZ: `token` resource" below.

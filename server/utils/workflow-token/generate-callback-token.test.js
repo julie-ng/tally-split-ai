@@ -46,7 +46,7 @@ describe('generateCallbackToken', () => {
 
   it('should produce different tokens for different actions', () => {
     const a = generateCallbackToken(sampleParams)
-    const b = generateCallbackToken({ ...sampleParams, actions: ['split:write', 'workflow:read'] })
+    const b = generateCallbackToken({ ...sampleParams, actions: ['expense:write', 'workflow:read'] })
     expect(a).not.toBe(b)
   })
 

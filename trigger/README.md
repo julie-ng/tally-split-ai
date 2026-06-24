@@ -12,7 +12,7 @@ This directory contains [Trigger.dev](https://trigger.dev) task definitions for 
 | `receipt-workflow.ts` | `receipt-workflow` | Orchestrator — runs OCR, annotations, and expense creation in sequence |
 | `analyze-ocr.ts` | `analyze-ocr` | Calls Azure Document Intelligence for receipt OCR |
 | `analyze-annotations.ts` | `analyze-annotations` | Calls GPT-4o to detect handwritten annotations |
-| `create-split.ts` | `create-split` | Creates an expense from the receipt total |
+| `create-expense.ts` | `create-expense` | Creates an expense from the receipt total |
 
 ## Running the dev worker
 

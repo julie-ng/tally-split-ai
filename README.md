@@ -52,7 +52,7 @@ As part of my pivot to AI Engineering and Architecture, I decided to build my ow
 Highlights of the AuthN / AuthZ design (see [`docs/SECURITY.md`](./docs/SECURITY.md) for detail):
 
 - **Two principal types, never blended.** Human users authenticate via session (GitHub OAuth); Trigger.dev tasks authenticate via HMAC. The auth pipeline commits to one path based on request headers — a failed task token does not fall back to session auth.
-- **Action-scoped HMAC tokens.** Each task gets only the `resource:permission` pairs it needs (e.g. `split:write`, `upload:read`). Tasks cannot mint their own tokens; only registered orchestrators can, and only for their declared children.
+- **Action-scoped HMAC tokens.** Each task gets only the `resource:permission` pairs it needs (e.g. `expense:write`, `upload:read`). Tasks cannot mint their own tokens; only registered orchestrators can, and only for their declared children.
 - **Cryptographic scope binding.** The token's scope is part of the signed HMAC payload, not a separate header — tampering invalidates the token. Verification uses `crypto.timingSafeEqual` and enforces a server-side expiry window.
 - **Household isolation at the query layer.** Every resource read filters by the caller's household; resource-by-id reads go through a `requireAuthorization` guard that returns 404 (not 403) on mismatch to avoid leaking existence.
 - **Sessions hold identity + authZ scope only.** Domain data lives in Pinia stores / DB queries, not in the session.

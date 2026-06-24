@@ -5,9 +5,9 @@ import { azureOcrExtract } from '#server/utils/azure-ocr.utils.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
 import { notifyStatus } from './utils/notify-status.js'
 
-const TASK_ID = 'create-split'
+const TASK_ID = 'create-expense'
 
-export const createSplit = task({
+export const createExpense = task({
   id: TASK_ID,
   maxDuration: 10,
   run: async (payload) => {

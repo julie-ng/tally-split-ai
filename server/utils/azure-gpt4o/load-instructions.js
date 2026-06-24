@@ -9,7 +9,7 @@ const cache = new Map()
  * Load a system prompt from trigger/instructions/<name>.md.
  * Cached after first read.
  *
- * @param {string} name - Instruction file basename without extension (e.g. 'adjust-split')
+ * @param {string} name - Instruction file basename without extension (e.g. 'adjust-expense')
  * @returns {string} Markdown contents
  */
 export function loadInstructions (name) {

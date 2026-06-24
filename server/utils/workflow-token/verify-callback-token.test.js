@@ -37,7 +37,7 @@ describe('verifyCallbackToken', () => {
 
   it('should return false for wrong actions', () => {
     const token = generateCallbackToken(sampleParams)
-    expect(verifyCallbackToken(token, { ...sampleParams, actions: ['split:write'] })).toBe(false)
+    expect(verifyCallbackToken(token, { ...sampleParams, actions: ['expense:write'] })).toBe(false)
   })
 
   it('should return false for wrong createdAt', () => {

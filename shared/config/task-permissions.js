@@ -11,16 +11,16 @@
  * - From trigger/: import { getTaskActions } from '#shared/config/task-permissions.js'
  */
 
-export const VALID_RESOURCES = ['upload', 'receipt', 'split', 'workflow', 'token']
+export const VALID_RESOURCES = ['upload', 'receipt', 'expense', 'workflow', 'token']
 export const VALID_PERMISSIONS = ['read', 'write', 'delete']
 
 export const TASK_PERMISSIONS = {
   'receipt-workflow': ['receipt:read', 'receipt:write', 'upload:read', 'upload:write', 'workflow:read', 'workflow:write'],
   'analyze-ocr': ['upload:read', 'upload:write', 'workflow:read', 'workflow:write', 'token:read'],
   'analyze-annotations': ['upload:read', 'upload:write', 'workflow:read', 'workflow:write', 'token:read'],
-  'create-split': ['receipt:read', 'receipt:write', 'split:write', 'upload:read', 'workflow:read', 'workflow:write'],
+  'create-expense': ['receipt:read', 'receipt:write', 'expense:write', 'upload:read', 'workflow:read', 'workflow:write'],
   'normalize-receipt': ['receipt:read', 'receipt:write', 'upload:read', 'workflow:read', 'workflow:write'],
-  'adjust-split': ['split:write', 'upload:read', 'workflow:read', 'workflow:write'],
+  'adjust-expense': ['expense:write', 'upload:read', 'workflow:read', 'workflow:write'],
 }
 
 /**
@@ -28,7 +28,7 @@ export const TASK_PERMISSIONS = {
  * generate tokens for via POST /api/workflows/runs/:runUuid/tokens.
  */
 export const TASK_CHILDREN = {
-  'receipt-workflow': ['analyze-ocr', 'analyze-annotations', 'create-split', 'adjust-split', 'normalize-receipt'],
+  'receipt-workflow': ['analyze-ocr', 'analyze-annotations', 'create-expense', 'adjust-expense', 'normalize-receipt'],
 }
 
 /**

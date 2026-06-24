@@ -76,7 +76,7 @@ receiptWorkflow
 
 **Duplicate guard:** The workflow endpoint rejects duplicate triggers — if a `queued` or `processing` run already exists for the upload, it returns the existing run instead of creating a new one.
 
-### adjust-split: Known Edge Cases
+### adjust-expense: Known Edge Cases
 
 - **Re-running workflow** — re-analyzing a receipt runs `adjustSplit` again, creating duplicate history entries. No dedup logic yet.
 - **Annotations → split linkage** — the LLM adjustment is not structurally linked back to which annotations drove the decision. The `reasoning` text field explains it but there's no structured reference. (TODO: low priority)
@@ -103,7 +103,7 @@ receiptWorkflow
 
 ### OCR JSON Token Estimates
 
-The full Azure Document Intelligence response is large. When forwarding OCR data to downstream LLM tasks (e.g., `adjust-split`), strip to only the fields needed:
+The full Azure Document Intelligence response is large. When forwarding OCR data to downstream LLM tasks (e.g., `adjust-expense`), strip to only the fields needed:
 
 | Scope | Bytes | ~Tokens | Reduction |
 |:--|--:|--:|--:|

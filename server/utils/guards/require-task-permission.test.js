@@ -12,10 +12,9 @@ describe('_deriveResource', () => {
     expect(_deriveResource('/api/uploads/abc123')).toBe('upload')
   })
 
-  // HMAC scope remains 'split' even though the route renamed to /api/expenses
-  it('should return "split" for /api/expenses paths', () => {
-    expect(_deriveResource('/api/expenses')).toBe('split')
-    expect(_deriveResource('/api/expenses/456')).toBe('split')
+  it('should return "expense" for /api/expenses paths', () => {
+    expect(_deriveResource('/api/expenses')).toBe('expense')
+    expect(_deriveResource('/api/expenses/456')).toBe('expense')
   })
 
   it('should return "workflow" for /api/workflows paths', () => {

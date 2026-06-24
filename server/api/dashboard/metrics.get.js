@@ -8,7 +8,7 @@ import { sql } from 'drizzle-orm'
  * cross household boundaries.
  *
  * Confidence buckets follow the LLM prompt language in
- * server/utils/azure-gpt4o/adjust-split.js:
+ * server/utils/azure-gpt4o/adjust-expense.js:
  *   high   ≥ 0.8
  *   medium 0.5–0.8
  *   low    < 0.5

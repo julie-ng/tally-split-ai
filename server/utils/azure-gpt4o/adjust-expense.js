@@ -14,8 +14,8 @@ import { loadInstructions } from './load-instructions.js'
  * @param {string|null} [params.customInstructions] - Optional household-level guidance appended to system prompt
  * @returns {Promise<Object>} { originalTotal, adjustedTotal, paidBy, amountConfidence, payerConfidence, reasoning }
  */
-export async function adjustSplit ({ ocrData, ocrText = null, annotations, customInstructions = null }) {
-  const baseSystemPrompt = loadInstructions('adjust-split')
+export async function adjustExpense ({ ocrData, ocrText = null, annotations, customInstructions = null }) {
+  const baseSystemPrompt = loadInstructions('adjust-expense')
   const systemPrompt = customInstructions
     ? `${baseSystemPrompt}\n\n## Custom Household Instructions\nThe household has provided the following guidance for this analysis. Apply where relevant; ignore if not applicable to this receipt:\n\n${customInstructions}`
     : baseSystemPrompt
@@ -33,11 +33,11 @@ export async function adjustSplit ({ ocrData, ocrText = null, annotations, custo
     ],
     temperature: 0,
     response_format: { type: 'json_object' },
-  }, 'adjust-split')
+  }, 'adjust-expense')
 
   const content = result.choices?.[0]?.message?.content
   if (!content) {
-    throw new Error('GPT-4o adjust-split returned empty content')
+    throw new Error('GPT-4o adjust-expense returned empty content')
   }
 
   return {

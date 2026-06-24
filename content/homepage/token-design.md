@@ -14,6 +14,6 @@ components:
   - example: 'receipt:{receiptId}'
     caption: Resource Type & ID
 
-  - example: 'split:write,upload:read…'
+  - example: 'expense:write,upload:read…'
     caption: Scoped Permissions
 ---

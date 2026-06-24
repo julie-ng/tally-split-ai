@@ -9,7 +9,7 @@ import { getGpt4oConfig } from './get-gpt4o-config.js'
  * trigger task run — calling it outside that runtime will throw.
  *
  * That makes every export here (and every gpt4o util that calls into
- * `gpt4oFetch` — `adjust-split.js`, `analyze-annotations.js`,
+ * `gpt4oFetch` — `adjust-expense.js`, `analyze-annotations.js`,
  * `normalize-receipt.js`) safe to use from `trigger/**` only. Do NOT
  * import these from Nuxt API handlers, server middleware, scripts, or
  * tests.
@@ -44,7 +44,7 @@ const JITTER_RANGE_SECONDS = 5
  * multiple concurrent uploads all hit the TPM ceiling at once.
  *
  * @param {Object} requestBody - The OpenAI-shape request body
- * @param {string} label - Used in error messages, e.g. 'adjust-split'
+ * @param {string} label - Used in error messages, e.g. 'adjust-expense'
  * @returns {Promise<Object>} The parsed response JSON
  * @throws {Gpt4oError} On non-2xx responses after retries are exhausted
  */

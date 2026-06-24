@@ -69,7 +69,7 @@ workflow:
     - Alice tends to pay with EC or Girocard. 
     - Bob tends to pay with "Visa Debit" or Mastercard ending in 1234.
     ```
-    [Read system prompt &rarr;](https://github.com/julie-ng/tally-split-ai/blob/main/trigger/instructions/adjust-split.md){target="_blank"}
+    [Read system prompt &rarr;](https://github.com/julie-ng/tally-split-ai/blob/main/trigger/instructions/adjust-expense.md){target="_blank"}
 ---
 
 ### Architecture

@@ -45,10 +45,10 @@ This is a [**Nuxt 4** application](https://nuxt.com/docs/4.x/getting-started/int
 │   │   └── user.store.js          # User state management
 │   └── utils/                     # Client-side utilities
 ├── trigger/                       # Trigger.dev task definitions
-│   ├── receipt-workflow.ts        # Orchestrator: OCR → annotations → split
+│   ├── receipt-workflow.ts        # Orchestrator: OCR → annotations → expense
 │   ├── analyze-ocr.ts            # Azure Document Intelligence OCR
 │   ├── analyze-annotations.ts    # GPT-4o annotation detection
-│   └── create-split.ts           # Split creation from receipt total
+│   └── create-expense.ts         # Expense creation from receipt total
 ├── server/                        # Nuxt server directory
 │   ├── api/                       # API endpoints (auto-registered)
 │   │   ├── analysis/              # Analysis endpoints (trigger tasks)

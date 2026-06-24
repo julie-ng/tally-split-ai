@@ -150,7 +150,7 @@ Each upload runs **3 GPT-4o calls** post-OCR:
 |:--|:--|:--|
 | `analyze-annotations` | vision (image + structured output) | ~5,000 |
 | `normalize-receipt` | text-only | ~1,500 |
-| `adjust-split` | text-only | ~1,500 |
+| `adjust-expense` | text-only | ~1,500 |
 
 A 5-file batch = 15 calls (~45K tokens) in one minute — far past a `capacity = 10` deployment's 10K TPM.
 
@@ -165,7 +165,7 @@ A 5-file batch = 15 calls (~45K tokens) in one minute — far past a `capacity =
 
 The pipeline has two layers of resilience:
 
-**Inner: per-call retry inside `gpt4oFetch`.** All GPT-4o utilities (`adjust-split`, `analyze-annotations`, `normalize-receipt`) route through a shared helper that catches 429 responses, reads the `Retry-After` header, and retries up to two times after waiting. Wait uses Trigger.dev's `wait.for` rather than `setTimeout` — the task is checkpointed during the wait and the worker is freed for other runs, so this does not consume concurrency.
+**Inner: per-call retry inside `gpt4oFetch`.** All GPT-4o utilities (`adjust-expense`, `analyze-annotations`, `normalize-receipt`) route through a shared helper that catches 429 responses, reads the `Retry-After` header, and retries up to two times after waiting. Wait uses Trigger.dev's `wait.for` rather than `setTimeout` — the task is checkpointed during the wait and the worker is freed for other runs, so this does not consume concurrency.
 
 **Outer: Trigger.dev's task-level retry** (`maxAttempts: 3` configured in `trigger.config.js`). If the inner retries are exhausted and the helper rethrows, Trigger.dev retries the entire task with exponential backoff. Combined with the inner layer, a single task survives up to 9 GPT-4o calls before final failure (3 outer attempts × 3 inner attempts).
 

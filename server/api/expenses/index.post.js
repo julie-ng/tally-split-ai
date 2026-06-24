@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Cannot resolve household for expense' })
   }
 
-  // Idempotency: a receipt has at most one split. The create-split task can
+  // Idempotency: a receipt has at most one expense. The create-expense task can
   // retry (Trigger.dev maxAttempts), so if a split already exists for this
   // receipt, return it instead of inserting a duplicate. Standalone splits
   // (no receiptId) have no uniqueness key and always insert.
@@ -82,8 +82,8 @@ export default defineEventHandler(async (event) => {
   }
 
   // Default to a 50/50 split when shares are omitted but an amount is given.
-  // The receipt-pipeline path (trigger/create-split.js) sends explicit shares,
-  // so this only kicks in for standalone splits created directly via the API.
+  // The receipt-pipeline path (trigger/create-expense.js) sends explicit shares,
+  // so this only kicks in for standalone expenses created directly via the API.
   // An explicitly-sent 0 share is respected (?? not ||).
   const defaultHalf = result.data.splitAmount != null
     ? calculateHalfAmount(result.data.splitAmount)
