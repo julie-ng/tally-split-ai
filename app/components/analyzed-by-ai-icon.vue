@@ -2,7 +2,7 @@
 const props = defineProps({
   color: {
     type: String,
-    default: 'text-slate-400',
+    default: 'text-dimmed',
   },
 })
 </script>

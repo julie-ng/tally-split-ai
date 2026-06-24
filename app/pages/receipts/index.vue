@@ -123,7 +123,7 @@ const expanded = ref({})
 
 const tableStyles = {
   base: 'min-w-full',
-  th: 'text-slate-700',
+  th: 'text-highlighted',
   td: 'align-top',
   tr: 'hover:bg-elevated/50',
 }
@@ -224,12 +224,12 @@ const paginationInfo = computed(() => {
     </template>
 
     <template #body>
-      <p class="text-sm text-slate-400 mb-4">
+      <p class="text-sm text-dimmed mb-4">
         Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} receipts
       </p>
 
       <ClientOnly>
-        <div class="border bg-white border-slate-200">
+        <div class="border bg-default border-default">
           <UTable
             ref="table"
             v-model:row-selection="rowSelection"
@@ -251,7 +251,7 @@ const paginationInfo = computed(() => {
             <template #id-cell="{ row }">
               <NuxtLink
                 :to="`/receipts/${row.original.id}`"
-                class="text-slate-400 hover:text-blue-800 hover:underline font-mono"
+                class="text-dimmed hover:text-blue-800 hover:underline font-mono"
               >
                 {{ row.original.id }}
               </NuxtLink>
@@ -260,7 +260,7 @@ const paginationInfo = computed(() => {
             <!-- Title -->
             <template #title-cell="{ row }">
               <h1 class="flex items-center gap-2">
-                <NuxtLink :to="`/receipts/${row.original.id}`" class=" text-slate-600 font-semibold hover:text-blue-800 hover:underline">
+                <NuxtLink :to="`/receipts/${row.original.id}`" class=" text-toned font-semibold hover:text-blue-800 hover:underline">
                   {{ row.original.title || '—' }}
                 </NuxtLink>
                 <UBadge
@@ -272,7 +272,7 @@ const paginationInfo = computed(() => {
                   Missing Upload
                 </UBadge>
               </h1>
-              <p class="text-slate-400">
+              <p class="text-dimmed">
                 {{ row.original.merchantName || '-' }}
               </p>
             </template>
@@ -282,7 +282,7 @@ const paginationInfo = computed(() => {
               <time v-if="row.original.date" :datetime="row.original.date" :title="row.original.date">
                 {{ timestampUtils.toShortDate(row.original.date) }}
               </time>
-              <span v-else class="text-slate-400">—</span>
+              <span v-else class="text-dimmed">—</span>
             </template>
 
             <!-- Receipt Total -->
@@ -293,7 +293,7 @@ const paginationInfo = computed(() => {
               >
                 {{ receiptUtils.formatCurrency(row.original.total, row.original.currency || 'EUR') }}
               </div>
-              <div v-else class="text-slate-400 text-right">
+              <div v-else class="text-dimmed text-right">
                 —
               </div>
             </template>
@@ -311,7 +311,7 @@ const paginationInfo = computed(() => {
 
           <!-- Pagination -->
           <div class="flex justify-between items-center border-t border-default py-4 px-4">
-            <div class="text-sm text-slate-600">
+            <div class="text-sm text-toned">
               <span v-if="selectedCount > 0">{{ selectedCount }} selected &middot; </span>
               Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }}
             </div>

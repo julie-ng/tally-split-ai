@@ -28,7 +28,7 @@ const householdStore = useHouseholdStore()
       <h1 class="font-bold text-2xl">
         {{ title }}
       </h1>
-      <p class="mt-1 text-sm text-slate-400">
+      <p class="mt-1 text-sm text-dimmed">
         Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} expenses for
         <NuxtLink :to="householdStore.path" class="underline cursor-pointer">{{ householdStore.name }}</NuxtLink>
       </p>

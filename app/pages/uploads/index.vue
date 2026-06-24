@@ -167,7 +167,7 @@ const columns = [
 
 const tableStyles = {
   base: 'min-w-full',
-  th: 'text-slate-600 font-semibold',
+  th: 'text-toned font-semibold',
   td: 'p-3 align-middle',
   tr: 'hover:bg-elevated/50',
 }
@@ -228,7 +228,7 @@ function closePreview () {
 
     <template #body>
       <div class="flex items-center justify-between">
-        <p class="text-sm text-slate-400">
+        <p class="text-sm text-dimmed">
           Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} Uploads
         </p>
         <div class="flex items-center gap-2">
@@ -251,7 +251,7 @@ function closePreview () {
       </div>
 
       <ClientOnly>
-        <div class="border bg-white border-slate-200">
+        <div class="border bg-default border-default">
           <!-- TODO: autoResetPageIndex configuration works now to keep page when deleting items. But it will break as soon as we try to use filters -->
           <UTable
             ref="table"
@@ -278,7 +278,7 @@ function closePreview () {
               <NuxtLink
                 :to="{ query: { ...route.query, preview: row.original.id } }"
                 replace
-                class="text-slate-400 hover:text-blue-800 hover:underline font-mono"
+                class="text-dimmed hover:text-blue-800 hover:underline font-mono"
               >
                 {{ row.original.id }}
               </NuxtLink>
@@ -340,7 +340,7 @@ function closePreview () {
           </UTable>
 
           <div class="flex justify-between items-center border-t border-default py-4 px-4">
-            <div class="text-sm text-slate-600">
+            <div class="text-sm text-toned">
               Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }}
             </div>
             <UPagination

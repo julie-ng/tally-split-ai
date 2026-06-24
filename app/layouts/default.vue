@@ -131,7 +131,7 @@ function getLinks (collapsed) {
     <UDashboardSidebar
       collapsible
       :ui="{
-        root: 'bg-muted',
+        root: 'bg-elevated/25',
         footer: 'border-t border-default',
       }"
     >

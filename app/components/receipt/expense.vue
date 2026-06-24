@@ -165,7 +165,7 @@ const debouncedUpdate = useDebounceFn(async () => {
 const settledClass = computed(function () {
   return isSettled.value
     ? 'border-blue-400 text-blue-700 bg-blue-50'
-    : 'border-slate-200'
+    : 'border-default'
 })
 
 /**
@@ -179,7 +179,7 @@ function showToast (err) {
     color: 'error',
     icon: 'i-lucide-triangle-alert',
     timeout: 5000,
-    ui: { root: 'bg-slate-100' },
+    ui: { root: 'bg-elevated' },
   })
 }
 </script>
@@ -195,10 +195,10 @@ function showToast (err) {
       <!-- Loading state -->
       <template v-if="expenseLoading && !expense">
         <div class="space-y-3 animate-pulse">
-          <div class="h-8 bg-slate-100 rounded" />
-          <div class="h-8 bg-slate-100 rounded" />
-          <div class="h-8 bg-slate-100 rounded" />
-          <div class="h-8 bg-slate-100 rounded" />
+          <div class="h-8 bg-elevated rounded" />
+          <div class="h-8 bg-elevated rounded" />
+          <div class="h-8 bg-elevated rounded" />
+          <div class="h-8 bg-elevated rounded" />
         </div>
       </template>
 
@@ -255,7 +255,7 @@ function showToast (err) {
         />
 
         <!-- Settle Button -->
-        <div class="mt-4 border rounded-md p-3 grid grid-cols-2 cursor-pointer hover:bg-slate-50" :class="settledClass" @click="toggleSettle">
+        <div class="mt-4 border rounded-md p-3 grid grid-cols-2 cursor-pointer hover:bg-muted" :class="settledClass" @click="toggleSettle">
           <div class="text-left">
             <div class="text-sm">
               {{ settledText }}

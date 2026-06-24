@@ -28,13 +28,13 @@ const isCellHighlighted = (index, key) =>
     <table :class="tableClass">
       <thead>
         <tr>
-          <th v-if="hasQuantity" class="py-2 border-b border-slate-300 font-medium">
+          <th v-if="hasQuantity" class="py-2 border-b border-default font-medium">
             Qty.
           </th>
-          <th class="py-2 border-b border-slate-300 font-medium text-left">
+          <th class="py-2 border-b border-default font-medium text-left">
             Item
           </th>
-          <th class="py-2 border-b border-slate-300 font-medium text-right">
+          <th class="py-2 border-b border-default font-medium text-right">
             Price
           </th>
         </tr>
@@ -43,7 +43,7 @@ const isCellHighlighted = (index, key) =>
         <tr v-for="item, id in items" :key="id">
           <td
             v-if="hasQuantity"
-            class="pr-2 py-2 pl-0 border-b border-slate-200 text-center transition-colors duration-150 cursor-default"
+            class="pr-2 py-2 pl-0 border-b border-default text-center transition-colors duration-150 cursor-default"
           >
             <!-- Quantity: doesn't always exist -->
             <div
@@ -56,14 +56,14 @@ const isCellHighlighted = (index, key) =>
             </div>
           </td>
           <td
-            class="py-2 border-b border-slate-200 text-left transition-colors duration-150 cursor-default"
+            class="py-2 border-b border-default text-left transition-colors duration-150 cursor-default"
             :class="{ 'bg-blue-50': isCellHighlighted(id, 'Description') }"
             @mouseenter="highlightedLabel = itemLabel(id, 'Description')"
             @mouseleave="highlightedLabel = null"
           >
             {{ item.description.value }}
           </td>
-          <td class="py-2 pl-10 border-b border-slate-200 text-right transition-colors duration-150 cursor-default">
+          <td class="py-2 pl-10 border-b border-default text-right transition-colors duration-150 cursor-default">
             <!-- Total Price: doesn't always exist -->
             <div
               v-if="item.totalPrice"

@@ -17,12 +17,12 @@ const historyLoaded = computed(() => !!expensesStore.history[props.expenseId])
 
 <template>
   <div v-if="historyLoaded" class="my-4">
-    <div class="text-sm font-medium text-slate-500 mb-2">
+    <div class="text-sm font-medium text-muted mb-2">
       AI Analysis
     </div>
 
     <!-- LLM adjustment found -->
-    <div v-if="llmChange" class="text-sm text-slate-600 bg-slate-50 rounded-md p-3 space-y-2">
+    <div v-if="llmChange" class="text-sm text-toned bg-muted rounded-md p-3 space-y-2">
       <div v-if="llmChange.reasoning">
         {{ llmChange.reasoning }}
       </div>
@@ -43,13 +43,13 @@ const historyLoaded = computed(() => !!expensesStore.history[props.expenseId])
           {{ field.field }}: {{ Math.round(field.confidence * 100) }}%
         </UBadge>
       </div>
-      <div class="text-xs text-slate-400">
+      <div class="text-xs text-dimmed">
         {{ llmChange.source }} &middot; {{ new Date(llmChange.createdAt).toLocaleString() }}
       </div>
     </div>
 
     <!-- No LLM adjustment -->
-    <div v-else class="text-sm text-slate-400">
+    <div v-else class="text-sm text-dimmed">
       AI reviewed but no adjustment applied.
     </div>
   </div>

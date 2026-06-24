@@ -122,7 +122,7 @@ async function handleBulkAnalyze () {
       <template #body>
         <p
           v-if="unanalyzedReceipts.length === 0"
-          class="text-sm text-slate-500"
+          class="text-sm text-muted"
         >
           All receipts have already been analyzed.
         </p>

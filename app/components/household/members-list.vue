@@ -16,7 +16,7 @@ const householdStore = useHouseholdStore()
       <div
         v-for="member in householdStore.members"
         :key="member.id"
-        class="flex items-center gap-3 p-3 border border-slate-200 rounded-md bg-white"
+        class="flex items-center gap-3 p-3 border border-default rounded-md bg-default"
       >
         <UAvatar :src="member.avatarUrl" :alt="member.username" size="md" />
         <div class="flex-1">

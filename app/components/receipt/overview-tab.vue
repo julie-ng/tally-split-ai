@@ -80,7 +80,7 @@ const dates = computed(() => {
     </div>
 
     <div class="px-4">
-      <hr class="my-6 border-slate-300">
+      <hr class="my-6 border-default">
 
       <!-- Edit Button -->
       <div class="my-3">

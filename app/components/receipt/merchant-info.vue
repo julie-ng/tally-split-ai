@@ -35,15 +35,15 @@ const addressLines = computed(() => {
 
 <template>
   <div :class="textSize">
-    <h1 class="text-slate-500 font-medium">
+    <h1 class="text-muted font-medium">
       {{ name }}
     </h1>
-    <p v-if="address" class="text-slate-500">
+    <p v-if="address" class="text-muted">
       <template v-for="(line, i) in addressLines" :key="i">
         <br v-if="i > 0">{{ line }}
       </template>
     </p>
-    <p v-if="phone" class="text-slate-500">
+    <p v-if="phone" class="text-muted">
       {{ phone }}
     </p>
   </div>

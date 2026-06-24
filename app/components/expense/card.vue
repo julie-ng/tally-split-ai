@@ -21,16 +21,16 @@ defineProps({
 <template>
   <div class="h-full">
     <UCard class="shadow-md/5 h-full">
-      <div class="text-sm text-slate-600">
+      <div class="text-sm text-toned">
         <slot name="subtitle">
           {{ subtitle }}
         </slot>
       </div>
-      <div class="text-2xl font-medium text-slate-600">
+      <div class="text-2xl font-medium text-toned">
         <slot name="title">
           {{ title }}
         </slot>
-        <div v-if="$slots.note || note" class="text-sm font-normal text-slate-500">
+        <div v-if="$slots.note || note" class="text-sm font-normal text-muted">
           <slot name="note">
             {{ note }}
           </slot>

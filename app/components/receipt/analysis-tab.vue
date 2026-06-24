@@ -145,7 +145,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
               Analysis
             </p>
             <div class="grid grid-cols-2 gap-0">
-              <div class="py-1 text-slate-500 text-sm">
+              <div class="py-1 text-muted text-sm">
                 Analysis Date
               </div>
               <div class="py-1.5 text-sm text-right">
@@ -207,7 +207,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
               <ui-label-content v-if="upload?.analyzedAt" label="Analyzed At" :content="timestampUtils.toShortDate(upload.analyzedAt)" />
               <ui-label-content v-if="upload?.ocrText" label="OCR Result">
                 <ClientOnly>
-                  <pre class="w-fit mt-1 p-5 bg-slate-100 rounded-lg font-mono text-sm">{{ upload.ocrText }}</pre>
+                  <pre class="w-fit mt-1 p-5 bg-elevated rounded-lg font-mono text-sm">{{ upload.ocrText }}</pre>
                 </ClientOnly>
               </ui-label-content>
             </ui-collapsible-property-group>

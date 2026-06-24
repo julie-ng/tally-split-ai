@@ -77,7 +77,7 @@ const handleCancel = () => {
         </div>
       </div>
 
-      <hr class="my-4 border-slate-200">
+      <hr class="my-4 border-default">
 
       <!-- Totals -->
       <section>
@@ -87,7 +87,7 @@ const handleCancel = () => {
         <div class="grid grid-cols-3 gap-4">
           <div>
             <label for="subtotal">
-              Subtotal <span class="text-slate-400">(EUR)</span>
+              Subtotal <span class="text-dimmed">(EUR)</span>
             </label>
           </div>
           <div class="col-span-2">
@@ -101,7 +101,7 @@ const handleCancel = () => {
           </div>
           <div>
             <label for="tax">
-              Tax <span class="text-slate-400">(EUR)</span>
+              Tax <span class="text-dimmed">(EUR)</span>
             </label>
           </div>
           <div class="col-span-2">
@@ -115,7 +115,7 @@ const handleCancel = () => {
           </div>
           <div>
             <label for="tip">
-              Tip <span class="text-slate-400">(EUR)</span>
+              Tip <span class="text-dimmed">(EUR)</span>
             </label>
           </div>
           <div class="col-span-2">
@@ -129,7 +129,7 @@ const handleCancel = () => {
           </div>
           <div>
             <label for="total">
-              Total <span class="text-slate-400">(EUR)</span>
+              Total <span class="text-dimmed">(EUR)</span>
             </label>
           </div>
           <div class="col-span-2">
@@ -144,7 +144,7 @@ const handleCancel = () => {
         </div>
       </section>
 
-      <hr class="my-4 border-slate-200">
+      <hr class="my-4 border-default">
 
       <!-- Merchant -->
       <section>
@@ -194,7 +194,7 @@ const handleCancel = () => {
         </div>
       </section>
 
-      <hr class="my-4 border-slate-200">
+      <hr class="my-4 border-default">
 
       <!-- Form Actions -->
       <div class="mt-6">

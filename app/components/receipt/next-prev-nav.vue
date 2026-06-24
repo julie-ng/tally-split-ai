@@ -29,15 +29,15 @@ function receiptDate (receipt) {
     <NuxtLink
       v-if="adjacentIds.prevId"
       :to="`/receipts/${adjacentIds.prevId}`"
-      class="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800"
+      class="flex items-center gap-2 text-sm text-muted hover:text-highlighted"
     >
       <UIcon name="i-lucide-chevron-left" />
       <div class="text-right">
-        <div class="text-xs text-slate-400">
+        <div class="text-xs text-dimmed">
           Previous
         </div>
         <div>
-          <span class="text-slate-400">({{ receiptDate(prevReceipt) }})</span>
+          <span class="text-dimmed">({{ receiptDate(prevReceipt) }})</span>
           {{ receipTitle(prevReceipt) }}
         </div>
       </div>
@@ -46,15 +46,15 @@ function receiptDate (receipt) {
     <NuxtLink
       v-if="adjacentIds.nextId"
       :to="`/receipts/${adjacentIds.nextId}`"
-      class="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800"
+      class="flex items-center gap-2 text-sm text-muted hover:text-highlighted"
     >
       <div class="text-left">
-        <div class="text-xs text-slate-400">
+        <div class="text-xs text-dimmed">
           Next
         </div>
         <div>
           {{ receipTitle(nextReceipt) }}
-          <span class="text-slate-400">({{ receiptDate(nextReceipt) }})</span>
+          <span class="text-dimmed">({{ receiptDate(nextReceipt) }})</span>
         </div>
       </div>
       <UIcon name="i-lucide-chevron-right" />

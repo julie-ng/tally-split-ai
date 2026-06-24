@@ -32,9 +32,9 @@ const highlightedLabel = inject('highlightedLabel', ref(null))
 </script>
 
 <template>
-  <div class="border border-slate-200">
+  <div class="border border-default">
     <template v-if="!upload?.blobName">
-      <div class="p-4 text-sm text-slate-400">
+      <div class="p-4 text-sm text-dimmed">
         Loading upload...
       </div>
     </template>

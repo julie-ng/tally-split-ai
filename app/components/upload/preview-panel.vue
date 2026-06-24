@@ -81,13 +81,13 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
               <upload-preview-overview :id="id" />
             </ui-collapsible-property-group>
 
-            <hr class="text-slate-300 my-3">
+            <hr class="border-default my-3">
 
             <ui-collapsible-property-group title="AI Analysis">
               <upload-preview-analysis :id="id" />
             </ui-collapsible-property-group>
 
-            <hr class="text-slate-300 my-3">
+            <hr class="border-default my-3">
 
             <ui-collapsible-property-group title="Azure Info">
               <upload-preview-azure :id="id" />

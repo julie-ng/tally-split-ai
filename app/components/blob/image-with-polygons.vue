@@ -99,11 +99,11 @@ const polygonToSvgPoints = (polygon) => {
     <!-- Tooltip -->
     <div
       v-if="hoveredRegion"
-      class="absolute z-10 px-2 py-1 text-xs bg-slate-800 text-white rounded shadow-lg pointer-events-none max-w-48 -translate-x-1/2 text-left"
+      class="absolute z-10 px-2 py-1 text-xs bg-inverted text-inverted rounded shadow-lg pointer-events-none max-w-48 -translate-x-1/2 text-left"
       :style="{ left: `${tooltipPos.x}px`, top: `${tooltipPos.y}px` }"
     >
       <span class="font-semibold font-mono">{{ hoveredRegion.label }}</span>
-      <span v-if="hoveredRegion.content" class="block text-slate-300 truncate">
+      <span v-if="hoveredRegion.content" class="block text-muted truncate">
         {{ hoveredRegion.content }}
       </span>
     </div>

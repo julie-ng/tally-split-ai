@@ -105,8 +105,8 @@ const columns = computed(() => [
 
 const tableStyles = {
   base: 'min-w-full',
-  thead: 'bg-slate-50',
-  th: 'text-slate-700',
+  thead: 'bg-muted',
+  th: 'text-highlighted',
   td: 'align-middle',
 }
 
@@ -145,7 +145,7 @@ function onSelect (event, row) {
 
 <template>
   <ClientOnly>
-    <div class="border bg-white border-slate-200">
+    <div class="border bg-default border-default">
       <UTable
         ref="table"
         v-model:pagination="pagination"
@@ -169,7 +169,7 @@ function onSelect (event, row) {
           <NuxtLink
             :to="{ query: { ...route.query, preview: row.original.id } }"
             replace
-            class="text-slate-400 hover:text-blue-800 hover:underline font-mono"
+            class="text-dimmed hover:text-blue-800 hover:underline font-mono"
           >
             {{ row.original.id }}
           </NuxtLink>
@@ -179,11 +179,11 @@ function onSelect (event, row) {
           <NuxtLink
             v-if="row.original.receipt"
             :to="`/receipts/${row.original.receipt.id}`"
-            class="text-slate-600 hover:text-blue-800 hover:underline font-medium"
+            class="text-toned hover:text-blue-800 hover:underline font-medium"
           >
             {{ row.original.receipt.title || row.original.receipt.merchantName || '—' }}
           </NuxtLink>
-          <span v-else class="text-slate-400">—</span>
+          <span v-else class="text-dimmed">—</span>
         </template>
 
         <template #date-cell="{ row }">
@@ -193,14 +193,14 @@ function onSelect (event, row) {
           >
             {{ toBerlinDisplayDate(row.original.date) }}
           </time>
-          <span v-else class="text-slate-400">—</span>
+          <span v-else class="text-dimmed">—</span>
         </template>
 
         <template #splitAmount-cell="{ row }">
           <div v-if="row.original.splitAmount != null" class="text-right font-medium">
             {{ receiptUtils.formatCurrency(row.original.splitAmount, 'EUR') }}
           </div>
-          <div v-else class="text-slate-400 text-right">
+          <div v-else class="text-dimmed text-right">
             —
           </div>
         </template>
@@ -209,7 +209,7 @@ function onSelect (event, row) {
           <div v-if="row.original.userOneShare != null" class="text-right font-medium">
             {{ receiptUtils.formatCurrency(row.original.userOneShare, 'EUR') }}
           </div>
-          <div v-else class="text-slate-400 text-right">
+          <div v-else class="text-dimmed text-right">
             -
           </div>
         </template>
@@ -218,7 +218,7 @@ function onSelect (event, row) {
           <div v-if="row.original.userTwoShare != null" class="text-right font-medium">
             {{ receiptUtils.formatCurrency(row.original.userTwoShare, 'EUR') }}
           </div>
-          <div v-else class="text-slate-400 text-right">
+          <div v-else class="text-dimmed text-right">
             -
           </div>
         </template>
@@ -240,7 +240,7 @@ function onSelect (event, row) {
       </UTable>
 
       <div v-if="showPagination" class="flex justify-between items-center border-t border-default py-4 px-4">
-        <div class="text-sm text-slate-600">
+        <div class="text-sm text-toned">
           Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }}
         </div>
         <UPagination

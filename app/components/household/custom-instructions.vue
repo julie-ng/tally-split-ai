@@ -14,7 +14,7 @@ const householdStore = useHouseholdStore()
     </p>
     <pre
       v-else
-      class="text-sm whitespace-pre-wrap p-3 border border-slate-200 rounded-md bg-elevated/50 font-sans"
+      class="text-sm whitespace-pre-wrap p-3 border border-default rounded-md bg-elevated/50 font-sans"
     >{{ householdStore.customInstructions }}</pre>
   </section>
 </template>

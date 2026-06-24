@@ -72,7 +72,7 @@ const inputBaseClass = computed(function () {
         :class="inputWidth"
         variant="subtle"
         trailing-icon="i-lucide-euro"
-        :ui="{ base: inputBaseClass, trailingIcon: 'size-4 text-slate-400' }"
+        :ui="{ base: inputBaseClass, trailingIcon: 'size-4 text-dimmed' }"
       />
     </div>
   </section>

@@ -20,16 +20,16 @@ function notEmpty () {
 
 <template>
   <article v-if="notEmpty()" class="flex flex-row my-1">
-    <div class="basis-1/4 text-slate-400 text-sm">
+    <div class="basis-1/4 text-dimmed text-sm">
       {{ props.name }}
     </div>
-    <div v-if="isArrayValue" class="basis-3/4 text-slate-500 text-sm">
-      <span v-for="tag, i in props.value" :key="i" class="px-2 py-1 mr-2 bg-blue-50 text-slate-400 rounded-sm text-xs">
+    <div v-if="isArrayValue" class="basis-3/4 text-muted text-sm">
+      <span v-for="tag, i in props.value" :key="i" class="px-2 py-1 mr-2 bg-blue-50 text-dimmed rounded-sm text-xs">
         {{ tag }}
       </span>
       <span v-if="props.value.length === 0">-</span>
     </div>
-    <div v-if="isStringValue" class="basis-3/4 text-slate-400 text-sm">
+    <div v-if="isStringValue" class="basis-3/4 text-dimmed text-sm">
       {{ props.value }}
     </div>
   </article>

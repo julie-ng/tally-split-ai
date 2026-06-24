@@ -16,11 +16,11 @@ function notEmpty (str) {
 }
 
 function extraKeyClasses (key) {
-  return key === 'Total' ? 'font-semibold text-sm text-slate-700' : 'text-sm text-slate-500'
+  return key === 'Total' ? 'font-semibold text-sm text-highlighted' : 'text-sm text-muted'
 }
 
 function extraValueClasses (key) {
-  return key === 'Total' ? 'font-semibold text-sm text-slate-700' : 'text-sm'
+  return key === 'Total' ? 'font-semibold text-sm text-highlighted' : 'text-sm'
 }
 </script>
 

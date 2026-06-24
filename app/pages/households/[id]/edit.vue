@@ -112,9 +112,9 @@ async function handleSubmit () {
           <div>
             <label for="customInstructions" class="block text-sm font-semibold mb-1">
               Custom AI Instructions
-              <span class="text-slate-400 font-normal">(optional)</span>
+              <span class="text-dimmed font-normal">(optional)</span>
             </label>
-            <p class="text-sm text-slate-500 mb-2">
+            <p class="text-sm text-muted mb-2">
               Free-text guidance appended to the AI prompt when analyzing receipts. Example: "When initials are unclear, JN's credit card ends in 1234." or "Chocolate items are always JN's."
             </p>
             <UAlert
@@ -138,7 +138,7 @@ async function handleSubmit () {
               <p v-if="fieldErrors.customInstructions" class="text-red-600 text-sm">
                 {{ fieldErrors.customInstructions.join(', ') }}
               </p>
-              <p v-else class="text-slate-400 text-sm ml-auto">
+              <p v-else class="text-dimmed text-sm ml-auto">
                 {{ formData.customInstructions?.length ?? 0 }} / 2000
               </p>
             </div>

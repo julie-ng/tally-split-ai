@@ -4,7 +4,7 @@ const emit = defineEmits(['on-update'])
 const activeClasses = ref('')
 
 function setActive (e) {
-  activeClasses.value = 'bg-slate-200'
+  activeClasses.value = 'bg-elevated'
 }
 
 function unsetActive (e) {
@@ -48,7 +48,7 @@ function _showFiles (files) {
   <div>
     <label
       id="js-dropzone"
-      class="my-5 p-5 flex flex-col items-center justify-center cursor-pointer w-full min-h-20 rounded-sm border border-slate-400 border-dashed text-center"
+      class="my-5 p-5 flex flex-col items-center justify-center cursor-pointer w-full min-h-20 rounded-sm border border-accented border-dashed text-center"
       :class="activeClasses"
       @drop.prevent="onDrop"
       @dragover.prevent="setActive"
@@ -65,15 +65,15 @@ function _showFiles (files) {
         @change="onFilesSelected"
       >
 
-      <div class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-slate-100">
-        <UIcon name="i-lucide-image" class="size-5 text-slate-500" />
+      <div class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-elevated">
+        <UIcon name="i-lucide-image" class="size-5 text-muted" />
       </div>
 
-      <p class="my-1 text-slate-600 text-sm font-semibold">
+      <p class="my-1 text-toned text-sm font-semibold">
         Drag and drop files here
       </p>
 
-      <p class="my-1 text-slate-400 text-sm">
+      <p class="my-1 text-dimmed text-sm">
         PNG or JPG (max. 2MB)
       </p>
     </label>

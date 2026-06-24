@@ -46,7 +46,7 @@ const householdStore = useHouseholdStore()
 
 <template>
   <div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between lg:gap-0">
-    <p class="text-sm text-slate-400">
+    <p class="text-sm text-dimmed">
       Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} expenses for
       <NuxtLink :to="householdStore.path" class="underline cursor-pointer">{{ householdStore.name }}</NuxtLink>
     </p>

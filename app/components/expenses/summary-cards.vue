@@ -42,10 +42,10 @@ const netBalanceText = computed(() => {
 
 const netBalanceColor = computed(() => {
   if (loggedInIsOwed.value === null) {
-    return 'text-gray-600'
+    return 'text-toned'
   }
   if (!isComplete.value) {
-    return 'text-gray-600'
+    return 'text-toned'
   }
   return loggedInIsOwed.value
     ? 'text-emerald-600'

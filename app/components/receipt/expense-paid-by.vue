@@ -31,7 +31,7 @@ items.push({
       :items="items"
       orientation="horizontal"
       variant="card"
-      :ui="{ item: 'px-3 py-2 w-24 cursor-pointer hover:bg-slate-100 has-data-[state=checked]:bg-blue-50 has-data-[state=checked]:border-blue-300' }"
+      :ui="{ item: 'px-3 py-2 w-24 cursor-pointer hover:bg-elevated has-data-[state=checked]:bg-blue-50 has-data-[state=checked]:border-blue-300' }"
     />
   </div>
 </template>

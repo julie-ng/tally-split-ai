@@ -8,7 +8,7 @@ defineProps({
 </script>
 
 <template>
-  <div class="grid grid-cols-2 gap-y-1 text-sm text-slate-600">
+  <div class="grid grid-cols-2 gap-y-1 text-sm text-toned">
     <div>Receipt ID</div>
     <div>{{ receipt.id }}</div>
 
