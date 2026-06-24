@@ -8,20 +8,26 @@
   /* How to adjust colors */
   /* Set in `app.config.js` per */
   /* https://ui.nuxt.com/docs/getting-started/theme/design-system */
+
+  /* Custom "Brand" palette — anchored so brand-500 = #1347e6, the brand blue.
+     500 is the conventional anchor stop, so Nuxt UI's default primary mapping
+     (500 in light / 400 in dark) lands on it with NO override. Generated in
+     OKLCH; 600–900 give darker stops for hover/active states. 50–900 to match
+     the numbered aliases (no 950). */
+  --color-brand-50: #f0f6ff;
+  --color-brand-100: #ddeaff;
+  --color-brand-200: #bfd6ff;
+  --color-brand-300: #94b9ff;
+  --color-brand-400: #2f74ff;
+  --color-brand-500: #1347e6;
+  --color-brand-600: #0e3bc3;
+  --color-brand-700: #0f339d;
+  --color-brand-800: #0e2c7c;
+  --color-brand-900: #0d245f;
 }
 
 /* Offset in-page anchor scrolling by the fixed header height so section
    targets land below the sticky <UHeader> instead of underneath it. */
 html {
   scroll-padding-top: calc(var(--ui-header-height) + 1rem);
-}
-
-/* Shift the `text-primary` / `bg-primary` alias to a darker shade.
-   The numbered scale (primary-50 … primary-900) is unaffected. */
-:root {
-  --ui-primary: var(--ui-color-primary-700);
-}
-
-.dark {
-  --ui-primary: var(--ui-color-primary-300);
 }
