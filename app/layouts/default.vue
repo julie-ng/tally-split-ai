@@ -111,13 +111,12 @@ function getLinks (collapsed) {
         active: false,
         children: expanded
           ? [
-              { label: 'blobs/', to: '/api/blobs/', external: true, target: '_blank' },
               { label: 'receipts/', to: '/api/receipts/', external: true, target: '_blank' },
-              { label: 'receipts/[id]', to: '/api/receipts/', external: true, target: '_blank' },
-              { label: 'tokens/read', to: '/api/tokens/read', external: true, target: '_blank' },
-              { label: 'tokens/upload', to: '/api/tokens/upload', external: true, target: '_blank' },
+              { label: 'expenses/', to: '/api/expenses/', external: true, target: '_blank' },
               { label: 'uploads/', to: '/api/uploads/', external: true, target: '_blank' },
-              { label: 'uploads/[id]', to: '/api/uploads/', external: true, target: '_blank' },
+              { label: 'households', to: '/api/households', external: true, target: '_blank' },
+              { label: 'workflows/', to: '/api/workflows/', external: true, target: '_blank' },
+              { label: 'dashboard/metrics', to: '/api/dashboard/metrics', external: true, target: '_blank' },
             ]
           : [],
       },
