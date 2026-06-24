@@ -125,7 +125,6 @@ function closePreview () {
   </UDashboardPanel>
 
   <expense-panel
-    v-if="previewExpenseId"
     :expense-id="previewExpenseId"
     @close="closePreview"
   />
