@@ -1,7 +1,7 @@
 <script setup>
 import { getPaginationRowModel } from '@tanstack/vue-table'
 import { useHouseholdStore } from '~/stores/household.store'
-import { toBerlinISODate, toBerlinDisplayDate } from '#shared/utils/expense-date.utils.js'
+import { toBerlinISODate, toBerlinShortDate } from '#shared/utils/expense-date.utils.js'
 
 const props = defineProps({
   data: {
@@ -42,47 +42,52 @@ const table = useTemplateRef('table')
 const columns = computed(() => [
   {
     accessorKey: 'id',
-    header: 'Expense ID',
+    header: 'ID',
+    meta: { class: { th: 'w-[80px]', td: 'w-[80px]' } },
   },
   {
     id: 'date',
     accessorFn: row => row.date ?? null,
     header: 'Date',
     sortUndefined: 'last',
+    meta: { class: { th: 'w-[80px]', td: 'w-[80px]' } },
   },
+  // {
+  //   accessorKey: 'paidByUserId',
+  //   header: 'Paid',
+  //   meta: { class: { th: 'w-[36px] px-0', td: 'w-[36px] px-0' } },
+  // },
   {
     accessorKey: 'title',
-    header: 'Receipt',
+    header: 'Expense',
   },
-  {
-    accessorKey: 'splitAmount',
-    header: 'Expense Amount',
-    meta: { class: { th: 'text-right' } },
-  },
+
   {
     accessorKey: 'userOneShare',
     header: `${user1Name.value}'s Share`,
-    meta: { class: { th: 'text-right' } },
+    meta: { class: { th: 'w-[124px] px-2 text-right', td: 'w-[124px] px-2 text-right' } },
   },
   {
     accessorKey: 'userTwoShare',
     header: `${user2Name.value}'s Share`,
-    meta: { class: { th: 'text-right' } },
+    meta: { class: { th: 'w-[124px] px-2 text-right', td: 'w-[124px] px-2 text-right' } },
   },
   {
-    accessorKey: 'paidByUserId',
-    header: 'Paid By',
+    accessorKey: 'splitAmount',
+    header: 'Total',
+    meta: { class: { th: 'w-[100px] px-2 text-right', td: 'w-[100px] px-2 text-right' } },
   },
+
   {
     accessorKey: 'isSettled',
     header: 'Settled',
+    meta: { class: { th: 'w-[124px] text-right', td: 'w-[124px] text-right' } },
   },
 ])
 
 const tableStyles = {
   base: 'min-w-full',
-  thead: 'bg-muted',
-  th: 'text-highlighted',
+  th: 'text-highlighted font-medium',
   td: 'align-middle',
 }
 
@@ -121,7 +126,7 @@ function onSelect (event, row) {
 
 <template>
   <ClientOnly>
-    <div class="border bg-default border-default">
+    <div class="border bg-default border-default rounded">
       <UTable
         ref="table"
         v-model:pagination="pagination"
@@ -138,70 +143,101 @@ function onSelect (event, row) {
         class="flex-1"
         @select="onSelect"
       >
+        <!-- Expense ID -->
         <template #id-cell="{ row }">
-          <NuxtLink
-            :to="{ query: { ...route.query, preview: row.original.id } }"
-            replace
-            class="text-dimmed hover:text-blue-800 hover:underline font-mono"
-          >
-            {{ row.original.id }}
-          </NuxtLink>
+          <UTooltip :text="row.original.id" :delay-duration="0">
+            <NuxtLink
+              :to="{ query: { ...route.query, preview: row.original.id } }"
+              replace
+              class="text-dimmed hover:text-blue-800 hover:underline font-mono"
+            >
+              {{ row.original.id.slice(0, 6) }}
+            </NuxtLink>
+          </UTooltip>
         </template>
 
+        <!-- Expense Title -->
         <template #title-cell="{ row }">
-          <NuxtLink
-            v-if="row.original.receipt"
-            :to="`/receipts/${row.original.receipt.id}`"
-            class="text-toned hover:text-blue-800 hover:underline font-medium"
-          >
-            {{ row.original.receipt.title || row.original.receipt.merchantName || '—' }}
-          </NuxtLink>
-          <span v-else class="text-dimmed">—</span>
+          <UTooltip :text="`Paid by ${householdStore.getMemberFirstName(row.original.paidByUserId)}`" :delay-duration="0">
+            <UAvatar
+              :src="householdStore.getMemberAvatarUrl(row.original.paidByUserId)"
+              :alt="householdStore.getMemberFirstName(row.original.paidByUserId)"
+              size="xs"
+              class="mr-3"
+            />
+          </UTooltip>
+          <span class="text-toned font-medium">
+            {{ row.original.title }}
+          </span>
         </template>
 
+        <!-- Expense Date -->
         <template #date-cell="{ row }">
           <time
             v-if="row.original.date"
             :datetime="toBerlinISODate(row.original.date)"
           >
-            {{ toBerlinDisplayDate(row.original.date) }}
+            {{ toBerlinShortDate(row.original.date) }}
           </time>
           <span v-else class="text-dimmed">—</span>
         </template>
 
+        <!-- Expense Total -->
         <template #splitAmount-cell="{ row }">
-          <div v-if="row.original.splitAmount != null" class="text-right font-medium">
-            {{ receiptUtils.formatCurrency(row.original.splitAmount, 'EUR') }}
+          <div v-if="row.original.splitAmount != null" class="text-right font-semibold text-toned">
+            {{ receiptUtils.formatAmount(row.original.splitAmount) }}
           </div>
           <div v-else class="text-dimmed text-right">
             —
           </div>
         </template>
 
+        <!-- Share #1 -->
         <template #userOneShare-cell="{ row }">
           <div v-if="row.original.userOneShare != null" class="text-right font-medium">
-            {{ receiptUtils.formatCurrency(row.original.userOneShare, 'EUR') }}
+            {{ receiptUtils.formatAmount(row.original.userOneShare) }}
+            <!-- <UBadge
+              :label="householdStore.userOneInitials"
+              color="neutral"
+              variant="soft"
+              size="sm"
+              class="ml-1 text-dimmed"
+            /> -->
           </div>
           <div v-else class="text-dimmed text-right">
-            -
+            —
           </div>
         </template>
 
+        <!-- Share #2 -->
         <template #userTwoShare-cell="{ row }">
           <div v-if="row.original.userTwoShare != null" class="text-right font-medium">
-            {{ receiptUtils.formatCurrency(row.original.userTwoShare, 'EUR') }}
+            {{ receiptUtils.formatAmount(row.original.userTwoShare) }}
+            <!-- <UBadge
+              :label="householdStore.userTwoInitials"
+              color="neutral"
+              variant="soft"
+              size="sm"
+              class="ml-1 text-dimmed"
+            /> -->
           </div>
           <div v-else class="text-dimmed text-right">
-            -
+            —
           </div>
         </template>
 
+        <!-- Paid By -->
         <template #paidByUserId-cell="{ row }">
-          <div class="text-sm">
-            {{ householdStore.getMemberFirstName(row.original.paidByUserId) }}
-          </div>
+          <UTooltip :text="`Paid by ${householdStore.getMemberFirstName(row.original.paidByUserId)}`" :delay-duration="0">
+            <UAvatar
+              :src="householdStore.getMemberAvatarUrl(row.original.paidByUserId)"
+              :alt="householdStore.getMemberFirstName(row.original.paidByUserId)"
+              size="xs"
+            />
+          </UTooltip>
         </template>
 
+        <!-- Settled status -->
         <template #isSettled-cell="{ row }">
           <UBadge v-if="row.original.isSettled" color="success" variant="soft">
             Settled Up

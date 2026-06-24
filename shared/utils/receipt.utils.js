@@ -4,6 +4,12 @@
  * @param {string} currencySymbol - The currency symbol (default: '€')
  * @returns {string} - Formatted currency string (e.g., "5.00 €")
  */
+function formatAmount (amount) {
+  if (amount === null || amount === undefined) return '—'
+  const n = typeof amount === 'string' ? parseFloat(amount) : amount
+  return `${n.toFixed(2)} €`
+}
+
 function formatCurrency (amount, currencySymbol = '€') {
   if (amount === '-' || amount === null || amount === undefined) {
     return '-'
@@ -38,4 +44,5 @@ function extractTotalsAsArray (receipt) {
 export const receiptUtils = {
   extractTotalsAsArray,
   formatCurrency,
+  formatAmount,
 }

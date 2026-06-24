@@ -62,6 +62,23 @@ export const useHouseholdStore = defineStore('household', () => {
     return source.split(/\s+/)[0]
   })
 
+  const getMemberAvatarUrl = computed(() => (id) => {
+    if (!id) return null
+    return getMemberById.value(id)?.avatarUrl ?? null
+  })
+
+  const getMemberInitials = computed(() => (id) => {
+    if (!id) return '?'
+    const member = getMemberById.value(id)
+    if (!member) return '?'
+    const source = member.displayName ?? member.username
+    if (!source) return '?'
+    return source.split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2)
+  })
+
+  const userOneInitials = computed(() => getMemberInitials.value(userOne.value?.id))
+  const userTwoInitials = computed(() => getMemberInitials.value(userTwo.value?.id))
+
   /**
    * Profile page URL for a household member.
    */
@@ -145,6 +162,10 @@ export const useHouseholdStore = defineStore('household', () => {
     getMemberById,
     getMemberName,
     getMemberFirstName,
+    getMemberAvatarUrl,
+    getMemberInitials,
+    userOneInitials,
+    userTwoInitials,
     getUserProfileUrl,
     fetch,
     refresh,

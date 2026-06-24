@@ -105,3 +105,14 @@ export function toBerlinDisplayDate (utcInstant) {
     year: 'numeric',
   })
 }
+
+export function toBerlinShortDate (utcInstant) {
+  if (!utcInstant) {
+    return null
+  }
+  return new Date(utcInstant).toLocaleDateString('en-US', {
+    timeZone: EXPENSE_TIMEZONE,
+    month: 'short',
+    day: '2-digit',
+  })
+}
