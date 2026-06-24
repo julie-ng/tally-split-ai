@@ -21,6 +21,8 @@ function isActive (path) {
 const expenseMonths = useExpenseMonths()
 const logout = useLogout()
 
+const colorMode = useColorMode()
+
 const userMenuItems = computed(() => [
   [
     {
@@ -28,6 +30,34 @@ const userMenuItems = computed(() => [
       icon: 'i-lucide-user',
       to: '/profile',
     },
+    {
+      label: 'Appearance',
+      icon: 'i-lucide-sun-moon',
+      children: [
+        {
+          label: 'Light',
+          icon: 'i-lucide-sun',
+          type: 'checkbox',
+          checked: colorMode.value === 'light',
+          onSelect: (e) => {
+            e.preventDefault()
+            colorMode.preference = 'light'
+          },
+        },
+        {
+          label: 'Dark',
+          icon: 'i-lucide-moon',
+          type: 'checkbox',
+          checked: colorMode.value === 'dark',
+          onSelect: (e) => {
+            e.preventDefault()
+            colorMode.preference = 'dark'
+          },
+        },
+      ],
+    },
+  ],
+  [
     {
       label: 'Logout',
       icon: 'i-lucide-log-out',
