@@ -27,7 +27,7 @@ Connection string via env var: `NUXT_DATABASE_URL`
 
 - `uploads` — Azure Blob metadata (hashId, blobPath, contentType, ocrJson/annotationsJson as jsonb, etc.)
 - `receipts` — Receipt business data (merchant, total, date, analysisStatus, etc.)
-- `splits` — Expense split records (receiptId, amount, person, settled, etc.)
+- `expenses` — Shared expense records derived from a receipt (receiptId, splitAmount, userOneShare/userTwoShare, isSettled, etc.)
 
 ## Adding/Changing Schema
 

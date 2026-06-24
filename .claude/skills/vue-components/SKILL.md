@@ -16,8 +16,8 @@ Components are organized by feature domain in `app/components/`:
 | `uploads/` | Upload queue, list views |
 | `blob/` | Blob metadata display |
 | `bulk-analyze/` | Bulk analysis UI |
-| `split/` | Individual split records |
-| `splits/` | Split management, summaries |
+| `expense/` | Individual expense records |
+| `expenses/` | Expense management, summaries |
 | `ui/` | Generic reusable UI helpers |
 | `analysis/` | Analysis result display |
 | `data/` | Data display utilities |
