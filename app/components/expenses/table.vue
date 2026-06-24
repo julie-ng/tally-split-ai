@@ -1,6 +1,5 @@
 <script setup>
 import { getPaginationRowModel } from '@tanstack/vue-table'
-import { UCheckbox } from '#components'
 import { useHouseholdStore } from '~/stores/household.store'
 import { toBerlinISODate, toBerlinDisplayDate } from '#shared/utils/expense-date.utils.js'
 
@@ -25,10 +24,6 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
-  maxHeight: {
-    type: String,
-    default: '700px',
-  },
 })
 
 const emit = defineEmits(['select'])
@@ -36,14 +31,6 @@ const pagination = defineModel('pagination', {
   type: Object,
   default: () => ({ pageIndex: 0, pageSize: 25 }),
 })
-const rowSelection = defineModel('rowSelection', {
-  type: Object,
-  default: () => ({}),
-})
-
-function isSettleable (expense) {
-  return !expense.isSettled && !!expense.paidByUserId
-}
 
 const route = useRoute()
 const householdStore = useHouseholdStore()
@@ -53,17 +40,6 @@ const user2Name = computed(() => householdStore.getMemberFirstName(householdStor
 const table = useTemplateRef('table')
 
 const columns = computed(() => [
-  {
-    id: 'select',
-    header: '',
-    cell: ({ row }) => h(UCheckbox, {
-      'modelValue': row.getIsSelected(),
-      'disabled': !isSettleable(row.original),
-      'onUpdate:modelValue': value => row.toggleSelected(!!value),
-      'ariaLabel': 'Select row',
-      'onClick': e => e.stopPropagation(),
-    }),
-  },
   {
     accessorKey: 'id',
     header: 'Expense ID',
@@ -149,7 +125,6 @@ function onSelect (event, row) {
       <UTable
         ref="table"
         v-model:pagination="pagination"
-        v-model:row-selection="rowSelection"
         :sorting="sorting"
         :pagination-options="{
           getPaginationRowModel: getPaginationRowModel(),
@@ -160,9 +135,7 @@ function onSelect (event, row) {
         :columns="columns"
         :meta="tableMeta"
         :ui="tableStyles"
-        sticky
         class="flex-1"
-        :style="{ maxHeight }"
         @select="onSelect"
       >
         <template #id-cell="{ row }">

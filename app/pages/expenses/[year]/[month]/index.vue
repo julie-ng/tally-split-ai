@@ -72,10 +72,6 @@ function closePreview () {
 
 const hasExpenses = computed(() => expenses.value.length > 0)
 
-const rowSelection = ref({})
-const selectedExpenseIds = computed(() => Object.keys(rowSelection.value))
-const selectedCount = computed(() => selectedExpenseIds.value.length)
-
 async function refreshAll () {
   await Promise.all([
     expensesStore.fetchAllExpenses(),
@@ -86,29 +82,6 @@ async function refreshAll () {
   ])
 }
 
-async function handleMarkSelectedSettled () {
-  if (selectedCount.value === 0) {
-    return
-  }
-
-  if (!confirm(`Mark ${selectedCount.value} expense(s) as settled?`)) {
-    return
-  }
-
-  try {
-    await expensesStore.markSettled(selectedExpenseIds.value)
-    rowSelection.value = {}
-    await expensesStore.fetchSummary({
-      year: year.value,
-      month: month.value,
-    })
-  }
-  catch (err) {
-    console.error(err)
-    alert('Failed to mark expenses as settled. Please try again.')
-    throw createError(err)
-  }
-}
 </script>
 
 <template>
@@ -153,29 +126,13 @@ async function handleMarkSelectedSettled () {
 
         <expenses-table
           v-model:pagination="pagination"
-          v-model:row-selection="rowSelection"
           :data="filteredExpenses"
           :sorting="sorting"
           :pagination-info="paginationInfo"
           :preview-expense-id="previewExpenseId"
           :show-pagination="false"
-          max-height="calc(100vh - 400px)"
           @select="openPreview"
-        >
-          <template #footer>
-            <div class="px-4 py-3 border-t border-default">
-              <UButton
-                v-if="selectedCount > 0"
-                color="primary"
-                variant="solid"
-                icon="i-lucide-check-check"
-                @click="handleMarkSelectedSettled"
-              >
-                Mark {{ selectedCount > 0 ? selectedCount : '' }} as Settled
-              </UButton>
-            </div>
-          </template>
-        </expenses-table>
+        />
       </div>
       <div v-else class="-mt-2 mb-6">
         <p class="text-sm mb-4">
@@ -187,7 +144,6 @@ async function handleMarkSelectedSettled () {
   </UDashboardPanel>
 
   <expense-panel
-    v-if="previewExpenseId"
     :expense-id="previewExpenseId"
     @close="closePreview"
   />

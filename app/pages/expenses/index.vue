@@ -67,7 +67,6 @@ function closePreview () {
             :items="[
               {
                 label: 'Expenses',
-                // class: 'text-default',
               },
               {
                 label: 'All',
