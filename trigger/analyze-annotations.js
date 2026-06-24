@@ -54,18 +54,7 @@ export const analyzeAnnotations = task({
 
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
       // 5. Flatten and slim before storing — drop raw API envelope, keep only what we need
-      const slimAnnotations = {
-        model: responseData.raw?.model,
-        usage: responseData.raw?.usage
-          ? {
-              prompt_tokens: responseData.raw.usage.prompt_tokens,
-              completion_tokens: responseData.raw.usage.completion_tokens,
-              total_tokens: responseData.raw.usage.total_tokens,
-            }
-          : null,
-        annotations: responseData.annotations?.annotations ?? [],
-        notes: responseData.annotations?.notes ?? null,
-      }
+      const slimAnnotations = gpt4oUtils.slimAnnotationsResponse(responseData)
 
       logger.log(`GPT-4o responded in ${elapsed}s`, {
         annotationCount: slimAnnotations.annotations.length,
