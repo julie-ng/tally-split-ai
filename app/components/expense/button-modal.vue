@@ -31,7 +31,7 @@ function onCreated (expense) {
       class="cursor-pointer"
       :variant="variant"
       :color="color"
-      size="sm"
+      size="md"
       @click="showModal = true"
     >
       {{ label }}
