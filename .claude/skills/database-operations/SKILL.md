@@ -1,71 +1,24 @@
 ---
 name: database-operations
-description: Database workflows for this project — schema changes and migrations using Drizzle ORM + PostgreSQL. Use when the user asks to add a table, modify a schema, or create a migration.
+description: Database workflows for this project — schema changes and migrations using Drizzle ORM + PostgreSQL. Use when adding a table, modifying a schema, or creating a migration.
 ---
 
 # Database Operations
 
-## Key Locations
+Schema: `server/db/schema.ts` (source of truth; `docs/SCHEMA.md` documents tables + enums). Connection: `server/db/connection.ts` (postgres-js, `prepare:false` for the transaction pooler). Local DB is Postgres in Docker (`docker compose -f docker-compose.dev.yaml up -d`), URL from `NUXT_DATABASE_URL`.
 
-| Item | Path |
-|:--|:--|
-| Schema | `server/db/schema.ts` |
-| DB connection | `server/db/connection.ts` |
-| Migrations | `server/db/migrations/postgres/` |
-| Backfill scripts | `server/db/migrations/backfills/` (historical, not maintained) |
+`db` and `schema` are auto-imported in handlers via `server/utils/db.utils.js`. Standard Drizzle query API — grep any handler for examples.
 
-## Database
+## Schema change flow
 
-PostgreSQL 17 running in Docker:
-```bash
-docker compose -f docker-compose.dev.yaml up -d
-```
+1. Edit `server/db/schema.ts`.
+2. `npm run db:generate` (drizzle-kit generate) → review the generated SQL.
+3. `npm run db:migrate` (drizzle-kit migrate).
 
-Connection string via env var: `NUXT_DATABASE_URL`
+**The agent cannot run these** — no live DB creds (secrets are injected via `op run`, not in the agent's shell). Generate, migrate, seeds, and Studio are hand-offs to the user. For DB inspection, ask the user to look in Drizzle Studio, not psql.
 
-## Current Tables
+## Gotchas that have cost real time
 
-- `uploads` — Azure Blob metadata (id, blobName/blobUrl, thumbnailName/thumbnailUrl, ocrJson/annotationsJson as jsonb, etc.)
-- `receipts` — Receipt business data (merchant, total, date, analysisStatus, etc.)
-- `expenses` — Shared expense records derived from a receipt (receiptId, splitAmount, userOneShare/userTwoShare, isSettled, etc.)
-
-## Adding/Changing Schema
-
-1. Edit `server/db/schema.ts`
-2. Generate migration: `npm run db:generate`
-3. Apply migration: `npm run db:migrate`
-
-## Backfill Scripts
-
-`server/db/migrations/backfills/` holds **historical, time-bound** scripts
-(named `seed-*.js`, `migrate-*.js`, etc.) that were run once against past
-schema states. They are NOT maintained against the current schema and may
-no longer compile — this is expected. Do not update them when changing
-the schema.
-
-When a future schema change requires data movement, write a NEW backfill
-script in this directory rather than editing existing ones.
-
-## Drizzle Query Patterns
-
-`db` and `schema` are auto-imported in server handlers via `server/utils/db.utils.js`.
-
-```js
-export default defineEventHandler(async (event) => {
-  const db = useDB()
-
-  // Select
-  const rows = await db.select().from(schema.receipts).where(eq(schema.receipts.id, id))
-
-  // Insert
-  const result = await db.insert(schema.receipts).values({ ... }).returning()
-
-  // Update
-  const result = await db.update(schema.receipts).set({ updatedAt: new Date() }).where(eq(schema.receipts.id, id)).returning()
-
-  // Delete
-  await db.delete(schema.receipts).where(eq(schema.receipts.id, id))
-})
-```
-
-Note: `jsonb` columns (e.g., `ocrJson`) accept plain JS objects — do NOT `JSON.stringify`.
+- **Never hand-edit a migration's `when` timestamp in `meta/_journal.json` after it's been applied** — it silently breaks "what's pending?" comparisons. If varying timestamps *before* running, change the last 3–4 digits too so it doesn't look like a duplicate to a human eyeballing it.
+- **Views / non-Drizzle DDL** aren't introspected: hand-write the SQL, copy the snapshot, patch the journal. A view depending on a table you're renaming must be `DROP`ed at the top of that migration and recreated after.
+- **Backfills** (`server/db/migrations/backfills/`, `seed-*.js`/`migrate-*.js`) are **historical, time-bound, and NOT maintained** against current schema — they may no longer compile, which is expected. Never update them on a schema change; write a NEW backfill instead. ("Migration" here means schema + code + moving existing data — don't forget the data.)

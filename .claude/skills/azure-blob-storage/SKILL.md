@@ -1,66 +1,23 @@
 ---
 name: azure-blob-storage
-description: Azure Blob Storage integration — SAS tokens, direct client uploads, filename conventions, and security model. Use when working on file uploads, blob storage, SAS token generation, or filename handling.
+description: Azure Blob Storage integration — SAS tokens, direct client uploads, and the security model. Use when working on file uploads, blob storage, SAS tokens, or filename handling.
 ---
 
 # Azure Blob Storage
 
-## Architecture: Direct Client Uploads
+Entry points: `server/api/tokens/{upload,read}.post.js` (SAS token generation), `server/api/blobs/new.post.js` (registers a blob), `server/utils/azure-storage.utils.js` (`azureStorageUtils`). Full sequence diagrams: `docs/blob-storage-architecture.md`.
 
-Files **never pass through the Nuxt server**. The flow is:
+## Architecture: direct client uploads
 
-1. Client requests a SAS upload URL from `/api/tokens/upload`
-2. Server validates `userId` and generates a time-limited, write-only SAS token
-3. Client uploads directly to Azure using the SAS URL
-4. Client commits the block list to finalize the upload
+Files **never pass through the Nuxt server**. Client requests a SAS URL from `/api/tokens/upload`, uploads straight to Azure, then commits the block list. Reads use the same pattern via `/api/tokens/read`. The storage account key stays server-side and is never exposed.
 
-Read access follows the same pattern via `/api/tokens/read`.
+## Security model (the part that's easy to get wrong)
 
-## Security
+- All blobs are **private**; SAS tokens are scoped to a single file with a short TTL.
+- Every token request checks the requesting `userId` matches the blob path's userId.
+- A mismatch returns **404, not 403** — never leak whether the blob exists.
 
-- All blobs are **private** — not publicly accessible
-- SAS tokens are scoped to a single file with a very short time window
-- Every token request checks that the requesting `userId` matches the blob path's userId
-- Mismatch returns 404 (even if the blob exists) — never leaks existence
+## Blob paths & filenames
 
-## Blob Path Design
-
-Blob path is `{userId}/{id}/{azureFilename}`, built by `azureUtils.buildBlobPath(userId, id, azureFilename)`:
-
-- `id` — a random string from `#shared/utils/generate-id.js`, generated per upload in `server/api/blobs/new.post.js`. (This replaced an older deterministic `hashId` scheme — there is **no `hashId`** anymore.)
-- `azureFilename` — the sanitized filename (see below).
-- Thumbnail is a sibling: `createThumbnailFilename(azureFilename)` → same `buildBlobPath` with the thumbnail name.
-- Azure container is configured via env var only — never hardcoded in app logic.
-
-## Filename Sanitization
-
-Because filenames use `()` and `#` for human pre-curation, they must be sanitized before upload to Azure (Azure Blob Storage is finicky with these characters). `createAzureFilename()` / `createThumbnailFilename()` live in `shared/utils/filename.utils.js`.
-
-Human pre-curation encoding in filenames:
-- `(41.95)` — total amount in EUR
-- `YYYY-MM-DD` — date
-
-## Key Files
-
-| File | Purpose |
-|:--|:--|
-| `server/utils/azure-storage.utils.js` | Azure storage client config + SAS token generation |
-| `shared/utils/filename.utils.js` | Filename sanitization (`createAzureFilename`, `createThumbnailFilename`) |
-| `shared/utils/azure.utils.js` | `azureUtils.buildBlobPath()` — assembles `{userId}/{id}/{filename}` |
-| `shared/utils/generate-id.js` | Random per-upload ID generator |
-| `server/api/tokens/upload.post.js` | Generate upload SAS token |
-| `server/api/tokens/read.post.js` | Generate read SAS token |
-| `server/api/blobs/index.get.js` | List blobs |
-| `server/api/blobs/new.post.js` | Register new blob |
-| `docs/blob-storage-architecture.md` | Security model and upload sequence diagrams |
-
-## References
-
-- [Blob Storage REST API](https://learn.microsoft.com/en-us/rest/api/storageservices/blob-service-rest-api)
-  - [Put Blob](https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob?tabs=microsoft-entra-id)
-  - [Put Block](https://learn.microsoft.com/en-us/rest/api/storageservices/put-block?tabs=microsoft-entra-id)
-  - [Put Block List](https://learn.microsoft.com/en-us/rest/api/storageservices/put-block-list?tabs=microsoft-entra-id)
-  - [Request Headers](https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob?tabs=microsoft-entra-id#request-headers-all-blob-types)
-- [Create a service SAS](https://learn.microsoft.com/en-us/rest/api/storageservices/create-service-sas) — params, permissions, how SAS generation works
-- [API Versions](https://learn.microsoft.com/en-us/rest/api/storageservices/versioning-for-the-azure-storage-services)
-- [Understanding block blobs, append blobs, and page blobs](https://learn.microsoft.com/en-us/rest/api/storageservices/understanding-block-blobs--append-blobs--and-page-blobs)
+- Blob path is `{userId}/{id}/{azureFilename}` via `azureUtils.buildBlobPath()` (`shared/utils/azure.utils.js`). `id` is a random per-upload string from `#shared/utils/generate-id.js` — there is **no `hashId`** (an older deterministic scheme was removed).
+- Filenames carry human pre-curation (`(41.95)` = EUR total, `YYYY-MM-DD` = date) and use `()`/`#`, which Azure dislikes — sanitize via `createAzureFilename()` / `createThumbnailFilename()` (`shared/utils/filename.utils.js`) before upload.

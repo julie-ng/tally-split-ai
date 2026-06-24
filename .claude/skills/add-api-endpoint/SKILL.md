@@ -5,84 +5,17 @@ description: Step-by-step guide to create a new Nuxt server API endpoint followi
 
 # Add a New API Endpoint
 
-## 1. Create the File
+The handler shape, error handling, and response conventions are in the always-loaded rule `.claude/rules/server-api-patterns.md` — follow it. Reference implementation: `server/api/uploads/[id].put.js`. This skill only adds what that rule doesn't.
 
-Files in `server/api/` are auto-registered as routes by Nuxt:
+## Steps
 
-| File | Route |
-|:--|:--|
-| `server/api/widgets/index.get.js` | `GET /api/widgets` |
-| `server/api/widgets/index.post.js` | `POST /api/widgets` |
-| `server/api/widgets/[id].get.js` | `GET /api/widgets/:id` |
-| `server/api/widgets/[id].put.js` | `PUT /api/widgets/:id` |
-| `server/api/widgets/[id].delete.js` | `DELETE /api/widgets/:id` |
+1. **Create the file** under `server/api/` — Nitro auto-registers it as a route. `[id].get.js` → `GET /api/resource/:id`, `index.post.js` → `POST /api/resource`, etc.
+2. **Guards at the top, in order:** `requireAuthentication` → `requireIdParam` → `requireAuthorization`. See an existing handler.
+3. **Validate bodies/params with zod**, never by hand — see `.claude/rules/zod-validation.md`. Add a new schema in `shared/utils/zod-schemas/` and export it from that dir's `index.js`.
+4. **Mutations:** if a task can call this endpoint, add `requireTaskPermission` and confirm the resource scope in `shared/config/task-permissions.js`. PUT/POST should return an acknowledgment, **not** the full row (a write-scoped token must not gain an incidental read).
 
-## 2. Use the Standard Handler Template
+## Why these aren't obvious
 
-```js
-import { z } from 'zod'
-import { eq } from 'drizzle-orm'
-
-export default defineEventHandler(async (event) => {
-  const db = useDB()                          // auto-imported via server/utils/db.utils.js
-  await guards.requireAuthentication(event)   // AuthN — always first
-  guards.requireIdParam(event)                // validates the :id route param
-
-  const id = getRouterParam(event, 'id')
-
-  // For POST/PUT: validate body with zod
-  const result = await readValidatedBody(event, body => zodSchemas.mySchema.safeParse(body))
-  if (!result.success) {
-    setResponseStatus(event, 400)
-    return {
-      success: false,
-      message: 'Invalid request body',
-      errors: z.flattenError(result.error).fieldErrors,
-    }
-  }
-
-  // Drizzle query
-  const dbResult = await db
-    .update(schema.myTable)
-    .set({ ...result.data, updatedAt: new Date() })
-    .where(eq(schema.myTable.id, id))
-    .returning()
-
-  if (dbResult.length === 0) {
-    throw createError({ statusCode: 404, message: 'Not found' })
-  }
-
-  return { success: true, data: dbResult[0] }
-})
-```
-
-> IDs are random strings from `#shared/utils/generate-id.js` (assigned at insert), addressed via the `[id]` route param. There is **no `hashId`** — an older deterministic `hashId` scheme was removed. Use `guards.requireIdParam(event)` and `getRouterParam(event, 'id')`.
-
-Reference: `server/api/uploads/[id].put.js`
-
-## 3. Add a Zod Schema (if new data shape needed)
-
-1. Create schema in `shared/utils/zod-schemas/my-resource.schema.js`
-2. Export it from `shared/utils/zod-schemas/index.js` as `zodSchemas.mySchema`
-
-## 4. PostgreSQL Notes
-
-- `jsonb` columns (e.g., `ocrJson`) accept plain JS objects — do NOT `JSON.stringify`
-- Always set `updatedAt` manually on updates — the schema only defines a `default` (applied on insert); PostgreSQL has no auto-update trigger:
-  ```js
-  updatedAt: new Date()
-  ```
-
-## 5. Response Shape Convention
-
-```js
-// Success
-return { success: true, data: dbResult[0] }     // single item
-return { success: true, data: dbResults }         // list
-
-// Validation error (400 — don't throw, return)
-return { success: false, message: '...', errors: { field: ['message'] } }
-
-// Not found (throw)
-throw createError({ statusCode: 404, message: '...' })
-```
+- **IDs are random strings** (`#shared/utils/generate-id.js`), addressed via `[id]`. There is **no `hashId`** — an older deterministic scheme was removed. Use `requireIdParam` / `getRouterParam(event, 'id')`.
+- **`updatedAt` must be set manually** on updates — the schema only defaults it on insert; Postgres has no auto-update trigger.
+- **`jsonb` columns** (e.g. `ocrJson`) take plain JS objects — never `JSON.stringify`.
