@@ -1,6 +1,10 @@
 export function useExpenseMonths () {
   return [
     {
+      label: 'June 2026',
+      to: '/expenses/2026/06/',
+    },
+    {
       label: 'May 2026',
       to: '/expenses/2026/05/',
     },
