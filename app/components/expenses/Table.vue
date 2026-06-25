@@ -32,7 +32,6 @@ const pagination = defineModel('pagination', {
   default: () => ({ pageIndex: 0, pageSize: 25 }),
 })
 
-const route = useRoute()
 const householdStore = useHouseholdStore()
 
 const user1Name = computed(() => householdStore.getMemberFirstName(householdStore.userOne?.id))
