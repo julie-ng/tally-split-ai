@@ -1,7 +1,7 @@
 <script setup>
-import { useReceiptsStore } from '~/stores/receipts.store'
+import { useDebounceFn } from '@vueuse/core'
 import { useExpensesStore } from '~/stores/expenses.store'
-import { useUploadsStore } from '~/stores/uploads.store'
+import { useHouseholdStore } from '~/stores/household.store'
 import { toBerlinDisplayDate } from '#shared/utils/expense-date.utils.js'
 
 const props = defineProps({
@@ -11,149 +11,270 @@ const props = defineProps({
   },
 })
 
+const toast = useToast()
 const expensesStore = useExpensesStore()
-const receiptsStore = useReceiptsStore()
-const uploadsStore = useUploadsStore()
+const householdStore = useHouseholdStore()
 
-// This leaf OWNS its receipt fetch — the page knows nothing about receipts.
-// Safe to fetch on id-change because the template no longer unmounts the whole
-// panel while loading (the root stays mounted; inner sections guard on `receipt`
-// individually). So a swap shows the previous content until the new receipt is
-// cached, instead of blanking. See .claude/rules/vue-component-conventions.md.
+// Read straight from the store by expenseId — the list/page already loaded the
+// expense, so this getter is warm. No fetch, no receiptId indirection. Works
+// for standalone expenses (no receipt) too, since nothing here gates on receipt.
 const expense = computed(() => expensesStore.getExpenseById(props.expenseId))
-const receiptId = computed(() => expense.value?.receiptId ?? expense.value?.receipt?.id ?? null)
-const receipt = computed(() => receiptId.value ? receiptsStore.getReceiptById(receiptId.value) : null)
 
-watch(receiptId, (id) => {
-  if (id) {
-    receiptsStore.fetchReceiptById(id)
+// Show the loading skeleton only on genuine first load — i.e. when this panel
+// is handed an expenseId that isn't in the store yet (a deep-link/swap before
+// the list loaded it). Saves no longer blank the expense (the store updates in
+// place), so once we've seen it, it stays.
+const hasLoaded = ref(false)
+watch(expense, (value) => {
+  if (value) {
+    hasLoaded.value = true
   }
 }, { immediate: true })
 
-const uploadId = computed(() => receipt.value?.uploads?.[0]?.id)
-const upload = computed(() =>
-  uploadId.value ? uploadsStore.getUploadById(uploadId.value) : null,
-)
+const formattedDate = computed(() => toBerlinDisplayDate(expense.value?.date))
 
-// The expense owns its own date (copied from the receipt for linked expenses,
-// set by the user for standalone ones), so read it from the expense — not the
-// receipt — or a standalone expense would show no date here. The stored value
-// is a UTC timestamptz; format it in Berlin time.
-const formattedDate = computed(() => {
-  return toBerlinDisplayDate(expense.value?.date)
+// -------- Household members (for paid-by + share labels) --------
+const userOne = computed(() => householdStore.userOne)
+const userTwo = computed(() => householdStore.userTwo)
+const user1Name = computed(() => householdStore.getMemberFirstName(userOne.value?.id))
+const user2Name = computed(() => householdStore.getMemberFirstName(userTwo.value?.id))
+
+// Computed (not a one-time loop) so options track async household load.
+const paidByOptions = computed(() => {
+  const options = []
+  if (userOne.value) {
+    options.push({ id: userOne.value.id, name: user1Name.value })
+  }
+  if (userTwo.value) {
+    options.push({ id: userTwo.value.id, name: user2Name.value })
+  }
+  return options
 })
 
-// Provide highlight state for cross-highlighting between image overlay and items
-const { highlightedLabel } = useHighlightedLabel()
-provide('highlightedLabel', highlightedLabel)
+// -------- Derived expense state --------
+const sumsUp = computed(() => expensesStore.doesExpenseAddUp(props.expenseId))
+const canSettle = computed(() => expensesStore.canSettleExpense(props.expenseId))
+const settledText = computed(() => isSettled.value ? 'Settled Up' : 'Unsettled')
+
+// -------- Editing: read view IS the edit view --------
+// Every field is a live input bound to a writable computed. Edits accumulate
+// into `pendingUpdates` and flush via one debounced save — no edit mode, no
+// save button. Read and edit are the same surface; you just click and type.
+const pendingUpdates = ref({})
+
+const debouncedSave = useDebounceFn(async () => {
+  const updates = { ...pendingUpdates.value }
+  pendingUpdates.value = {}
+  try {
+    await expensesStore.updateExpense(props.expenseId, updates)
+  }
+  catch (err) {
+    showError(err)
+  }
+}, 500)
+
+// Writable computed factory: get from the live expense, set into the pending
+// accumulator + schedule a save. `parse` lets numeric fields ignore empties.
+function field (key, parse = v => v) {
+  return computed({
+    get: () => expense.value?.[key],
+    set: (value) => {
+      if (value === '') {
+        return
+      }
+      pendingUpdates.value[key] = parse(value)
+      debouncedSave()
+    },
+  })
+}
+
+const splitAmount = field('splitAmount', parseFloat)
+const userOneShare = field('userOneShare', parseFloat)
+const userTwoShare = field('userTwoShare', parseFloat)
+const paidByUserId = field('paidByUserId')
+const isSettled = field('isSettled')
+
+// -------- Actions --------
+function toggleSettle () {
+  if (!canSettle.value && !isSettled.value) {
+    toast.add({
+      title: 'Cannot settle without paid-by',
+      description: 'Identify who paid before marking as settled.',
+      color: 'warning',
+      icon: 'i-lucide-triangle-alert',
+      timeout: 4000,
+    })
+    return
+  }
+  isSettled.value = !isSettled.value
+}
+
+function splitEvenly () {
+  const half = (expense.value?.splitAmount ?? 0) / 2
+  pendingUpdates.value.userOneShare = half
+  pendingUpdates.value.userTwoShare = half
+  debouncedSave()
+}
+
+function resetToZero () {
+  Object.assign(pendingUpdates.value, {
+    splitAmount: 0,
+    userOneShare: 0,
+    userTwoShare: 0,
+    paidByUserId: null,
+    isSettled: false,
+  })
+  debouncedSave()
+}
+
+// -------- Styles / helpers --------
+const settledClass = computed(() => isSettled.value
+  ? 'border-blue-400 text-blue-700 bg-blue-50'
+  : 'border-default',
+)
+
+function showError (err) {
+  console.error('Auto-save failed:', err)
+  toast.add({
+    title: 'Error saving expense',
+    description: err.message || 'Failed to save changes',
+    color: 'error',
+    icon: 'i-lucide-triangle-alert',
+    timeout: 5000,
+    ui: { root: 'bg-elevated' },
+  })
+}
 </script>
 
 <template>
-  <!-- Grid layout stays permanently mounted so swapping receipts never reflows
-       the columns; only the data-dependent inner blocks guard on `receipt`. -->
-  <div class="grid grid-cols-2 gap-6">
-    <!-- Left column: Receipt info -->
-    <UCard>
-      <div v-if="receipt">
-        <p class="text-sm text-muted">
-          <span class="font-mono">{{ receipt.id }}</span>
+  <ClientOnly>
+    <!-- Single-member household: splitting is meaningless -->
+    <div v-if="!householdStore.hasTwoMembers" class="text-sm text-dimmed">
+      Splitting is only possible if your household has more than one member.
+    </div>
+
+    <!-- Skeleton only on genuine first load — NOT on the brief undefined gap
+         during save-refetch (hasLoaded stays true through it). -->
+    <div v-else-if="!hasLoaded" class="space-y-3 animate-pulse">
+      <div class="h-8 bg-elevated rounded" />
+      <div class="h-8 bg-elevated rounded" />
+      <div class="h-8 bg-elevated rounded" />
+      <div class="h-8 bg-elevated rounded" />
+    </div>
+
+    <div v-else class="space-y-5">
+      <!-- Title & date -->
+      <div>
+        <h2 class="text-xl font-bold">
+          {{ expense.title || 'Untitled expense' }}
+        </h2>
+        <p class="text-sm text-muted mt-1">
+          {{ formattedDate || 'No date' }}
         </p>
       </div>
 
-      <div v-if="receipt" class="space-y-5">
-        <!-- Title & Merchant -->
-        <div>
-          <h2 class="text-xl font-bold">
-            {{ receipt.title || 'Untitled' }}
-          </h2>
-          <receipt-merchant-info
-            v-if="receipt.merchantName"
-            :name="receipt.merchantName"
-            :address="receipt.merchantAddress"
-            class="mt-1"
+      <USeparator />
+
+      <!-- Expense amount -->
+      <receipt-expense-input
+        v-model="splitAmount"
+        :sums-up="sumsUp"
+        label="Expense Amount"
+        input-name="splitAmount"
+        :highlight-on-success="true"
+      >
+        <template v-if="sumsUp" #success>
+          Shares add up
+        </template>
+        <template v-if="!sumsUp" #warn>
+          Shares do not add up
+        </template>
+      </receipt-expense-input>
+
+      <!-- Paid by -->
+      <section class="flex justify-between items-center my-2 text-sm">
+        <div class="font-medium">
+          Paid By
+        </div>
+        <div class="text-right">
+          <receipt-expense-paid-by
+            v-model="paidByUserId"
+            :users="paidByOptions"
           />
         </div>
+      </section>
 
-        <USeparator />
+      <!-- Shares -->
+      <receipt-expense-input
+        v-model="userOneShare"
+        :label="`${user1Name}'s Share`"
+        :sums-up="sumsUp"
+        input-name="userOneShare"
+      />
+      <receipt-expense-input
+        v-model="userTwoShare"
+        :label="`${user2Name}'s Share`"
+        :sums-up="sumsUp"
+        input-name="userTwoShare"
+      />
 
-        <!-- Transaction Date -->
-        <div>
-          <p class="text-sm text-muted">
-            Transaction Date
-          </p>
-          <p class="font-medium">
-            {{ formattedDate || '—' }}
-          </p>
+      <!-- Settle toggle -->
+      <div
+        class="mt-4 border rounded-md p-3 grid grid-cols-2 cursor-pointer hover:bg-muted"
+        :class="settledClass"
+        @click="toggleSettle"
+      >
+        <div class="text-left text-sm">
+          {{ settledText }}
         </div>
-
-        <USeparator />
-
-        <!-- Totals -->
-        <div>
-          <p class="text-sm text-muted mb-2">
-            Totals
-          </p>
-          <data-key-value-table :items="receiptUtils.extractTotalsAsArray(receipt)" currency="EUR" />
+        <div class="flex justify-end">
+          <UCheckbox v-model="isSettled" class="cursor-pointer" />
         </div>
+      </div>
 
-        <USeparator />
-
-        <!-- Expense Costs (includes LLM analysis) -->
-        <div>
-          <p class="text-sm text-muted mb-2">
-            Expense Costs
-          </p>
-          <receipt-expense :receipt-id="receipt.id" />
-        </div>
-
-        <USeparator />
-
-        <!-- Actions -->
+      <!-- Quick actions -->
+      <div class="flex justify-between items-center mt-3 text-sm">
+        <div>Reset</div>
         <div class="flex gap-2">
           <UButton
-            :to="`/receipts/${receipt.id}`"
-            variant="subtle"
+            variant="solid"
             color="neutral"
+            class="cursor-pointer"
+            icon="i-lucide-zap"
+            @click="splitEvenly"
           >
-            Full Details
+            Split 50/50
           </UButton>
           <UButton
-            :to="`/receipts/${receipt.id}/edit`"
-            variant="subtle"
+            variant="solid"
             color="neutral"
+            class="cursor-pointer"
+            icon="i-lucide-eraser"
+            @click="resetToZero"
           >
-            Edit
+            Reset to zero
           </UButton>
         </div>
       </div>
-    </UCard>
 
-    <!-- Right column: Receipt image with overlay -->
-    <div class="max-w-xs">
-      <template v-if="receipt">
-        <div v-if="uploadId">
-          <receipt-upload-column :id="uploadId" />
-          <ui-label-content label="Upload ID">
-            <div class="font-mono">
-              {{ upload?.id }}
-            </div>
-          </ui-label-content>
-          <ui-label-content label="Uploaded At">
-            <div class="text-xs">
-              {{ dateUtils.formatDate(new Date(upload?.createdAt)) }}
-            </div>
-          </ui-label-content>
-          <upload-json-links :upload-id="uploadId" />
-        </div>
-        <UAlert
-          v-else
-          color="warning"
+      <USeparator class="my-6" />
+
+      <!-- LLM analysis (read-only) -->
+      <expense-llm-analysis :expense-id="expenseId" />
+
+      <USeparator class="my-6" />
+
+      <!-- Link to the source receipt's full detail page, if linked -->
+      <div v-if="expense.receiptId">
+        <UButton
+          :to="`/receipts/${expense.receiptId}`"
           variant="subtle"
-          title="No Upload"
-          description="This receipt has no associated upload."
-          icon="i-lucide-image-off"
-        />
-      </template>
+          color="neutral"
+          icon="i-lucide-receipt"
+        >
+          Go to Receipt
+        </UButton>
+      </div>
     </div>
-  </div>
+  </ClientOnly>
 </template>
