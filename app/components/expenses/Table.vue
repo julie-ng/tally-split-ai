@@ -34,6 +34,7 @@ const pagination = defineModel('pagination', {
 
 const route = useRoute()
 const householdStore = useHouseholdStore()
+
 const user1Name = computed(() => householdStore.getMemberFirstName(householdStore.userOne?.id))
 const user2Name = computed(() => householdStore.getMemberFirstName(householdStore.userTwo?.id))
 
@@ -103,7 +104,11 @@ const tableMeta = computed(() => ({
 // visible after a deep-link. Use TanStack's sorted/filtered row model so the
 // math accounts for current sort + filters, not raw data order.
 watch(
-  [() => props.previewExpenseId, () => props.data, () => props.sorting, () => table.value?.tableApi],
+  [
+    () => props.previewExpenseId,
+    () => props.data, () => props.sorting,
+    () => table.value?.tableApi,
+  ],
   ([id, _rows, _sorting, api]) => {
     if (!id || !api) {
       return
@@ -146,13 +151,7 @@ function onSelect (event, row) {
         <!-- Expense ID -->
         <template #id-cell="{ row }">
           <UTooltip :text="row.original.id" :delay-duration="0">
-            <NuxtLink
-              :to="{ query: { ...route.query, preview: row.original.id } }"
-              replace
-              class="text-dimmed hover:text-blue-800 hover:underline font-mono"
-            >
-              {{ row.original.id.slice(0, 6) }}
-            </NuxtLink>
+            {{ row.original.id.slice(0, 6) }}
           </UTooltip>
         </template>
 
