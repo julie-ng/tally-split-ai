@@ -15,13 +15,20 @@ const expensesStore = useExpensesStore()
 const receiptsStore = useReceiptsStore()
 const uploadsStore = useUploadsStore()
 
-// Props-driven leaf: this panel is swapped by id inside the slideover, so it
-// must NOT fetch on id-change (that empties v-if="receipt" between swaps and
-// blinks). The page that owns ?preview warms the receipt store; we only read
-// cached getters here. See .claude/rules/vue-component-conventions.md.
+// This leaf OWNS its receipt fetch — the page knows nothing about receipts.
+// Safe to fetch on id-change because the template no longer unmounts the whole
+// panel while loading (the root stays mounted; inner sections guard on `receipt`
+// individually). So a swap shows the previous content until the new receipt is
+// cached, instead of blanking. See .claude/rules/vue-component-conventions.md.
 const expense = computed(() => expensesStore.getExpenseById(props.expenseId))
 const receiptId = computed(() => expense.value?.receiptId ?? expense.value?.receipt?.id ?? null)
 const receipt = computed(() => receiptId.value ? receiptsStore.getReceiptById(receiptId.value) : null)
+
+watch(receiptId, (id) => {
+  if (id) {
+    receiptsStore.fetchReceiptById(id)
+  }
+}, { immediate: true })
 
 const uploadId = computed(() => receipt.value?.uploads?.[0]?.id)
 const upload = computed(() =>
@@ -42,16 +49,18 @@ provide('highlightedLabel', highlightedLabel)
 </script>
 
 <template>
-  <div v-if="receipt" class="grid grid-cols-2 gap-6">
+  <!-- Grid layout stays permanently mounted so swapping receipts never reflows
+       the columns; only the data-dependent inner blocks guard on `receipt`. -->
+  <div class="grid grid-cols-2 gap-6">
     <!-- Left column: Receipt info -->
     <UCard>
-      <div>
+      <div v-if="receipt">
         <p class="text-sm text-muted">
           <span class="font-mono">{{ receipt.id }}</span>
         </p>
       </div>
 
-      <div class="space-y-5">
+      <div v-if="receipt" class="space-y-5">
         <!-- Title & Merchant -->
         <div>
           <h2 class="text-xl font-bold">
@@ -121,28 +130,30 @@ provide('highlightedLabel', highlightedLabel)
 
     <!-- Right column: Receipt image with overlay -->
     <div class="max-w-xs">
-      <div v-if="uploadId">
-        <receipt-upload-column :id="uploadId" />
-        <ui-label-content label="Upload ID">
-          <div class="font-mono">
-            {{ upload?.id }}
-          </div>
-        </ui-label-content>
-        <ui-label-content label="Uploaded At">
-          <div class="text-xs">
-            {{ dateUtils.formatDate(new Date(upload?.createdAt)) }}
-          </div>
-        </ui-label-content>
-        <upload-json-links :upload-id="uploadId" />
-      </div>
-      <UAlert
-        v-else
-        color="warning"
-        variant="subtle"
-        title="No Upload"
-        description="This receipt has no associated upload."
-        icon="i-lucide-image-off"
-      />
+      <template v-if="receipt">
+        <div v-if="uploadId">
+          <receipt-upload-column :id="uploadId" />
+          <ui-label-content label="Upload ID">
+            <div class="font-mono">
+              {{ upload?.id }}
+            </div>
+          </ui-label-content>
+          <ui-label-content label="Uploaded At">
+            <div class="text-xs">
+              {{ dateUtils.formatDate(new Date(upload?.createdAt)) }}
+            </div>
+          </ui-label-content>
+          <upload-json-links :upload-id="uploadId" />
+        </div>
+        <UAlert
+          v-else
+          color="warning"
+          variant="subtle"
+          title="No Upload"
+          description="This receipt has no associated upload."
+          icon="i-lucide-image-off"
+        />
+      </template>
     </div>
   </div>
 </template>

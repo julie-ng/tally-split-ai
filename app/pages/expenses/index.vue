@@ -1,6 +1,5 @@
 <script setup>
 import { useExpensesStore } from '~/stores/expenses.store'
-import { useReceiptsStore } from '~/stores/receipts.store'
 import { useExpensesTableControls } from '~/composables/useExpensesTableControls'
 
 useHead({
@@ -50,21 +49,6 @@ const route = useRoute()
 const router = useRouter()
 
 const previewExpenseId = computed(() => route.query.preview ?? null)
-
-// The page owns the ?preview URL state, so it owns the fetch: warm the receipt
-// store whenever the selection changes. By the time the swapped-in <expense-preview>
-// leaf reads getReceiptById(), the data is already cached — no remount flash.
-const receiptsStore = useReceiptsStore()
-watch(previewExpenseId, (id) => {
-  if (!id) {
-    return
-  }
-  const expense = expensesStore.getExpenseById(id)
-  const receiptId = expense?.receiptId ?? expense?.receipt?.id ?? null
-  if (receiptId) {
-    receiptsStore.fetchReceiptById(receiptId)
-  }
-}, { immediate: true })
 
 // The slideover lives here (page level), not inside <ExpensesTable>: the page
 // owns the ?preview selection, so it owns the slideover that renders it. Keeps
