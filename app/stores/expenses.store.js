@@ -387,28 +387,42 @@ export const useExpensesStore = defineStore('expenses', () => {
     saving.value[id] = true
     errors.value[id] = null
 
+    // The PUT is the source of truth for "did the write commit". The reconcile
+    // GET is best-effort polish. They get SEPARATE error handling:
+    //   - PUT fails    → roll back the optimistic update (nothing persisted).
+    //   - PUT ok, GET fails → write IS committed; KEEP the optimistic value
+    //     (it equals what we just saved) and skip the refresh. Rolling back here
+    //     would discard a change that actually persisted — store lying the other
+    //     way. We do not delete-then-fetch: that leaves expenses.value[id]
+    //     undefined for the request duration, which makes components reading the
+    //     expense (e.g. the preview inputs) get `undefined` and flash/error.
     try {
-      // Call backend API. The PUT returns only { success: true } — it does not
-      // echo the row back (so a write-scoped token can't read it). Re-fetch the
-      // authoritative expense (with its receipt join) to reconcile the optimistic
-      // update. Clear the cache entry first so fetchExpense doesn't short-circuit.
+      // PUT returns only { success: true } — it does not echo the row back (so a
+      // write-scoped token can't read it).
       await $fetch(`/api/expenses/${id}`, {
         method: 'PUT',
         body: payload,
       })
+    }
+    catch (err) {
+      expenses.value[id] = originalExpense
+      errors.value[id] = err
+      saving.value[id] = false
+      console.error(`[ExpensesStore] ❌ Failed to update expense ${id}:`, err)
+      throw err
+    }
 
-      delete expenses.value[id]
-      const fresh = await fetchExpense(id)
-
+    // Write committed. Reconcile with the authoritative row (with receipt join),
+    // overwriting IN PLACE. A failure here is non-fatal: keep the optimistic value.
+    try {
+      const fresh = await requestFetch(`/api/expenses/${id}`)
+      expenses.value[id] = fresh
       _log(`[ExpensesStore] ✅ updated expense: ${id}`)
       return fresh
     }
     catch (err) {
-      // Rollback optimistic update on error
-      expenses.value[id] = originalExpense
-      errors.value[id] = err
-      console.error(`[ExpensesStore] ❌ Failed to update expense ${id}:`, err)
-      throw err
+      console.warn(`[ExpensesStore] ⚠️ saved expense ${id} but reconcile fetch failed; keeping optimistic value`, err)
+      return expenses.value[id]
     }
     finally {
       saving.value[id] = false
