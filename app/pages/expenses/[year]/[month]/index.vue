@@ -3,7 +3,6 @@ import { useExpensesStore } from '~/stores/expenses.store'
 import { useExpensesTableControls } from '~/composables/useExpensesTableControls'
 
 const route = useRoute()
-const router = useRouter()
 const year = computed(() => parseInt(route.params.year))
 const month = computed(() => parseInt(route.params.month))
 
@@ -57,18 +56,13 @@ const {
   reset,
 } = useExpensesTableControls(expenses)
 
-// Preview panel — URL state via ?preview=<expenseId>
-const previewExpenseId = computed(() => route.query.preview ?? null)
-
-function openPreview (event, row) {
-  router.replace({ query: { ...route.query, preview: row.original.id } })
-}
-
-function closePreview () {
-  const query = { ...route.query }
-  delete query.preview
-  router.replace({ query })
-}
+// Preview slideover: open-state, ?preview URL sync, and esc-to-close.
+const {
+  previewExpenseId,
+  previewExpense,
+  isSlideoverOpen,
+  openPreview,
+} = useExpensePreview()
 
 const hasExpenses = computed(() => expenses.value.length > 0)
 
@@ -81,7 +75,6 @@ async function refreshAll () {
     }),
   ])
 }
-
 </script>
 
 <template>
@@ -124,7 +117,7 @@ async function refreshAll () {
           @refresh="refreshAll"
         />
 
-        <expenses-table
+        <ExpensesTable
           v-model:pagination="pagination"
           :data="filteredExpenses"
           :sorting="sorting"
@@ -143,8 +136,9 @@ async function refreshAll () {
     </template>
   </UDashboardPanel>
 
-  <expense-panel
+  <ExpensePreviewSlideover
+    v-model:open="isSlideoverOpen"
+    :expense="previewExpense"
     :expense-id="previewExpenseId"
-    @close="closePreview"
   />
 </template>
