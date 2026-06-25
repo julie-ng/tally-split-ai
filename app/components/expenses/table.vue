@@ -256,7 +256,7 @@ function onSelect (event, row) {
           :page="pagination.pageIndex + 1"
           :items-per-page="pagination.pageSize"
           :total="paginationInfo.total"
-          @update:page="(p) => { pagination.pageIndex = p - 1 }"
+          @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
         />
       </div>
 
