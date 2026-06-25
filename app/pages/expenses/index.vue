@@ -69,7 +69,7 @@ const {
           />
         </template>
         <template #right>
-          <expense-button-modal @created="refreshAll" />
+          <ExpenseCreateSlideoverButton @created="refreshAll" />
         </template>
       </UDashboardNavbar>
     </template>

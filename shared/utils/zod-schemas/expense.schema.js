@@ -35,6 +35,7 @@ export const expenseRequestSchema = z.object({
   userTwoShare: z.number().nullable().optional(),
   userOneId: z.string().nullable().optional(),
   userTwoId: z.string().nullable().optional(),
+  paidByUserId: z.string().nullable().optional(), // who paid (human-set on create); null = unsure
   notes: z.string().nullable().optional(),
   isSettled: z.boolean().optional(),
 })
