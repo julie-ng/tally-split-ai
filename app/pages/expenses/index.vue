@@ -43,58 +43,13 @@ const {
   reset,
 } = useExpensesTableControls(expenses)
 
-// -------- Preview panel --------
-// URL state: ?preview=<expenseId> is the single source of truth.
-const route = useRoute()
-const router = useRouter()
-
-const previewExpenseId = computed(() => route.query.preview ?? null)
-
-// The slideover lives here (page level), not inside <ExpensesTable>: the page
-// owns the ?preview selection, so it owns the slideover that renders it. Keeps
-// the table a pure rows+clicks component with no preview knowledge.
-//
-// Open-state is decoupled from previewExpenseId — seeded once (so a cold-load
-// ?preview=<id> auto-opens), then owned locally. `:dismissible="false"` on the
-// slideover is what fixed the blink: with modal/overlay off, a row click counted
-// as click-outside → dismiss → open flipped true→false→true → panel repainted.
-const isSlideoverOpen = ref(!!previewExpenseId.value)
-
-const previewExpense = computed(() => previewExpenseId.value
-  ? expensesStore.getExpenseById(previewExpenseId.value)
-  : null,
-)
-
-function openPreview (event, row) {
-  isSlideoverOpen.value = true
-  router.replace({ query: { ...route.query, preview: row.original.id } })
-}
-
-function closePreview () {
-  const query = { ...route.query }
-  delete query.preview
-  router.replace({ query })
-}
-
-watch(isSlideoverOpen, (value) => {
-  if (!value) {
-    closePreview()
-  }
-})
-
-// `:dismissible="false"` also disables esc-to-close, so restore it manually.
-onMounted(() => {
-  window.addEventListener('keydown', onKeydown)
-})
-onBeforeUnmount(() => {
-  window.removeEventListener('keydown', onKeydown)
-})
-
-function onKeydown (event) {
-  if (event.key === 'Escape' && isSlideoverOpen.value) {
-    isSlideoverOpen.value = false
-  }
-}
+// Preview slideover: open-state, ?preview URL sync, and esc-to-close.
+const {
+  previewExpenseId,
+  previewExpense,
+  isSlideoverOpen,
+  openPreview,
+} = useExpensePreview()
 </script>
 
 <template>
@@ -153,23 +108,9 @@ function onKeydown (event) {
     </template>
   </UDashboardPanel>
 
-  <USlideover
+  <ExpensePreviewSlideover
     v-model:open="isSlideoverOpen"
-    :title="previewExpense?.title"
-    :description="previewExpense?.receipt?.merchantName"
-    :modal="false"
-    :overlay="false"
-    :dismissible="false"
-    :transition="false"
-    :unmount-on-hide="false"
-    :ui="{
-      content: 'top-(--ui-header-height) h-[calc(100%-var(--ui-header-height))] max-w-3xl ring-1 ring-default',
-    }"
-  >
-    <template #body>
-      <div class="pt-2 px-4">
-        <ExpensePreview v-if="previewExpenseId" :expense-id="previewExpenseId" />
-      </div>
-    </template>
-  </USlideover>
+    :expense="previewExpense"
+    :expense-id="previewExpenseId"
+  />
 </template>
