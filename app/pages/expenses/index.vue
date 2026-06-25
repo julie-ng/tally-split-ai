@@ -102,7 +102,7 @@ function closePreview () {
           @reset="reset"
         />
 
-        <expenses-table
+        <ExpensesTable
           v-model:pagination="pagination"
           :data="filteredExpenses"
           :sorting="sorting"

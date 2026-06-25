@@ -70,6 +70,10 @@ export default withNuxt(
     ],
     rules: {
       'vue/multi-word-component-names': 'off',
+      // Off during the kebab→PascalCase filename migration: casing is a manual
+      // "reviewed & cleaned" marker, so a mixed tree is expected. Don't enable
+      // until the migration is complete.
+      'vue/component-name-in-template-casing': 'off',
     },
   },
 )
