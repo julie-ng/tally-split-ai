@@ -13,6 +13,31 @@ export default defineAppConfig({
     container: {
       base: 'w-full max-w-full mx-auto px-4 sm:px-6 lg:px-8',
     },
+    input: {
+      slots: {
+        base: 'bg-muted!',
+      },
+    },
+    textarea: {
+      slots: {
+        base: 'bg-muted!',
+      },
+    },
+    inputDate: {
+      slots: {
+        base: 'bg-muted!',
+      },
+    },
+    inputTime: {
+      slots: {
+        base: 'bg-muted!',
+      },
+    },
+    select: {
+      slots: {
+        base: 'bg-muted!',
+      },
+    },
     slideover: {
       variants: {
         side: {
