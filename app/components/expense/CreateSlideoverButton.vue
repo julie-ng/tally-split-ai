@@ -45,8 +45,15 @@ function onCreated (expense) {
     <USlideover
       v-model:open="showModal"
       title="New expense"
+      inset
       :ui="{
-        content: 'top-(--ui-header-height) h-[calc(100%-var(--ui-header-height))] max-w-3xl ring-1 ring-default',
+        // content is rounded (via `inset`) but has no overflow clip by default,
+        // so a child with a background (the footer) paints over the rounded
+        // corners. overflow-hidden clips all children to the rounded shape.
+        content: 'max-w-lg ring-1 ring-default overflow-hidden',
+        // header: 'bg-muted dark:bg-default',
+        // body: 'bg-muted dark:bg-default',
+        // footer: 'bg-elevated/50 dark:dark:bg-default',
       }"
     >
       <template #body>

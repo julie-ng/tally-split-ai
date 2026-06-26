@@ -69,6 +69,7 @@ const form = ref({
   // Default to the logged-in user — you usually paid for what you're logging.
   // Falls back to "Unsure" if the session isn't loaded yet.
   paidByUserId: userStore.userId ?? UNSURE,
+  isSettled: false,
   notes: '',
 })
 
@@ -81,7 +82,18 @@ const saving = computed(() => expensesStore.saving.create || false)
 const sharesTouched = ref(false)
 
 watch(() => form.value.splitAmount, (amount) => {
-  if (sharesTouched.value || amount == null) {
+  if (amount == null) {
+    return
+  }
+  // A zero total has no asymmetric split — force both shares to 0 even if the
+  // user had hand-edited them.
+  if (amount === 0) {
+    sharesTouched.value = false
+    form.value.userOneShare = 0
+    form.value.userTwoShare = 0
+    return
+  }
+  if (sharesTouched.value) {
     return
   }
   const half = round2(amount / 2)
@@ -126,6 +138,32 @@ const sharesSumOk = computed(() => {
   return Math.abs((userOneShare + userTwoShare) - splitAmount) < 0.01
 })
 
+// Only surface the add-up state once there's a complete set to validate —
+// otherwise an empty/half-filled form would flash orange.
+const showSumState = computed(() => {
+  const { splitAmount, userOneShare, userTwoShare } = form.value
+  return splitAmount != null && userOneShare != null && userTwoShare != null
+})
+
+// Green border when shares add up, orange when they don't; no border otherwise.
+const sumBorderClass = computed(() => {
+  if (!showSumState.value) {
+    return ''
+  }
+  return sharesSumOk.value ? 'ring-success' : 'ring-warning'
+})
+
+// Can't mark an expense settled without knowing who paid (matches the edit-side
+// rule). Disable the checkbox when paid-by is "Unsure", and force-uncheck it if
+// the user switches back to Unsure after settling.
+const canSettle = computed(() => form.value.paidByUserId !== UNSURE)
+
+watch(canSettle, (allowed) => {
+  if (!allowed) {
+    form.value.isSettled = false
+  }
+})
+
 async function handleSubmit () {
   submitError.value = null
 
@@ -135,6 +173,7 @@ async function handleSubmit () {
     userOneShare: form.value.userOneShare,
     userTwoShare: form.value.userTwoShare,
     paidByUserId: form.value.paidByUserId === UNSURE ? null : form.value.paidByUserId,
+    isSettled: form.value.isSettled,
     date: form.value.date
       ? toUtcInstant(form.value.date, form.value.time)
       : null,
@@ -173,6 +212,7 @@ defineExpose({ saving, canSubmit })
 <template>
   <div>
     <form :id="formId" class="flex flex-col gap-4" @submit.prevent="handleSubmit">
+      <!-- Title -->
       <div class="flex flex-col gap-1">
         <label for="expense-title" class="text-sm font-semibold">Title</label>
         <UInput
@@ -183,6 +223,7 @@ defineExpose({ saving, canSubmit })
         />
       </div>
 
+      <!-- Date / Time -->
       <div class="flex gap-3">
         <div class="flex flex-col gap-1">
           <label for="expense-date" class="text-sm font-semibold">Date</label>
@@ -191,8 +232,6 @@ defineExpose({ saving, canSubmit })
             v-model="form.date"
           >
             <template #trailing>
-              <!-- Calendar dropdown. UPopover anchors to its own default
-                   trigger (the button below) — no :reference needed. -->
               <UPopover>
                 <UButton
                   color="neutral"
@@ -222,17 +261,22 @@ defineExpose({ saving, canSubmit })
         </div>
       </div>
 
+      <USeparator type="dashed" class="mt-3 mb-2" />
+
+      <h2 class="text-sm font-semibold">
+        Split Amounts
+      </h2>
+      <!-- Split Amount -->
       <div class="flex flex-col gap-1">
         <div class="flex items-center justify-between">
-          <label for="expense-amount" class="text-sm font-semibold">Amount to split (EUR)</label>
-          <UButton
-            color="neutral"
-            variant="subtle"
-            size="sm"
-            @click="splitEvenly"
+          <label for="expense-amount" class="text-sm">Total (EUR)</label>
+          <span
+            v-if="showSumState"
+            class="text-xs font-medium"
+            :class="sharesSumOk ? 'text-success' : 'text-warning'"
           >
-            Split evenly
-          </UButton>
+            {{ sharesSumOk ? 'Shares add up' : 'Shares do not add up' }}
+          </span>
         </div>
         <UInput
           id="expense-amount"
@@ -242,42 +286,63 @@ defineExpose({ saving, canSubmit })
           min="0"
           placeholder="0.00"
           required
+          :ui="{ base: sumBorderClass }"
         />
         <p class="text-xs text-dimmed">
           Defaults to a 50/50 split — edit a share below to split unevenly.
         </p>
       </div>
 
-      <div class="flex flex-col gap-1">
-        <label for="expense-user-one-share" class="text-sm font-semibold">
-          {{ user1Name }}'s Share
-        </label>
-        <UInput
-          id="expense-user-one-share"
-          :model-value="form.userOneShare"
-          type="number"
-          step="0.01"
-          min="0"
-          placeholder="0.00"
-          @update:model-value="onShareInput('one', $event)"
-        />
+      <!-- Shares -->
+      <div class="grid grid-cols-2 gap-3">
+        <!-- User 1 Share -->
+        <div class="flex flex-col gap-1">
+          <label for="expense-user-one-share" class="text-sm">
+            {{ user1Name }}'s Share
+          </label>
+          <UInput
+            id="expense-user-one-share"
+            :model-value="form.userOneShare"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+            :ui="{ base: sumBorderClass }"
+            @update:model-value="onShareInput('one', $event)"
+          />
+        </div>
+
+        <!-- User 2 Share -->
+        <div class="flex flex-col gap-1">
+          <label for="expense-user-two-share" class="text-sm">
+            {{ user2Name }}'s Share
+          </label>
+          <UInput
+            id="expense-user-two-share"
+            :model-value="form.userTwoShare"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+            :ui="{ base: sumBorderClass }"
+            @update:model-value="onShareInput('two', $event)"
+          />
+        </div>
       </div>
 
-      <div class="flex flex-col gap-1">
-        <label for="expense-user-two-share" class="text-sm font-semibold">
-          {{ user2Name }}'s Share
-        </label>
-        <UInput
-          id="expense-user-two-share"
-          :model-value="form.userTwoShare"
-          type="number"
-          step="0.01"
-          min="0"
-          placeholder="0.00"
-          @update:model-value="onShareInput('two', $event)"
-        />
+      <div class="flex">
+        <UButton
+          color="neutral"
+          variant="subtle"
+          @click="splitEvenly"
+        >
+          Split evenly
+        </UButton>
       </div>
 
+      <USeparator type="dashed" class="mt-3 mb-2" />
+
+      <!-- Paid By -->
       <div class="flex flex-col gap-1">
         <span class="text-sm font-semibold">Paid By</span>
         <URadioGroup
@@ -285,6 +350,10 @@ defineExpose({ saving, canSubmit })
           :items="paidByItems"
           indicator="end"
           variant="card"
+          :ui="{
+            fieldset: 'gap-y-2',
+            item: 'has-data-[state=checked]:bg-primary/5 has-data-[state=checked]:border-primary/30',
+          }"
         >
           <template #label="{ item }">
             <span class="flex items-center gap-2">
@@ -300,6 +369,21 @@ defineExpose({ saving, canSubmit })
         </URadioGroup>
       </div>
 
+      <!-- Settled -->
+      <UCheckbox
+        v-model="form.isSettled"
+        label="Mark as settled"
+        :description="canSettle ? '' : 'Identify who paid before marking as settled.'"
+        :disabled="!canSettle"
+        :ui="{
+          label: 'text-sm font-normal',
+          description: 'text-xs min-h-4',
+        }"
+      />
+
+      <USeparator type="dashed" class="mt-3 mb-2" />
+
+      <!-- Notes -->
       <div class="flex flex-col gap-1">
         <label for="expense-notes" class="text-sm font-semibold">Notes (optional)</label>
         <UTextarea
