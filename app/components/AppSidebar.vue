@@ -133,6 +133,10 @@ function getLinks (collapsed) {
 <template>
   <UDashboardSidebar
     collapsible
+    resizable
+    :default-size="16"
+    :min-size="12"
+    :max-size="18"
     :ui="{
       root: 'bg-elevated/25',
       footer: 'border-t border-default',
@@ -166,24 +170,16 @@ function getLinks (collapsed) {
     <template #footer="{ collapsed }">
       <UDropdownMenu :items="userMenuItems" :ui="{ content: 'w-48' }">
         <UButton
+          :avatar="{ src: userStore.avatarUrl, alt: userStore.displayName }"
+          :label="collapsed ? undefined : userStore.displayName"
+          :trailing-icon="collapsed ? undefined : 'i-lucide-chevrons-up-down'"
           color="neutral"
           variant="ghost"
+          block
           :square="collapsed"
-          :block="!collapsed"
           class="overflow-hidden"
-          trailing-icon="i-lucide-chevrons-up-down"
-          :class="collapsed ? '' : 'justify-start'"
-          :ui="{
-            trailingIcon: 'opacity-40',
-          }"
-        >
-          <UAvatar
-            :src="userStore.avatarUrl"
-            :alt="userStore.displayName"
-            size="xs"
-          />
-          <span v-if="!collapsed" class="truncate">{{ userStore.displayName }}</span>
-        </UButton>
+          :ui="{ trailingIcon: 'opacity-40' }"
+        />
       </UDropdownMenu>
     </template>
   </UDashboardSidebar>
