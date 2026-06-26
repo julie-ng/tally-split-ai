@@ -12,7 +12,7 @@ if (loggedIn.value) {
 </script>
 
 <template>
-  <UDashboardGroup>
+  <UDashboardGroup unit="rem">
     <AppSidebar />
 
     <slot />

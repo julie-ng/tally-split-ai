@@ -106,6 +106,39 @@ export function toBerlinDisplayDate (utcInstant) {
   })
 }
 
+/**
+ * Format a stored UTC instant for long display, "7 April 2006".
+ * @param {string|Date|null} utcInstant
+ * @returns {string|null} e.g. "7 April 2006", or null if input is empty
+ */
+export function toBerlinLongDate (utcInstant) {
+  if (!utcInstant) {
+    return null
+  }
+  return new Date(utcInstant).toLocaleDateString('en-GB', {
+    timeZone: EXPENSE_TIMEZONE,
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
+/**
+ * Format a stored UTC instant's time-of-day for Berlin display, "14:30".
+ * @param {string|Date|null} utcInstant
+ * @returns {string|null} e.g. "14:30", or null if input is empty
+ */
+export function toBerlinTime (utcInstant) {
+  if (!utcInstant) {
+    return null
+  }
+  return new Date(utcInstant).toLocaleTimeString('en-GB', {
+    timeZone: EXPENSE_TIMEZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 export function toBerlinShortDate (utcInstant) {
   if (!utcInstant) {
     return null

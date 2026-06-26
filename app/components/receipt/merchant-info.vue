@@ -35,7 +35,7 @@ const addressLines = computed(() => {
 
 <template>
   <div :class="textSize">
-    <h1 class="text-muted font-medium">
+    <h1 class="font-medium">
       {{ name }}
     </h1>
     <p v-if="address" class="text-muted">

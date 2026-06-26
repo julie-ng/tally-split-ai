@@ -18,6 +18,7 @@ export default defineEventHandler(async (event) => {
           id: true,
           title: true,
           merchantName: true,
+          merchantAddress: true,
           date: true,
         },
         with: {

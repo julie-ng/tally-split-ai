@@ -13,10 +13,17 @@ import { useExpensesStore } from '~/stores/expenses.store'
  * Call from page setup (the page owns the router; this packages the canonical
  * ?preview behavior so every list page doesn't re-implement it).
  *
+ * Two presentations share this composable: the older slideover (`/expenses`)
+ * and the resizable side-panel (`/expenses/[year]/[month]`). Both drive the same
+ * open-state ref — exposed as both `isSlideoverOpen` and `isPreviewOpen` so each
+ * page reads naturally. The panel also uses the tab state below.
+ *
  * @returns {{
  *   previewExpenseId: import('vue').ComputedRef<string|null>,
  *   previewExpense: import('vue').ComputedRef<object|null>,
  *   isSlideoverOpen: import('vue').Ref<boolean>,
+ *   isPreviewOpen: import('vue').Ref<boolean>,
+ *   activeTab: import('vue').Ref<string>,
  *   openPreview: (event: Event, row: { original: { id: string } }) => void,
  *   closePreview: () => void,
  * }}
@@ -36,6 +43,22 @@ export function useExpensePreview () {
   // Seeded once from the URL (cold-load auto-open), then owned locally. NOT a
   // computed off previewExpenseId — that re-coupling is what caused the blink.
   const isSlideoverOpen = ref(!!previewExpenseId.value)
+
+  // Active preview tab (panel presentation). Option A: every NEW expense opens
+  // on Overview. Keyed off id-change (not the open event) so it also resets when
+  // the user clicks a different row while the panel is already open.
+  const activeTab = ref('overview')
+
+  // Warm the expense + reset the tab whenever the selected id changes. The list
+  // already populated most expenses (so getExpenseById is warm and the leaf
+  // doesn't flash); this covers the cold-load `?preview=<id>` path and is a
+  // no-op (cache hit) for the common case.
+  watch(previewExpenseId, (id) => {
+    if (id) {
+      activeTab.value = 'overview'
+      expensesStore.fetchExpense(id)
+    }
+  })
 
   function openPreview (event, row) {
     isSlideoverOpen.value = true
@@ -72,6 +95,8 @@ export function useExpensePreview () {
     previewExpenseId,
     previewExpense,
     isSlideoverOpen,
+    isPreviewOpen: isSlideoverOpen, // same ref, panel-friendly name
+    activeTab,
     openPreview,
     closePreview,
   }
