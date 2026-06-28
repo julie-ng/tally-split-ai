@@ -65,56 +65,56 @@ const {
     <UDashboardPanel class="min-w-0">
       <template #header>
         <UDashboardNavbar title="Expenses">
-        <template #left>
-          <UBreadcrumb
-            :items="[
-              {
-                label: 'Expenses',
-              },
-              {
-                label: 'All',
-              },
-            ]"
+          <template #left>
+            <UBreadcrumb
+              :items="[
+                {
+                  label: 'Expenses',
+                },
+                {
+                  label: 'All',
+                },
+              ]"
+            />
+          </template>
+          <template #right>
+            <ExpenseCreateSlideoverButton @created="refreshAll" />
+          </template>
+        </UDashboardNavbar>
+      </template>
+
+      <template #body>
+        <div>
+          <h1 class="font-bold text-2xl">
+            All Expenses
+          </h1>
+
+          <expenses-summary-cards :summary="summary" class="my-4" />
+
+          <expenses-toolbar
+            :settled-label="settledLabel"
+            :settled-menu-items="settledMenuItems"
+            :paid-by-label="paidByLabel"
+            :paid-by-menu-items="paidByMenuItems"
+            :sort-label="sortLabel"
+            :sort-icon="sortIcon"
+            :sort-menu-items="sortMenuItems"
+            :has-active-filters="hasActiveFilters"
+            :pagination-info="paginationInfo"
+            class="mt-6 mb-3"
+            @reset="reset"
           />
-        </template>
-        <template #right>
-          <ExpenseCreateSlideoverButton @created="refreshAll" />
-        </template>
-      </UDashboardNavbar>
-    </template>
 
-    <template #body>
-      <div>
-        <h1 class="font-bold text-2xl">
-          All Expenses
-        </h1>
-
-        <expenses-summary-cards :summary="summary" class="my-4" />
-
-        <expenses-toolbar
-          :settled-label="settledLabel"
-          :settled-menu-items="settledMenuItems"
-          :paid-by-label="paidByLabel"
-          :paid-by-menu-items="paidByMenuItems"
-          :sort-label="sortLabel"
-          :sort-icon="sortIcon"
-          :sort-menu-items="sortMenuItems"
-          :has-active-filters="hasActiveFilters"
-          :pagination-info="paginationInfo"
-          class="mt-6 mb-3"
-          @reset="reset"
-        />
-
-        <ExpensesTable
-          v-model:pagination="pagination"
-          :data="filteredExpenses"
-          :sorting="sorting"
-          :pagination-info="paginationInfo"
-          :preview-expense-id="previewExpenseId"
-          @select="openPreview"
-        />
-      </div>
-    </template>
+          <ExpensesTable
+            v-model:pagination="pagination"
+            :data="filteredExpenses"
+            :sorting="sorting"
+            :pagination-info="paginationInfo"
+            :preview-expense-id="previewExpenseId"
+            @select="openPreview"
+          />
+        </div>
+      </template>
     </UDashboardPanel>
 
     <ExpensePreviewPanel
