@@ -61,6 +61,11 @@ export function useExpensePreview () {
   // Receipt tab without the expenses endpoint having to carry receipt fields.
   // The actual upload image (SAS URL) is fetched lazily only when the Receipt
   // tab is opened.
+  // immediate: on a cold hard-load the URL already carries ?preview=<id>, so
+  // previewExpenseId is born set and never "changes" — without immediate the
+  // warm (esp. the receipt fetch) never runs and merchant/receipt skeleton
+  // forever. Matches the immediate id-watches in the tab leaves (LLMAnalysis,
+  // HistoryTab).
   watch(previewExpenseId, async (id) => {
     if (!id) {
       return
@@ -70,7 +75,7 @@ export function useExpensePreview () {
     if (expense?.receiptId) {
       receiptsStore.fetchReceiptById(expense.receiptId)
     }
-  })
+  }, { immediate: true })
 
   function openPreview (event, row) {
     isSlideoverOpen.value = true

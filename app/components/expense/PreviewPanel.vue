@@ -132,9 +132,7 @@ const tabs = [
           </template>
 
           <template #history>
-            <div class="py-4 text-sm text-muted">
-              History — coming soon.
-            </div>
+            <ExpenseHistoryTab v-if="expenseId" :expense-id="expenseId" />
           </template>
         </UTabs>
       </template>

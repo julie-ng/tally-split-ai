@@ -65,7 +65,7 @@ function amount (value) {
       <USkeleton class="h-5 w-1/2" />
       <USkeleton class="h-4 w-2/3" />
       <USkeleton class="h-4 w-1/3" />
-      <USkeleton class="w-3/4 mx-auto aspect-[3/4] rounded-lg" />
+      <USkeleton class="w-3/4 mx-auto aspect-3/4 rounded-lg" />
     </div>
 
     <!-- Receipt loaded -->
