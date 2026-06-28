@@ -59,9 +59,19 @@ Two valid patterns, picked by the component's **role**, not preference:
 
 **Why this matters (the flash):** a leaf that fetches on `id`-change empties itself between `idA` and `idB` — its root `v-if="data"` goes falsy→truthy, the subtree unmounts/remounts, and the user sees a **blink** on every swap. If the owner warms the store when the selection changes, the getter is already populated by the time the leaf renders, so the leaf never blanks out. This also lets a wrapping `USlideover`/transition stay enabled without flickering.
 
-**Concretely:** a preview panel keyed by `?preview=<id>` is a *leaf*. The **page** (URL owner) should `store.fetchX(id)` when the query changes; the panel just reads `store.getXById(id)`. Don't put `watchEffect(() => fetch(id))` inside the swapped leaf. Ref: `expense/Preview.vue` (leaf) + `pages/expenses/index.vue` (owner).
+**Concretely:** a preview panel keyed by `?preview=<id>` is a *leaf*. The **page**/composable (URL owner) should `store.fetchX(id)` when the query changes; the panel just reads `store.getXById(id)`. Don't put `watchEffect(() => fetch(id))` inside the swapped leaf. Ref: `useExpensePreview()` (owner: warms expense + receipt on id-change) + `expense/OverviewTab.vue` / `expense/ReadOnly.vue` (leaves: read getters).
 
 > Earlier guidance said leaf components should always self-fetch + show a skeleton. That holds for **once-rendered** relational widgets, not for **swapped-by-id** panels — those must be props-driven to avoid the remount flash. This is the validated resolution of that open question.
+
+### The reused-leaf trap: react to the id, don't snapshot it
+
+A subtle case inside a **reused** container (e.g. a `UTabs` preview panel that swaps rows *without remounting* — the `expenseId` prop changes but the component stays mounted):
+
+- **Store-getter reads** (`computed(() => store.getXById(props.id))`) are safe — they re-evaluate automatically.
+- A **bare setup-time fetch** is the trap: `store.fetchHistory(props.id)` in `<script setup>` runs ONCE for the first id; later swaps never re-fetch → that row's data is missing/blank. (Bit `LLMAnalysis` and `HistoryTab`: "shows only after edit".)
+- When a reused leaf legitimately self-fetches lazy/relational data (history, an image), do it in `watch(() => props.id, fn, { immediate: true })` — NOT in setup. `immediate` also covers cold-load where the id is born-set and never "changes" (same reason the owner's warm watch is `immediate`).
+
+Rule: **inside a reused-by-id leaf, every fetch keys off the id via an immediate watch; getter computeds are fine as-is.**
 
 ## Validation Responsibility
 

@@ -52,6 +52,28 @@ Reference implementation: `server/api/uploads/[id].put.js`
 - `schema` is auto-imported — no import needed in handlers
 - `jsonb` columns (e.g., `ocrJson`) store native JSON — do NOT `JSON.stringify`
 
+## Don't widen an endpoint with another domain's fields
+
+An endpoint returns its own domain. Do **not** add a relational `with: {...}` join
+just because some frontend view wants a related domain's fields handy — that
+leaks foreign-shaped data into the response, puts fields in a store that doesn't
+own them, and pays the join cost on every fetch.
+
+```js
+// ❌ Anti-pattern (we did this for the expense preview's merchant info, then reverted):
+//    /api/expenses widened to carry receipt merchant/address/uploads.
+receipt: { columns: { id: true, merchantName: true, merchantAddress: true }, with: { uploads: {...} } }
+
+// ✅ Return only your domain (+ the FK id so the UI knows the relation exists):
+receipt: { columns: { id: true, title: true, date: true } }
+```
+
+The frontend composes across domains by **warming each store by id** (the page/
+composable warms both, each leaf reads its own store getter) — see
+`.claude/skills/pinia-stores` → "Compose stores in the frontend". A join IS
+correct when the related rows are part of the *same aggregate* the endpoint owns
+(e.g. `/api/receipts/:id` returning the receipt WITH its uploads).
+
 ## File Naming
 
 Files in `server/api/` are auto-registered as routes:

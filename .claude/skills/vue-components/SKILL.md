@@ -17,8 +17,14 @@ Naming (kebab-case), `defineModel()` for two-way bindings, and validation respon
 
 Components must not `$fetch`/`useFetch` directly, must not validate or null-guard inputs, and must not stop empty values from reaching the store. All data access and validation lives in Pinia (`.claude/rules/zod-validation.md`). The split avoids duplicate, hard-to-debug validation logic — trust the store + backend to handle it consistently.
 
+## Owner warms, leaf reads — and the reused-leaf trap
+
+For swapped-by-id UI (list rows, a `?preview=<id>` detail panel), the owner (page/composable) warms the store on id-change and the leaf reads the getter via props — never self-fetch in a swapped leaf or it blanks/blinks on every swap. Full rule + the **reused-leaf trap** (a once-mounted leaf reused across changing ids must do any self-fetch in `watch(() => props.id, fn, { immediate: true })`, never in setup) live in `.claude/rules/vue-component-conventions.md` → "Who Fetches".
+
 ## Reference components
 
-- `app/components/receipt/edit-form.vue` — form with store interaction
+- `app/components/expense/PreviewPanel.vue` — tabbed resizable preview panel (composes Overview/Receipt/History leaves; the canonical list-detail pattern)
+- `app/components/expense/HistoryTab.vue` — reused-by-id leaf that self-fetches correctly (immediate id-watch)
+- `app/components/expense/EditForm.vue` — form with store interaction
 - `app/components/blob/sas-link.vue` — simple display with a SAS URL
 - `app/components/upload/preview-azure.vue` — `<ClientOnly>` usage
