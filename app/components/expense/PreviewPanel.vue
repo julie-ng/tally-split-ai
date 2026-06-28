@@ -68,78 +68,78 @@ const tabs = [
       :min-size="22"
       :max-size="48"
       class="bg-elevated/25"
-    :ui="{
-      // overflow-hidden + min-w-0 clip children to the sidebar's --width.
-      // Without it, a long un-broken title (e.g. 'Scanned_20260415-1048-08')
-      // expands the flex column past --width and pushes the X off-screen.
-      root: 'overflow-hidden min-w-0',
-      // Header holds two stacked lines (title + date), so let it grow past the
-      // default fixed single-row height. items-start keeps the X top-aligned.
-      header: 'h-auto py-3 items-start min-w-0',
-      // Body no longer scrolls itself; the tab content does. min-h-0 lets the
-      // inner flex child shrink so overflow kicks in.
-      body: 'overflow-hidden min-h-0 min-w-0 p-0',
-    }"
-  >
-    <template #header>
-      <!-- w-full + min-w-0 so the title can truncate instead of widening the
+      :ui="{
+        // overflow-hidden + min-w-0 clip children to the sidebar's --width.
+        // Without it, a long un-broken title (e.g. 'Scanned_20260415-1048-08')
+        // expands the flex column past --width and pushes the X off-screen.
+        root: 'overflow-hidden min-w-0',
+        // Header holds two stacked lines (title + date), so let it grow past the
+        // default fixed single-row height. items-start keeps the X top-aligned.
+        header: 'h-auto py-3 items-start min-w-0',
+        // Body no longer scrolls itself; the tab content does. min-h-0 lets the
+        // inner flex child shrink so overflow kicks in.
+        body: 'overflow-hidden min-h-0 min-w-0 p-0',
+      }"
+    >
+      <template #header>
+        <!-- w-full + min-w-0 so the title can truncate instead of widening the
            sidebar and pushing the X off-screen. pl-2 matches tab contents. -->
-      <div class="w-full min-w-0 pl-2">
-        <div class="flex items-center gap-2 min-w-0">
-          <p class="font-bold flex-1 min-w-0 truncate text-primary">
-            {{ expense?.title || 'Expense' }}
+        <div class="w-full min-w-0 pl-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <p class="font-bold flex-1 min-w-0 truncate text-primary">
+              {{ expense?.title || 'Expense' }}
+            </p>
+            <UButton
+              icon="i-lucide-x"
+              color="neutral"
+              variant="ghost"
+              aria-label="Close preview"
+              class="shrink-0"
+              @click="open = false"
+            />
+          </div>
+          <p class="text-sm text-dimmed truncate">
+            {{ formattedDate || 'No date' }}
           </p>
-          <UButton
-            icon="i-lucide-x"
-            color="neutral"
-            variant="ghost"
-            aria-label="Close preview"
-            class="shrink-0"
-            @click="open = false"
-          />
         </div>
-        <p class="text-sm text-dimmed truncate">
-          {{ formattedDate || 'No date' }}
-        </p>
-      </div>
-    </template>
+      </template>
 
-    <template #default>
-      <UTabs
-        v-model="activeTab"
-        :items="tabs"
-        size="md"
-        variant="link"
-        color="primary"
-        :ui="{
-          indicator: 'border-b-3 border-primary',
-          trigger: 'cursor-pointer',
-          // Column: fixed list on top, scrolling content below. min-h-0 on both
-          // the column root and the scroll child is load-bearing.
-          root: 'flex flex-col h-full min-h-0 w-full gap-0',
-          list: 'shrink-0 px-4 gap-4',
-          content: 'flex-1 overflow-y-auto min-h-0 px-4',
-        }"
-      >
-        <template #overview>
-          <div class="py-4">
-            <ExpenseOverview v-if="expenseId" :expense-id="expenseId" />
-          </div>
-        </template>
+      <template #default>
+        <UTabs
+          v-model="activeTab"
+          :items="tabs"
+          size="md"
+          variant="link"
+          color="primary"
+          :ui="{
+            indicator: 'border-b-3 border-primary',
+            trigger: 'cursor-pointer',
+            // Column: fixed list on top, scrolling content below. min-h-0 on both
+            // the column root and the scroll child is load-bearing.
+            root: 'flex flex-col h-full min-h-0 w-full gap-0',
+            list: 'shrink-0 px-4 gap-4',
+            content: 'flex-1 overflow-y-auto min-h-0 px-4',
+          }"
+        >
+          <template #overview>
+            <div class="py-4">
+              <ExpenseOverview v-if="expenseId" :expense-id="expenseId" />
+            </div>
+          </template>
 
-        <template #receipt>
-          <div class="py-4 text-sm text-muted">
-            Receipt preview — coming soon.
-          </div>
-        </template>
+          <template #receipt>
+            <div class="py-4 text-sm text-muted">
+              Receipt preview — coming soon.
+            </div>
+          </template>
 
-        <template #history>
-          <div class="py-4 text-sm text-muted">
-            History — coming soon.
-          </div>
-        </template>
-      </UTabs>
-    </template>
+          <template #history>
+            <div class="py-4 text-sm text-muted">
+              History — coming soon.
+            </div>
+          </template>
+        </UTabs>
+      </template>
     </UDashboardSidebar>
   </UDashboardGroup>
 </template>
