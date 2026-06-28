@@ -1,17 +1,37 @@
 <script setup>
 import { useExpensesStore } from '~/stores/expenses.store'
+import { useHouseholdStore } from '~/stores/household.store'
 
 const props = defineProps({
   receipt: Object,
 })
 
 const expensesStore = useExpensesStore()
+const householdStore = useHouseholdStore()
 const expenseId = computed(() => expensesStore.getExpenseIdByReceiptId(props.receipt.id))
 const { history, pending } = await useReceiptHistory(props.receipt.id, expenseId)
 
 function displayValue (val) {
-  return val === null || val === undefined ? '\u2014' : val
+  return val === null || val === undefined ? 'null' : val
 }
+
+// `source` is 'user:<userId>' or 'task:<taskName>'. Resolve humans to avatar +
+// full name; bots/tasks to a bot icon + the task label.
+function describeSource (source) {
+  if (source?.startsWith('user:')) {
+    const userId = source.slice(5)
+    return {
+      isBot: false,
+      label: householdStore.getMemberName(userId),
+      avatar: householdStore.getMemberAvatarUrl(userId),
+    }
+  }
+  return { isBot: true, label: source, avatar: null }
+}
+
+const entries = computed(() =>
+  history.value.map(entry => ({ ...entry, src: describeSource(entry.source) })),
+)
 </script>
 
 <template>
@@ -27,7 +47,7 @@ function displayValue (val) {
     <!-- Timeline -->
     <div v-else class="space-y-4">
       <div
-        v-for="entry in history"
+        v-for="entry in entries"
         :key="`${entry.entityType}-${entry.id}`"
         class="border border-default rounded-lg p-4"
       >
@@ -39,7 +59,26 @@ function displayValue (val) {
             variant="subtle"
             size="xs"
           />
-          <span class="text-xs text-muted font-mono">{{ entry.source }}</span>
+          <UAvatar
+            v-if="entry.src.isBot"
+            icon="i-lucide-bot"
+            size="2xs"
+            class="bg-primary/10 text-primary shrink-0"
+            :ui="{ icon: 'size-4' }"
+          />
+          <UAvatar
+            v-else
+            :src="entry.src.avatar"
+            :alt="entry.src.label"
+            size="2xs"
+            class="shrink-0"
+          />
+          <span
+            class="text-xs"
+            :class="entry.src.isBot ? 'text-muted font-mono' : 'text-default'"
+          >
+            {{ entry.src.label }}
+          </span>
           <span class="text-xs text-dimmed ml-auto">
             {{ timestampUtils.toShortDatetime(entry.createdAt) }}
           </span>
