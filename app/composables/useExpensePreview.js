@@ -2,27 +2,19 @@ import { useExpensesStore } from '~/stores/expenses.store'
 import { useReceiptsStore } from '~/stores/receipts.store'
 
 /**
- * Drives the expense preview slideover for a list page.
+ * Drives the tabbed preview panel (ExpensePreviewPanel) on every expense list
+ * page. Owns the ?preview URL sync, open-state, active tab, and warm-on-open of
+ * the expense + its receipt.
  *
  * The `?preview=<expenseId>` query param is the single source of truth for
- * *which* expense is previewed; this composable owns that URL sync plus the
- * slideover's open-state. Open-state is deliberately decoupled from the id
- * (seeded once so a cold-load `?preview=<id>` auto-opens, then owned locally) —
- * see app/components/expense/Preview.vue and the blink history: with a non-modal
- * slideover, re-deriving `open` from the id re-triggered repaints.
- *
- * Call from page setup (the page owns the router; this packages the canonical
- * ?preview behavior so every list page doesn't re-implement it).
- *
- * Two presentations share this composable: the older slideover (`/expenses`)
- * and the resizable side-panel (`/expenses/[year]/[month]`). Both drive the same
- * open-state ref — exposed as both `isSlideoverOpen` and `isPreviewOpen` so each
- * page reads naturally. The panel also uses the tab state below.
+ * *which* expense is previewed. Open-state is seeded ONCE from the URL (so a
+ * cold-load `?preview=<id>` auto-opens) then owned locally — NOT a computed off
+ * the id, which would re-trigger on every row swap. Call from page setup (the
+ * page owns the router; this packages the canonical ?preview behavior).
  *
  * @returns {{
  *   previewExpenseId: import('vue').ComputedRef<string|null>,
  *   previewExpense: import('vue').ComputedRef<object|null>,
- *   isSlideoverOpen: import('vue').Ref<boolean>,
  *   isPreviewOpen: import('vue').Ref<boolean>,
  *   activeTab: import('vue').Ref<string>,
  *   openPreview: (event: Event, row: { original: { id: string } }) => void,
@@ -42,9 +34,8 @@ export function useExpensePreview () {
     : null,
   )
 
-  // Seeded once from the URL (cold-load auto-open), then owned locally. NOT a
-  // computed off previewExpenseId — that re-coupling is what caused the blink.
-  const isSlideoverOpen = ref(!!previewExpenseId.value)
+  // Seeded once from the URL (cold-load auto-open), then owned locally.
+  const isPreviewOpen = ref(!!previewExpenseId.value)
 
   // Active preview tab (panel presentation). Option A: every NEW expense opens
   // on Overview. Keyed off id-change (not the open event) so it also resets when
@@ -78,7 +69,7 @@ export function useExpensePreview () {
   }, { immediate: true })
 
   function openPreview (event, row) {
-    isSlideoverOpen.value = true
+    isPreviewOpen.value = true
     router.replace({ query: { ...route.query, preview: row.original.id } })
   }
 
@@ -88,17 +79,16 @@ export function useExpensePreview () {
     router.replace({ query })
   }
 
-  watch(isSlideoverOpen, (value) => {
+  watch(isPreviewOpen, (value) => {
     if (!value) {
       closePreview()
     }
   })
 
-  // `:dismissible="false"` (set on the slideover to fix the blink) also disables
-  // esc-to-close, so restore it here.
+  // Esc-to-close (the panel has no built-in dismiss handler).
   function onKeydown (event) {
-    if (event.key === 'Escape' && isSlideoverOpen.value) {
-      isSlideoverOpen.value = false
+    if (event.key === 'Escape' && isPreviewOpen.value) {
+      isPreviewOpen.value = false
     }
   }
   onMounted(() => {
@@ -111,8 +101,7 @@ export function useExpensePreview () {
   return {
     previewExpenseId,
     previewExpense,
-    isSlideoverOpen,
-    isPreviewOpen: isSlideoverOpen, // same ref, panel-friendly name
+    isPreviewOpen,
     activeTab,
     openPreview,
     closePreview,

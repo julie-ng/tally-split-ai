@@ -43,19 +43,28 @@ const {
   reset,
 } = useExpensesTableControls(expenses)
 
-// Preview slideover: open-state, ?preview URL sync, and esc-to-close.
+// Preview panel: open-state, ?preview URL sync, esc-to-close, active tab, and
+// warm-on-id (expense + receipt) all live in the composable.
 const {
   previewExpenseId,
   previewExpense,
-  isSlideoverOpen,
+  isPreviewOpen,
+  activeTab,
   openPreview,
 } = useExpensePreview()
 </script>
 
 <template>
-  <UDashboardPanel>
-    <template #header>
-      <UDashboardNavbar title="Expenses">
+  <!-- min-w-0 so this wrapper (a flex item inside UDashboardGroup) can shrink to
+       its share of the row instead of overflowing; overflow-hidden clips the
+       resizable preview to the available width. -->
+  <div class="flex flex-1 min-w-0 overflow-hidden">
+    <!-- Main table panel: NOT resizable → flex-1, fills the space the preview
+         leaves and expands to full width when the preview closes. min-w-0 so the
+         wide table can shrink instead of forcing the row past the viewport. -->
+    <UDashboardPanel class="min-w-0">
+      <template #header>
+        <UDashboardNavbar title="Expenses">
         <template #left>
           <UBreadcrumb
             :items="[
@@ -106,11 +115,13 @@ const {
         />
       </div>
     </template>
-  </UDashboardPanel>
+    </UDashboardPanel>
 
-  <ExpensePreviewSlideover
-    v-model:open="isSlideoverOpen"
-    :expense="previewExpense"
-    :expense-id="previewExpenseId"
-  />
+    <ExpensePreviewPanel
+      v-model:open="isPreviewOpen"
+      v-model:active-tab="activeTab"
+      :expense="previewExpense"
+      :expense-id="previewExpenseId"
+    />
+  </div>
 </template>

@@ -123,7 +123,7 @@ const tabs = [
         >
           <template #overview>
             <div class="py-4">
-              <ExpenseOverview v-if="expenseId" :expense-id="expenseId" />
+              <ExpenseOverviewTab v-if="expenseId" :expense-id="expenseId" />
             </div>
           </template>
 
