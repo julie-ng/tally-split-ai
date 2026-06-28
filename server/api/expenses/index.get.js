@@ -13,21 +13,15 @@ export default defineEventHandler(async (event) => {
   const expenses = await db.query.expenses.findMany({
     where: eq(schema.expenses.householdId, householdId),
     with: {
+      // Only the receipt id + title are needed for the list/preview: the id
+      // lets the UI know a receipt exists and warm it from the receipts store
+      // (which owns receipts + uploads). Merchant info, address, and uploads are
+      // read from the receipts store on demand, NOT funneled through here.
       receipt: {
         columns: {
           id: true,
           title: true,
-          merchantName: true,
-          merchantAddress: true,
           date: true,
-        },
-        with: {
-          uploads: {
-            columns: {
-              analysisStatus: true,
-              originalFilename: true,
-            },
-          },
         },
       },
     },

@@ -1,6 +1,7 @@
 <script setup>
 import { useExpensesStore } from '~/stores/expenses.store'
 import { useHouseholdStore } from '~/stores/household.store'
+import { useReceiptsStore } from '~/stores/receipts.store'
 
 // Read-only text rendering of an expense (the Overview tab's view mode). Pure
 // presentation: reads warm store getters by id, emits `edit` for the host to
@@ -16,8 +17,19 @@ defineEmits(['edit'])
 
 const expensesStore = useExpensesStore()
 const householdStore = useHouseholdStore()
+const receiptsStore = useReceiptsStore()
 
 const expense = computed(() => expensesStore.getExpenseById(props.expenseId))
+
+// Merchant info lives on the RECEIPT (receipts store owns it). The preview warms
+// the receipt on open (useExpensePreview); until it lands, show a skeleton.
+const receiptId = computed(() => expense.value?.receiptId)
+const receipt = computed(() => receiptId.value
+  ? receiptsStore.getReceiptById(receiptId.value)
+  : null,
+)
+// Receipt linked but not yet in the store → still warming → skeleton.
+const receiptPending = computed(() => !!receiptId.value && !receipt.value)
 
 const userOne = computed(() => householdStore.userOne)
 const userTwo = computed(() => householdStore.userTwo)
@@ -44,17 +56,27 @@ function amount (value) {
 
 <template>
   <div class="space-y-5">
-    <!-- Merchant (when the expense came from a receipt) -->
-    <template v-if="expense.receipt?.merchantName">
+    <!-- Merchant (when the expense came from a receipt). Data comes from the
+         receipts store, warmed on preview open; skeleton while it loads. -->
+    <template v-if="receiptId">
       <div>
-        <!-- <h3 class="text-sm font-semibold mb-2">
-          Merchant
-        </h3> -->
+        <!-- Still warming -->
+        <div v-if="receiptPending" class="space-y-2">
+          <USkeleton class="h-4 w-2/3" />
+          <USkeleton class="h-4 w-1/2" />
+          <USkeleton class="h-4 w-1/3" />
+        </div>
+        <!-- Loaded, has merchant -->
         <receipt-merchant-info
-          :name="expense.receipt.merchantName"
-          :address="expense.receipt.merchantAddress"
+          v-else-if="receipt?.merchantName"
+          :name="receipt.merchantName"
+          :address="receipt.merchantAddress"
           :relaxed-line-height="true"
         />
+        <!-- Loaded, but OCR found no merchant — a true null, not an error -->
+        <p v-else class="text-sm text-dimmed">
+          No merchant info detected.
+        </p>
       </div>
 
       <USeparator />
@@ -144,7 +166,7 @@ function amount (value) {
     <!-- Edit -->
     <div class="flex justify-start pt-2">
       <UButton
-        icon="i-lucide-pencil"
+        trailing-icon="i-lucide-pencil"
         color="neutral"
         variant="outline"
         @click="$emit('edit')"

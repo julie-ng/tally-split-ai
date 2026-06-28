@@ -128,9 +128,7 @@ const tabs = [
           </template>
 
           <template #receipt>
-            <div class="py-4 text-sm text-muted">
-              Receipt preview — coming soon.
-            </div>
+            <ExpenseReceiptTab v-if="expenseId" :expense-id="expenseId" />
           </template>
 
           <template #history>

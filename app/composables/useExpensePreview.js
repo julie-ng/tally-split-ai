@@ -1,4 +1,5 @@
 import { useExpensesStore } from '~/stores/expenses.store'
+import { useReceiptsStore } from '~/stores/receipts.store'
 
 /**
  * Drives the expense preview slideover for a list page.
@@ -32,6 +33,7 @@ export function useExpensePreview () {
   const route = useRoute()
   const router = useRouter()
   const expensesStore = useExpensesStore()
+  const receiptsStore = useReceiptsStore()
 
   const previewExpenseId = computed(() => route.query.preview ?? null)
 
@@ -53,10 +55,20 @@ export function useExpensePreview () {
   // already populated most expenses (so getExpenseById is warm and the leaf
   // doesn't flash); this covers the cold-load `?preview=<id>` path and is a
   // no-op (cache hit) for the common case.
-  watch(previewExpenseId, (id) => {
-    if (id) {
-      activeTab.value = 'overview'
-      expensesStore.fetchExpense(id)
+  //
+  // Also warm the linked RECEIPT into the receipts store (which owns receipts +
+  // their uploads). This makes merchant info + the upload id available for the
+  // Receipt tab without the expenses endpoint having to carry receipt fields.
+  // The actual upload image (SAS URL) is fetched lazily only when the Receipt
+  // tab is opened.
+  watch(previewExpenseId, async (id) => {
+    if (!id) {
+      return
+    }
+    activeTab.value = 'overview'
+    const expense = await expensesStore.fetchExpense(id)
+    if (expense?.receiptId) {
+      receiptsStore.fetchReceiptById(expense.receiptId)
     }
   })
 
