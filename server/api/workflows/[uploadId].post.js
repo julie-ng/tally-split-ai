@@ -5,6 +5,7 @@ import { WORKFLOW_STATUS } from '#shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { UPLOAD_ANALYSIS_STATUS } from '#shared/enums/upload-analysis-status.js'
 import { getTaskActions } from '#shared/config/task-permissions.js'
+import { deriveInitials } from '#shared/utils/initials.utils.js'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger('workflow')
@@ -25,9 +26,28 @@ export default defineEventHandler(async (event) => {
   const household = await db.query.households.findFirst({
     where: eq(schema.households.id, event.context.householdId),
     columns: { customInstructions: true, llmConsent: true },
+    with: {
+      // Ordered by createdAt ASC = the userOne/userTwo slot order on expenses.
+      users: {
+        columns: { displayName: true, username: true, initials: true },
+        orderBy: (users, { asc }) => [asc(users.createdAt)],
+      },
+    },
   })
   const customInstructions = household?.customInstructions ?? null
   const llmConsent = household?.llmConsent ?? false
+
+  // Snapshot the two members (slot order) for the adjust-expense LLM so it can
+  // map handwriting → a person. Minimal PII: firstName + initials only, NO
+  // userId/lastName/email. Initials fall back to a name-derived value when a
+  // member hasn't set their own. Only sent downstream when llmConsent is true.
+  const householdMembers = (household?.users ?? []).slice(0, 2).map((u) => {
+    const name = u.displayName ?? u.username ?? ''
+    return {
+      firstName: name.split(/\s+/)[0] || null,
+      initials: u.initials || deriveInitials(name),
+    }
+  })
 
   if (!upload) {
     throw createError({ statusCode: 404, message: 'Upload not found' })
@@ -102,6 +122,7 @@ export default defineEventHandler(async (event) => {
       callbackToken,
       customInstructions,
       llmConsent,
+      householdMembers,
     }, {
       ttl: `${ttlMinutes}m`,
     })

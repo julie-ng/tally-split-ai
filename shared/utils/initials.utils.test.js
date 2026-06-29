@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { deriveInitials } from './initials.utils.js'
 
 describe('deriveInitials', () => {
-  it('returns first letter of first two tokens', () => {
+  it('returns first letter of first and last token', () => {
     expect(deriveInitials('Michael Mustermann')).toBe('MM')
   })
 
@@ -10,12 +10,13 @@ describe('deriveInitials', () => {
     expect(deriveInitials('jane doe')).toBe('JD')
   })
 
-  it('handles three or more tokens by using first two', () => {
-    expect(deriveInitials('Anna Maria Schmidt')).toBe('AM')
+  it('uses first + LAST token for three or more (skips middle names)', () => {
+    expect(deriveInitials('Anna Maria Schmidt')).toBe('AS')
+    expect(deriveInitials('John Michael Adams')).toBe('JA')
   })
 
-  it('handles single-token names (GitHub login style)', () => {
-    expect(deriveInitials('octocat')).toBe('OC')
+  it('handles single-token names (GitHub login style) — first letter only', () => {
+    expect(deriveInitials('octocat')).toBe('O')
   })
 
   it('handles single-character names', () => {

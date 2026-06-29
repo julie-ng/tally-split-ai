@@ -1,7 +1,9 @@
 /**
  * Derive initials from a display name. Takes the first character of the
- * first two whitespace-separated tokens, uppercased. For single-token
- * names (e.g. a GitHub login), takes the first two characters.
+ * FIRST and LAST whitespace-separated tokens, uppercased — so a middle name
+ * doesn't change the result (e.g. "John Michael Adams" → "JA", same as
+ * "John Adams"). For single-token names (e.g. a GitHub login), takes just the
+ * first character.
  *
  * Returns '??' for empty/whitespace-only input.
  *
@@ -15,9 +17,9 @@ export function deriveInitials (name) {
 
   const tokens = trimmed.split(/\s+/)
   if (tokens.length >= 2) {
-    return (tokens[0][0] + tokens[1][0]).toUpperCase()
+    return (tokens[0][0] + tokens[tokens.length - 1][0]).toUpperCase()
   }
 
-  // Single token — take first 2 chars (or 1 if name is one char)
-  return tokens[0].slice(0, 2).toUpperCase()
+  // Single token (e.g. a GitHub login) — just the first character.
+  return tokens[0][0].toUpperCase()
 }

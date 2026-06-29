@@ -64,15 +64,18 @@ export const expenseUpdateSchema = z.object({
 
 /**
  * Expense Task Resolution Schema - validates POST /api/expenses/[id]/task body.
- * Sent by the adjust-expense trigger task with raw LLM output. The endpoint
- * matches initials → userId (PII boundary) and writes paidByUserId +
- * paidByMatch + share/amount fields in one transaction.
+ * Sent by the adjust-expense trigger task with raw LLM output. The LLM is given
+ * the two members keyed by slot ('user1'/'user2') and returns the payer as a
+ * slot (or 'mismatched' when it read initials matching neither member, or null);
+ * the endpoint maps slot → userId and sets paidByMatch in one transaction.
  */
 export const expenseTaskResolutionSchema = z.object({
   adjustedTotal: z.number().nullable().optional(),
   userOneShare: z.number().nullable().optional(),
   userTwoShare: z.number().nullable().optional(),
-  paidByInitials: z.string().nullable().optional(),
+  // Payer as a household slot. 'mismatched' = LLM found initials but they map to
+  // no member; null = no payer signal.
+  paidBySlot: z.enum(['user1', 'user2', 'mismatched']).nullable().optional(),
 
   // Change tracking metadata
   llm: z.object({

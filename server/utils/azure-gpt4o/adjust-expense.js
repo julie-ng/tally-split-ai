@@ -12,18 +12,28 @@ import { loadInstructions } from './load-instructions.js'
  * @param {string|null} [params.ocrText] - Full raw OCR text. Useful for matching things the receipt model misses (e.g., card numbers in the footer).
  * @param {Object} params.annotations - Annotations JSON from GPT-4o vision analysis
  * @param {string|null} [params.customInstructions] - Optional household-level guidance appended to system prompt
- * @returns {Promise<Object>} { originalTotal, adjustedTotal, paidBy, amountConfidence, payerConfidence, reasoning }
+ * @param {Array<{firstName: string|null, initials: string|null}>} [params.householdMembers] - The two household members in slot order (user1, user2). Lets the model map handwriting → a person and allocate shares + payer by slot. Empty/absent when the household hasn't consented.
+ * @returns {Promise<Object>} { originalTotal, adjustedTotal, shares, paidBy, confidence, amountConfidence, shareConfidence, payerConfidence, reasoning }
  */
-export async function adjustExpense ({ ocrData, ocrText = null, annotations, customInstructions = null }) {
+export async function adjustExpense ({ ocrData, ocrText = null, annotations, customInstructions = null, householdMembers = [] }) {
   const baseSystemPrompt = loadInstructions('adjust-expense')
   const systemPrompt = customInstructions
     ? `${baseSystemPrompt}\n\n## Custom Household Instructions\nThe household has provided the following guidance for this analysis. Apply where relevant; ignore if not applicable to this receipt:\n\n${customInstructions}`
     : baseSystemPrompt
 
+  // Present the two members keyed by slot so the model returns shares + payer as
+  // 'user1'/'user2' (the server maps slot → userId — PII boundary: no userIds
+  // are ever sent here, only first name + initials).
+  const household = {
+    user1: householdMembers[0] ?? null,
+    user2: householdMembers[1] ?? null,
+  }
+
   const userMessage = JSON.stringify({
     ocrData,
     ocrText,
     annotations: annotations || { annotations: [], notes: 'No annotations' },
+    household,
   }, null, 2)
 
   const result = await gpt4oFetch({

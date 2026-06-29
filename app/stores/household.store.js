@@ -72,9 +72,13 @@ export const useHouseholdStore = defineStore('household', () => {
     if (!id) return '?'
     const member = getMemberById.value(id)
     if (!member) return '?'
+    // A member's own `initials` (set at creation / editable) is authoritative;
+    // fall back to deriving from the name via the shared rule (first + last
+    // token) so display matches what deriveInitials() stamps elsewhere.
+    if (member.initials) return member.initials
     const source = member.displayName ?? member.username
     if (!source) return '?'
-    return source.split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2)
+    return deriveInitials(source)
   })
 
   const userOneInitials = computed(() => getMemberInitials.value(userOne.value?.id))

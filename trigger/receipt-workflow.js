@@ -16,7 +16,7 @@ export const receiptWorkflow = task({
   id: TASK_ID,
   maxDuration: 600,
   run: async (payload) => {
-    const { uploadId, runUuid, callbackToken, customInstructions, llmConsent } = payload
+    const { uploadId, runUuid, callbackToken, customInstructions, llmConsent, householdMembers } = payload
     const authHeaders = { callbackToken, runUuid, taskId: TASK_ID }
     const api = createApiClient(authHeaders)
 
@@ -125,7 +125,7 @@ export const receiptWorkflow = task({
       // No-consent households keep the API-default 50/50 split from step 4.
       if (expenseId && annotationsResult.ok && llmConsent) {
         const adjustResult = await adjustExpense.triggerAndWait(
-          { uploadId, expenseId, runUuid, callbackToken: postOcrTokens['adjust-expense'], customInstructions },
+          { uploadId, expenseId, runUuid, callbackToken: postOcrTokens['adjust-expense'], customInstructions, householdMembers },
         )
 
         if (!adjustResult.ok) {

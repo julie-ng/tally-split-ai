@@ -1,18 +1,20 @@
 import { z } from 'zod'
-import { eq, inArray } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { expenseTaskResolutionSchema } from '#shared/utils/zod-schemas/expense.schema.js'
 import { PAID_BY_MATCH } from '#shared/enums/paid-by-match.js'
 
 /**
  * Task-only endpoint for the adjust-expense workflow callback.
  *
- * Owns the LLM contract for paidBy resolution: the trigger task posts raw
- * initials (no userId — PII boundary), and this endpoint maps initials →
- * userId by looking up household members. Sets paidByMatch in the same
- * transaction. Frozen LLM signal — never written by humans (see docs/SCHEMA.md).
+ * Owns the LLM contract for paidBy resolution. The LLM is given the two members
+ * keyed by slot (no userId — PII boundary) and returns the payer as a slot
+ * ('user1'/'user2'), 'mismatched' (read initials matching neither member), or
+ * null. This endpoint maps slot → the expense's userOneId/userTwoId and sets
+ * paidByMatch. Frozen LLM signal — never written by humans (see docs/SCHEMA.md).
  *
- * Also accepts adjusted split amount + per-user shares so all adjust-expense
- * writes flow through one task-scoped endpoint, separate from human PUT.
+ * Also accepts adjusted split amount + per-user shares (the LLM's asymmetric
+ * allocation) so all adjust-expense writes flow through one task-scoped
+ * endpoint, separate from human PUT.
  */
 export default defineEventHandler(async (event) => {
   const log = useLogger('expense')
@@ -35,7 +37,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const { adjustedTotal, userOneShare, userTwoShare, paidByInitials, llm } = result.data
+  const { adjustedTotal, userOneShare, userTwoShare, paidBySlot, llm } = result.data
 
   // tx is the Drizzle transaction object — same query API as db, but every
   // operation runs in one Postgres transaction (commits on resolve, rolls
@@ -55,10 +57,8 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Resolve paidBy: match initials against household members in the slot.
-    // Only userOne and userTwo are eligible — paidBy must be a participant.
-    const { paidByUserId, paidByMatch } = await _resolvePaidBy(tx, {
-      initials: paidByInitials,
+    // Resolve paidBy from the LLM's slot answer → the expense's user slots.
+    const { paidByUserId, paidByMatch } = _resolvePaidBySlot(paidBySlot, {
       userOneId: before.userOneId,
       userTwoId: before.userTwoId,
     })
@@ -103,44 +103,35 @@ export default defineEventHandler(async (event) => {
 })
 
 /**
- * Match a raw LLM payer hint to one of the split's two user slots.
+ * Map the LLM's slot-based payer answer to one of the expense's two user slots.
  *
- * The hint can be initials (from handwritten annotations) or a name
- * (from custom-instructions context, e.g. "Matt"). Strategy:
- *   - Length <= 3: exact case-insensitive match against users.initials
- *   - Length > 3:  case-insensitive substring match against users.displayName.
- *                  Ambiguous (both users match) → MISMATCHED.
+ * The LLM is given the members keyed by slot and does the identity reasoning
+ * (incl. fuzzy name matching like "Julia" vs "Julie"), so this is a pure map —
+ * no name/initials matching here:
+ *   - 'user1'      → userOneId, MATCHED
+ *   - 'user2'      → userTwoId, MATCHED
+ *   - 'mismatched' → null,      MISMATCHED (LLM read initials matching no member)
+ *   - null/absent  → null,      MISSING    (no payer signal)
  *
- * @returns {Promise<{ paidByUserId: string|null, paidByMatch: string }>}
+ * A slot whose userId is unexpectedly null (single-member household) falls back
+ * to MISMATCHED rather than asserting a bad MATCHED.
+ *
+ * @param {'user1'|'user2'|'mismatched'|null|undefined} slot
+ * @returns {{ paidByUserId: string|null, paidByMatch: string }}
  */
-async function _resolvePaidBy (tx, { initials, userOneId, userTwoId }) {
-  if (!initials) {
-    return { paidByUserId: null, paidByMatch: PAID_BY_MATCH.MISSING }
+function _resolvePaidBySlot (slot, { userOneId, userTwoId }) {
+  if (slot === 'user1') {
+    return userOneId
+      ? { paidByUserId: userOneId, paidByMatch: PAID_BY_MATCH.MATCHED }
+      : { paidByUserId: null, paidByMatch: PAID_BY_MATCH.MISMATCHED }
   }
-
-  const slotIds = [userOneId, userTwoId].filter(Boolean)
-  if (slotIds.length === 0) {
+  if (slot === 'user2') {
+    return userTwoId
+      ? { paidByUserId: userTwoId, paidByMatch: PAID_BY_MATCH.MATCHED }
+      : { paidByUserId: null, paidByMatch: PAID_BY_MATCH.MISMATCHED }
+  }
+  if (slot === 'mismatched') {
     return { paidByUserId: null, paidByMatch: PAID_BY_MATCH.MISMATCHED }
   }
-
-  const candidates = await tx
-    .select({ id: schema.users.id, initials: schema.users.initials, displayName: schema.users.displayName })
-    .from(schema.users)
-    .where(inArray(schema.users.id, slotIds))
-
-  const target = initials.trim().toLowerCase()
-
-  if (target.length <= 3) {
-    const matched = candidates.find(c => c.initials?.toLowerCase() === target)
-    if (matched) {
-      return { paidByUserId: matched.id, paidByMatch: PAID_BY_MATCH.MATCHED }
-    }
-    return { paidByUserId: null, paidByMatch: PAID_BY_MATCH.MISMATCHED }
-  }
-
-  const nameMatches = candidates.filter(c => c.displayName?.toLowerCase().includes(target))
-  if (nameMatches.length === 1) {
-    return { paidByUserId: nameMatches[0].id, paidByMatch: PAID_BY_MATCH.MATCHED }
-  }
-  return { paidByUserId: null, paidByMatch: PAID_BY_MATCH.MISMATCHED }
+  return { paidByUserId: null, paidByMatch: PAID_BY_MATCH.MISSING }
 }
