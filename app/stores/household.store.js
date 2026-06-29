@@ -28,6 +28,7 @@ export const useHouseholdStore = defineStore('household', () => {
   const name = computed(() => household.value?.name ?? null)
   const description = computed(() => household.value?.description ?? null)
   const customInstructions = computed(() => household.value?.customInstructions ?? null)
+  const llmConsent = computed(() => household.value?.llmConsent ?? false)
   const members = computed(() => household.value?.members ?? [])
   const userOne = computed(() => members.value[0] ?? null)
   const userTwo = computed(() => members.value[1] ?? null)
@@ -154,6 +155,7 @@ export const useHouseholdStore = defineStore('household', () => {
     name,
     description,
     customInstructions,
+    llmConsent,
     members,
     userOne,
     userTwo,

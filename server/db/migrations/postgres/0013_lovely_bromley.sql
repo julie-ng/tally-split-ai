@@ -1,0 +1,1 @@
+ALTER TABLE "households" ADD COLUMN "llm_consent" boolean DEFAULT false NOT NULL;

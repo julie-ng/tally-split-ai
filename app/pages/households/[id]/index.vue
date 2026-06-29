@@ -59,6 +59,8 @@ const actionItems = ref([
 
       <household-add-member-form />
 
+      <household-llm-consent />
+
       <household-custom-instructions />
     </template>
   </UDashboardPanel>

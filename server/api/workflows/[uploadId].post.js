@@ -20,13 +20,14 @@ export default defineEventHandler(async (event) => {
     columns: { id: true, status: true },
   })
 
-  // Snapshot the household's custom LLM instructions for this run.
+  // Snapshot the household's custom LLM instructions + LLM consent for this run.
   // Edits during the run won't affect in-flight tasks.
   const household = await db.query.households.findFirst({
     where: eq(schema.households.id, event.context.householdId),
-    columns: { customInstructions: true },
+    columns: { customInstructions: true, llmConsent: true },
   })
   const customInstructions = household?.customInstructions ?? null
+  const llmConsent = household?.llmConsent ?? false
 
   if (!upload) {
     throw createError({ statusCode: 404, message: 'Upload not found' })
@@ -100,6 +101,7 @@ export default defineEventHandler(async (event) => {
       runUuid: workflowRun.uuid,
       callbackToken,
       customInstructions,
+      llmConsent,
     }, {
       ttl: `${ttlMinutes}m`,
     })

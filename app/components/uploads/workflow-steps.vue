@@ -89,6 +89,7 @@ function stepIcon (status) {
     case WORKFLOW_STEP_STATUS.COMPLETED: return 'i-lucide-circle-check'
     case WORKFLOW_STEP_STATUS.FAILED: return 'i-lucide-circle-alert'
     case WORKFLOW_STEP_STATUS.PROCESSING: return 'i-lucide-loader-circle'
+    case WORKFLOW_STEP_STATUS.SKIPPED: return 'i-lucide-circle-minus'
     default: return 'i-lucide-circle'
   }
 }
@@ -98,6 +99,7 @@ function stepColor (status) {
     case WORKFLOW_STEP_STATUS.COMPLETED: return 'text-green-500'
     case WORKFLOW_STEP_STATUS.FAILED: return 'text-amber-500'
     case WORKFLOW_STEP_STATUS.PROCESSING: return 'text-blue-500'
+    case WORKFLOW_STEP_STATUS.SKIPPED: return 'text-neutral-400'
     default: return 'text-neutral-300'
   }
 }

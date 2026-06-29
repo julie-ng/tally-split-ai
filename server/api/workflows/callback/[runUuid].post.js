@@ -5,7 +5,7 @@ import { WORKFLOW_STATUSES, WORKFLOW_STEP_STATUSES } from '#shared/enums/workflo
 // The orchestrator step (`_orchestrator`) emits run-level statuses
 // (`partial`, `completed`, `processing`, `queued`, `failed`); per-step
 // callbacks emit step-level statuses (`pending`, `processing`,
-// `completed`, `failed`). Validate against the appropriate enum so a
+// `completed`, `failed`, `skipped`). Validate against the appropriate enum so a
 // `partial` orchestrator notify isn't rejected as an invalid step status.
 const callbackSchema = z.object({
   step: z.enum(WORKFLOW_STEPS),

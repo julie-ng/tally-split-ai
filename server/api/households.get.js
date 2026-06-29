@@ -36,6 +36,7 @@ export default defineEventHandler(async (event) => {
     name: household.name,
     description: household.description,
     customInstructions: household.customInstructions,
+    llmConsent: household.llmConsent,
     members: household.users,
   }
 })

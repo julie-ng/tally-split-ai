@@ -16,7 +16,7 @@ export const receiptWorkflow = task({
   id: TASK_ID,
   maxDuration: 600,
   run: async (payload) => {
-    const { uploadId, runUuid, callbackToken, customInstructions } = payload
+    const { uploadId, runUuid, callbackToken, customInstructions, llmConsent } = payload
     const authHeaders = { callbackToken, runUuid, taskId: TASK_ID }
     const api = createApiClient(authHeaders)
 
@@ -119,8 +119,11 @@ export const receiptWorkflow = task({
         logger.warn(`Expense creation failed`, { error: expenseResult.error })
       }
 
-      // Step 5: Adjust expense — NON-FATAL, requires both split and annotations
-      if (expenseId && annotationsResult.ok) {
+      // Step 5: Adjust expense — NON-FATAL, requires both split and annotations.
+      // Gated on household llmConsent: this task sends member names/initials to
+      // the LLM, so it's skipped entirely for households that haven't opted in.
+      // No-consent households keep the API-default 50/50 split from step 4.
+      if (expenseId && annotationsResult.ok && llmConsent) {
         const adjustResult = await adjustExpense.triggerAndWait(
           { uploadId, expenseId, runUuid, callbackToken: postOcrTokens['adjust-expense'], customInstructions },
         )
@@ -134,6 +137,17 @@ export const receiptWorkflow = task({
           await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_EXPENSE, 'failed', authHeaders, adjustResult.error)
           logger.warn(`Adjust-split failed, continuing`, { error: adjustResult.error })
         }
+      }
+      else if (expenseId && annotationsResult.ok && !llmConsent) {
+        // Preconditions met, but the household hasn't consented to LLM analysis.
+        // Mark the step SKIPPED (not FAILED — it intentionally didn't run, and
+        // not COMPLETED — it did no work) so it doesn't sit at 'pending' forever
+        // and the run can finalize cleanly.
+        await updateWorkflowStatus(authHeaders, {
+          adjustExpenseStatus: WORKFLOW_STEP_STATUS.SKIPPED,
+        })
+        await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_EXPENSE, 'skipped', authHeaders)
+        logger.info('Adjust-split skipped — household has not consented to LLM analysis')
       }
     }
     catch (err) {

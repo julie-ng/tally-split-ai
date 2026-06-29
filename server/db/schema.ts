@@ -19,6 +19,13 @@ export const households = pgTable('households', {
   // and adjust-expense LLM tasks. Snapshotted into the workflow payload at
   // trigger time — in-flight runs are unaffected by edits.
   customInstructions: text('custom_instructions'),
+  // Consent to send household data (member first names + initials, never
+  // userIds) to LLMs for expense analysis/attribution. Scope = LLM steps only;
+  // pure OCR/vision (Azure Document Intelligence) does NOT require it. Off by
+  // default — the adjust-expense task is skipped entirely unless this is true.
+  // Like customInstructions, snapshotted into the workflow payload at trigger
+  // time so in-flight runs are unaffected by edits.
+  llmConsent: boolean('llm_consent').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })

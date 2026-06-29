@@ -20,6 +20,7 @@ const formData = ref({
   name: householdStore.name ?? '',
   description: householdStore.description ?? '',
   customInstructions: householdStore.customInstructions ?? '',
+  llmConsent: householdStore.llmConsent ?? false,
 })
 
 const fieldErrors = ref({})
@@ -33,6 +34,7 @@ async function handleSubmit () {
       name: formData.value.name,
       description: formData.value.description,
       customInstructions: formData.value.customInstructions,
+      llmConsent: formData.value.llmConsent,
     })
     toast.add({
       title: 'Household updated',
@@ -109,6 +111,7 @@ async function handleSubmit () {
             </p>
           </div>
 
+          <!-- Custom LLM Instructions -->
           <div>
             <label for="customInstructions" class="block text-sm font-semibold mb-1">
               Custom AI Instructions
@@ -142,6 +145,20 @@ async function handleSubmit () {
                 {{ formData.customInstructions?.length ?? 0 }} / 2000
               </p>
             </div>
+          </div>
+
+          <!-- LLM Consent -->
+          <div>
+            <!-- <h2 class="block text-sm font-semibold mb-1">
+              AI Expense Analysis
+            </h2> -->
+            <UCheckbox
+              v-model="formData.llmConsent"
+              label="I agree to giving my name and initials (without user IDs) to LLMs to analyze and adjust expense splits within this household."
+            />
+            <p v-if="fieldErrors.llmConsent" class="text-red-600 text-sm mt-1">
+              {{ fieldErrors.llmConsent.join(', ') }}
+            </p>
           </div>
         </div>
 

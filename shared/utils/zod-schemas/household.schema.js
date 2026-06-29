@@ -25,6 +25,7 @@ export const householdUpdateSchema = z.object({
     .max(2000)
     .nullable()
     .optional()),
+  llmConsent: z.boolean().optional(),
 }).refine(
   data => Object.keys(data).length > 0,
   { error: 'At least one field must be provided for update' },
