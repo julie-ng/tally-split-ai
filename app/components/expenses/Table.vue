@@ -150,7 +150,7 @@ function onSelect (event, row) {
         <!-- Expense ID -->
         <template #id-cell="{ row }">
           <UTooltip :text="row.original.id" :delay-duration="0">
-            {{ row.original.id.slice(0, 6) }}
+            <span class="font-mono text-sm">{{ row.original.id }}</span>
           </UTooltip>
         </template>
 
@@ -174,6 +174,7 @@ function onSelect (event, row) {
           <time
             v-if="row.original.date"
             :datetime="toBerlinISODate(row.original.date)"
+            class="tabular-nums"
           >
             {{ toBerlinShortDate(row.original.date) }}
           </time>
@@ -182,7 +183,7 @@ function onSelect (event, row) {
 
         <!-- Expense Total -->
         <template #splitAmount-cell="{ row }">
-          <div v-if="row.original.splitAmount != null" class="text-right font-semibold text-toned">
+          <div v-if="row.original.splitAmount != null" class="text-right tabular-nums">
             {{ receiptUtils.formatAmount(row.original.splitAmount) }}
           </div>
           <div v-else class="text-dimmed text-right">
@@ -192,7 +193,7 @@ function onSelect (event, row) {
 
         <!-- Share #1 -->
         <template #userOneShare-cell="{ row }">
-          <div v-if="row.original.userOneShare != null" class="text-right font-medium">
+          <div v-if="row.original.userOneShare != null" class="text-right tabular-nums">
             {{ receiptUtils.formatAmount(row.original.userOneShare) }}
             <!-- <UBadge
               :label="householdStore.userOneInitials"
@@ -209,7 +210,7 @@ function onSelect (event, row) {
 
         <!-- Share #2 -->
         <template #userTwoShare-cell="{ row }">
-          <div v-if="row.original.userTwoShare != null" class="text-right font-medium">
+          <div v-if="row.original.userTwoShare != null" class="text-right tabular-nums">
             {{ receiptUtils.formatAmount(row.original.userTwoShare) }}
             <!-- <UBadge
               :label="householdStore.userTwoInitials"
