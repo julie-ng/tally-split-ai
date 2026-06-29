@@ -138,7 +138,7 @@ function getLinks (collapsed) {
     :min-size="12"
     :max-size="18"
     :ui="{
-      root: 'bg-elevated/25',
+      root: 'bg-elevated/30',
       footer: 'border-t border-default',
     }"
   >

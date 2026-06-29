@@ -13,6 +13,11 @@ export default defineAppConfig({
     container: {
       base: 'w-full max-w-full mx-auto px-4 sm:px-6 lg:px-8',
     },
+    dashboardPanel: {
+      slots: {
+        root: 'bg-elevated/30',
+      },
+    },
     input: {
       slots: {
         base: 'bg-muted!',

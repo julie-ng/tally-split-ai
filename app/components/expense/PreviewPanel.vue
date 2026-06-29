@@ -67,7 +67,6 @@ const tabs = [
       :default-size="28"
       :min-size="22"
       :max-size="48"
-      class="bg-elevated/25"
       :ui="{
         // overflow-hidden + min-w-0 clip children to the sidebar's --width.
         // Without it, a long un-broken title (e.g. 'Scanned_20260415-1048-08')
