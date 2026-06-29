@@ -13,12 +13,14 @@ import { loadInstructions } from './load-instructions.js'
  * @param {string} params.merchantName - Merchant name from receipt
  * @param {Object[]} params.lineItems - Line items from OCR ({ description, quantity, totalPrice })
  * @param {string} params.originalFilename - Original upload filename
+ * @param {string} params.currentDate - Today's date (YYYY-MM-DD), for the year sanity check. Passed in (not computed here) so the util stays deterministic.
  * @returns {Promise<Object>} { date, time, title, filenameIsHumanNamed }
  */
-export async function normalizeReceipt ({ transactionDate, transactionTime, merchantName, lineItems, originalFilename }) {
+export async function normalizeReceipt ({ transactionDate, transactionTime, merchantName, lineItems, originalFilename, currentDate }) {
   const systemPrompt = loadInstructions('normalize-receipt')
 
   const userMessage = JSON.stringify({
+    currentDate: currentDate || null,
     transactionDate: transactionDate || null,
     transactionTime: transactionTime || null,
     merchantName: merchantName || 'Unknown',

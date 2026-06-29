@@ -53,13 +53,17 @@ export const normalizeReceipt = task({
 
       const receipt = await api.get(`/api/receipts/${receiptId}`)
 
-      // 5. Call GPT-4o-mini for normalization
+      // 5. Call GPT-4o-mini for normalization. Pass today's date so the model
+      // can sanity-check the receipt year (OCR often misreads it on
+      // crumpled/faded receipts) and correct an implausibly old/future year.
+      const currentDate = new Date().toISOString().slice(0, 10)
       const result = await gpt4oUtils.normalizeReceipt({
         transactionDate,
         transactionTime,
         merchantName: receipt.merchantName,
         lineItems,
         originalFilename: upload.originalFilename,
+        currentDate,
       })
 
       logger.log(`Normalize result for ${uploadId}`, {
