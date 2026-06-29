@@ -52,6 +52,15 @@ const {
   activeTab,
   openPreview,
 } = useExpensePreview()
+
+// Batch settle/delete: composable owns row-selection + the handlers (confirm,
+// toasts, optimistic store update). After a mutation, refresh the summary cards.
+const {
+  rowSelection,
+  selectedCount,
+  batchSettle,
+  batchDelete,
+} = useExpenseBatchActions({ onMutated: () => expensesStore.fetchSummary() })
 </script>
 
 <template>
@@ -91,7 +100,7 @@ const {
 
           <expenses-summary-cards :summary="summary" class="my-4" />
 
-          <expenses-toolbar
+          <ExpensesToolbar
             :settled-label="settledLabel"
             :settled-menu-items="settledMenuItems"
             :paid-by-label="paidByLabel"
@@ -101,12 +110,16 @@ const {
             :sort-menu-items="sortMenuItems"
             :has-active-filters="hasActiveFilters"
             :pagination-info="paginationInfo"
+            :selected-count="selectedCount"
             class="mt-6 mb-3"
             @reset="reset"
+            @batch-settle="batchSettle"
+            @batch-delete="batchDelete"
           />
 
           <ExpensesTable
             v-model:pagination="pagination"
+            v-model:row-selection="rowSelection"
             :data="filteredExpenses"
             :sorting="sorting"
             :pagination-info="paginationInfo"

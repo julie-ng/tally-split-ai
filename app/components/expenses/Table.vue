@@ -1,5 +1,6 @@
 <script setup>
 import { getPaginationRowModel } from '@tanstack/vue-table'
+import { UCheckbox } from '#components'
 import { useHouseholdStore } from '~/stores/household.store'
 import { toBerlinISODate, toBerlinShortDate } from '#shared/utils/expense-date.utils.js'
 
@@ -31,8 +32,14 @@ const pagination = defineModel('pagination', {
   type: Object,
   default: () => ({ pageIndex: 0, pageSize: 25 }),
 })
+const rowSelection = defineModel('rowSelection', {
+  type: Object,
+  default: () => ({}),
+})
 
 const householdStore = useHouseholdStore()
+
+const selectedCount = computed(() => Object.keys(rowSelection.value).length)
 
 const user1Name = computed(() => householdStore.getMemberFirstName(householdStore.userOne?.id))
 const user2Name = computed(() => householdStore.getMemberFirstName(householdStore.userTwo?.id))
@@ -40,6 +47,25 @@ const user2Name = computed(() => householdStore.getMemberFirstName(householdStor
 const table = useTemplateRef('table')
 
 const columns = computed(() => [
+  {
+    id: 'select',
+    meta: { class: { th: 'w-[36px] px-2', td: 'w-[36px] px-2' } },
+    header: ({ table }) => h(UCheckbox, {
+      'modelValue': table.getIsSomePageRowsSelected() ? 'indeterminate' : table.getIsAllPageRowsSelected(),
+      'onUpdate:modelValue': value => table.toggleAllPageRowsSelected(!!value),
+      'ariaLabel': 'Select all',
+    }),
+    // Stop the click bubbling to the row's @select handler so ticking a box
+    // doesn't also open the preview panel (Gmail-style: box and row-click are
+    // independent).
+    cell: ({ row }) => h('div', { onClick: e => e.stopPropagation() }, [
+      h(UCheckbox, {
+        'modelValue': row.getIsSelected(),
+        'onUpdate:modelValue': value => row.toggleSelected(!!value),
+        'ariaLabel': 'Select row',
+      }),
+    ]),
+  },
   {
     accessorKey: 'id',
     header: 'ID',
@@ -134,6 +160,7 @@ function onSelect (event, row) {
       <UTable
         ref="table"
         v-model:pagination="pagination"
+        v-model:row-selection="rowSelection"
         :sorting="sorting"
         :pagination-options="{
           getPaginationRowModel: getPaginationRowModel(),
@@ -247,6 +274,7 @@ function onSelect (event, row) {
 
       <div v-if="showPagination" class="flex justify-between items-center border-t border-default py-4 px-4">
         <div class="text-sm text-toned">
+          <span v-if="selectedCount > 0">{{ selectedCount }} selected &middot; </span>
           Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }}
         </div>
         <UPagination

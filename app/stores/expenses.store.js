@@ -473,47 +473,54 @@ export const useExpensesStore = defineStore('expenses', () => {
   }
 
   /**
-   * Mark a specific list of expenses as settled.
-   * Server silently drops IDs the caller doesn't own, IDs already settled,
-   * and IDs without a paidByUserId.
+   * Batch settle/unsettle a list of expenses (collection PATCH).
+   * Server silently drops IDs the caller doesn't own and IDs that aren't
+   * eligible for the requested direction (settle needs not-yet-settled +
+   * paidByUserId; unsettle needs currently-settled). The response's updatedIds
+   * tells us exactly which ones took, so we reconcile the optimistic update.
    *
-   * @param {string[]} expenseIds
-   * @returns {Promise<Object>} Result with updatedCount + settledIds
+   * @param {string[]} ids
+   * @param {boolean} isSettled - target value (true = settle, false = unsettle)
+   * @returns {Promise<Object>} Result with updatedCount + updatedIds + updated rows
    */
-  async function markSettled (expenseIds) {
-    _log(`[ExpensesStore] markSettled(${expenseIds.length} ids)`)
+  async function _setSettled (ids, isSettled) {
+    _log(`[ExpensesStore] _setSettled(${ids.length} ids, isSettled=${isSettled})`)
 
-    if (expenseIds.length === 0) {
-      return { success: true, updatedCount: 0, settledIds: [] }
+    if (ids.length === 0) {
+      return { success: true, updatedCount: 0, updatedIds: [] }
     }
 
     // Snapshot for rollback
     const originals = {}
-    for (const id of expenseIds) {
+    for (const id of ids) {
       if (expenses.value[id]) {
         originals[id] = { ...expenses.value[id] }
       }
     }
 
-    // Optimistic update — server will only confirm the eligible ones via
-    // settledIds in the response; we reconcile after success.
-    for (const id of expenseIds) {
+    // Optimistic update — flip the local flag; we reconcile against the
+    // server-confirmed updatedIds after success.
+    for (const id of ids) {
       if (expenses.value[id]) {
-        expenses.value[id] = { ...expenses.value[id], isSettled: true }
+        expenses.value[id] = { ...expenses.value[id], isSettled }
       }
     }
 
     try {
-      const result = await $fetch('/api/expenses/batch-settle', {
-        method: 'PUT',
-        body: { expenseIds },
+      const result = await $fetch('/api/expenses', {
+        method: 'PATCH',
+        body: { ids, patch: { isSettled } },
       })
-      _log(`[ExpensesStore] ✅ settled ${result.updatedCount}/${expenseIds.length} expenses`)
+      _log(`[ExpensesStore] ✅ updated ${result.updatedCount}/${ids.length} expenses (isSettled=${isSettled})`)
 
-      // Reconcile: roll back any ID we optimistically flipped that the server
-      // didn't actually settle (e.g. unattributed slipped through client filter).
-      const confirmed = new Set(result.settledIds ?? [])
-      for (const id of expenseIds) {
+      // Reconcile: the server returns the full updated rows. Patch those into
+      // the cache (so derived fields like settledAt/updatedAt stay accurate),
+      // and roll back any ID we optimistically flipped that wasn't confirmed.
+      const confirmed = new Set(result.updatedIds ?? [])
+      for (const row of result.updated ?? []) {
+        expenses.value[row.id] = { ...expenses.value[row.id], ...row }
+      }
+      for (const id of ids) {
         if (!confirmed.has(id) && originals[id]) {
           expenses.value[id] = originals[id]
         }
@@ -525,7 +532,95 @@ export const useExpensesStore = defineStore('expenses', () => {
       for (const id in originals) {
         expenses.value[id] = originals[id]
       }
-      console.error('[ExpensesStore] ❌ failed to mark expenses as settled:', err)
+      console.error('[ExpensesStore] ❌ failed to batch update settled state:', err)
+      throw err
+    }
+  }
+
+  /**
+   * Mark a list of expenses as settled. Ineligible IDs (no payer / already
+   * settled / not owned) are silently dropped by the server.
+   * @param {string[]} ids
+   */
+  function markSettled (ids) {
+    return _setSettled(ids, true)
+  }
+
+  /**
+   * Mark a list of expenses as unsettled (undo). Only currently-settled,
+   * owned IDs are affected.
+   * @param {string[]} ids
+   */
+  function markUnsettled (ids) {
+    return _setSettled(ids, false)
+  }
+
+  /**
+   * Batch delete a list of expenses. Server silently drops IDs the caller
+   * doesn't own. Optimistically removes from the cache, reconciles against the
+   * server-confirmed deletedIds, and restores anything that wasn't deleted.
+   *
+   * @param {string[]} ids
+   * @returns {Promise<Object>} Result with deletedCount + deletedIds
+   */
+  async function batchDelete (ids) {
+    _log(`[ExpensesStore] batchDelete(${ids.length} ids)`)
+
+    if (ids.length === 0) {
+      return { success: true, deletedCount: 0, deletedIds: [] }
+    }
+
+    // Snapshot for rollback (keep the receiptId so we can restore the
+    // receiptToExpense map entry too).
+    const originals = {}
+    for (const id of ids) {
+      if (expenses.value[id]) {
+        originals[id] = { ...expenses.value[id] }
+      }
+    }
+
+    // Optimistic remove — drop from both the expense map and the
+    // receiptId→expenseId index so getExpenseIdByReceiptId can't return a
+    // dangling id.
+    for (const id of ids) {
+      const receiptId = expenses.value[id]?.receiptId
+      delete expenses.value[id]
+      if (receiptId && receiptToExpense.value[receiptId] === id) {
+        delete receiptToExpense.value[receiptId]
+      }
+    }
+
+    try {
+      const result = await $fetch('/api/expenses/delete', {
+        method: 'POST',
+        body: { ids },
+      })
+      _log(`[ExpensesStore] ✅ deleted ${result.deletedCount}/${ids.length} expenses`)
+
+      // Reconcile: restore any optimistically-removed ID the server did NOT
+      // actually delete (e.g. not owned) — both the row and its index entry.
+      const confirmed = new Set(result.deletedIds ?? [])
+      for (const id of ids) {
+        if (!confirmed.has(id) && originals[id]) {
+          expenses.value[id] = originals[id]
+          const receiptId = originals[id].receiptId
+          if (receiptId) {
+            receiptToExpense.value[receiptId] = id
+          }
+        }
+      }
+
+      return result
+    }
+    catch (err) {
+      for (const id in originals) {
+        expenses.value[id] = originals[id]
+        const receiptId = originals[id].receiptId
+        if (receiptId) {
+          receiptToExpense.value[receiptId] = id
+        }
+      }
+      console.error('[ExpensesStore] ❌ failed to batch delete expenses:', err)
       throw err
     }
   }
@@ -565,5 +660,7 @@ export const useExpensesStore = defineStore('expenses', () => {
     updateExpense,
     clearExpenseError,
     markSettled,
+    markUnsettled,
+    batchDelete,
   }
 })

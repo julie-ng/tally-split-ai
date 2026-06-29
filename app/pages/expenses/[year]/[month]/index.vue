@@ -78,6 +78,17 @@ async function refreshAll () {
     }),
   ])
 }
+
+// Batch settle/delete: composable owns row-selection + the handlers. After a
+// mutation, refresh this month's summary cards.
+const {
+  rowSelection,
+  selectedCount,
+  batchSettle,
+  batchDelete,
+} = useExpenseBatchActions({
+  onMutated: () => expensesStore.fetchSummary({ year: year.value, month: month.value }),
+})
 </script>
 
 <template>
@@ -113,7 +124,7 @@ async function refreshAll () {
         <div v-if="hasExpenses">
           <expenses-summary-cards :summary="summary" class="mb-4" />
 
-          <expenses-toolbar
+          <ExpensesToolbar
             :settled-label="settledLabel"
             :settled-menu-items="settledMenuItems"
             :paid-by-label="paidByLabel"
@@ -123,13 +134,17 @@ async function refreshAll () {
             :sort-menu-items="sortMenuItems"
             :has-active-filters="hasActiveFilters"
             :pagination-info="paginationInfo"
+            :selected-count="selectedCount"
             class="mt-6 mb-3"
             @reset="reset"
             @refresh="refreshAll"
+            @batch-settle="batchSettle"
+            @batch-delete="batchDelete"
           />
 
           <ExpensesTable
             v-model:pagination="pagination"
+            v-model:row-selection="rowSelection"
             :data="filteredExpenses"
             :sorting="sorting"
             :pagination-info="paginationInfo"

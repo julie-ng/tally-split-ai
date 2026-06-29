@@ -1,6 +1,4 @@
 <script setup>
-import { useHouseholdStore } from '~/stores/household.store'
-
 defineProps({
   settledLabel: {
     type: String,
@@ -38,20 +36,37 @@ defineProps({
     type: Object,
     default: () => ({ start: 0, end: 0, total: 0 }),
   },
+  selectedCount: {
+    type: Number,
+    default: 0,
+  },
 })
-defineEmits(['reset', 'refresh'])
-
-const householdStore = useHouseholdStore()
+defineEmits(['reset', 'refresh', 'batch-settle', 'batch-delete'])
 </script>
 
 <template>
   <div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between lg:gap-0">
-    <p class="text-sm text-dimmed">
-      Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} expenses for
-      <NuxtLink :to="householdStore.path" class="underline cursor-pointer">{{ householdStore.name }}</NuxtLink>
-    </p>
+    <!-- Batch actions: only shown when rows are selected. The page owns the
+         actual mutations; this just surfaces the buttons + count. -->
+    <div v-if="selectedCount > 0" class="flex items-center gap-2">
+      <UButton
+        color="neutral"
+        variant="subtle"
+        size="sm"
+        class="cursor-pointer"
+        icon="i-lucide-square-check-big"
+        @click="$emit('batch-settle')"
+      >
+        Settle ({{ selectedCount }})
+      </UButton>
+    </div>
+    <div v-else />
 
     <div class="flex items-center gap-2">
+      <p class="text-sm text-dimmed">
+        Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} expenses
+      </p>
+
       <UButton
         color="neutral"
         variant="outline"
