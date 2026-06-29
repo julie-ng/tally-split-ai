@@ -47,8 +47,11 @@ If no annotations affect the total, the adjusted total equals the original total
 **Ignore printed tax-rate codes.** German (and many European) receipts often print a single-letter or single-digit code in an extra column right after the price on each line item — typically `A`, `B`, `1`, `2`, and sometimes other letters or symbols (e.g., `*`, `#`). These are the cash register's tax-rate codes (e.g., A = 19% VAT, B = 7%), not handwritten initials. If an annotation entry has `value: "A"` or `value: "B"` and is positioned next to an item's price, treat it as a printed tax code, not as a payer signal.
 
 **Card numbers match by EXACT last digits only — never by brand.** When custom instructions map a card to a person (e.g. "card ending in 1234 is Alice's"), treat it as a payer signal **only if** the receipt's card ends in exactly those digits.
+- **Compare all four digits, position by position.** Before concluding anything about a card, write out in your reasoning: the receipt's last-4, each listed card's last-4, and which listed entry (if any) is an EXACT match. A card differs by even one digit → it is NOT that entry.
+- Two different listed cards (e.g. `1234` and `2431`) are **not** interchangeable. Do not let one card's mapping "bleed" onto the other because they look similar or appear in the same list.
 - The card **brand or issuer** (Visa, Mastercard, EC, Amex, debit/credit) is **never** sufficient on its own to assign or lean toward a payer. Do NOT reason like "it's a Mastercard, which is more like Alice's pattern." Two people can use the same brand; the brand carries no payer information by itself.
-- If the receipt's card does not match **any** instruction by exact digits, the card is **not** a payer signal. Do not guess from the brand, and keep `payerConfidence` low.
+- If the receipt's card does not match **any** instruction by exact digits, the card is **not** a payer signal. **Do not default to "joint" / shared / null-payer just because you are unsure** — an unmatched card means *no information about the payer*, which is different from a confirmed joint card. Return `paidBy: null` with **low** `payerConfidence`, and do not invent a joint interpretation.
+- A card is only "joint" / shared if an instruction maps **those exact digits** to joint. An unmatched card is never assumed joint.
 - Only the digit match counts — a brand mentioned alongside the digits in an instruction is context for you, not a thing to match on.
 
 - Initials in the margin, or a note like "Bob owes Alice", indicate who paid the bill.
