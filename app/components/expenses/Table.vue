@@ -43,14 +43,14 @@ const columns = computed(() => [
   {
     accessorKey: 'id',
     header: 'ID',
-    meta: { class: { th: 'w-[80px]', td: 'w-[80px]' } },
+    meta: { class: { th: 'w-[190px]', td: 'w-[190px]' } },
   },
   {
     id: 'date',
     accessorFn: row => row.date ?? null,
     header: 'Date',
     sortUndefined: 'last',
-    meta: { class: { th: 'w-[80px]', td: 'w-[80px]' } },
+    meta: { class: { th: 'w-[100px]', td: 'w-[100px]' } },
   },
   // {
   //   accessorKey: 'paidByUserId',
@@ -65,17 +65,17 @@ const columns = computed(() => [
   {
     accessorKey: 'userOneShare',
     header: `${user1Name.value}'s Share`,
-    meta: { class: { th: 'w-[124px] px-2 text-right', td: 'w-[124px] px-2 text-right' } },
+    meta: { class: { th: 'w-[120px] px-2 text-right', td: 'w-[120px] px-2 text-right' } },
   },
   {
     accessorKey: 'userTwoShare',
     header: `${user2Name.value}'s Share`,
-    meta: { class: { th: 'w-[124px] px-2 text-right', td: 'w-[124px] px-2 text-right' } },
+    meta: { class: { th: 'w-[120px] px-2 text-right', td: 'w-[120px] px-2 text-right' } },
   },
   {
     accessorKey: 'splitAmount',
-    header: 'Total',
-    meta: { class: { th: 'w-[100px] px-2 text-right', td: 'w-[100px] px-2 text-right' } },
+    header: 'Split Amount',
+    meta: { class: { th: 'w-[120px] px-2 text-right', td: 'w-[120px] px-2 text-right' } },
   },
 
   {
@@ -94,7 +94,7 @@ const tableStyles = {
 const tableMeta = computed(() => ({
   class: {
     tr: row => row?.original?.id === props.previewExpenseId
-      ? 'bg-primary/10'
+      ? 'bg-brand-50'
       : '',
   },
 }))
@@ -149,9 +149,7 @@ function onSelect (event, row) {
       >
         <!-- Expense ID -->
         <template #id-cell="{ row }">
-          <UTooltip :text="row.original.id" :delay-duration="0">
-            <span class="font-mono text-sm">{{ row.original.id }}</span>
-          </UTooltip>
+          <span class="font-mono text-sm">{{ row.original.id }}</span>
         </template>
 
         <!-- Expense Title -->
