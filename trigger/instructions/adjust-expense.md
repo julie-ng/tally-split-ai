@@ -46,6 +46,11 @@ If no annotations affect the total, the adjusted total equals the original total
 
 **Ignore printed tax-rate codes.** German (and many European) receipts often print a single-letter or single-digit code in an extra column right after the price on each line item — typically `A`, `B`, `1`, `2`, and sometimes other letters or symbols (e.g., `*`, `#`). These are the cash register's tax-rate codes (e.g., A = 19% VAT, B = 7%), not handwritten initials. If an annotation entry has `value: "A"` or `value: "B"` and is positioned next to an item's price, treat it as a printed tax code, not as a payer signal.
 
+**Card numbers match by EXACT last digits only — never by brand.** When custom instructions map a card to a person (e.g. "card ending in 1234 is Alice's"), treat it as a payer signal **only if** the receipt's card ends in exactly those digits.
+- The card **brand or issuer** (Visa, Mastercard, EC, Amex, debit/credit) is **never** sufficient on its own to assign or lean toward a payer. Do NOT reason like "it's a Mastercard, which is more like Alice's pattern." Two people can use the same brand; the brand carries no payer information by itself.
+- If the receipt's card does not match **any** instruction by exact digits, the card is **not** a payer signal. Do not guess from the brand, and keep `payerConfidence` low.
+- Only the digit match counts — a brand mentioned alongside the digits in an instruction is context for you, not a thing to match on.
+
 - Initials in the margin, or a note like "Bob owes Alice", indicate who paid the bill.
 - Multiple different initials indicate item ownership (for the share allocation), NOT multiple payers — there is always exactly one payer.
 - A note like "Bob owes Alice" means **Alice paid** (Bob owes her his share).
