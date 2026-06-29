@@ -1,9 +1,18 @@
 <script setup>
+import { useExpensesStore } from '~/stores/expenses.store'
+
 const props = defineProps({
   receipt: Object,
 })
 
+const expensesStore = useExpensesStore()
+
 const uploadId = computed(() => props.receipt.uploads?.[0]?.id)
+
+// The linked expense isn't reachable from the receipt UI otherwise. The sibling
+// <receipt-expense> already warms the receiptId → expenseId mapping into the
+// store, so we just read it here. Deep-links the expenses preview panel.
+const expenseId = computed(() => expensesStore.getExpenseIdByReceiptId(props.receipt.id))
 
 const dates = computed(() => {
   return [
@@ -82,8 +91,8 @@ const dates = computed(() => {
     <div class="px-4">
       <hr class="my-6 border-default">
 
-      <!-- Edit Button -->
-      <div class="my-3">
+      <!-- Edit / View actions -->
+      <div class="my-3 flex items-center gap-2">
         <NuxtLink :to="`/receipts/${receipt.id}/edit`">
           <UButton
             icon="i-lucide-pencil"
@@ -92,6 +101,16 @@ const dates = computed(() => {
             class="hover:cursor-pointer"
           >
             Edit Receipt
+          </UButton>
+        </NuxtLink>
+        <NuxtLink v-if="expenseId" :to="`/expenses?preview=${expenseId}`">
+          <UButton
+            icon="i-lucide-coins"
+            color="neutral"
+            variant="outline"
+            class="hover:cursor-pointer"
+          >
+            View Expense
           </UButton>
         </NuxtLink>
       </div>
