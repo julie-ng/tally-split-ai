@@ -1,12 +1,14 @@
 import { z } from 'zod'
+import { tasks } from '@trigger.dev/sdk/v3'
 
 /**
  * Batch-delete expenses in the caller's household.
  *
  * POST (not DELETE) so the { ids } body survives legacy proxies/caches that
- * strip DELETE bodies. The mutation + household scoping live in
- * server/utils/expenses (expensesUtils.deleteMany); this handler only
- * validates and shapes the response.
+ * strip DELETE bodies. The cascade delete + household scoping live in
+ * server/utils/expenses (expensesUtils.deleteMany); this handler validates,
+ * offloads Azure blob deletion to the delete-blobs task, and shapes the
+ * response.
  */
 const batchDeleteSchema = z.object({
   ids: z.array(z.string()).min(1).max(500),
@@ -31,24 +33,30 @@ export default defineEventHandler(async (event) => {
   const { ids } = result.data
 
   try {
-    const deleted = await expensesUtils.deleteMany(db, { householdId, ids })
+    const { deletedIds, blobDeleteUrls } = await expensesUtils.deleteMany(db, { householdId, ids })
 
-    const deletedIds = deleted.map(r => r.id)
+    // Offload Azure blob cleanup — the DB rows are already gone; orphaned blobs
+    // are harmless if this is delayed/retried, so don't block the response.
+    if (blobDeleteUrls.length > 0) {
+      await tasks.trigger('delete-blobs', { blobDeleteUrls })
+    }
+
     log.info(
       {
         requested: ids.length,
-        deleted: deleted.length,
+        deleted: deletedIds.length,
         requestedIds: ids,
         deletedIds,
+        blobs: blobDeleteUrls.length,
       },
-      'Batch deleted (history cascaded)',
+      'Batch deleted (receipts + cascade); blob cleanup queued',
     )
 
     return {
       success: true,
-      deletedCount: deleted.length,
+      deletedCount: deletedIds.length,
       deletedIds,
-      message: `Successfully deleted ${deleted.length} expense(s)`,
+      message: `Successfully deleted ${deletedIds.length} expense(s)`,
     }
   }
   catch (err) {

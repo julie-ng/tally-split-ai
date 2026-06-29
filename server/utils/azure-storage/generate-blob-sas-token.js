@@ -10,7 +10,7 @@ import { generateBlobUrl } from './generate-blob-url.js'
  * Generate SAS token for Azure Blob Storage.
  * @param {string} blobName - The blob name/path
  * @param {Object} options - SAS token options
- * @param {string} options.permissions - Permissions: 'read' or 'create'
+ * @param {string} options.permissions - Permissions: 'read', 'create', or 'delete'
  * @param {number} options.expiresInMinutes - Token validity duration in minutes
  * @returns {Object} Object containing sasToken, blobUrl, uploadUrl, and expiresAt
  */
@@ -31,8 +31,11 @@ export function generateBlobSasToken (blobName, { permissions = 'read', expiresI
       sasPermissions.create = true
       sasPermissions.tag = true
       break
+    case 'delete':
+      sasPermissions.delete = true
+      break
     default:
-      throw new Error(`Invalid permission: ${permissions}. Must be 'read' or 'create'`)
+      throw new Error(`Invalid permission: ${permissions}. Must be 'read', 'create', or 'delete'`)
   }
 
   // Set expiration time

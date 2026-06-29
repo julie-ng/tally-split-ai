@@ -59,6 +59,16 @@ defineEmits(['reset', 'refresh', 'batch-settle', 'batch-delete'])
       >
         Settle ({{ selectedCount }})
       </UButton>
+      <UButton
+        color="neutral"
+        variant="subtle"
+        size="sm"
+        class="cursor-pointer"
+        icon="i-lucide-trash-2"
+        @click="$emit('batch-delete')"
+      >
+        Delete ({{ selectedCount }})
+      </UButton>
     </div>
     <div v-else />
 

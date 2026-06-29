@@ -129,7 +129,7 @@ export function useExpenseBatchActions (options = {}) {
     })
 
     const confirmed = await confirmModal.open({
-      title: `Delete ${ids.length} expense${ids.length === 1 ? '' : 's'}?`,
+      title: 'Confirm Deletion',
       description: 'This permanently deletes the following and cannot be undone.',
       items,
       confirmLabel: `Delete ${ids.length === 1 ? 'expense' : 'expenses'}`,

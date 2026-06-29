@@ -21,6 +21,9 @@ export const TASK_PERMISSIONS = {
   'create-expense': ['receipt:read', 'receipt:write', 'expense:write', 'upload:read', 'workflow:read', 'workflow:write'],
   'normalize-receipt': ['receipt:read', 'receipt:write', 'upload:read', 'workflow:read', 'workflow:write'],
   'adjust-expense': ['expense:write', 'upload:read', 'workflow:read', 'workflow:write'],
+  // No API access: deletes Azure blobs via pre-signed DELETE SAS URLs passed in
+  // its payload, so it never calls back into our API and needs no HMAC scope.
+  'delete-blobs': [],
 }
 
 /**

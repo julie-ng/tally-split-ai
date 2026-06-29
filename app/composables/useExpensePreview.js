@@ -62,9 +62,18 @@ export function useExpensePreview () {
       return
     }
     activeTab.value = 'overview'
-    const expense = await expensesStore.fetchExpense(id)
-    if (expense?.receiptId) {
-      receiptsStore.fetchReceiptById(expense.receiptId)
+    try {
+      const expense = await expensesStore.fetchExpense(id)
+      if (expense?.receiptId) {
+        receiptsStore.fetchReceiptById(expense.receiptId)
+      }
+    }
+    catch (err) {
+      // The ?preview id points at an expense that no longer exists (deleted, or
+      // a stale/hand-edited URL). Close the preview instead of throwing an
+      // unhandled rejection from the watcher.
+      console.warn(`[useExpensePreview] could not load preview expense ${id}, closing:`, err)
+      isPreviewOpen.value = false
     }
   }, { immediate: true })
 
@@ -82,6 +91,16 @@ export function useExpensePreview () {
   watch(isPreviewOpen, (value) => {
     if (!value) {
       closePreview()
+    }
+  })
+
+  // If the previewed expense disappears from the store while the panel is open
+  // (e.g. it was just deleted), close the preview so ?preview doesn't dangle and
+  // re-trigger a 404 fetch. Only acts when an id is set but its expense is gone —
+  // not during the brief warm window (the warm watch handles cold-load fetch).
+  watch(previewExpense, (expense) => {
+    if (isPreviewOpen.value && previewExpenseId.value && !expense) {
+      isPreviewOpen.value = false
     }
   })
 

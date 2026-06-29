@@ -11,6 +11,11 @@ import { globSync } from 'glob'
  * deletion is handled by FK cascade at the schema layer (see
  * project_change_history.md), so handlers no longer write history.
  *
+ * NOTE: "delete semantics, POST method" endpoints (e.g. batch delete uses
+ * `delete.post.js` so the { ids } body survives proxies that strip DELETE
+ * bodies) are ALSO excluded — they're deletes, not state-mutating writes, so the
+ * same FK-cascade rationale applies. We match these by filename, not HTTP method.
+ *
  * This is a static analysis test — it reads source files and checks
  * for the presence of trackChanges/trackCreate/trackBatchChanges calls.
  * It catches the case where someone adds or modifies an endpoint
@@ -26,9 +31,13 @@ import { globSync } from 'glob'
 const TRACK_FUNCTIONS = ['trackChanges', 'trackCreate', 'trackBatchChanges']
 const TRACK_PATTERN = new RegExp(`(${TRACK_FUNCTIONS.join('|')})\\(`)
 
+// Filenames that are deletes (regardless of HTTP method) and so are exempt from
+// history tracking — deletion is handled by FK cascade, not handler writes.
+const DELETE_SEMANTICS = /(^|\.)delete\.(post|put)\.js$/
+
 function getMutatingEndpoints (dir) {
   const pattern = resolve(dir, '*.{post,put}.js')
-  return globSync(pattern)
+  return globSync(pattern).filter(f => !DELETE_SEMANTICS.test(f.split('/').pop()))
 }
 
 function fileContainsTracking (filePath) {
