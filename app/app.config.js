@@ -4,7 +4,7 @@ export default defineAppConfig({
       brand: 'brand',
       primary: 'brand',
       secondary: 'teal',
-      neutral: 'mist',
+      neutral: 'gray',
       info: 'cyan',
       warning: 'amber',
       success: 'emerald',

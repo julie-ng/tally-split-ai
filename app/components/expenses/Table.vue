@@ -120,7 +120,7 @@ const tableStyles = {
 const tableMeta = computed(() => ({
   class: {
     tr: row => row?.original?.id === props.previewExpenseId
-      ? 'bg-brand-50'
+      ? 'bg-elevated/90'
       : '',
   },
 }))
