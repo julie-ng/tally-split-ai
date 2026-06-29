@@ -46,6 +46,8 @@ export const expenseRequestSchema = z.object({
  * excluded — paidBy resolution flows through POST /api/expenses/[id]/task.
  */
 export const expenseUpdateSchema = z.object({
+  title: z.string().optional(),
+  date: z.string().nullable().optional(), // UTC ISO instant (timestamptz), null to clear
   splitAmount: z.number().optional(),
   userOneShare: z.number().nullable().optional(),
   userTwoShare: z.number().nullable().optional(),
