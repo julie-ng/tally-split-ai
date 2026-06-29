@@ -291,7 +291,7 @@ function showToast (err) {
         </div>
 
         <USeparator class="my-6" />
-        <expense-llm-analysis v-if="expenseId" :expense-id="expenseId" />
+        <ExpenseLLMAnalysis v-if="expenseId" :expense-id="expenseId" />
 
       <!-- <div class="text-right">
         <UButton
