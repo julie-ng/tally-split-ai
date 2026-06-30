@@ -1,5 +1,6 @@
-import { eq, and, inArray } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { summarizeExpenses } from '#shared/utils/expenses/expense-summary.utils.js'
+import { toBerlinISODate } from '#shared/utils/expense-date.utils.js'
 
 export default defineEventHandler(async (event) => {
   const db = useDB()
@@ -11,33 +12,26 @@ export default defineEventHandler(async (event) => {
   const year = query.year ? parseInt(query.year) : null
   const month = query.month ? parseInt(query.month) : null
 
-  // filter expenses for this household via the linked receipt
-  const queryOptions = {
+  // Scope by expenses.householdId DIRECTLY — NOT via a receipt join. Standalone
+  // expenses have receiptId = null; an inArray(receiptId, household receipts)
+  // filter silently drops them from the summary while the table (which scopes by
+  // householdId) still shows them, so the cards undercount. See the same fix in
+  // server/utils/expenses/set-settled.js and delete-many.js.
+  const expenses = await db.query.expenses.findMany({
     where: and(
-      inArray(
-        schema.expenses.receiptId,
-        db.select({ id: schema.receipts.id })
-          .from(schema.receipts)
-          .where(eq(schema.receipts.householdId, householdId)),
-      ),
+      eq(schema.expenses.householdId, householdId),
       eq(schema.expenses.isSettled, false),
     ),
-  }
-
-  if (year && month) {
-    queryOptions.with = {
-      receipt: { columns: { date: true } },
-    }
-  }
-
-  const expenses = await db.query.expenses.findMany(queryOptions)
+  })
 
   let filteredExpenses = expenses
   if (year && month) {
+    // Bucket by expense.date (Berlin calendar day), exactly like the table's
+    // getExpensesByMonth — NOT by receipt.date, which standalone expenses lack.
+    const target = `${year}-${String(month).padStart(2, '0')}`
     filteredExpenses = expenses.filter((expense) => {
-      if (!expense.receipt?.date) return false
-      const date = new Date(expense.receipt.date)
-      return date.getFullYear() === year && date.getMonth() + 1 === month
+      const berlinMonth = toBerlinISODate(expense.date)?.slice(0, 7) // "YYYY-MM" or undefined
+      return berlinMonth === target
     })
   }
 
