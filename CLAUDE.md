@@ -45,10 +45,15 @@ This is a [**Nuxt 4** application](https://nuxt.com/docs/4.x/getting-started/int
 │   │   └── user.store.js          # User state management
 │   └── utils/                     # Client-side utilities
 ├── trigger/                       # Trigger.dev task definitions
-│   ├── receipt-workflow.ts        # Orchestrator: OCR → annotations → expense
-│   ├── analyze-ocr.ts            # Azure Document Intelligence OCR
-│   ├── analyze-annotations.ts    # GPT-4o annotation detection
-│   └── create-expense.ts         # Expense creation from receipt total
+│   ├── receipt-workflow.js        # Orchestrator: OCR → annotations → normalize → expense → adjust
+│   ├── analyze-ocr.js             # Azure Document Intelligence OCR (deterministic, FATAL)
+│   ├── analyze-annotations.js     # GPT-4o handwriting/annotation detection (non-fatal)
+│   ├── normalize-receipt.js       # GPT-4o-mini: clean date/year, title, filename (non-fatal)
+│   ├── create-expense.js          # Expense from receipt total (deterministic, non-fatal)
+│   ├── adjust-expense.js          # GPT-4o-mini: asymmetric split (LLM-consent-gated, non-fatal)
+│   ├── delete-blobs.js            # Azure blob cleanup on expense/receipt delete
+│   ├── instructions/              # LLM system prompts (.md) for the AI tasks
+│   └── utils/                     # api-client, notify-status helpers
 ├── server/                        # Nuxt server directory
 │   ├── api/                       # API endpoints (auto-registered)
 │   │   ├── analysis/              # Analysis endpoints (trigger tasks)
@@ -79,7 +84,7 @@ This is a [**Nuxt 4** application](https://nuxt.com/docs/4.x/getting-started/int
 - **API routes**: Server API endpoints are auto-registered from `server/api/`
 - **State management**: Pinia stores for reactive state (uploads, user)
 - **Database**: PostgreSQL 17 (Docker) + Drizzle ORM
-- **Async workflows**: Trigger.dev orchestrates long-running analysis tasks
+- **Async workflows**: Trigger.dev orchestrates a fixed 5-step pipeline (deterministic control flow; LLMs are perception/extraction components, not agents — see `trigger/README.md`)
 - **Client-side uploads**: Direct-to-Azure uploads using SAS tokens (no server proxy)
 
 ---
@@ -88,8 +93,9 @@ This is a [**Nuxt 4** application](https://nuxt.com/docs/4.x/getting-started/int
 
 - Users upload receipt photos via drag-and-drop; uploads are queued and sent directly to Azure Blob Storage
 - Filenames encode pre-curated data: `(41.95)` for total in EUR, `YYYY-MM-DD` for dates
-- After upload, a Trigger.dev workflow automatically runs: OCR → annotation detection → split creation
-- Each upload creates a Receipt entry (via OCR analysis) and a Split entry (from receipt total)
+- After upload, a Trigger.dev workflow automatically runs: OCR → annotation detection → receipt normalization → expense creation → split adjustment
+- Each upload creates a Receipt entry (via OCR analysis) and an Expense entry (from receipt total, defaulting to a 50/50 split)
+- Only OCR is fatal; the AI steps degrade gracefully (run finishes `PARTIAL`, expense stays editable). The `adjust-expense` step is gated on `households.llmConsent` — it's the only step that sends member names to the LLM
 - The `workflow_runs` table tracks per-step progress; `uploads.analysisStatus` is a convenience field updated by the orchestrator
 
 ---

@@ -5,14 +5,29 @@ This directory contains [Trigger.dev](https://trigger.dev) task definitions for 
 > [!TIP]
 > Trigger CLI can only trigger orchestrator. Use our manual HTTP endpoints to test individual triggers, e.g. only OCR analysis.
 
+## Pipeline shape
+
+One orchestrator (`receipt-workflow`) fans out to five worker tasks in a **fixed sequence**. The control flow is plain deterministic JavaScript — a DAG of `triggerAndWait` calls. No LLM decides what runs next, nothing loops, no model calls tools: this is an **orchestrated LLM pipeline, not an agent**. The "intelligence" is three discrete, single-shot LLM calls with structured outputs, each doing one narrow job:
+
+- `analyze-annotations` — perception (reads the photo, detects handwriting)
+- `normalize-receipt` — cleanup/enrichment (fixes OCR date/year, generates a title)
+- `adjust-expense` — allocation (maps handwriting → person, splits the total asymmetrically)
+
+Prompts for these live in [`instructions/`](./instructions). The other two workers are deterministic (Azure DI extraction; pure split math).
+
 ## Tasks
 
-| Task | ID | Description |
-|:--|:--|:--|
-| `receipt-workflow.ts` | `receipt-workflow` | Orchestrator — runs OCR, annotations, and expense creation in sequence |
-| `analyze-ocr.ts` | `analyze-ocr` | Calls Azure Document Intelligence for receipt OCR |
-| `analyze-annotations.ts` | `analyze-annotations` | Calls GPT-4o to detect handwritten annotations |
-| `create-expense.ts` | `create-expense` | Creates an expense from the receipt total |
+| Task | ID | Kind | Fatal? | Description |
+|:--|:--|:--|:--|:--|
+| `receipt-workflow.js` | `receipt-workflow` | orchestrator | — | Runs the five workers in sequence; finalizes `workflow_runs` status |
+| `analyze-ocr.js` | `analyze-ocr` | deterministic | **yes** | Azure Document Intelligence receipt OCR |
+| `analyze-annotations.js` | `analyze-annotations` | AI (GPT-4o) | no | Detects handwritten annotations (initials, circles, strikethroughs) |
+| `normalize-receipt.js` | `normalize-receipt` | AI (GPT-4o-mini) | no | Normalizes date/year, generates title, flags human-named filenames |
+| `create-expense.js` | `create-expense` | deterministic | no | Creates an expense from the receipt total (defaults to 50/50) |
+| `adjust-expense.js` | `adjust-expense` | AI (GPT-4o-mini) | no | Asymmetric split from annotations/instructions — **gated on `households.llmConsent`** |
+| `delete-blobs.js` | `delete-blobs` | deterministic | — | Cleans up Azure blobs when an expense/receipt is deleted (not part of the analysis pipeline) |
+
+**Failure handling:** only OCR is fatal. If any AI step fails, the orchestrator records it per-step in `workflow_runs.errors` and finishes the run as `PARTIAL` — the user still gets a receipt and an editable 50/50 expense. `adjust-expense` is additionally *skipped* (a distinct status, not failed) when the household hasn't consented to LLM analysis, since it's the only step that sends member names to the model.
 
 ## Running the dev worker
 
