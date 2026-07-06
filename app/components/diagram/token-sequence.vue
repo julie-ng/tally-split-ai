@@ -5,7 +5,7 @@ import tokenLifecycle from '~~/docs/diagrams/token-lifecycle.sequence.mmd?raw'
 <template>
   <UModal
     title="Token Lifecycle Sequence Diagram"
-    description="Something here"
+    description="How role-based tokens, e.g. orchestrator vs tasks are generated and used across Tally Split AU and Azure"
     :ui="{ content: 'max-w-6xl' }"
     scrollable
   >

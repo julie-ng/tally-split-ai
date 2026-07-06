@@ -5,7 +5,7 @@ import authZDiagram from '~~/docs/diagrams/auth-z.flowchart.mmd?raw'
 <template>
   <UModal
     title="Authorization Flowchart"
-    description="Something here"
+    description="Permissions checking for humans (scoped to household IDs) vs. machines (granular task based & time-limited checks)"
     :ui="{ content: 'max-w-4xl' }"
     scrollable
   >
