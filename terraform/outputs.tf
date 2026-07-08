@@ -31,11 +31,11 @@ output "azure_openai" {
 
 output "azure_gpt_4o" {
   value = {
-    id                   = azurerm_cognitive_deployment.gpt4o.id
-    name                 = azurerm_cognitive_deployment.gpt4o.name
-    model                = azurerm_cognitive_deployment.gpt4o.model
-    capacity             = azurerm_cognitive_deployment.gpt4o.sku[0].capacity
-    cognitive_account_id = azurerm_cognitive_deployment.gpt4o.cognitive_account_id
+    id                   = azurerm_cognitive_deployment.gpt.id
+    name                 = azurerm_cognitive_deployment.gpt.name
+    model                = azurerm_cognitive_deployment.gpt.model
+    capacity             = azurerm_cognitive_deployment.gpt.sku[0].capacity
+    cognitive_account_id = azurerm_cognitive_deployment.gpt.cognitive_account_id
   }
 }
 
@@ -75,6 +75,6 @@ output "document_intelligence_endpoint" {
 
 # Manual construction of endpoint not in Azure API or Docs
 
-output "azure_gpt_4o_annotations_url" {
+output "azure_gpt_annotations_url" {
   value = "https://${azurerm_cognitive_account.openai.custom_subdomain_name}.openai.azure.com/openai/deployments/${var.openai_deployment_name}/chat/completions?api-version=${var.openai_api_version}"
 }

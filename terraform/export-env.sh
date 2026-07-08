@@ -58,7 +58,7 @@ export AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT="$(get '.document_intelligence_endpo
 export AZURE_DOCUMENT_INTELLIGENCE_KEY="$(get '.doc_intelligence_key.value')"
 
 # Azure OpenAI (GPT-4o)
-export AZURE_GPT4O_ENDPOINT="$(get '.azure_gpt_4o_annotations_url.value')"
+export AZURE_GPT4O_ENDPOINT="$(get '.azure_gpt_annotations_url.value')"
 export AZURE_GPT4O_KEY="$(get '.azure_openai_key.value')"
 
 # Azure Storage

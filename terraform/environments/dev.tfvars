@@ -1,2 +1,2 @@
-environment           = "dev"
-openai_gpt4o_capacity = 10
+environment         = "dev"
+openai_gpt_capacity = 10

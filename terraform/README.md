@@ -66,7 +66,7 @@ Endpoints
 
 ```bash
 terraform output document_intelligence_endpoint
-terraform output azure_gpt_4o_annotations_url
+terraform output azure_gpt_annotations_url
 ```
 
 ```bash

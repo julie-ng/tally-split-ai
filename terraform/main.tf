@@ -61,7 +61,7 @@ resource "azurerm_cognitive_account" "openai" {
   tags = local.tags
 }
 
-resource "azurerm_cognitive_deployment" "gpt4o" {
+resource "azurerm_cognitive_deployment" "gpt" {
   name                 = var.openai_deployment_name
   cognitive_account_id = azurerm_cognitive_account.openai.id
 
@@ -73,7 +73,7 @@ resource "azurerm_cognitive_deployment" "gpt4o" {
 
   sku {
     name     = "GlobalStandard"
-    capacity = var.openai_gpt4o_capacity
+    capacity = var.openai_gpt_capacity
   }
 }
 
