@@ -106,7 +106,7 @@ This is a [**Nuxt 4** application](https://nuxt.com/docs/4.x/getting-started/int
 - **Database**: PostgreSQL 17 + Drizzle ORM — Docker via `docker compose -f docker-compose.dev.yaml up -d`
 - **Storage**: Azure Blob Storage (direct client uploads via SAS tokens — never through server)
 - **AI/OCR**: Azure Document Intelligence (`prebuilt-receipt` model, API version 2024-11-30)
-- **Annotations**: GPT-4o via Azure AI Foundry for handwriting/annotation detection
+- **Annotations**: GPT-4o via the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) for handwriting/annotation detection
 - **Workflows**: Trigger.dev for async task orchestration (OCR, annotations, splits)
 - **Frontend**: Vue 3, Pinia stores, NuxtUI, Tailwind CSS
 - **Testing**: Vitest — unit tests (co-located with source) + integration tests (`tests/`)
@@ -126,9 +126,10 @@ AZURE_STORAGE_ACCOUNT=""
 AZURE_STORAGE_ACCOUNT_KEY=""
 AZURE_STORAGE_CONTAINER_NAME=""
 
-# Azure GPT-4o (annotations)
-AZURE_GPT4O_ENDPOINT=""
-AZURE_GPT4O_KEY=""
+# AI Gateway (annotations, normalization, split adjustment)
+AI_GATEWAY_API_KEY=""
+AI_GATEWAY_ANNOTATIONS_MODEL="openai/gpt-4o"
+AI_GATEWAY_RECEIPT_MODEL="openai/gpt-4o-mini"
 
 # Postgres (local Docker)
 POSTGRES_DB=""

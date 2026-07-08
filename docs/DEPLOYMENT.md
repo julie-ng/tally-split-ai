@@ -8,8 +8,12 @@ See [terraform/README.md](./../terraform/README.md) to deploy dev/prod for:
 
 - Azure Resource Group, e.g. `tally-split-prod-rg`
 - Azure Document Intelligence (OCR)
-- Azure OpenAI gpt-4o (Annotations)
 - Azure Storage Account (Uploads)
+
+> [!NOTE]
+> The LLM calls (annotations, normalization, split adjustment) no longer run on
+> Azure OpenAI — they route through the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway).
+> Models are configured via `AI_GATEWAY_*` env vars, not Terraform.
 
 See also [terraform/Makefile](./../terraform/Makefile) for scripts to easily:
 - Deploy
@@ -41,9 +45,15 @@ Production deployments are automated via [GitHub integration](https://trigger.de
 
 - `AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT`
 - `AZURE_DOCUMENT_INTELLIGENCE_KEY`
-- `AZURE_GPT4O_ENDPOINT`
-- `AZURE_GPT4O_KEY`
+- `AI_GATEWAY_API_KEY`
+- `AI_GATEWAY_ANNOTATIONS_MODEL` (e.g. `openai/gpt-4o`)
+- `AI_GATEWAY_RECEIPT_MODEL` (e.g. `openai/gpt-4o-mini`)
 - `NUXT_PUBLIC_URL` (the deployed Vercel URL — used for API callbacks)
+
+> [!IMPORTANT]
+> `trigger.config.js` has no `syncEnvVars`, so the Trigger.dev worker reads its
+> env from the Trigger.dev dashboard — the `AI_GATEWAY_*` vars must be set there
+> or deployed tasks fail auth. The old `AZURE_GPT4O_*` vars can be removed.
 
 ## Supabase (DB)
 

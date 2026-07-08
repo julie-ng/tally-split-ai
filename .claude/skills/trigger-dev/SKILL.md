@@ -12,7 +12,7 @@ SDK v3 (`@trigger.dev/sdk/v3`) — `task({ id, run })` / `schemaTask({ id, schem
 - **`tasks.trigger()` enqueues to the Trigger.dev cloud — it is NOT a connection to the worker.** It returns `handle.id` and succeeds **even with no worker running**; the run just sits queued and never executes. A successful enqueue says nothing about whether anything will run it. We persist `handle.id` as `workflowRuns.triggerRunId` so status can be checked later.
 - **`triggerAndWait()` returns a Result `{ ok, output, error }`, not the output.** Check `result.ok`, read `result.output`; or `.unwrap()` to throw on error. **Never** wrap `triggerAndWait` in `Promise.all` / `Promise.allSettled` — unsupported.
 - **Tasks run outside Nuxt** — no auto-imports (`useDB`, `schema`, `createError`). Import directly from `#server/...`, `#shared/...`, source files. Use `import type` for task refs when triggering from Nuxt API routes (avoids bundling task code).
-- **Waits > 5s are checkpointed** and don't burn compute (the basis for the GPT-4o 429 backoff via `wait.for`).
+- **Waits > 5s are checkpointed** and don't burn compute — `wait.for({ seconds })` frees the worker during the wait rather than blocking it (useful for backoff/polling). _(The pipeline no longer uses this — LLM 429 backoff moved to the AI SDK when we migrated to the Vercel AI Gateway — but the capability is worth knowing.)_
 
 ## Detecting "it never ran" — TTL & status
 

@@ -41,8 +41,9 @@ As part of my pivot to AI Engineering and Architecture, I decided to build my ow
 | [Turso](https://turso.tech) | Hosted libSQL for [@nuxt/content](https://content.nuxt.com/), not Postgres: Nuxt Content needs the `pg` driver, which conflicts with the `postgres-js` driver Supabase's pooler requires. |
 | [Azure Blob Storage](https://learn.microsoft.com/en-us/azure/storage/blobs/) | Receipt photo storage (direct client uploads via SAS) |
 | [Azure Document Intelligence](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/) | OCR for receipts (`prebuilt-receipt` model) |
-| [GPT-4o](https://openai.com/gpt-4o) | Handwritten annotation detection |
-| [GPT-4o-mini](https://openai.com/gpt-4o-mini) | Receipt normalization & split adjustment |
+| [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) | Provider-agnostic LLM routing (ZDR, prompt caching, fallback) |
+| [GPT-4o](https://openai.com/gpt-4o) | Handwritten annotation detection (via the Gateway) |
+| [GPT-4o-mini](https://openai.com/gpt-4o-mini) | Receipt normalization & split adjustment (via the Gateway) |
 
 > [!NOTE] 
 > I chose [Trigger.dev](https://trigger.dev) over [Vercel Workflows](https://vercel.com/workflows) for its developer experience and stronger feature set, for example, durable compute, remote-controlled execution.

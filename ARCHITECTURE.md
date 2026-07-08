@@ -138,62 +138,21 @@ The natural fix is Supabase Realtime (Postgres-change websockets). Doing it prop
 
 That's significant, multi-phase work: designing RLS policies that match the household-isolation model, migrating the realtime client, and verifying behavioural parity with the current SSE flow. Intentionally **not prioritized for this POC**. Decision to revisit mid-to-late June 2026.
 
-## Handling Azure 429 Rate Limits
+## Handling LLM Rate Limits
 
-The Azure GPT-4o deployment has a fixed tokens-per-minute (TPM) ceiling. Concurrent uploads can exceed it in bursts. Azure responds with HTTP 429 and a `Retry-After` header indicating how long to wait.
+LLM calls route through the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) via the AI SDK. Rate-limit (429) backoff is delegated to the SDK's built-in retry, and the Gateway smooths per-provider TPM limits and can fail over between providers. Trigger.dev's task-level retry (`maxAttempts: 3` in `trigger.config.js`) still wraps each task as an outer safety net.
 
-### Why this matters
+When retries are exhausted, the failure surfaces in the UI: the workflow run's `errors` JSON column gains an entry under the relevant step key (`adjustExpense`, `annotations`, etc.), an SSE event fires, and the failed-step indicator in the upload table shows the underlying error.
 
-Each upload runs **3 GPT-4o calls** post-OCR:
+### Prior art: the Azure TPM problem (learnings)
 
-| Step | Type | Approx. tokens |
-|:--|:--|:--|
-| `analyze-annotations` | vision (image + structured output) | ~5,000 |
-| `normalize-receipt` | text-only | ~1,500 |
-| `adjust-expense` | text-only | ~1,500 |
+Before the Gateway migration, calls hit an Azure OpenAI deployment with a fixed tokens-per-minute ceiling, and concurrent uploads blew past it. Each upload fires 3 LLM calls post-OCR (annotations ~5K tokens, normalize + adjust ~1.5K each), so a 5-file batch demanded ~45K tokens/minute against a 10K-TPM deployment — surfacing ~35 user-visible errors. A hand-rolled per-call retry loop fixed it, and its design choices are worth keeping as notes even though the Gateway/SDK now own this:
 
-A 5-file batch = 15 calls (~45K tokens) in one minute — far past a `capacity = 10` deployment's 10K TPM.
+- **Checkpointed waits, not `setTimeout`.** Backoff used Trigger.dev's `wait.for`, which checkpoints the task and frees the worker during the wait — so retrying under rate limits didn't consume concurrency.
+- **Jitter on `Retry-After`.** A 0–5s jitter was added on top of the server's `Retry-After` to break lockstep — otherwise several uploads that 429'd at the same instant would all retry at the same later instant and re-collide.
+- **Layered resilience.** A cheap inner per-call retry (recovers within the TPM window) under a coarse outer task-level retry (survives a rolled-over window) — the inner layer absorbed almost everything before the outer one engaged.
 
-**Before this fix:**
-- All 5 uploads hit at least one failed step
-- ~35 errors surfaced to the user → looks like a broken app
-
-**After:**
-- Same batch succeeds on first run
-- Trigger logs show very few runs hit even one outer retry; none hit `maxAttempts: 3`
-- Most 429s recover on the second inner attempt, before Trigger's outer retry kicks in
-
-The pipeline has two layers of resilience:
-
-**Inner: per-call retry inside `gpt4oFetch`.** All GPT-4o utilities (`adjust-expense`, `analyze-annotations`, `normalize-receipt`) route through a shared helper that catches 429 responses, reads the `Retry-After` header, and retries up to two times after waiting. Wait uses Trigger.dev's `wait.for` rather than `setTimeout` — the task is checkpointed during the wait and the worker is freed for other runs, so this does not consume concurrency.
-
-**Outer: Trigger.dev's task-level retry** (`maxAttempts: 3` configured in `trigger.config.js`). If the inner retries are exhausted and the helper rethrows, Trigger.dev retries the entire task with exponential backoff. Combined with the inner layer, a single task survives up to 9 GPT-4o calls before final failure (3 outer attempts × 3 inner attempts).
-
-A small jitter (0–5s) is added on top of `Retry-After` to break lockstep retries — without it, three simultaneous uploads that all 429'd at the same moment would all retry at the same later moment, re-colliding.
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Task as Trigger.dev task
-    participant Util as gpt4oFetch
-    participant Azure as Azure OpenAI
-    Task->>+Util: call(prompt)
-    Util->>+Azure: POST /chat/completions
-    Azure-->>-Util: 429 (Retry-After: 30s)
-    Note over Util: attempt 1 failed
-    Util->>Util: wait.for(30s + jitter)
-    Util->>+Azure: POST /chat/completions (retry)
-    Azure-->>-Util: 429 (Retry-After: 20s)
-    Note over Util: attempt 2 failed
-    Util->>Util: wait.for(20s + jitter)
-    Util->>+Azure: POST /chat/completions (retry)
-    Azure-->>-Util: 200 OK
-    Util-->>-Task: response
-```
-
-If all three inner attempts return 429, the helper throws `Gpt4oError` with `status`, `headers`, and `body` preserved. Trigger.dev then handles the outer retry — typically the next outer attempt succeeds because the TPM window has rolled over by then.
-
-When all retries are exhausted, the failure surfaces in the UI: the workflow run's `errors` JSON column gains an entry under the relevant step key (`adjustSplit`, `annotations`, etc.), an SSE event fires, and the failed-step circle in the upload table tooltip shows the underlying 429 message.
+The Gateway makes most of this unnecessary: provider-side smoothing plus fallback means a single deployment's TPM ceiling is no longer the hard wall it was.
 
 ### Example Azure URLs
 

@@ -6,8 +6,10 @@ sequenceDiagram
       participant Orch as Orchestrator task
       participant Child@{ "type" : "collections" } as Child task(s)
     end
+    box rgb(245, 243, 255) AI Infrastructure
+      participant AI@{ "type" : "collections" } as AI Service(s)
+    end
     box rgb(240, 246, 255) Azure
-      participant AI as AI Service(s)
       participant Storage@{ "type" : "database" } as Blob Storage
     end
 
