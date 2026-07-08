@@ -4,16 +4,10 @@
 
 - **Azure Storage Account** for blob storage
 - **Azure Document Intelligence** for OCR service
-- **Azure OpenAI gpt-4o** for annotations analysis
 
 #### Regions
 
 Defaults to North Europe.
-
-> [!IMPORTANT]
-> Azure Open AI is deployed to a different region because it's not available in North Europe. We're using **swedencentral**, which has highest capacity. 
-
-Azure Open AI is also available in following European regions: uksouth, westeurope, francecentral, germanywestcentral, switzerlandnorth, italynorth, spaincentral, norwayeast, polandcentral.
 
 ## Environments
 
@@ -66,12 +60,10 @@ Endpoints
 
 ```bash
 terraform output document_intelligence_endpoint
-terraform output azure_gpt_annotations_url
 ```
 
 ```bash
 terraform output -raw azure_storage_account_key
-terraform output -raw azure_openai_key
 terraform output -raw doc_intelligence_key
 ```
 

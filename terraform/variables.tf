@@ -18,41 +18,6 @@ variable "storage_container_name" {
   description = "Blob container for receipt uploads."
 }
 
-variable "openai_sku" {
-  type        = string
-  description = "SKU for Azure OpenAI Cognitive Services."
-}
-
-variable "openai_model_name" {
-  type        = string
-  description = "OpenAI Model Name for annotations."
-}
-
-variable "openai_model_version" {
-  type        = string
-  description = "OpenAI Model version for annotations."
-}
-
-variable "openai_api_version" {
-  type        = string
-  description = "API version for gpt that's included in REST endpoint. Used in outputs."
-}
-
-variable "openai_gpt_capacity" {
-  type        = number
-  description = "TPM capacity (in thousands) for the gpt-4/5 deployment."
-}
-
-variable "openai_deployment_name" {
-  type        = string
-  description = "Deployment name for Azure resource."
-}
-
-variable "openai_region" {
-  type        = string
-  description = "Region for Azure OpenAI Cognitive Services. As of May 2026 only available in following European regions: swedencentral, uksouth, westeurope, northeurope, francecentral, germanywestcentral, switzerlandnorth, italynorth, spaincentral, norwayeast, polandcentral"
-}
-
 variable "azure_doc_intelligence_model" {
   type        = string
   description = "Model name, e.g. FormRecognizer for Document Intelligence Cognitive Services."

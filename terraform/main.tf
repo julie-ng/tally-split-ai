@@ -50,33 +50,6 @@ resource "azurerm_storage_container" "receipts" {
   container_access_type = "private" # disallow unauthenticated access
 }
 
-resource "azurerm_cognitive_account" "openai" {
-  name                  = local.openai_account_name
-  location              = var.openai_region
-  resource_group_name   = azurerm_resource_group.project.name
-  kind                  = "OpenAI"
-  sku_name              = var.openai_sku
-  custom_subdomain_name = local.openai_account_name
-
-  tags = local.tags
-}
-
-resource "azurerm_cognitive_deployment" "gpt" {
-  name                 = var.openai_deployment_name
-  cognitive_account_id = azurerm_cognitive_account.openai.id
-
-  model {
-    format  = "OpenAI"
-    name    = var.openai_model_name
-    version = var.openai_model_version
-  }
-
-  sku {
-    name     = "GlobalStandard"
-    capacity = var.openai_gpt_capacity
-  }
-}
-
 resource "azurerm_cognitive_account" "doc_intelligence" {
   name                  = local.doc_intel_account_name
   location              = azurerm_resource_group.project.location

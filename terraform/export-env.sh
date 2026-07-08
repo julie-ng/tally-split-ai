@@ -57,10 +57,6 @@ cat > "$OUT_FILE" <<EOF
 export AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT="$(get '.document_intelligence_endpoint.value')"
 export AZURE_DOCUMENT_INTELLIGENCE_KEY="$(get '.doc_intelligence_key.value')"
 
-# Azure OpenAI (GPT-4o)
-export AZURE_GPT4O_ENDPOINT="$(get '.azure_gpt_annotations_url.value')"
-export AZURE_GPT4O_KEY="$(get '.azure_openai_key.value')"
-
 # Azure Storage
 export AZURE_STORAGE_ACCOUNT="$(get '.storage_account.value.name')"
 export AZURE_STORAGE_ACCOUNT_KEY="$(get '.azure_storage_account_key.value')"
