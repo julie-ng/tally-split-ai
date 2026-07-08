@@ -1,16 +1,16 @@
-import { gpt4oFetch } from './gpt4o-fetch.js'
+import { llmGenerate } from './llm-generate.js'
 import { loadInstructions } from './load-instructions.js'
+import { adjustExpenseSchema } from './schemas.js'
+import { getGatewayModels } from './get-llm-config.js'
 
 /**
  * Analyze OCR data and handwritten annotations to determine the adjusted split amount and payer.
- * Uses GPT-4o-mini (text-only, no vision).
- *
- * TRIGGER.DEV-ONLY — see `gpt4o-fetch.js` for details.
+ * Uses the receipt (text-only) model configured via env.
  *
  * @param {Object} params
  * @param {Object} params.ocrData - Flattened OCR data from extractForLlm() ({ lineItems, total, subtotal, tax, tip })
  * @param {string|null} [params.ocrText] - Full raw OCR text. Useful for matching things the receipt model misses (e.g., card numbers in the footer).
- * @param {Object} params.annotations - Annotations JSON from GPT-4o vision analysis
+ * @param {Object} params.annotations - Annotations JSON from the vision analysis step
  * @param {string|null} [params.customInstructions] - Optional household-level guidance appended to system prompt
  * @param {Array<{firstName: string|null, initials: string|null}>} [params.householdMembers] - The two household members in slot order (user1, user2). Lets the model map handwriting → a person and allocate shares + payer by slot. Empty/absent when the household hasn't consented.
  * @returns {Promise<Object>} { originalTotal, adjustedTotal, shares, paidBy, confidence, amountConfidence, shareConfidence, payerConfidence, reasoning }
@@ -36,22 +36,20 @@ export async function adjustExpense ({ ocrData, ocrText = null, annotations, cus
     household,
   }, null, 2)
 
-  const result = await gpt4oFetch({
+  const { receiptModel } = getGatewayModels()
+
+  const result = await llmGenerate({
+    model: receiptModel,
+    system: systemPrompt,
     messages: [
-      { role: 'system', content: systemPrompt },
       { role: 'user', content: userMessage },
     ],
-    temperature: 0,
-    response_format: { type: 'json_object' },
-  }, 'adjust-expense')
-
-  const content = result.choices?.[0]?.message?.content
-  if (!content) {
-    throw new Error('GPT-4o adjust-expense returned empty content')
-  }
+    schema: adjustExpenseSchema,
+    label: 'adjust-expense',
+  })
 
   return {
-    ...JSON.parse(content),
-    model: result.model,
+    ...result.object,
+    model: result.modelId,
   }
 }

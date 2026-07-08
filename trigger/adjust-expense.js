@@ -2,7 +2,7 @@ import { task, logger } from '@trigger.dev/sdk/v3'
 import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { azureOcrExtract } from '#server/utils/azure-ocr.utils.js'
-import { gpt4oUtils } from '#server/utils/azure-gpt4o.utils.js'
+import { llmUtils } from '#server/utils/llm.utils.js'
 import { resolveShares } from '#shared/utils/expenses/resolve-shares.utils.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
 import { notifyStatus } from './utils/notify-status.js'
@@ -55,11 +55,11 @@ export const adjustExpense = task({
         return { skipped: true, reason: 'no_document_fields' }
       }
 
-      // 5. Call GPT-4o-mini to analyze annotations and determine split.
+      // 5. Call the LLM to analyze annotations and determine split.
       // householdMembers ({ user1, user2 } = { firstName, initials }) lets the
       // model map handwriting → a person and allocate asymmetric shares + payer
       // by slot. Only present when the household consented to LLM analysis.
-      const result = await gpt4oUtils.adjustExpense({
+      const result = await llmUtils.adjustExpense({
         ocrData,
         ocrText: upload.ocrText,
         annotations: upload.annotationsJson,

@@ -2,7 +2,7 @@ import { task, logger } from '@trigger.dev/sdk/v3'
 import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { azureOcrExtract } from '#server/utils/azure-ocr.utils.js'
-import { gpt4oUtils } from '#server/utils/azure-gpt4o.utils.js'
+import { llmUtils } from '#server/utils/llm.utils.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
 import { notifyStatus } from './utils/notify-status.js'
 
@@ -53,11 +53,11 @@ export const normalizeReceipt = task({
 
       const receipt = await api.get(`/api/receipts/${receiptId}`)
 
-      // 5. Call GPT-4o-mini for normalization. Pass today's date so the model
+      // 5. Call the LLM for normalization. Pass today's date so the model
       // can sanity-check the receipt year (OCR often misreads it on
       // crumpled/faded receipts) and correct an implausibly old/future year.
       const currentDate = new Date().toISOString().slice(0, 10)
-      const result = await gpt4oUtils.normalizeReceipt({
+      const result = await llmUtils.normalizeReceipt({
         transactionDate,
         transactionTime,
         merchantName: receipt.merchantName,

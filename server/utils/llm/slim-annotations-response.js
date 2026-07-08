@@ -1,5 +1,5 @@
 /**
- * Slim the GPT-4o annotation-detection response to only the fields we need.
+ * Slim the LLM annotation-detection response to only the fields we need.
  *
  * Drops the raw API envelope (choices, full message, system_fingerprint, etc.)
  * and flattens the nested `annotations.annotations` / `annotations.notes` shape.
@@ -11,7 +11,7 @@
  *   - An already-slimmed object (idempotent — returns an equivalent shape):
  *       { model, usage, annotations: [...], notes }
  *
- * @param {Object} response - GPT-4o annotation response (raw or already slimmed)
+ * @param {Object} response - LLM annotation response (raw or already slimmed)
  * @returns {Object|null} Slimmed { model, usage, annotations, notes }
  */
 export function slimAnnotationsResponse (response) {

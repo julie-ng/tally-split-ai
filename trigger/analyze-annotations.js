@@ -1,7 +1,7 @@
 import { task, logger } from '@trigger.dev/sdk/v3'
 import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
-import { gpt4oUtils } from '#server/utils/azure-gpt4o.utils.js'
+import { llmUtils } from '#server/utils/llm.utils.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
 import { notifyStatus } from './utils/notify-status.js'
 
@@ -46,17 +46,17 @@ export const analyzeAnnotations = task({
         }))
       }
 
-      logger.log(`Calling GPT-4o for annotations`, { lineItemCount: ocrLineItems.length })
+      logger.log(`Calling LLM for annotations`, { lineItemCount: ocrLineItems.length })
       const startTime = Date.now()
 
-      // 4. Call GPT-4o for annotation analysis
-      const responseData = await gpt4oUtils.analyzeAnnotations(blobUrlWithSas, ocrLineItems, customInstructions)
+      // 4. Call the LLM for annotation analysis
+      const responseData = await llmUtils.analyzeAnnotations(blobUrlWithSas, ocrLineItems, customInstructions)
 
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
       // 5. Flatten and slim before storing — drop raw API envelope, keep only what we need
-      const slimAnnotations = gpt4oUtils.slimAnnotationsResponse(responseData)
+      const slimAnnotations = llmUtils.slimAnnotationsResponse(responseData)
 
-      logger.log(`GPT-4o responded in ${elapsed}s`, {
+      logger.log(`LLM responded in ${elapsed}s`, {
         annotationCount: slimAnnotations.annotations.length,
       })
 

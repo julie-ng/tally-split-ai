@@ -1,11 +1,11 @@
-import { gpt4oFetch } from './gpt4o-fetch.js'
+import { llmGenerate } from './llm-generate.js'
 import { loadInstructions } from './load-instructions.js'
+import { normalizeReceiptSchema } from './schemas.js'
+import { getGatewayModels } from './get-llm-config.js'
 
 /**
- * Normalize receipt data using GPT-4o-mini (text-only, no vision).
+ * Normalize receipt data using the receipt (text-only) model configured via env.
  * Reconciles inconsistent OCR date/time fields and generates a receipt title.
- *
- * TRIGGER.DEV-ONLY — see `gpt4o-fetch.js` for details.
  *
  * @param {Object} params
  * @param {Object} params.transactionDate - OCR TransactionDate field ({ content, valueDate })
@@ -28,22 +28,20 @@ export async function normalizeReceipt ({ transactionDate, transactionTime, merc
     originalFilename,
   }, null, 2)
 
-  const result = await gpt4oFetch({
+  const { receiptModel } = getGatewayModels()
+
+  const result = await llmGenerate({
+    model: receiptModel,
+    system: systemPrompt,
     messages: [
-      { role: 'system', content: systemPrompt },
       { role: 'user', content: userMessage },
     ],
-    temperature: 0,
-    response_format: { type: 'json_object' },
-  }, 'normalize')
-
-  const content = result.choices?.[0]?.message?.content
-  if (!content) {
-    throw new Error('GPT-4o normalize returned empty content')
-  }
+    schema: normalizeReceiptSchema,
+    label: 'normalize',
+  })
 
   return {
-    ...JSON.parse(content),
-    model: result.model,
+    ...result.object,
+    model: result.modelId,
   }
 }
