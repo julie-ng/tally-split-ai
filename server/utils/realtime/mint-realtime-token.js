@@ -39,7 +39,15 @@ export async function mintRealtimeToken ({ userId, privateJwk, ttlSeconds = 3600
     throw new Error('mintRealtimeToken: privateJwk must include a kid')
   }
 
-  const privateKey = await importJWK(jwk, 'ES256')
+  // Supabase's `gen signing-key` emits key_ops: ["sign","verify"]. jose's webapi
+  // build (bundled by Nitro in prod) passes key_ops straight to WebCrypto's
+  // importKey, which rejects an EC private key that declares the public-only
+  // "verify" op ("Unsupported key usage for a ECDSA key"). The node build (dev)
+  // ignores key_ops, which is why this only failed in prod. Drop key_ops so jose
+  // derives the correct ["sign"] usage from the presence of `d`.
+  const { key_ops, ...signingJwk } = jwk
+
+  const privateKey = await importJWK(signingJwk, 'ES256')
 
   const nowSeconds = Math.floor(Date.now() / 1000)
   const expiresAt = nowSeconds + ttlSeconds

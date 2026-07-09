@@ -59,4 +59,17 @@ describe('mintRealtimeToken', () => {
     void kid
     await expect(mintRealtimeToken({ userId, privateJwk: noKid })).rejects.toThrow('kid')
   })
+
+  // Regression: Supabase's `gen signing-key` emits key_ops: ["sign","verify"].
+  // jose's webapi build (bundled by Nitro in prod) passes key_ops straight to
+  // WebCrypto's importKey, which rejects "verify" on an EC private key. We strip
+  // key_ops so signing works regardless of jose build. exportJWK omits key_ops,
+  // so this shape is only exercised if we set it explicitly.
+  it('mints a token from a Supabase-shaped JWK with key_ops ["sign","verify"]', async () => {
+    const supabaseShaped = { ...privateJwk, use: 'sig', key_ops: ['sign', 'verify'], alg: 'ES256', ext: true }
+    const { token } = await mintRealtimeToken({ userId, privateJwk: supabaseShaped })
+    const { payload } = await jwtVerify(token, publicKey)
+    expect(payload.sub).toBe(userId)
+    expect(payload.role).toBe('authenticated')
+  })
 })
