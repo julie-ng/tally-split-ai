@@ -6,6 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - Current year: 2026
 
+## Documentation Sources (verify, don't guess)
+
+Do NOT design from training data for fast-moving products. Before implementing, consult the authoritative source:
+
+- **Supabase** — invoke the `supabase` skill and verify against current Supabase docs FIRST, before designing. (Supabase's JWT/RLS/Realtime behavior has changed; training-data assumptions have been wrong here.)
+- **Nuxt / Nuxt UI** — prefer the **Nuxt MCP server** (`nuxt-remote`, if connected) and the `nuxt-ui` skill over context7. Fall back to Nuxt docs if the MCP server isn't available.
+- **Everything else** (non-Nuxt, non-Supabase libraries) — use **context7**.
+
 ## Project Overview
 
 AI Receipts POC is a proof-of-concept application for analyzing scanned receipts with handwritten annotations to split expenses between people. The app uses Azure Document Intelligence Service (formerly Form Recognizer) to perform OCR and extract structured data from receipt photos, and GPT-4o to detect handwritten annotations (initials, circles, strikethroughs).
