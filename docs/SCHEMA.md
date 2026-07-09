@@ -219,6 +219,7 @@ Tracks Trigger.dev workflow orchestration. One row per workflow run.
 |:--|:--|:--|
 | `id` | `serial` PK | |
 | `uploadId` | `text` FK → `uploads.id` (cascade) | Nullable |
+| `householdId` | `text` NOT NULL FK → `households.id` | AuthZ scope; denormalized + write-once, stamped at run creation. Lets realtime subscriptions and RLS scope by a direct column instead of a 2-hop join through `uploads`. See note below |
 | `uuid` | `uuid` NOT NULL | Opaque, used in HMAC callbacks; randomly generated |
 | `triggerRunId` | `text` | For Trigger.dev dashboard linking |
 | `status` | enum | `WORKFLOW_STATUS` — overall state |
@@ -229,6 +230,8 @@ Tracks Trigger.dev workflow orchestration. One row per workflow run.
 | `normalizeStatus` | enum | `WORKFLOW_STEP_STATUS` |
 | `errors` | `jsonb` | Per-step error messages keyed by step name (e.g. `{ ocr, annotations, adjustExpense, _orchestrator }`); null when no errors |
 | `createdAt`, `completedAt` | `timestamp` | |
+
+> `householdId` is **denormalized and write-once**: stamped once at run creation (the acting principal's household) and never changed. It exists so realtime subscriptions and future RLS policies can scope a run by a direct column rather than joining `workflow_runs → uploads → users/household_members`. No request schema accepts it, so clients cannot set or change it (same immutability pattern as `expenses.householdId`).
 
 ### `WORKFLOW_STATUS`
 

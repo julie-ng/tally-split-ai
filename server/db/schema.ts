@@ -187,9 +187,9 @@ export const workflowRuns = pgTable('workflow_runs', {
   // Denormalized, write-once AuthZ scope. Lets realtime subscriptions and RLS
   // policies scope a run to a household by a DIRECT column rather than a 2-hop
   // join (workflow_runs → uploads → users/household_members). Populated at run
-  // creation; never updated. Nullable until existing rows are backfilled (see
-  // migrations/backfills/seed-workflow-run-household-ids.js), then NOT NULL.
-  householdId: text('household_id').references(() => households.id),
+  // creation; never updated. NOT NULL after backfilling existing rows (see
+  // migrations/backfills/seed-workflow-run-household-ids.js).
+  householdId: text('household_id').notNull().references(() => households.id),
 
   // UUID for secure callback endpoint (opaque, unguessable)
   uuid: uuid('uuid').defaultRandom().notNull(),

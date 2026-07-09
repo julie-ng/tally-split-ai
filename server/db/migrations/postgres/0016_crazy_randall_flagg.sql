@@ -1,0 +1,1 @@
+ALTER TABLE "workflow_runs" ALTER COLUMN "household_id" SET NOT NULL;
