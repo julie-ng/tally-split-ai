@@ -78,9 +78,12 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Validate and insert workflow run record
+  // Validate and insert workflow run record. householdId is the write-once
+  // AuthZ scope (realtime filter + future RLS) — event.context.householdId is
+  // the authenticated principal's household, already used above for the snapshot.
   const insertData = workflowRunInsertSchema.parse({
     uploadId: upload.id,
+    householdId: event.context.householdId,
   })
 
   const [workflowRun] = await db

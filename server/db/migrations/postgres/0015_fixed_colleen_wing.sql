@@ -1,0 +1,2 @@
+ALTER TABLE "workflow_runs" ADD COLUMN "household_id" text;--> statement-breakpoint
+ALTER TABLE "workflow_runs" ADD CONSTRAINT "workflow_runs_household_id_households_id_fk" FOREIGN KEY ("household_id") REFERENCES "public"."households"("id") ON DELETE no action ON UPDATE no action;

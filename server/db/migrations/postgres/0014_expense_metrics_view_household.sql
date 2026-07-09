@@ -16,7 +16,11 @@ SELECT
   e.id AS expense_id,
   e.receipt_id,
   e.household_id,
-  COALESCE(e.date, r.date) AS receipt_date,
+  -- e.date is timestamptz (mode:'string', ISO), r.date is text (ISO). Cast the
+  -- expense date DOWN to text so (a) COALESCE's arms share a type and (b) the
+  -- output column stays `text` — CREATE OR REPLACE VIEW forbids changing an
+  -- existing view column's type (0011 defined receipt_date as text).
+  COALESCE(e.date::text, r.date) AS receipt_date,
   e.paid_by_match,
   e.is_settled,
   e.created_at AS expense_created_at,

@@ -36,6 +36,7 @@ export default defineEventHandler(async (event) => {
     .insert(schema.workflowRuns)
     .values({
       uploadId: upload.id,
+      householdId: event.context.householdId, // write-once AuthZ scope
       status: WORKFLOW_STATUS.PROCESSING,
       ocrStatus: WORKFLOW_STEP_STATUS.PENDING,
       annotationsStatus: WORKFLOW_STEP_STATUS.PENDING,
