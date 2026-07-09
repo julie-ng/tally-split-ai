@@ -136,10 +136,16 @@ export const useRealtimeStore = defineStore('realtime', () => {
     const workflowStore = useWorkflowStore()
     workflowStore.ingestRun(row)
 
-    // 3. Refresh the upload record (pulls new rows into the table if the upload
-    //    row isn't loaded yet).
+    // 3. Pull the upload row in ONLY if it isn't already loaded. A workflow run
+    //    updates workflow_runs many times per upload (once per step transition);
+    //    the upload row itself doesn't change during a run, and its live status
+    //    comes from the workflow store above. So fetch at most once — when we
+    //    first see a run for an upload not yet in the table — instead of on every
+    //    event (which was ~14 redundant refetches per upload).
     const uploadsStore = useUploadsStore()
-    uploadsStore.refreshUploadById(uploadId)
+    if (!uploadsStore.getUploadById(uploadId)) {
+      uploadsStore.refreshUploadById(uploadId)
+    }
   }
 
   function _scheduleTokenRefresh (supabase) {

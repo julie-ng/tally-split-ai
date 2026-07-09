@@ -174,6 +174,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
     const existing = runs.value[uploadId] ?? []
     const idx = existing.findIndex(r => r.id === mapped.id)
+    const previous = idx === -1 ? null : existing[idx]
 
     if (idx === -1) {
       // New run — prepend (latest-first ordering the getters rely on).
@@ -185,7 +186,20 @@ export const useWorkflowStore = defineStore('workflow', () => {
       runs.value[uploadId] = [...existing]
     }
 
-    _log(`[WorkflowStore] 🔄 ingested run ${mapped.id} for ${uploadId} (status=${mapped.status})`)
+    // Log only what changed. A run updates workflow_runs once per step
+    // transition while the run-level status stays 'processing', so logging the
+    // whole row makes distinct events look identical (the console collapses them
+    // into a single "10x" line). Diff against the previous row and log the delta.
+    if (!previous) {
+      _log(`[WorkflowStore] 🔄 new run ${mapped.id} for ${uploadId} (status=${mapped.status})`)
+    }
+    else {
+      const changed = Object.keys(mapped)
+        .filter(k => mapped[k] !== previous[k])
+        .map(k => `${k}=${mapped[k]}`)
+        .join(' ')
+      _log(`[WorkflowStore] 🔄 run ${mapped.id} for ${uploadId} changed: ${changed || '(no field change)'}`)
+    }
   }
 
   /**
