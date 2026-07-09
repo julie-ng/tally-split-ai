@@ -4,7 +4,6 @@ import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { azureOcrExtract } from '#server/utils/azure-ocr.utils.js'
 import { llmUtils } from '#server/utils/llm.utils.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
-import { notifyStatus } from './utils/notify-status.js'
 
 const TASK_ID = 'normalize-receipt'
 
@@ -18,7 +17,6 @@ export const normalizeReceipt = task({
 
     // Update workflow step status
     await updateWorkflowStatus(authHeaders, { normalizeStatus: WORKFLOW_STEP_STATUS.PROCESSING })
-    await notifyStatus(runUuid, WORKFLOW_STEP.NORMALIZE, 'processing', authHeaders)
 
     try {
       // 1. Fetch upload record for ocrJson and originalFilename
@@ -91,7 +89,6 @@ export const normalizeReceipt = task({
 
       // 8. Update workflow step status
       await updateWorkflowStatus(authHeaders, { normalizeStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-      await notifyStatus(runUuid, WORKFLOW_STEP.NORMALIZE, 'completed', authHeaders)
 
       logger.log(`Normalize complete for ${uploadId}`, {
         receiptId,
@@ -107,7 +104,6 @@ export const normalizeReceipt = task({
         normalizeStatus: WORKFLOW_STEP_STATUS.FAILED,
         errors: { [WORKFLOW_STEP.NORMALIZE]: err.message },
       })
-      await notifyStatus(runUuid, WORKFLOW_STEP.NORMALIZE, 'failed', authHeaders, err.message)
       throw err
     }
   },

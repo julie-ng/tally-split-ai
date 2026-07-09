@@ -128,7 +128,6 @@ describe('Security boundaries: task-facing endpoints call requireTaskPermission'
     'server/api/expenses/index.post.js',
     'server/api/workflows/runs/[runUuid]/status.put.js',
     'server/api/workflows/runs/[runUuid]/tokens.post.js',
-    'server/api/workflows/callback/[runUuid].post.js',
   ]
 
   for (const endpoint of taskFacingEndpoints) {

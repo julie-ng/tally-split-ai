@@ -6,7 +6,6 @@ import { azureOcrExtract } from '#server/utils/azure-ocr.utils.js'
 import { getAzureDocumentIntelligenceConfig } from '#server/utils/azure-document-intelligence.js'
 import { receiptInputSchema } from '#shared/utils/zod-schemas/receipt.schema.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
-import { notifyStatus } from './utils/notify-status.js'
 
 const TASK_ID = 'analyze-ocr'
 
@@ -20,7 +19,6 @@ export const analyzeOcr = task({
 
     // Update workflow step status
     await updateWorkflowStatus(authHeaders, { ocrStatus: WORKFLOW_STEP_STATUS.PROCESSING })
-    await notifyStatus(runUuid, WORKFLOW_STEP.OCR, 'processing', authHeaders)
 
     try {
       // 1. Fetch upload record via API
@@ -85,7 +83,6 @@ export const analyzeOcr = task({
 
       // 6. Update workflow step status
       await updateWorkflowStatus(authHeaders, { ocrStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-      await notifyStatus(runUuid, WORKFLOW_STEP.OCR, 'completed', authHeaders)
 
       logger.log(`OCR analysis complete for ${uploadId}`)
 
@@ -101,7 +98,6 @@ export const analyzeOcr = task({
         ocrStatus: WORKFLOW_STEP_STATUS.FAILED,
         errors: { [WORKFLOW_STEP.OCR]: err.message },
       })
-      await notifyStatus(runUuid, WORKFLOW_STEP.OCR, 'failed', authHeaders, err.message)
       throw err
     }
   },

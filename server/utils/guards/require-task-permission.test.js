@@ -20,7 +20,7 @@ describe('_deriveResource', () => {
   it('should return "workflow" for /api/workflows paths', () => {
     expect(_deriveResource('/api/workflows')).toBe('workflow')
     expect(_deriveResource('/api/workflows/runs/uuid/status')).toBe('workflow')
-    expect(_deriveResource('/api/workflows/callback/uuid')).toBe('workflow')
+    expect(_deriveResource('/api/workflows/runs/uuid/tokens')).toBe('workflow')
   })
 
   it('should return null for unrecognized paths', () => {

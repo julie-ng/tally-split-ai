@@ -4,7 +4,6 @@ import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { azureOcrExtract } from '#server/utils/azure-ocr.utils.js'
 import { fromReceiptDateTime } from '#shared/utils/expense-date.utils.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
-import { notifyStatus } from './utils/notify-status.js'
 
 const TASK_ID = 'create-expense'
 
@@ -18,7 +17,6 @@ export const createExpense = task({
 
     // Update workflow step status
     await updateWorkflowStatus(authHeaders, { createExpenseStatus: WORKFLOW_STEP_STATUS.PROCESSING })
-    await notifyStatus(runUuid, WORKFLOW_STEP.EXPENSE, 'processing', authHeaders)
 
     try {
       // 1. Fetch receipt to get total via API
@@ -65,7 +63,6 @@ export const createExpense = task({
 
       // 4. Update workflow step status
       await updateWorkflowStatus(authHeaders, { createExpenseStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-      await notifyStatus(runUuid, WORKFLOW_STEP.EXPENSE, 'completed', authHeaders)
 
       logger.log(`Expense created for receipt ${receiptId}`, { expenseId, amountSource })
 
@@ -76,7 +73,6 @@ export const createExpense = task({
         createExpenseStatus: WORKFLOW_STEP_STATUS.FAILED,
         errors: { [WORKFLOW_STEP.EXPENSE]: err.message },
       })
-      await notifyStatus(runUuid, WORKFLOW_STEP.EXPENSE, 'failed', authHeaders, err.message)
       throw err
     }
   },

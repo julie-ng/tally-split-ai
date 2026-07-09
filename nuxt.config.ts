@@ -8,6 +8,16 @@ const azureBlobHost = azureStorageAccount
   ? `https://${azureStorageAccount}.blob.core.windows.net`
   : null
 
+// Supabase Realtime connects over WebSocket (wss://) and also makes https calls
+// to the same project host. Derive both origins from the public URL so the CSP
+// allowlists them. See docs/REALTIME.md.
+const supabaseUrl = process.env.NUXT_PUBLIC_SUPABASE_URL
+if (!supabaseUrl) {
+  console.warn('[nuxt.config] NUXT_PUBLIC_SUPABASE_URL not set — CSP will not allowlist Supabase. Realtime will be blocked at runtime.')
+}
+const supabaseHost = supabaseUrl ? supabaseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '') : null
+const supabaseConnectSrc = supabaseHost ? ` https://${supabaseHost} wss://${supabaseHost}` : ''
+
 const isDev = process.env.NODE_ENV !== 'production'
 
 const csp = [
@@ -24,8 +34,8 @@ const csp = [
     ? `img-src 'self' data: blob: https://avatars.githubusercontent.com ${azureBlobHost}`
     : `img-src 'self' data: blob: https://avatars.githubusercontent.com`,
   azureBlobHost
-    ? `connect-src 'self' ${azureBlobHost}`
-    : `connect-src 'self'`,
+    ? `connect-src 'self' ${azureBlobHost}${supabaseConnectSrc}`
+    : `connect-src 'self'${supabaseConnectSrc}`,
   `frame-ancestors 'none'`,
   `base-uri 'self'`,
   `form-action 'self'`,
@@ -110,11 +120,21 @@ export default defineNuxtConfig({
         // secure: true, // already env-gated by nuxt-auth-utils (true in prod, false in dev)
       },
     },
+    // Server-only: the ES256 signing key as a JWK JSON string (includes its own
+    // kid), used by /api/realtime/token to mint short-lived Supabase JWTs. Never
+    // exposed to the client. Auto-populated from NUXT_SUPABASE_JWT_PRIVATE_KEY at
+    // runtime. See docs/REALTIME.md.
+    supabaseJwtPrivateKey: '',
     public: {
       environment: 'development',
       uploadMaxConcurrent: 3,
       uploadAutoIntervalMs: 1000,
       uploadAutoEnabled: true,
+      // Client-safe Supabase connection details. Auto-populated from
+      // NUXT_PUBLIC_SUPABASE_* env vars at runtime. Publishable key = the new
+      // API-key system's browser-safe key (replaces the legacy anon key).
+      supabaseUrl: '',
+      supabasePublishableKey: '',
     },
   },
   // Bundle icon collections locally — without this, Nuxt UI fetches icons

@@ -8,7 +8,6 @@ import { normalizeReceipt } from './normalize-receipt.js'
 import { createExpense } from './create-expense.js'
 import { adjustExpense } from './adjust-expense.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
-import { notifyStatus } from './utils/notify-status.js'
 
 const TASK_ID = 'receipt-workflow'
 
@@ -82,7 +81,6 @@ export const receiptWorkflow = task({
           annotationsStatus: WORKFLOW_STEP_STATUS.FAILED,
           errors: { [WORKFLOW_STEP.ANNOTATIONS]: annotationsResult.error },
         })
-        await notifyStatus(runUuid, WORKFLOW_STEP.ANNOTATIONS, 'failed', authHeaders, annotationsResult.error)
         logger.warn(`Annotations analysis failed, continuing`, { error: annotationsResult.error })
       }
 
@@ -97,7 +95,6 @@ export const receiptWorkflow = task({
           normalizeStatus: WORKFLOW_STEP_STATUS.FAILED,
           errors: { [WORKFLOW_STEP.NORMALIZE]: normalizeResult.error },
         })
-        await notifyStatus(runUuid, WORKFLOW_STEP.NORMALIZE, 'failed', authHeaders, normalizeResult.error)
         logger.warn(`Normalize failed, continuing`, { error: normalizeResult.error })
       }
 
@@ -115,7 +112,6 @@ export const receiptWorkflow = task({
           createExpenseStatus: WORKFLOW_STEP_STATUS.FAILED,
           errors: { [WORKFLOW_STEP.EXPENSE]: expenseResult.error },
         })
-        await notifyStatus(runUuid, WORKFLOW_STEP.EXPENSE, 'failed', authHeaders, expenseResult.error)
         logger.warn(`Expense creation failed`, { error: expenseResult.error })
       }
 
@@ -134,7 +130,6 @@ export const receiptWorkflow = task({
             adjustExpenseStatus: WORKFLOW_STEP_STATUS.FAILED,
             errors: { [WORKFLOW_STEP.ADJUST_EXPENSE]: adjustResult.error },
           })
-          await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_EXPENSE, 'failed', authHeaders, adjustResult.error)
           logger.warn(`Adjust-split failed, continuing`, { error: adjustResult.error })
         }
       }
@@ -146,7 +141,6 @@ export const receiptWorkflow = task({
         await updateWorkflowStatus(authHeaders, {
           adjustExpenseStatus: WORKFLOW_STEP_STATUS.SKIPPED,
         })
-        await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_EXPENSE, 'skipped', authHeaders)
         logger.info('Adjust-split skipped — household has not consented to LLM analysis')
       }
     }
@@ -162,7 +156,6 @@ export const receiptWorkflow = task({
         analysisStatus: UPLOAD_ANALYSIS_STATUS.COMPLETED,
         errors: { [WORKFLOW_STEP.ORCHESTRATOR]: err.message },
       })
-      await notifyStatus(runUuid, WORKFLOW_STEP.ORCHESTRATOR, 'failed', authHeaders, err.message)
 
       throw err
     }
@@ -175,8 +168,6 @@ export const receiptWorkflow = task({
       completedAt: new Date().toISOString(),
       analysisStatus: UPLOAD_ANALYSIS_STATUS.COMPLETED,
     })
-
-    await notifyStatus(runUuid, WORKFLOW_STEP.ORCHESTRATOR, finalStatus, authHeaders)
 
     logger.log(`Receipt workflow ${finalStatus} for ${uploadId}`, { receiptId, expenseId })
 

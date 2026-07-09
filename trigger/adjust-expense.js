@@ -5,7 +5,6 @@ import { azureOcrExtract } from '#server/utils/azure-ocr.utils.js'
 import { llmUtils } from '#server/utils/llm.utils.js'
 import { resolveShares } from '#shared/utils/expenses/resolve-shares.utils.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
-import { notifyStatus } from './utils/notify-status.js'
 
 const TASK_ID = 'adjust-expense'
 
@@ -19,7 +18,6 @@ export const adjustExpense = task({
 
     // Update workflow step status
     await updateWorkflowStatus(authHeaders, { adjustExpenseStatus: WORKFLOW_STEP_STATUS.PROCESSING })
-    await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_EXPENSE, 'processing', authHeaders)
 
     try {
       // 1. Fetch upload for OCR and annotations data
@@ -32,7 +30,6 @@ export const adjustExpense = task({
       const hasCustomInstructions = !!customInstructions?.trim()
       if (!hasAnnotations && !hasCustomInstructions) {
         await updateWorkflowStatus(authHeaders, { adjustExpenseStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-        await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_EXPENSE, 'completed', authHeaders)
 
         logger.log(`Skipped adjust-expense for ${uploadId} — no annotations and no custom instructions`)
         return { skipped: true, reason: 'no_inputs' }
@@ -41,7 +38,6 @@ export const adjustExpense = task({
       // 3. Skip if no OCR data
       if (!upload.ocrJson) {
         await updateWorkflowStatus(authHeaders, { adjustExpenseStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-        await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_EXPENSE, 'completed', authHeaders)
 
         logger.log(`Skipped adjust-expense for ${uploadId} — no OCR data`)
         return { skipped: true, reason: 'no_ocr_data' }
@@ -121,7 +117,6 @@ export const adjustExpense = task({
 
       // 8. Update workflow step status
       await updateWorkflowStatus(authHeaders, { adjustExpenseStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-      await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_EXPENSE, 'completed', authHeaders)
 
       logger.log(`Adjust-expense complete for ${uploadId}`, {
         expenseId,
@@ -141,7 +136,6 @@ export const adjustExpense = task({
         adjustExpenseStatus: WORKFLOW_STEP_STATUS.FAILED,
         errors: { [WORKFLOW_STEP.ADJUST_EXPENSE]: err.message },
       })
-      await notifyStatus(runUuid, WORKFLOW_STEP.ADJUST_EXPENSE, 'failed', authHeaders, err.message)
       throw err
     }
   },

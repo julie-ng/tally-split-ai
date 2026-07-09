@@ -139,6 +139,56 @@ export const useWorkflowStore = defineStore('workflow', () => {
   }
 
   /**
+   * Ingest a full workflow_runs row from a Supabase Realtime change event.
+   *
+   * Unlike the old SSE path (per-step deltas via updateStepStatus), a
+   * postgres_changes payload carries the ENTIRE authoritative row on every
+   * INSERT/UPDATE. We upsert it as the latest run for its upload — no delta
+   * reconstruction, the DB row is the source of truth.
+   *
+   * The payload is in DB column shape (snake_case); map it to the camelCase
+   * shape the store/getters use.
+   *
+   * @param {object} row - payload.new from a workflow_runs postgres_changes event
+   */
+  function ingestRun (row) {
+    if (!row?.upload_id) return
+
+    const uploadId = row.upload_id
+
+    const mapped = {
+      id: row.id,
+      uploadId: row.upload_id,
+      householdId: row.household_id,
+      triggerRunId: row.trigger_run_id,
+      status: row.status,
+      ocrStatus: row.ocr_status,
+      annotationsStatus: row.annotations_status,
+      normalizeStatus: row.normalize_status,
+      createExpenseStatus: row.create_expense_status,
+      adjustExpenseStatus: row.adjust_expense_status,
+      errors: row.errors,
+      createdAt: row.created_at,
+      completedAt: row.completed_at,
+    }
+
+    const existing = runs.value[uploadId] ?? []
+    const idx = existing.findIndex(r => r.id === mapped.id)
+
+    if (idx === -1) {
+      // New run — prepend (latest-first ordering the getters rely on).
+      runs.value[uploadId] = [mapped, ...existing]
+    }
+    else {
+      // Update in place, preserving array position.
+      existing[idx] = mapped
+      runs.value[uploadId] = [...existing]
+    }
+
+    _log(`[WorkflowStore] 🔄 ingested run ${mapped.id} for ${uploadId} (status=${mapped.status})`)
+  }
+
+  /**
    * Reconcile stuck runs against Trigger.dev before fetching. A run no worker
    * ever dequeued stays 'queued' locally forever; the server asks Trigger for
    * the real state and finalizes expired/crashed runs so the UI can surface
@@ -208,6 +258,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     reconcile,
     triggerWorkflow,
     updateStepStatus,
+    ingestRun,
     removeById,
   }
 })

@@ -3,7 +3,6 @@ import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { llmUtils } from '#server/utils/llm.utils.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
-import { notifyStatus } from './utils/notify-status.js'
 
 const TASK_ID = 'analyze-annotations'
 
@@ -17,7 +16,6 @@ export const analyzeAnnotations = task({
 
     // Update workflow step status
     await updateWorkflowStatus(authHeaders, { annotationsStatus: WORKFLOW_STEP_STATUS.PROCESSING })
-    await notifyStatus(runUuid, WORKFLOW_STEP.ANNOTATIONS, 'processing', authHeaders)
 
     try {
       // 1. Fetch upload record via API (includes ocrJson from OCR step)
@@ -65,7 +63,6 @@ export const analyzeAnnotations = task({
 
       // 7. Update workflow step status
       await updateWorkflowStatus(authHeaders, { annotationsStatus: WORKFLOW_STEP_STATUS.COMPLETED })
-      await notifyStatus(runUuid, WORKFLOW_STEP.ANNOTATIONS, 'completed', authHeaders)
 
       logger.log(`Annotations analysis complete for ${uploadId}`)
 
@@ -80,7 +77,6 @@ export const analyzeAnnotations = task({
         annotationsStatus: WORKFLOW_STEP_STATUS.FAILED,
         errors: { [WORKFLOW_STEP.ANNOTATIONS]: err.message },
       })
-      await notifyStatus(runUuid, WORKFLOW_STEP.ANNOTATIONS, 'failed', authHeaders, err.message)
       throw err
     }
   },
