@@ -45,7 +45,8 @@ export async function mintRealtimeToken ({ userId, privateJwk, ttlSeconds = 3600
   // "verify" op ("Unsupported key usage for a ECDSA key"). The node build (dev)
   // ignores key_ops, which is why this only failed in prod. Drop key_ops so jose
   // derives the correct ["sign"] usage from the presence of `d`.
-  const { key_ops, ...signingJwk } = jwk
+  const signingJwk = { ...jwk }
+  delete signingJwk.key_ops
 
   const privateKey = await importJWK(signingJwk, 'ES256')
 
