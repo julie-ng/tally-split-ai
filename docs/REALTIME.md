@@ -6,39 +6,77 @@ old SSE mechanism (Vercel function timeouts made SSE unworkable even on Pro).
 
 ## Connection paths (target design)
 
-Two — and only two — paths reach Postgres. All RESTful DB access goes through our
-Nuxt APIs (connecting as `postgres`, which **bypasses RLS**); the browser's only
-direct Supabase link is the **read-only** Realtime push channel (connecting as
-`authenticated`, which **enforces RLS**). The browser never queries Postgres
-directly.
+Two — and only two — paths reach Postgres:
+
+1. **REST (reads + writes).** All RESTful DB access goes through our Nuxt APIs.
+   The browser never touches Postgres directly.
+2. **Realtime (read-only push).** The browser's only direct Supabase link is the
+   Realtime channel, which pushes `workflow_runs` row changes to the browser.
+
+### Diagram 1 — REST path (all reads + writes)
+
+Every read and write goes through our Nuxt server API. The browser never queries
+Postgres directly.
 
 ```mermaid
 flowchart LR
-  Browser["Browser<br/>(Pinia stores)"]
   API["Nuxt server API<br/>role: postgres"]
-  RT["Supabase Realtime"]
-  PG[("Postgres<br/>public.workflow_runs")]
+  Browser["User (Browser)<br/>Pinia stores"]
 
-  %% REST path — all reads + writes, via our server, RLS bypassed
-  Browser -->|"$fetch (REST)"| API
+  subgraph Supabase
+    RT["Supabase Realtime"]
+    PG[("Postgres<br/>public.workflow_runs")]
+  end
+
   API -->|"reads + writes<br/>RLS BYPASSED"| PG
+  Browser -->|"$fetch (REST)"| API
 
-  %% Realtime path — read-only push to the browser, RLS enforced
-  API -.->|"mints ES256 JWT<br/>(sub, role: authenticated)"| Browser
-  Browser -->|"wss + setAuth(JWT)<br/>subscribe"| RT
-  PG -->|"row-change events"| RT
-  RT -->|"push (household-scoped<br/>RLS ENFORCED)"| Browser
-
-  %% Forbidden
   Browser -.->|"direct DB query<br/>❌ NEVER"| PG
 
   classDef forbidden stroke:#c00,stroke-dasharray:4 3,color:#c00;
-  linkStyle 6 stroke:#c00,stroke-dasharray:4 3;
+  linkStyle 2 stroke:#c00,stroke-dasharray:4 3;
+```
+
+The server connects as `postgres`, which **bypasses RLS** — authorization is
+enforced in the API handlers (session + household scoping), not the database.
+
+### Diagram 2 — Realtime handshake (direct browser ↔ Supabase)
+
+The one place the browser talks to Supabase directly. Our server never proxies the
+websocket; it only mints the short-lived JWT that lets the browser authenticate as
+`authenticated`, under which Supabase **enforces RLS**.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant API as Nuxt server API<br/>(role: postgres)
+  participant B as Browser<br/>(Pinia store)
+  box Supabase
+    participant RT as Supabase Realtime
+    participant PG as Postgres
+  end
+
+  Note over B,API: 1. Token mint (session-gated)
+  B->>API: GET /api/realtime/token
+  API->>API: mint ES256 JWT<br/>(sub, role: authenticated, exp)
+  API-->>B: short-lived JWT
+
+  Note over B,RT: 2. Authenticate + subscribe (direct)
+  B->>RT: wss connect + setAuth(JWT)
+  B->>RT: subscribe public.workflow_runs
+  RT->>RT: verify JWT (matched by kid)<br/>enforce RLS for role authenticated
+  RT-->>B: SUBSCRIBED
+
+  Note over RT,B: 3. Live push (read-only, RLS ENFORCED)
+  PG-->>RT: row-change event
+  RT-->>B: push (household-scoped)
+
+  Note over B,API: refresh JWT at ~50 min, repeat step 1
 ```
 
 > **Target design.** Today the RLS policy is interim `using (true)` and the browser
-> narrows to its household client-side (see step 6 + "Still TODO"). The diagram
-> shows the end state: household-scoped RLS enforces the boundary in the DB and the
+> narrows to its household client-side (see step 6 + "Still TODO"). Diagram 2 shows
+> the end state: household-scoped RLS enforces the boundary in the DB and the
 > client-side filter is removed.
 
 ## How it works
