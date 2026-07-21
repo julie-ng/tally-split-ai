@@ -10,6 +10,7 @@
     "build": "nuxt build",
     "dev": "nuxt dev",
     "lint": "eslint .",
+    "lint:list-files": "eslint . --debug 2>&1 | grep -iE 'linting |Processing'",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "predev": "nuxt prepare",
@@ -74,6 +75,20 @@
     "vitest": "^4.0.15"
   },
   "overrides": {
-    "@depot/cli": "0.0.1-cli.2.101.60"
+    "@depot/cli": "0.0.1-cli.2.101.60",
+    "tar": "^7.5.20",
+    "ws": "^8.21.1",
+    "engine.io": "^6.6.9",
+    "cookie": "^0.7.0",
+    "esbuild": "^0.28.1",
+    "@opentelemetry/core": "^2.9.0"
+  },
+  "allowScripts": {
+    "@depot/cli@0.0.1-cli.2.101.60": true,
+    "vue-demi@0.14.10": true,
+    "esbuild@0.28.1": true,
+    "sharp@0.34.5": true,
+    "better-sqlite3@12.11.1": true,
+    "fsevents@2.3.3": true
   }
 }
