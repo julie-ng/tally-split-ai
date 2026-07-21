@@ -1,128 +1,170 @@
-# Realtime (Supabase) — setup & how it works
+# Supabase Realtime — Security Design
 
-Live workflow-status updates come from **Supabase Realtime** (websockets), which
-broadcasts `workflow_runs` row changes directly to the browser. This replaced the
-old SSE mechanism (Vercel function timeouts made SSE unworkable even on Pro).
+- Previous setup: Server Side Events (SSE) – long-lived connections not compatible with serverless function timeouts
+- Current setup: [Supabase Realtime](https://supabase.com/realtime) – user opens web sockets and receives events with authZ security boundary enforced via row level security (RLS).
 
-## How it works
+## Summary
 
-1. Every trigger task, when a step transitions, writes the new status to
-   `workflow_runs` (via `PUT /api/workflows/runs/:runUuid/status`).
-2. Supabase Realtime broadcasts that row change to subscribed browsers.
-3. The browser holds a subscription to `public.workflow_runs` and filters
-   client-side by the current household (`workflow_runs.household_id`).
-   IMPORTANT: `postgres_changes` enforces RLS + table grants for the connected
-   role. Because we connect with a `role: authenticated` JWT, the table needs a
-   SELECT grant AND an RLS SELECT policy for `authenticated` — otherwise Supabase
-   sends the event with the row data stripped and `errors: ["Error 401:
-   Unauthorized"]`. Our interim policy is `using (true)` (any authenticated user
-   reads any row); the client-side household filter narrows it. Tightening that
-   policy to household-scoped is the real Plan-2 RLS work (needs the household in
-   the JWT). See step 6.
-4. Auth: we keep our own auth in nuxt-auth-utils. `GET /api/realtime/token`
-   mints a short-lived **ES256** JWT (`sub`, `role: authenticated`, `exp`),
-   signed with an ES256 signing key (a JWK). The **same** signing key is imported
-   into the Supabase project's JWT signing keys, so Supabase can verify our
-   tokens (matched by the JWK's `kid`). The store calls
-   `supabase.realtime.setAuth(token)` and refreshes at ~50 min.
+- User authenticates with Nuxt API
+- Nuxt API mints JWT  (`sub`, `role: authenticated`, `exp`) signed with _Supabase-issued_  **ES256** JWT signing key. 
+- User subscribes to events for `workflow_runs` (table) via web sockets.
+- Supabase broadcasts updates (RLS enforced)
+- Security
+  - AuthN: via app
+  - AuthZ: via RLS policy that scopes roles to user's `household_id`; not JWT token because it would require re-minting if household change.
+  
 
-Key files:
+## Connections to Supabase
+
+Two paths to Supabase:
+
+| Path | Auth | Actions | RLS Enforced |
+|:--|:--|:--|:--|
+| Nuxt API | DB password | read + write | false |
+| Browser (Realtime) | JWT | read-only | true |
+
+### REST path
+
+- The server connects as `postgres`, which **bypasses RLS**
+- Authorization (AuthZ) is enforced in the API handlers (session + household scoping), not the database.
+
+```mermaid
+flowchart LR
+  API["<strong>Nuxt server API</strong><br/>(role: postgres)"]
+  Browser["<strong>Browser</strong>"]
+
+  subgraph Supabase
+    PG[("<strong>Postgres</strong><br/><code>public.workflow_runs</code>")]    
+  end
+
+  API -->|"reads + writes<br/>RLS bypassed"| PG
+  Browser -->|"REST"| API
+
+  Browser -.->|"Direct DB query<br/>❌ never"| PG  
+
+  classDef forbidden stroke:#c00,stroke-dasharray:4 3,color:#c00;
+  linkStyle 2 stroke:#c00,stroke-dasharray:4 3;
+```
+
+### Web Sockets Path
+
+- User connects directly to Supabase to receive read-only updates.
+- User AuthN is at Nuxt API server, which issues `authenticated` JWT to confirm AuthN for Supabase.
+- User AuthZ is enforced via RLS. The policy scopes rows to the user's household by looking up `public.users` on `auth.uid()` (the token's `sub`).
+- Workers update their status via `PUT /api/workflows/runs/:runUuid/status`, which updates the `workflow_runs` table. Supabase pushes notification to user.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant API as Nuxt server API<br/>(role: postgres)
+  actor B as Browser
+  box Supabase
+    participant RT as Realtime<br/> (Web Socket)
+    participant PG@{ "type": "database" } as Postgres
+  end
+
+  Note over B,API: 1. Token mint (session-gated)
+  B->>API: GET /api/realtime/token
+  activate API
+  API->>API: mint ES256 JWT<br/>(sub, role: authenticated, exp)
+  API-->>B: short-lived JWT
+  deactivate API
+
+  Note over B,RT: 2. Authenticate + subscribe (direct)
+  B->>RT: Connect + setAuth(JWT)
+  activate RT
+  B->>RT: Subscribe public.workflow_runs
+  RT->>RT: Verify JWT<br/>(matched by Key ID)
+  RT-->>B: SUBSCRIBED
+  deactivate RT
+
+  Note over RT,B: 3. Live push (read-only, RLS enforced)
+  PG-->>RT: row-change event
+  RT-->>B: push (household-scoped)
+  
+  loop At ~50 min.
+      B->>API: Refresh Token… repeat steps 1-7.
+  end
+```
+
+> [!IMPORTANT]
+> `postgres_changes` enforces RLS + table grants for the connected role. Because we connect with a `role: authenticated` JWT, the table needs a SELECT grant AND an RLS SELECT policy for `authenticated`
+> 
+> Otherwise Supabase sends the event with the row data stripped and `errors: ["Error 401: Unauthorized"]`.
+
+
+#### Key files
+
 - `server/api/realtime/token.get.js` — mints the JWT (session-gated)
 - `server/utils/realtime/mint-realtime-token.js` — signing logic (+ tests)
 - `app/stores/realtime.store.js` — the subscription (same `connect()`/`disconnect()` API as before)
 
-## One-time setup (do this to make it work)
+## Configuration
 
-### 1. Install the new deps
-```
-npm install
-```
-(adds `@supabase/supabase-js` + `jose`; also runs `nuxt prepare`, which clears the
-`realtimeUtils is not defined` ESLint false-positive.)
+### Environment Variables
 
-### 2. Generate an ES256 signing key (JWK)
-Use the Supabase CLI — it emits the key in JWK format (with a `kid`), which is
-exactly what both Supabase's import dialog and our minter expect.
-```
-supabase gen signing-key --algorithm ES256
-```
-This prints a JWK JSON object, e.g.:
+See supabase docs for details:
+
+- [Get API Details](https://supabase.com/docs/guides/realtime/getting_started#get-api-details)
+  - For Realtime, use [Dashboard > Settings > API Keys](https://supabase.com/dashboard/project/_/settings/api-keys/). 
+  - Or go to `https://supabase.com/dashboard/project/<project_id>/settings/jwt`
+  - Do _not_ use Connect Dialog (for database).
+- [Understanding API keys](https://supabase.com/docs/guides/getting-started/api-keys)
+
+| Variable | Example | 
+|:--|:--|
+| `NUXT_PUBLIC_SUPABASE_URL` | `https://<project_id>.supabase.co` |
+| `NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_…` | 
+| `NUXT_SUPABASE_JWT_PRIVATE_KEY` |  See example below |
+
+The Supabase-issued signing key should be in this format
+
 ```json
-{ "kty": "EC", "kid": "3a18cfe2-...", "d": "…", "crv": "P-256", "x": "…", "y": "…" }
+{
+  "kty": "EC",
+  "kid": "UUID",
+  "use": "sig",
+  "key_ops": ["sign", "verify"], /* see important note below */
+  "alg": "ES256",
+  "ext": true,
+  "d": "…",
+  "crv": "P-256",
+  "x": "…",
+  "y": "…"
+}
 ```
-The `d` field is the private part — treat the whole thing as a secret.
 
-> The SAME JWK is used in two places: imported into Supabase (so it can verify)
-> AND stored in our env (so we can sign). Supabase will NOT let you extract the
-> key after import, so keep your own copy now.
+> [!WARNING]
+> The [jose](https://www.npmjs.com/package/jose) webapi build **rejects** a JWK with `key_ops: ["sign","verify"]`. **Manually** remove `key_ops` before saving to `NUXT_SUPABASE_JWT_PRIVATE_KEY`
 
-### 3. Import the key into Supabase
-Supabase dashboard → Project → **Settings → JWT Keys → JWT Signing Keys** →
-**Create Standby Key** → algorithm **ES256 (ECC)** → check **Import an existing
-private key** → paste the JWK from step 2 → **Create standby key**. Once it shows
-up, promote/rotate it to the current key per the dashboard.
+## SQL for RLS policy & grants
 
-> This is the signing-keys "import your own key" path (Supabase docs:
-> `guides/auth/signing-keys` → "How to create (mint) JWTs…"). NOT the
-> third-party-auth OIDC path.
+Because Drizzle is an ORM, the policies are **hand-written SQL** migrations, e.g. [`0018_household_scoped_workflow_runs_rls.sql`](./../server/db/migrations/postgres/0018_household_scoped_workflow_runs_rls.sql).
 
-### 4. Set env vars (1Password, per environment)
-Names use the Nuxt convention — `NUXT_` (server) / `NUXT_PUBLIC_` (client) prefixes
-auto-map onto `runtimeConfig` at runtime; no `process.env` wiring in the config.
+> [!IMPORTANT]
+> Apply policy with `drizzle-kit migrate` like any other migration, so it's tracked in history.
 
-| Var | Value | Notes |
-|:--|:--|:--|
-| `NUXT_PUBLIC_SUPABASE_URL` | project URL | client-safe |
-| `NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | publishable key (`sb_publishable_…`) | client-safe; Settings → API Keys → Publishable key (replaces legacy anon key) |
-| `NUXT_SUPABASE_JWT_PRIVATE_KEY` | the full JWK JSON string from step 2 | server-only; includes its own `kid` (no separate kid var) |
+The policy does four things, all required for the browser's `role: authenticated` connection to receive row data.
 
-### 5. Enable the Realtime publication (per DB — dev + prod)
-```sql
-alter publication supabase_realtime add table workflow_runs;
-```
-> GOTCHA: a `DROP SCHEMA public CASCADE` (schema reset) silently removes the table
-> from the publication — re-run this after any reset. Verify with:
-> `SELECT * FROM pg_publication_tables WHERE pubname='supabase_realtime';`
+1. **Add `workflow_runs` to the `supabase_realtime` publication** — so Realtime broadcasts its row changes at all.
 
-### 6. Authorize the `authenticated` role for postgres_changes (per DB — dev + prod)
-`postgres_changes` enforces table grants + RLS for the connected role. Without
-this, events arrive with the row data stripped and `errors: ["Error 401:
-Unauthorized"]`.
-```sql
--- Grant: let the authenticated role read the table
-grant select on public.workflow_runs to authenticated;
+2. **`GRANT SELECT` to `authenticated`** — `postgres_changes` enforces table grants for the connected role.
 
--- RLS: enable + an interim SELECT policy (any authenticated user reads any row;
--- the client-side household filter narrows it). Tighten to household-scoped in
--- the Plan-2 RLS phase.
-alter table public.workflow_runs enable row level security;
-create policy "authenticated can read workflow_runs"
-on public.workflow_runs for select to authenticated using (true);
-```
-> Also survives a schema reset only if re-run — a `DROP SCHEMA public CASCADE`
-> drops the policy AND the grant. Re-run steps 5 + 6 together after any reset.
+3. **`GRANT SELECT (id, household_id)` on `public.users` + a self-only SELECT policy** — lets the policy subquery resolve the caller's household, while exposing only the caller's own row.
 
-## Test end-to-end
+  ```sql
+  using ( id = (select auth.jwt() ->> 'sub') )
+  ```
 
-- Unit test (passing): `npx vitest run server/utils/realtime/mint-realtime-token.test.js`
-- Manual: open `/uploads`, wait for `[RealtimeStore] subscribed` in the console,
-  THEN upload a receipt (subscribing after a run finishes means no live events to
-  see). Watch the workflow steps update live without a refresh.
-- Troubleshooting when subscribed but nothing updates:
-  - Empty `payload.new` + `errors: ["Error 401: Unauthorized"]` → step 6 (grant/RLS)
-  - No events at all during a live run → step 5 (publication), or the app is
-    writing to a different DB than the browser's Supabase project
-  - Events arrive but filtered out → household mismatch (`row.household_id` vs
-    `useHouseholdStore().id`)
+4. **Enable RLS + a household-scoped SELECT policy** — scopes each user to their own household. The policy reads no household claim from the token; it looks the household up from `public.users` by the JWT `sub`, so switching households needs no re-mint:
+  ```sql
+  using (
+    household_id in (
+      select household_id from public.users where id = (select auth.jwt() ->> 'sub')
+    )
+  )
+  ```
 
-## Still TODO (flagged, not done)
-- **RLS** (later phase) — tighten the interim `using (true)` policy (step 6) to
-  household-scoped so the DB enforces the filter instead of the client. Needs the
-  household id in the minted JWT; then the client-side `household_id` check in the
-  store can go away.
-
-## History
-- The old SSE mechanism (an in-memory `workflowBus` + a `notifyStatus` callback
-  from each trigger task to `POST /api/workflows/callback/:runUuid`) was removed.
-  Live updates now come from Realtime broadcasting the `workflow_runs` DB write
-  that each task already performs — the callback push was redundant.
+> [!NOTE]
+> Use `auth.jwt() ->> 'sub'` (text), **not** `auth.uid()`.
+> `auth.uid()` casts the claim to `uuid`; our user ids are text nanoids, so it would throw and the row would be stripped.
