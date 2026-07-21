@@ -4,6 +4,43 @@ Live workflow-status updates come from **Supabase Realtime** (websockets), which
 broadcasts `workflow_runs` row changes directly to the browser. This replaced the
 old SSE mechanism (Vercel function timeouts made SSE unworkable even on Pro).
 
+## Connection paths (target design)
+
+Two — and only two — paths reach Postgres. All RESTful DB access goes through our
+Nuxt APIs (connecting as `postgres`, which **bypasses RLS**); the browser's only
+direct Supabase link is the **read-only** Realtime push channel (connecting as
+`authenticated`, which **enforces RLS**). The browser never queries Postgres
+directly.
+
+```mermaid
+flowchart LR
+  Browser["Browser<br/>(Pinia stores)"]
+  API["Nuxt server API<br/>role: postgres"]
+  RT["Supabase Realtime"]
+  PG[("Postgres<br/>public.workflow_runs")]
+
+  %% REST path — all reads + writes, via our server, RLS bypassed
+  Browser -->|"$fetch (REST)"| API
+  API -->|"reads + writes<br/>RLS BYPASSED"| PG
+
+  %% Realtime path — read-only push to the browser, RLS enforced
+  API -.->|"mints ES256 JWT<br/>(sub, role: authenticated)"| Browser
+  Browser -->|"wss + setAuth(JWT)<br/>subscribe"| RT
+  PG -->|"row-change events"| RT
+  RT -->|"push (household-scoped<br/>RLS ENFORCED)"| Browser
+
+  %% Forbidden
+  Browser -.->|"direct DB query<br/>❌ NEVER"| PG
+
+  classDef forbidden stroke:#c00,stroke-dasharray:4 3,color:#c00;
+  linkStyle 6 stroke:#c00,stroke-dasharray:4 3;
+```
+
+> **Target design.** Today the RLS policy is interim `using (true)` and the browser
+> narrows to its household client-side (see step 6 + "Still TODO"). The diagram
+> shows the end state: household-scoped RLS enforces the boundary in the DB and the
+> client-side filter is removed.
+
 ## How it works
 
 1. Every trigger task, when a step transitions, writes the new status to
@@ -117,9 +154,20 @@ on public.workflow_runs for select to authenticated using (true);
 
 ## Still TODO (flagged, not done)
 - **RLS** (later phase) — tighten the interim `using (true)` policy (step 6) to
-  household-scoped so the DB enforces the filter instead of the client. Needs the
-  household id in the minted JWT; then the client-side `household_id` check in the
-  store can go away.
+  household-scoped so the DB enforces the filter instead of the client. Then the
+  client-side `household_id` check in the store can go away. Two ways to scope:
+  - **Derive from `sub` (no JWT change):** the token already carries `sub` =
+    our user id, readable as `auth.uid()`. Scope the policy by joining
+    membership, e.g. `using (household_id in (select hm.household_id from
+    household_members hm where hm.user_id = auth.uid()))`. Works with today's
+    token; membership changes take effect without re-minting.
+  - **Add `household_id` to the JWT:** simpler/cheaper policy (`using
+    (household_id = auth.jwt()->>'household_id')`), but the token then encodes
+    household — it must be re-minted when a user switches/joins a household.
+  - Only `workflow_runs` RLS is load-bearing (it's the only table the browser
+    subscribes to). RLS on other user-facing tables would be pure defense-in-depth
+    — our REST APIs connect as `postgres` (bypasses RLS), and the browser never
+    queries those tables directly. See the connection-paths diagram above.
 
 ## History
 - The old SSE mechanism (an in-memory `workflowBus` + a `notifyStatus` callback
