@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
   await guards.requireAuthorization(event, { expenseId })
 
   const householdId = event.context.householdId
-  const { deletedIds, blobDeleteUrls } = await expensesUtils.deleteMany(db, {
+  const { deletedIds, deletedReceiptIds, blobDeleteUrls } = await expensesUtils.deleteMany(db, {
     householdId,
     ids: [expenseId],
   })
@@ -44,5 +44,6 @@ export default defineEventHandler(async (event) => {
   return {
     success: true,
     deleted: { id: expenseId },
+    deletedReceiptIds,
   }
 })

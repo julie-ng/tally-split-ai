@@ -1,4 +1,5 @@
 import { useExpensesStore } from '~/stores/expenses.store'
+import { useReceiptsStore } from '~/stores/receipts.store'
 import { toBerlinShortDate } from '#shared/utils/expense-date.utils.js'
 import ConfirmModal from '~/components/ConfirmModal.vue'
 
@@ -23,6 +24,7 @@ import ConfirmModal from '~/components/ConfirmModal.vue'
 export function useExpenseBatchActions (options = {}) {
   const { onMutated } = options
   const expensesStore = useExpensesStore()
+  const receiptsStore = useReceiptsStore()
   const toast = useToast()
   const overlay = useOverlay()
   const confirmModal = overlay.create(ConfirmModal)
@@ -144,6 +146,14 @@ export function useExpenseBatchActions (options = {}) {
       const result = await expensesStore.batchDelete(ids)
       const deleted = result.deletedCount
       clearSelection()
+
+      // The cascade deletes receipts server-side too; evict them from the
+      // receipts store so it doesn't show already-deleted receipts. Page-
+      // orchestrated (not store-to-store) per the store-composition rule.
+      for (const receiptId of result.deletedReceiptIds ?? []) {
+        receiptsStore.evictReceipt(receiptId)
+      }
+
       await onMutated?.()
 
       if (deleted === ids.length) {

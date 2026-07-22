@@ -23,7 +23,9 @@ import { eq, and, inArray } from 'drizzle-orm'
  * @param {object} opts
  * @param {string} opts.householdId
  * @param {string[]} opts.ids
- * @returns {Promise<{ deletedIds: string[], blobDeleteUrls: string[] }>}
+ * @returns {Promise<{ deletedIds: string[], deletedReceiptIds: string[], blobDeleteUrls: string[] }>}
+ *   deletedIds = expense ids removed; deletedReceiptIds = receipt ids the cascade
+ *   removed (so the caller can evict them from the receipts cache).
  */
 export async function deleteMany (db, { householdId, ids }) {
   return db.transaction(async (tx) => {
@@ -41,7 +43,7 @@ export async function deleteMany (db, { householdId, ids }) {
       .for('update')
 
     if (owned.length === 0) {
-      return { deletedIds: [], blobDeleteUrls: [] }
+      return { deletedIds: [], deletedReceiptIds: [], blobDeleteUrls: [] }
     }
 
     const receiptIds = owned.filter(e => e.receiptId).map(e => e.receiptId)
@@ -91,6 +93,7 @@ export async function deleteMany (db, { householdId, ids }) {
 
     return {
       deletedIds: owned.map(e => e.id),
+      deletedReceiptIds: receiptIds,
       blobDeleteUrls,
     }
   })

@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
   const { ids } = result.data
 
   try {
-    const { deletedIds, blobDeleteUrls } = await expensesUtils.deleteMany(db, { householdId, ids })
+    const { deletedIds, deletedReceiptIds, blobDeleteUrls } = await expensesUtils.deleteMany(db, { householdId, ids })
 
     // Offload Azure blob cleanup — the DB rows are already gone; orphaned blobs
     // are harmless if this is delayed/retried, so don't block the response.
@@ -56,6 +56,7 @@ export default defineEventHandler(async (event) => {
       success: true,
       deletedCount: deletedIds.length,
       deletedIds,
+      deletedReceiptIds,
       message: `Successfully deleted ${deletedIds.length} expense(s)`,
     }
   }

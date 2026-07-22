@@ -382,6 +382,19 @@ export const useReceiptsStore = defineStore('receipts', () => {
   }
 
   /**
+   * Evict a receipt from the cache WITHOUT calling the API — for when the
+   * receipt was already deleted server-side elsewhere (e.g. an expense delete
+   * cascaded it away). Keeps this store in sync without it owning the deletion.
+   * @param {string} id - Receipt ID
+   */
+  function evictReceipt (id) {
+    if (receiptsById.value[id]) {
+      _log(`[ReceiptsStore] evictReceipt(${id}) — removed from cache`)
+      delete receiptsById.value[id]
+    }
+  }
+
+  /**
    * Clear all caches (useful for logout or major state changes)
    */
   function clearAllCaches () {
@@ -423,6 +436,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
     analyzeBulk,
     clearReceiptError,
     invalidateReceipt,
+    evictReceipt,
     clearAllCaches,
   }
 })
