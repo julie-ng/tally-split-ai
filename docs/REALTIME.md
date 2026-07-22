@@ -6,12 +6,12 @@
 ## Summary
 
 - User authenticates with Nuxt API
-- Nuxt API mints JWT  (`sub`, `role: authenticated`, `exp`) signed wtih _Supabase-issued_  **ES256** JWT signing key. 
+- Nuxt API mints JWT  (`sub`, `role: authenticated`, `exp`) signed with _Supabase-issued_  **ES256** JWT signing key. 
 - User subscribes to events for `workflow_runs` (table) via web sockets.
-- Supbase broadcasts updates (RLS enforced)
+- Supabase broadcasts updates (RLS enforced)
 - Security
   - AuthN: via app
-  - AuthZ: via RLS policy that scopes roles to user's `household_id`; not JWT token because it would require re-minting if houshold change.
+  - AuthZ: via RLS policy that scopes roles to user's `household_id`; not JWT token because it would require re-minting if household change.
   
 
 ## Connections to Supabase
@@ -117,7 +117,7 @@ See supabase docs for details:
 | `NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_…` | 
 | `NUXT_SUPABASE_JWT_PRIVATE_KEY` |  See example below |
 
-The Supabase-issed signing key should be in this format
+The Supabase-issued signing key should be in this format
 
 ```json
 {
