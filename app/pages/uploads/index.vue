@@ -4,7 +4,6 @@ import { getPaginationRowModel } from '@tanstack/vue-table'
 import { useUploadsStore } from '~/stores/uploads.store'
 import { useUploadQueueStore } from '~/stores/upload-queue.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
-import { useRealtimeStore } from '~/stores/realtime.store'
 
 useHead({
   title: 'Uploads',
@@ -13,21 +12,12 @@ useHead({
 const uploadsStore = useUploadsStore()
 const uploadQueueStore = useUploadQueueStore()
 const workflowStore = useWorkflowStore()
-const realtimeStore = useRealtimeStore()
 uploadsStore.debug = true
 workflowStore.debug = true
 
-// Scope SSE to /uploads only — workflow progress bars live here. Other
-// pages don't show live progress, so holding a serverless function open
-// elsewhere would just burn cost without UX benefit. Auth is checked in
-// the realtime store; SSR-safe via onMounted/onBeforeUnmount.
-const { loggedIn } = useUserSession()
-onMounted(() => {
-  if (loggedIn.value) {
-    realtimeStore.connect()
-  }
-})
-onBeforeUnmount(() => realtimeStore.disconnect())
+// Realtime is connected at the layout level (session-scoped), not here — the
+// subscription outlives navigation. This page just reads the workflow store it
+// feeds. See app/layouts/default.vue.
 
 // Reconcile stuck runs (no worker / expired) against Trigger.dev before
 // fetching, so the fetched statuses already reflect reality. Best-effort.

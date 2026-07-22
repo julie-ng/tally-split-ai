@@ -22,6 +22,10 @@ export const useRealtimeStore = defineStore('realtime', () => {
   const isConnected = ref(false)
   const hasShownDisconnectToast = ref(false)
   let refreshTimer = null
+  // Set while disconnect() tears down so the subscribe() callback ignores the
+  // CLOSED status that removeChannel() fires — that's an intentional teardown
+  // (e.g. navigating away from /uploads), not a lost connection.
+  let isDisconnecting = false
 
   // Refresh the access token before it expires (token TTL is 1h; refresh at 50m).
   const TOKEN_REFRESH_MS = 50 * 60 * 1000
@@ -54,6 +58,10 @@ export const useRealtimeStore = defineStore('realtime', () => {
   async function connect () {
     if (channel.value) return
 
+    // Re-arm: clear the teardown flag so a real disconnect on this fresh
+    // connection surfaces the toast.
+    isDisconnecting = false
+
     const supabase = getClient()
     if (!supabase) return
 
@@ -81,7 +89,10 @@ export const useRealtimeStore = defineStore('realtime', () => {
         }
         else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           isConnected.value = false
-          _maybeShowDisconnectToast()
+          // Suppress on intentional teardown — removeChannel() fires CLOSED.
+          if (!isDisconnecting) {
+            _maybeShowDisconnectToast()
+          }
         }
       })
   }
@@ -91,6 +102,9 @@ export const useRealtimeStore = defineStore('realtime', () => {
       clearTimeout(refreshTimer)
       refreshTimer = null
     }
+    // Stays true past this sync body: removeChannel() fires CLOSED on the
+    // subscribe() callback asynchronously. connect() clears it on next use.
+    isDisconnecting = true
     if (channel.value && client.value) {
       client.value.removeChannel(channel.value)
     }
