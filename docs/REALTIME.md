@@ -6,9 +6,13 @@
 ## Summary
 
 - User authenticates with Nuxt API
-- Nuxt API mints JWT  (`sub`, `role: authenticated`, `exp`) incl. `household_id` signed wtih _Supabase-issued_  **ES256** JWT signing key.
+- Nuxt API mints JWT  (`sub`, `role: authenticated`, `exp`) signed wtih _Supabase-issued_  **ES256** JWT signing key. 
 - User subscribes to events for `workflow_runs` (table) via web sockets.
 - Supbase broadcasts updates (RLS enforced)
+- Security
+  - AuthN: via app
+  - AuthZ: via RLS policy that scopes roles to user's `household_id`; not JWT token because it would require re-minting if houshold change.
+  
 
 ## Connections to Supabase
 
@@ -46,7 +50,7 @@ flowchart LR
 
 - User connects directly to Supabase to receive read-only updates.
 - User AuthN is at Nuxt API server, which issues `authenticated` JWT to confirm AuthN for Supabase.
-- User AuthZ is enforced via RLS, scoped to `householdId`.
+- User AuthZ is enforced via RLS. The policy scopes rows to the user's household by looking up `public.users` on `auth.uid()` (the token's `sub`).
 - Workers update their status via `PUT /api/workflows/runs/:runUuid/status`, which updates the `workflow_runs` table. Supabase pushes notification to user.
 
 ```mermaid
@@ -84,7 +88,9 @@ sequenceDiagram
 ```
 
 > [!IMPORTANT]
-> `postgres_changes` enforces RLS + table grants for the connected role. Because we connect with a `role: authenticated` JWT, the table needs a SELECT grant AND an RLS SELECT policy for `authenticated` — otherwise Supabase sends the event with the row data stripped and `errors: ["Error 401: Unauthorized"]`.
+> `postgres_changes` enforces RLS + table grants for the connected role. Because we connect with a `role: authenticated` JWT, the table needs a SELECT grant AND an RLS SELECT policy for `authenticated`
+> 
+> Otherwise Supabase sends the event with the row data stripped and `errors: ["Error 401: Unauthorized"]`.
 
 
 #### Key files
@@ -131,30 +137,25 @@ The Supabase-issed signing key should be in this format
 > [!WARNING]
 > The [jose](https://www.npmjs.com/package/jose) webapi build **rejects** a JWK with `key_ops: ["sign","verify"]`. **Manually** remove `key_ops` before saving to `NUXT_SUPABASE_JWT_PRIVATE_KEY`
 
-### SQL to enable publication
+## SQL for RLS policy & grants
 
-```sql
-alter publication supabase_realtime add table workflow_runs;
-```
+Because Drizzle is an ORM, the policies are **hand-written SQL** [`0017_realtime_workflow_runs_rls.sql`](./../server/db/migrations/postgres/0017_realtime_workflow_runs_rls.sql) migrations.
 
-> [!TIP]
-> A `DROP SCHEMA public CASCADE` (schema reset) silently removes the table from the publication — re-run this after any reset. Verify with: `SELECT * FROM pg_publication_tables WHERE pubname='supabase_realtime';`
+> [!IMPORTANT]
+> Apply policy with `drizzle-kit migrate` like any other migration, so it's tracked in history.
 
-Authorize the `authenticated` role for postgres_changes (per DB — dev + prod)
-`postgres_changes` enforces table grants + RLS for the connected role. Without this, events arrive with the row data stripped and `errors: ["Error 401: Unauthorized"]`.
+The policy does three things, all required for the browser's `role: authenticated` connection to receive row data.
 
-```sql
--- Grant: let the authenticated role read the table
-grant select on public.workflow_runs to authenticated;
+1. **Add `workflow_runs` to the `supabase_realtime` publication** — so Realtime broadcasts its row changes at all.
 
--- RLS: enable + an interim SELECT policy (any authenticated user reads any row;
--- the client-side household filter narrows it). Tighten to household-scoped in
--- the Plan-2 RLS phase.
-alter table public.workflow_runs enable row level security;
-create policy "authenticated can read workflow_runs"
-on public.workflow_runs for select to authenticated using (true);
-```
+2. **`GRANT SELECT` to `authenticated`** — `postgres_changes` enforces table grants for the connected role.
 
-Also survives a schema reset only if re-run — a `DROP SCHEMA public CASCADE` drops the policy AND the grant. 
+3. **Enable RLS + a household-scoped SELECT policy** — scopes each user to their own household. The policy reads no household claim from the token; it looks the household up from `public.users` by `auth.uid()` (the token's `sub`), so switching households needs no re-mint:
 
-Re-run steps 5 + 6 together after any reset (of what?? DB?)
+  ```sql
+  using (
+    household_id in (
+      select household_id from public.users where id = auth.uid()
+    )
+  )
+  ```
