@@ -24,7 +24,7 @@ const MOCK_STEPS = [
   },
   {
     key: 'ocr',
-    label: 'OCR',
+    label: 'OCR Analysis',
     description: 'Text extraction (Azure Document Intelligence)',
     status: 'completed',
     startedAt: '2026-07-22T10:21:04',
@@ -85,7 +85,8 @@ const STATUS_CONFIG = {
     icon: 'i-lucide-check',
     dot: 'bg-inverted text-inverted border-inverted',
     label: 'Completed',
-    labelClass: 'text-success',
+    labelClass: 'text-default',
+    dotColor: 'bg-success',
   },
   processing: {
     icon: 'i-lucide-loader-circle',
@@ -232,7 +233,7 @@ function toggle (step) {
         <!-- Status dot (mt nudges the check to align with the step label,
              which sits below the box's top padding) -->
         <span
-          class="relative z-10 mt-2 flex size-5 shrink-0 items-center justify-center rounded-full border"
+          class="relative z-10 mt-3 flex size-5 shrink-0 items-center justify-center rounded-full border"
           :class="cfg(step.status).dot"
         >
           <UIcon
@@ -253,7 +254,7 @@ function toggle (step) {
           <!-- Header (clickable when expandable) -->
           <button
             type="button"
-            class="w-full px-3 py-2 text-left"
+            class="w-full px-3 py-3 text-left"
             :class="isExpandable(step) ? 'cursor-pointer' : 'cursor-default'"
             @click="toggle(step)"
           >
@@ -261,7 +262,13 @@ function toggle (step) {
               <p class="text-sm font-medium text-default max-w-[70%] truncate mb-0.5">
                 {{ step.label }}
               </p>
-              <span class="ml-auto shrink-0 text-xs">
+              <span class="ml-auto flex shrink-0 items-center gap-1.5 text-xs">
+                <!-- Leading status dot (e.g. green for completed) -->
+                <span
+                  v-if="cfg(step.status).dotColor"
+                  class="size-2 rounded-full"
+                  :class="cfg(step.status).dotColor"
+                />
                 <span
                   class="font-medium"
                   :class="cfg(step.status).labelClass"
@@ -271,13 +278,13 @@ function toggle (step) {
                 <!-- Completed → static duration; Processing → live elapsed. -->
                 <span
                   v-if="step.status === 'completed' && fmtDuration(step.startedAt, step.completedAt)"
-                  class="text-dimmed"
+                  class="text-muted tabular-nums"
                 >
                   · {{ fmtDuration(step.startedAt, step.completedAt) }}
                 </span>
                 <span
                   v-else-if="step.status === 'processing' && elapsed(step.startedAt)"
-                  class="text-dimmed tabular-nums"
+                  class="text-muted tabular-nums"
                 >
                   · {{ elapsed(step.startedAt) }}
                 </span>
@@ -285,21 +292,25 @@ function toggle (step) {
               <UIcon
                 v-if="isExpandable(step)"
                 name="i-lucide-chevron-down"
-                class="size-4 shrink-0 text-dimmed transition-transform"
+                class="size-4 shrink-0 text-highlighted transition-transform"
                 :class="expanded.has(step.key) ? 'rotate-180' : ''"
               />
             </div>
-
-            <p class="text-xs text-dimmed truncate mt-0.5">
-              {{ step.description }}
-            </p>
           </button>
 
           <!-- Expanded detail -->
           <div
             v-if="isExpandable(step) && expanded.has(step.key)"
-            class="border-t border-default px-3 py-2 space-y-2"
+            class="border-t border-default px-3 py-3 space-y-2"
           >
+            <!-- Step description (moved out of the header to reduce noise) -->
+            <p
+              v-if="step.description"
+              class="text-xs text-muted mb-3"
+            >
+              {{ step.description }}
+            </p>
+
             <!-- LLM summary — a natural-language paragraph (e.g. the split
                  reasoning), shown above the structured rows in a tinted box. -->
             <p
@@ -319,7 +330,7 @@ function toggle (step) {
                 class="flex items-baseline gap-2 text-xs"
               >
                 <span class="w-24 shrink-0 text-muted">{{ d.label }}</span>
-                <span class="text-default break-words">{{ d.value }}</span>
+                <span class="text-default break-words tabular-nums">{{ d.value }}</span>
               </div>
             </div>
           </div>
