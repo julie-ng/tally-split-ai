@@ -345,8 +345,30 @@ function closePreview () {
     </template>
   </UDashboardPanel>
 
-  <upload-preview-panel
+  <!-- MOCK: existing image/OCR slideover temporarily disabled so it doesn't
+       overlap the WorkflowTimeline mock below. Restore when done. -->
+  <!-- <upload-preview-panel
     :id="previewId"
     @close="closePreview"
-  />
+  /> -->
+
+  <!-- MOCK: WorkflowTimeline visual preview. Temporary fixed right-side panel so
+       we can iterate on the look. Shows when a row is selected (?preview=<id>).
+       Not the final placement — remove when wiring the real panel. -->
+  <div
+    v-if="previewId"
+    class="fixed right-0 top-0 z-50 h-screen w-[380px] overflow-y-auto border-l border-default bg-default shadow-xl"
+  >
+    <div class="flex items-center justify-between border-b border-default px-4 py-3">
+      <span class="text-xs font-mono text-dimmed">MOCK · {{ previewId }}</span>
+      <UButton
+        icon="i-lucide-x"
+        color="neutral"
+        variant="ghost"
+        size="xs"
+        @click="closePreview"
+      />
+    </div>
+    <uploads-workflow-timeline />
+  </div>
 </template>
