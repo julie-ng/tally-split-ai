@@ -139,23 +139,32 @@ The Supabase-issed signing key should be in this format
 
 ## SQL for RLS policy & grants
 
-Because Drizzle is an ORM, the policies are **hand-written SQL** [`0017_realtime_workflow_runs_rls.sql`](./../server/db/migrations/postgres/0017_realtime_workflow_runs_rls.sql) migrations.
+Because Drizzle is an ORM, the policies are **hand-written SQL** migrations, e.g. [`0018_household_scoped_workflow_runs_rls.sql`](./../server/db/migrations/postgres/0018_household_scoped_workflow_runs_rls.sql).
 
 > [!IMPORTANT]
 > Apply policy with `drizzle-kit migrate` like any other migration, so it's tracked in history.
 
-The policy does three things, all required for the browser's `role: authenticated` connection to receive row data.
+The policy does four things, all required for the browser's `role: authenticated` connection to receive row data.
 
 1. **Add `workflow_runs` to the `supabase_realtime` publication** — so Realtime broadcasts its row changes at all.
 
 2. **`GRANT SELECT` to `authenticated`** — `postgres_changes` enforces table grants for the connected role.
 
-3. **Enable RLS + a household-scoped SELECT policy** — scopes each user to their own household. The policy reads no household claim from the token; it looks the household up from `public.users` by `auth.uid()` (the token's `sub`), so switching households needs no re-mint:
+3. **`GRANT SELECT (id, household_id)` on `public.users` + a self-only SELECT policy** — lets the policy subquery resolve the caller's household, while exposing only the caller's own row.
 
+  ```sql
+  using ( id = (select auth.jwt() ->> 'sub') )
+  ```
+
+4. **Enable RLS + a household-scoped SELECT policy** — scopes each user to their own household. The policy reads no household claim from the token; it looks the household up from `public.users` by the JWT `sub`, so switching households needs no re-mint:
   ```sql
   using (
     household_id in (
-      select household_id from public.users where id = auth.uid()
+      select household_id from public.users where id = (select auth.jwt() ->> 'sub')
     )
   )
   ```
+
+> [!NOTE]
+> Use `auth.jwt() ->> 'sub'` (text), **not** `auth.uid()`.
+> `auth.uid()` casts the claim to `uuid`; our user ids are text nanoids, so it would throw and the row would be stripped.
