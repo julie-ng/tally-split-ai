@@ -20,18 +20,17 @@ Postgres directly.
 
 ```mermaid
 flowchart LR
-  API["Nuxt server API<br/>role: postgres"]
-  Browser["User (Browser)<br/>Pinia stores"]
+  API["<strong>Nuxt server API</strong><br/>(role: postgres)"]
+  Browser["<strong>Browser</strong>"]
 
   subgraph Supabase
-    RT["Supabase Realtime"]
-    PG[("Postgres<br/>public.workflow_runs")]
+    PG[("<strong>Postgres</strong><br/><code>public.workflow_runs</code>")]    
   end
 
-  API -->|"reads + writes<br/>RLS BYPASSED"| PG
-  Browser -->|"$fetch (REST)"| API
+  API -->|"reads + writes<br/>RLS bypassed"| PG
+  Browser -->|"REST"| API
 
-  Browser -.->|"direct DB query<br/>❌ NEVER"| PG
+  Browser -.->|"Direct DB query<br/>❌ never"| PG  
 
   classDef forbidden stroke:#c00,stroke-dasharray:4 3,color:#c00;
   linkStyle 2 stroke:#c00,stroke-dasharray:4 3;
@@ -50,28 +49,34 @@ websocket; it only mints the short-lived JWT that lets the browser authenticate 
 sequenceDiagram
   autonumber
   participant API as Nuxt server API<br/>(role: postgres)
-  participant B as Browser<br/>(Pinia store)
+  actor B as Browser
   box Supabase
-    participant RT as Supabase Realtime
-    participant PG as Postgres
+    participant RT as Realtime<br/> (Web Socket)
+    participant PG@{ "type": "database" } as Postgres
   end
 
   Note over B,API: 1. Token mint (session-gated)
   B->>API: GET /api/realtime/token
+  activate API
   API->>API: mint ES256 JWT<br/>(sub, role: authenticated, exp)
   API-->>B: short-lived JWT
+  deactivate API
 
   Note over B,RT: 2. Authenticate + subscribe (direct)
-  B->>RT: wss connect + setAuth(JWT)
-  B->>RT: subscribe public.workflow_runs
-  RT->>RT: verify JWT (matched by kid)<br/>enforce RLS for role authenticated
+  B->>RT: Connect + setAuth(JWT)
+  activate RT
+  B->>RT: Subscribe public.workflow_runs
+  RT->>RT: Verify JWT<br/>(matched by Key ID)
   RT-->>B: SUBSCRIBED
+  deactivate RT
 
-  Note over RT,B: 3. Live push (read-only, RLS ENFORCED)
+  Note over RT,B: 3. Live push (read-only, RLS enforced)
   PG-->>RT: row-change event
   RT-->>B: push (household-scoped)
-
-  Note over B,API: refresh JWT at ~50 min, repeat step 1
+  
+  loop At ~50 min.
+      B->>API: Refresh Token… repeat steps 1-7.
+  end
 ```
 
 > **Target design.** Today the RLS policy is interim `using (true)` and the browser
