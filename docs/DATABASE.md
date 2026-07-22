@@ -40,17 +40,16 @@ Examples: [`0017_realtime_workflow_runs_rls.sql`](../server/db/migrations/postgr
 
 Steps:
 
-1. **Write the `.sql`** in `server/db/migrations/postgres/` — next number, descriptive name (e.g. `0018_household_scoped_workflow_runs_rls.sql`).
-2. **Add a row to `meta/_journal.json`** — this is the step `db:generate` normally does for you. Copy the previous entry and bump it:
-   ```json
-   { "idx": 18, "version": "7", "when": <now-unix-ms>, "tag": "0018_household_scoped_workflow_runs_rls", "breakpoints": true }
+1. **Scaffold an empty migration** — let Drizzle create the file AND its journal/snapshot bookkeeping:
+   ```bash
+   npx drizzle-kit generate --custom --name=household_scoped_workflow_runs_rls
    ```
-   - `idx` = previous + 1. `tag` = filename without `.sql` (this links the row to the file). `when` = current Unix **ms** (`node -e "console.log(Date.now())"`), and must be **greater than** the previous row's `when` so ordering holds.
-   - **No snapshot needed.** RLS/grants/publications aren't in Drizzle's snapshot model, so there's no `meta/00XX_snapshot.json` — expected (`0017`/`0018` have none).
+   `--custom` prepares an empty `.sql` for hand-written SQL. Because it runs through `generate`, Drizzle writes the `meta/_journal.json` row itself — no hand-editing, no timestamp math.
+2. **Write your SQL** into the scaffolded file.
 3. **Apply** — `npm run db:migrate`.
 
 > [!CAUTION]
-> `db:migrate` reads `_journal.json`, not the folder. If you write the `.sql` but forget the journal row, migrate reports **success and applies nothing** — the phantom-applied trap. Verify the change actually landed (e.g. `SELECT polname FROM pg_policy WHERE ...`), not just that migrate exited 0.
+> Do NOT hand-author the `.sql` and hand-edit `_journal.json` — `db:migrate` reads the journal, not the folder, so a missing/mismatched journal row means migrate reports **success and applies nothing** (the phantom-applied trap). `generate --custom` avoids this entirely. Still, verify the change actually landed (e.g. `SELECT polname FROM pg_policy WHERE ...`), not just that migrate exited 0.
 
 Make statements **idempotent** so a re-run (or a manual apply on an existing env) is safe: `GRANT`s are naturally idempotent; guard `CREATE POLICY` with `DROP POLICY IF EXISTS` or a `DO $$ ... EXCEPTION WHEN duplicate_object THEN null; END $$` block; check publication membership before `ALTER PUBLICATION ADD TABLE`. See `0017` for the patterns.
 
