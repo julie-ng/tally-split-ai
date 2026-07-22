@@ -127,6 +127,13 @@
       "when": 1783604687959,
       "tag": "0017_realtime_workflow_runs_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1784708254497,
+      "tag": "0018_household_scoped_workflow_runs_rls",
+      "breakpoints": true
     }
   ]
 }

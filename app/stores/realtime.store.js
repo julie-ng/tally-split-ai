@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js'
 import { useUploadQueueStore } from '~/stores/upload-queue.store'
 import { useUploadsStore } from '~/stores/uploads.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
-import { useHouseholdStore } from '~/stores/household.store'
 
 /**
  * Realtime store — Supabase Realtime (websockets) for live workflow_runs updates.
@@ -13,10 +12,9 @@ import { useHouseholdStore } from '~/stores/household.store'
  * — so consumers (pages/uploads, useLogout) are unchanged.
  *
  * Auth: we keep our own auth in nuxt-auth-utils. This store fetches a short-lived
- * ES256 JWT from /api/realtime/token and hands it to Supabase via setAuth. There
- * is no RLS yet, so the subscription is wide-open and we filter client-side by
- * the current household (the workflow_runs.household_id column). RLS (a later
- * phase) will move that filter into the DB and this client-side check goes away.
+ * ES256 JWT from /api/realtime/token and hands it to Supabase via setAuth. Household
+ * scoping is enforced by RLS on workflow_runs (migration 0018): Supabase only
+ * forwards rows for the user's own household, so there is no client-side filter.
  */
 export const useRealtimeStore = defineStore('realtime', () => {
   const client = ref(null)
@@ -102,18 +100,13 @@ export const useRealtimeStore = defineStore('realtime', () => {
   }
 
   /**
-   * Handle a workflow_runs change. No RLS yet, so filter client-side by the
-   * current household before acting on the row.
+   * Handle a workflow_runs change. Household scoping is enforced by RLS on
+   * workflow_runs (migration 0018) — Supabase only forwards rows for the user's
+   * own household, so there is no client-side household filter here.
    */
   function handleRowChange (payload) {
     const row = payload.new
     if (!row) return
-
-    const householdStore = useHouseholdStore()
-    // Only act on runs belonging to the current household. (RLS will make this
-    // redundant later.) If the household id isn't loaded yet, err on ignoring —
-    // a fetch on mount will reconcile the authoritative state anyway.
-    if (!householdStore.id || row.household_id !== householdStore.id) return
 
     const uploadId = row.upload_id
     if (!uploadId) return
