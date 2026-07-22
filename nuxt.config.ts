@@ -160,12 +160,13 @@ export default defineNuxtConfig({
   vite: {
     optimizeDeps: {
       include: [
+        '@supabase/supabase-js',
+        '@tanstack/vue-table',
         '@vue/devtools-core',
         '@vue/devtools-kit',
         '@vueuse/core',
+        'mermaid',
         'zod',
-        '@tanstack/vue-table',
-        'mermaid'
       ],
     },
   },
