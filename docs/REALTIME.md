@@ -1,4 +1,4 @@
-# Realtime (Supabase) — setup & how it works
+# Supabase Realtime — Security Design
 
 - Previous setup: Server Side Events (SSE) – long-lived connections not compatible with serverless function timeouts
 - Current setup: [Supabase Realtime](https://supabase.com/realtime) – user opens web sockets and receives events with authZ security boundary enforced via row level security (RLS).
