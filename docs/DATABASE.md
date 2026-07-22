@@ -32,6 +32,28 @@ npm run db:studio                 # inspect (refresh after migrating — it cach
 
 Backfill each environment before applying step 3 there.
 
+## Hand-written migrations (RLS, grants, publications, views)
+
+Some DDL can't be generated from `schema.ts` — RLS policies, `GRANT`s, publication membership, and views. Drizzle's introspection doesn't model them, so `db:generate` will never emit them. You author the `.sql` by hand.
+
+Examples: [`0017_realtime_workflow_runs_rls.sql`](../server/db/migrations/postgres/0017_realtime_workflow_runs_rls.sql), [`0018_household_scoped_workflow_runs_rls.sql`](../server/db/migrations/postgres/0018_household_scoped_workflow_runs_rls.sql).
+
+Steps:
+
+1. **Write the `.sql`** in `server/db/migrations/postgres/` — next number, descriptive name (e.g. `0018_household_scoped_workflow_runs_rls.sql`).
+2. **Add a row to `meta/_journal.json`** — this is the step `db:generate` normally does for you. Copy the previous entry and bump it:
+   ```json
+   { "idx": 18, "version": "7", "when": <now-unix-ms>, "tag": "0018_household_scoped_workflow_runs_rls", "breakpoints": true }
+   ```
+   - `idx` = previous + 1. `tag` = filename without `.sql` (this links the row to the file). `when` = current Unix **ms** (`node -e "console.log(Date.now())"`), and must be **greater than** the previous row's `when` so ordering holds.
+   - **No snapshot needed.** RLS/grants/publications aren't in Drizzle's snapshot model, so there's no `meta/00XX_snapshot.json` — expected (`0017`/`0018` have none).
+3. **Apply** — `npm run db:migrate`.
+
+> [!CAUTION]
+> `db:migrate` reads `_journal.json`, not the folder. If you write the `.sql` but forget the journal row, migrate reports **success and applies nothing** — the phantom-applied trap. Verify the change actually landed (e.g. `SELECT polname FROM pg_policy WHERE ...`), not just that migrate exited 0.
+
+Make statements **idempotent** so a re-run (or a manual apply on an existing env) is safe: `GRANT`s are naturally idempotent; guard `CREATE POLICY` with `DROP POLICY IF EXISTS` or a `DO $$ ... EXCEPTION WHEN duplicate_object THEN null; END $$` block; check publication membership before `ALTER PUBLICATION ADD TABLE`. See `0017` for the patterns.
+
 ## Seeds vs. backfills
 
 | | `server/db/seeds/` | `server/db/migrations/backfills/` |
