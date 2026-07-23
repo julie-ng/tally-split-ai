@@ -1,0 +1,17 @@
+{
+  "name": "Claude Node Sandbox",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "mounts": [
+    "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind",
+    "target=${containerWorkspaceFolder}/node_modules,type=volume"
+  ],
+  "features": {
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+  },
+  "postCreateCommand": "npm install",
+  "customizations": {
+    "zed": {
+      "extensions": ["eslint", "html", "sql", "vue", "mcp-server-context7"]
+    }
+  }
+}
