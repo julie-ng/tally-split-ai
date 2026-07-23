@@ -1,6 +1,11 @@
 {
   "name": "Claude Node Sandbox",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  // Mirror the host path inside the container so Claude Code derives the same
+  // project slug (-Users-jng-workspace-julie-ng-tally-split-ai) as the host,
+  // keeping ~/.claude/projects/<slug>/memory in sync across both.
+  "workspaceMount": "source=${localWorkspaceFolder},target=/Users/jng/workspace/julie-ng/tally-split-ai,type=bind,consistency=cached",
+  "workspaceFolder": "/Users/jng/workspace/julie-ng/tally-split-ai",
   "mounts": [
     "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind",
     "source=${localEnv:HOME}/.claude.json,target=/home/node/.claude.json,type=bind",
