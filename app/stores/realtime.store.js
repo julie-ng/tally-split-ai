@@ -20,19 +20,29 @@ export const useRealtimeStore = defineStore('realtime', () => {
   const client = ref(null)
   const channel = ref(null)
   const isConnected = ref(false)
-  const hasShownDisconnectToast = ref(false)
   let refreshTimer = null
-  // Set while disconnect() tears down so the subscribe() callback ignores the
-  // CLOSED status that removeChannel() fires — that's an intentional teardown
-  // (e.g. navigating away from /uploads), not a lost connection.
-  let isDisconnecting = false
+  // Unix seconds when the current token expires. Used to decide, on tab-visible,
+  // whether the token went stale while the tab was backgrounded (the refresh
+  // timer doesn't fire while asleep).
+  let tokenExpiresAt = 0
+  // Count of consecutive token-mint failures during (re)connect. A dropped
+  // channel is normal — the SDK auto-reconnects — but if we can't mint an auth
+  // token at all, Realtime is genuinely unavailable, and we surface it once.
+  let authFailureCount = 0
+  let hasShownErrorToast = false
 
   // Refresh the access token before it expires (token TTL is 1h; refresh at 50m).
   const TOKEN_REFRESH_MS = 50 * 60 * 1000
+  // On tab-visible, re-mint only if the token has < this much life left;
+  // otherwise the existing refresh timer still covers it.
+  const REMINT_THRESHOLD_MS = 10 * 60 * 1000
+  // Give up (and surface a toast) after this many consecutive mint failures.
+  const MAX_AUTH_FAILURES = 3
 
   async function fetchToken () {
     // $fetch (not useRequestFetch) — connect() runs client-side on user action.
-    const { token } = await $fetch('/api/realtime/token')
+    const { token, expiresAt } = await $fetch('/api/realtime/token')
+    tokenExpiresAt = expiresAt || 0
     return token
   }
 
@@ -58,24 +68,26 @@ export const useRealtimeStore = defineStore('realtime', () => {
   async function connect () {
     if (channel.value) return
 
-    // Re-arm: clear the teardown flag so a real disconnect on this fresh
-    // connection surfaces the toast.
-    isDisconnecting = false
-
     const supabase = getClient()
     if (!supabase) return
 
     let token
     try {
       token = await fetchToken()
+      authFailureCount = 0
     }
     catch (err) {
       console.error('[RealtimeStore] failed to fetch realtime token:', err)
+      _handleAuthFailure()
       return
     }
 
     await supabase.realtime.setAuth(token)
     _scheduleTokenRefresh(supabase)
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', _onVisibilityChange)
+    }
 
     channel.value = supabase
       .channel('workflow-runs')
@@ -83,16 +95,16 @@ export const useRealtimeStore = defineStore('realtime', () => {
         { event: '*', schema: 'public', table: 'workflow_runs' },
         payload => handleRowChange(payload))
       .subscribe((status) => {
+        // The SDK auto-reconnects (exponential backoff) on CHANNEL_ERROR /
+        // TIMED_OUT and rejoins after network interruptions, re-firing
+        // SUBSCRIBED on recovery. So a dropped channel needs no user-facing
+        // toast and no manual retry — we only track isConnected for the UI.
         if (status === 'SUBSCRIBED') {
           console.log('[RealtimeStore] subscribed')
           isConnected.value = true
         }
         else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           isConnected.value = false
-          // Suppress on intentional teardown — removeChannel() fires CLOSED.
-          if (!isDisconnecting) {
-            _maybeShowDisconnectToast()
-          }
         }
       })
   }
@@ -102,15 +114,14 @@ export const useRealtimeStore = defineStore('realtime', () => {
       clearTimeout(refreshTimer)
       refreshTimer = null
     }
-    // Stays true past this sync body: removeChannel() fires CLOSED on the
-    // subscribe() callback asynchronously. connect() clears it on next use.
-    isDisconnecting = true
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', _onVisibilityChange)
+    }
     if (channel.value && client.value) {
       client.value.removeChannel(channel.value)
     }
     channel.value = null
     isConnected.value = false
-    hasShownDisconnectToast.value = false
   }
 
   /**
@@ -155,13 +166,17 @@ export const useRealtimeStore = defineStore('realtime', () => {
     }
   }
 
+  async function _refreshToken (supabase) {
+    const token = await fetchToken()
+    await supabase.realtime.setAuth(token)
+    _scheduleTokenRefresh(supabase)
+  }
+
   function _scheduleTokenRefresh (supabase) {
     if (refreshTimer) clearTimeout(refreshTimer)
     refreshTimer = setTimeout(async () => {
       try {
-        const token = await fetchToken()
-        await supabase.realtime.setAuth(token)
-        _scheduleTokenRefresh(supabase)
+        await _refreshToken(supabase)
       }
       catch (err) {
         console.error('[RealtimeStore] token refresh failed:', err)
@@ -169,23 +184,48 @@ export const useRealtimeStore = defineStore('realtime', () => {
     }, TOKEN_REFRESH_MS)
   }
 
-  function _maybeShowDisconnectToast () {
-    // Suppress when logged out — session destruction closes the channel, expected.
+  /**
+   * On tab-visible, the refresh timer may have been throttled/paused while the
+   * tab was backgrounded, leaving a stale token for the SDK's auto-reconnect to
+   * present. Re-mint only when the token is expired or near-expiry; a brief tab
+   * switch (token still has ample life) is left to the existing timer.
+   */
+  async function _onVisibilityChange () {
+    if (document.visibilityState !== 'visible') return
+    if (!client.value) return
+
+    const msLeft = tokenExpiresAt * 1000 - Date.now()
+    if (msLeft > REMINT_THRESHOLD_MS) return
+
+    try {
+      await _refreshToken(client.value)
+    }
+    catch (err) {
+      console.error('[RealtimeStore] token re-mint on visible failed:', err)
+    }
+  }
+
+  function _handleAuthFailure () {
+    authFailureCount += 1
+    if (authFailureCount < MAX_AUTH_FAILURES) return
+    if (hasShownErrorToast) return
+
+    // Suppress when logged out — expected during session teardown.
     const { loggedIn } = useUserSession()
     if (!loggedIn.value) return
-    if (hasShownDisconnectToast.value) return
 
-    hasShownDisconnectToast.value = true
+    hasShownErrorToast = true
+    _showErrorToast()
+  }
+
+  function _showErrorToast () {
+    console.error('[RealtimeStore] live updates unavailable — token mint failed repeatedly')
     useToast().add({
-      title: 'Realtime updates disconnected',
-      description: 'Connection lost.',
+      title: 'Live updates unavailable',
+      description: 'We couldn\'t establish a realtime connection.',
       color: 'warning',
       icon: 'i-lucide-wifi-off',
       duration: 0,
-      actions: [{
-        label: 'Refresh to re-connect',
-        onClick: () => window.location.reload(),
-      }],
     })
   }
 
