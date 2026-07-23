@@ -3,12 +3,11 @@
   "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
   "mounts": [
     "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind",
+    "source=${localEnv:HOME}/.claude.json,target=/home/node/.claude.json,type=bind",
     "target=${containerWorkspaceFolder}/node_modules,type=volume"
   ],
-  "features": {
-    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
-  },
-  "postCreateCommand": "npm install",
+  "onCreateCommand": "sudo chown -R node:node ${containerWorkspaceFolder}/node_modules",
+  "postCreateCommand": "npm install && npm install -g @anthropic-ai/claude-code",
   "customizations": {
     "zed": {
       "extensions": ["eslint", "html", "sql", "vue", "mcp-server-context7"]
