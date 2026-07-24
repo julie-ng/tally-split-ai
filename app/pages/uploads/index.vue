@@ -196,6 +196,16 @@ const route = useRoute()
 const router = useRouter()
 const previewId = computed(() => route.query.preview ?? null)
 
+// Active preview tab. Panel tabs are NEVER in the URL (only ?preview=<id> is) —
+// a plain ref, reset to 'workflow' on id-change (in the warm watch below), so
+// switching rows always lands on the pipeline view. See the locked URL rule in
+// project_design_direction_v1.
+const activeTab = ref('workflow')
+const previewTabs = [
+  { label: 'Workflow', value: 'workflow', slot: 'workflow' },
+  { label: 'Image', value: 'image', slot: 'image' },
+]
+
 // -------- Workflow-timeline data (real) --------
 // Static per-step metadata. Status + timestamps come from the workflow store;
 // details/summary are still stubbed (see ⚠️ STEP 2b below). The `stepKey` is
@@ -243,6 +253,10 @@ const annotations = ref(null)
 
 watch(previewId, async (id) => {
   annotations.value = null
+  // Reset to the pipeline view whenever a different row is selected (also
+  // covers cold-load via immediate). Keyed off id, not the open event, so
+  // clicking another row while the panel is open resets too.
+  activeTab.value = 'workflow'
   if (!id) return
 
   // Annotations live on the upload — fetch regardless of receipt existence.
@@ -552,10 +566,8 @@ function closePreview () {
          collapse context (two sidebars sharing a group's sidebarCollapsed ref
          clobber each other). unit="rem" matches the app group's resize math.
 
-         ⚠️ STEP 3: currently single-content (Workflow timeline only). This
-         becomes a UTabs panel — Workflow · Image/OCR — folding in the disabled
-         upload-preview-panel (image/OCR) as the second tab, with activeTab as a
-         plain ref (panel tabs NEVER go in the URL — only ?preview=<id> is). -->
+         Two-tab panel (Workflow · Image), activeTab a plain ref — panel tabs
+         NEVER go in the URL (only ?preview=<id> is). -->
     <UDashboardGroup v-if="previewId" unit="rem" class="contents">
       <UDashboardSidebar
         id="upload-preview"
@@ -571,10 +583,13 @@ function closePreview () {
         }"
       >
         <template #header>
+          <!-- Title describes the UPLOAD (the panel now has two tabs, so the
+               title isn't tab-specific). Filename when known, else 'Upload';
+               id as the mono subtitle. -->
           <div class="w-full min-w-0 pl-2">
             <div class="flex items-center gap-2 min-w-0">
               <p class="font-bold flex-1 min-w-0 truncate text-primary">
-                Workflow
+                {{ previewUpload?.originalFilename || 'Upload' }}
               </p>
               <UButton
                 icon="i-lucide-x"
@@ -592,29 +607,51 @@ function closePreview () {
         </template>
 
         <template #default>
-          <!-- Scrolls itself; sidebar body no longer does (p-0 + overflow-hidden
-               above). min-h-0 lets this flex child shrink so overflow kicks in. -->
-          <div class="h-full min-h-0 overflow-y-auto">
-            <UploadWorkflowTimeline
-              :steps="timelineSteps"
-              :run-started-at="timelineRunStartedAt"
-            >
-              <!-- Create Expense step footer: link to the created expense.
-                   Enabled once the expense is warmed (upload → receipt →
-                   expense); disabled while null (standalone/not-yet-created). -->
-              <template #footer-createExpense>
-                <UButton
-                  label="View expense"
-                  trailing-icon="i-lucide-arrow-right"
-                  size="xs"
-                  color="neutral"
-                  variant="subtle"
-                  :to="previewExpenseId ? `/expenses?preview=${previewExpenseId}` : undefined"
-                  :disabled="!previewExpenseId"
-                />
-              </template>
-            </UploadWorkflowTimeline>
-          </div>
+          <!-- Two facets of one upload as tabs (activeTab is a plain ref — panel
+               tabs never go in the URL). Workflow = the pipeline timeline;
+               Image = the receipt image + OCR/analysis. Same :ui as the expenses
+               preview: fixed tab list on top, scrolling content below (min-h-0
+               on the root + content is load-bearing). -->
+          <UTabs
+            v-model="activeTab"
+            :items="previewTabs"
+            size="md"
+            variant="link"
+            color="primary"
+            :ui="{
+              indicator: 'border-b-3 border-primary',
+              trigger: 'cursor-pointer',
+              root: 'flex flex-col h-full min-h-0 w-full gap-0',
+              list: 'shrink-0 px-4 gap-4',
+              content: 'flex-1 overflow-y-auto min-h-0',
+            }"
+          >
+            <template #workflow>
+              <UploadWorkflowTimeline
+                :steps="timelineSteps"
+                :run-started-at="timelineRunStartedAt"
+              >
+                <!-- Create Expense step footer: link to the created expense.
+                     Enabled once the expense is warmed (upload → receipt →
+                     expense); disabled while null (standalone/not-yet-created). -->
+                <template #footer-createExpense>
+                  <UButton
+                    label="View expense"
+                    trailing-icon="i-lucide-arrow-right"
+                    size="xs"
+                    color="neutral"
+                    variant="subtle"
+                    :to="previewExpenseId ? `/expenses?preview=${previewExpenseId}` : undefined"
+                    :disabled="!previewExpenseId"
+                  />
+                </template>
+              </UploadWorkflowTimeline>
+            </template>
+
+            <template #image>
+              <UploadImageTab v-if="previewId" :id="previewId" />
+            </template>
+          </UTabs>
         </template>
       </UDashboardSidebar>
     </UDashboardGroup>
