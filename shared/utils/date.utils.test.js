@@ -90,6 +90,25 @@ describe('getMonthName()', () => {
   })
 })
 
+describe('formatDuration()', () => {
+  it('should format sub-minute durations as seconds only', () => {
+    expect(dateUtils.formatDuration(0)).toBe('0s')
+    expect(dateUtils.formatDuration(6)).toBe('6s')
+    expect(dateUtils.formatDuration(59)).toBe('59s')
+  })
+
+  it('should format durations of a minute or more as "Xm Ys"', () => {
+    expect(dateUtils.formatDuration(60)).toBe('1m 0s')
+    expect(dateUtils.formatDuration(64)).toBe('1m 4s')
+    expect(dateUtils.formatDuration(125)).toBe('2m 5s')
+  })
+
+  it('should handle multi-minute durations', () => {
+    expect(dateUtils.formatDuration(600)).toBe('10m 0s')
+    expect(dateUtils.formatDuration(3661)).toBe('61m 1s')
+  })
+})
+
 describe('timeWithoutSeconds()', () => {
   it('should remove seconds from time string', () => {
     const result = dateUtils.timeWithoutSeconds('11:59:34')

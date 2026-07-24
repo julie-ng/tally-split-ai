@@ -43,6 +43,17 @@ function timeWithoutSeconds (time) {
   return `${parts[0]}:${parts[1]}`
 }
 
+/**
+ * Format a duration in seconds as a compact human string.
+ * @param {number} totalSeconds - Whole seconds elapsed
+ * @returns {string} - e.g. "6s" or "1m 4s"
+ */
+function formatDuration (totalSeconds) {
+  const mins = Math.floor(totalSeconds / 60)
+  const secs = totalSeconds % 60
+  return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`
+}
+
 const monthNames = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
@@ -59,6 +70,7 @@ function getMonthName (month) {
 
 export const dateUtils = {
   formatDate,
+  formatDuration,
   formatISODate,
   getMonthName,
   timeWithoutSeconds,

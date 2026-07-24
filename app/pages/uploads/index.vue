@@ -1,6 +1,7 @@
 <script setup>
 import { h, resolveComponent } from 'vue'
 import { getPaginationRowModel } from '@tanstack/vue-table'
+import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 import { useUploadsStore } from '~/stores/uploads.store'
 import { useUploadQueueStore } from '~/stores/upload-queue.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
@@ -181,6 +182,96 @@ const paginationInfo = computed(() => {
   return { start, end, total }
 })
 
+// -------- MOCK workflow-timeline data --------
+// ⚠️ STEP 2 (after DB schema change + migration): replace MOCK_STEPS with a
+// computed that maps the real workflow store → this step shape, e.g.
+//   mapWorkflowToSteps(workflowStore, previewId.value)
+// Lifted up here (out of the timeline component) so the component stays a
+// props-driven leaf. What's still faked and needs real wiring in step 2:
+//   • per-step startedAt/completedAt — NO per-step timestamp columns exist on
+//     workflow_runs yet (only run-level created_at/completed_at). These mock
+//     times exist purely so durations render for the visual.
+//   • details / summary — sourced from receipt/expense rows, NOT workflow_runs.
+//   • the Create Expense footer button's :to target (see template below).
+// Statuses use the real WORKFLOW_STEP_STATUS enum so every visual state shows.
+const MOCK_RUN_STARTED_AT = '2026-07-22T10:21:00'
+const MOCK_STEPS = [
+  {
+    key: 'upload',
+    label: 'Upload',
+    description: 'File received',
+    status: WORKFLOW_STEP_STATUS.COMPLETED,
+    startedAt: '2026-07-22T10:21:00',
+    completedAt: '2026-07-22T10:21:03',
+    details: [
+      { label: 'File', value: 'Scanned_20260629-1611-03.jpg' },
+      { label: 'Size', value: '343 KB' },
+    ],
+  },
+  {
+    key: 'ocr',
+    label: 'OCR Analysis',
+    description: 'Text extraction (Azure Document Intelligence)',
+    status: WORKFLOW_STEP_STATUS.COMPLETED,
+    startedAt: '2026-07-22T10:21:04',
+    completedAt: '2026-07-22T10:21:10',
+    details: [
+      { label: 'Merchant', value: 'EDEKA Yilmaz' },
+      { label: 'Address', value: 'Lerchenauer Str. 3, 80809 München' },
+      { label: 'Line items', value: '14' },
+      { label: 'Total', value: '€41.95' },
+    ],
+  },
+  {
+    key: 'annotations',
+    label: 'Handwritten analysis',
+    description: 'Detecting initials, circles, strikethroughs (GPT-4o)',
+    status: WORKFLOW_STEP_STATUS.COMPLETED,
+    startedAt: '2026-07-22T10:21:10',
+    completedAt: '2026-07-22T10:21:16',
+    summary: 'No handwritten annotations were detected to indicate who paid, and the total remains unchanged. The adjusted total is split evenly between the household members.',
+    details: [
+      { label: 'Initials found', value: 'None' },
+      { label: 'Strikethroughs', value: '0' },
+      { label: 'Confidence', value: '0.92' },
+    ],
+  },
+  {
+    key: 'normalize',
+    label: 'Normalize',
+    description: 'Cleaning date, title, filename',
+    status: WORKFLOW_STEP_STATUS.PROCESSING,
+    // MOCK: pin ~4s before load so the live elapsed counter reads a small number
+    // instead of hours. Real data won't need this. ⚠️ STEP 2.
+    startedAt: new Date(Date.now() - 4000).toISOString(),
+    completedAt: null,
+    details: null,
+  },
+  {
+    key: 'createExpense',
+    label: 'Create expense',
+    description: 'Expense from receipt total',
+    status: WORKFLOW_STEP_STATUS.PENDING,
+    startedAt: null,
+    completedAt: null,
+    // Mock rows so the Create Expense footer (link-to-expense button) has a body
+    // to sit under while iterating on the visual. ⚠️ STEP 2: real details.
+    details: [
+      { label: 'Amount', value: '€41.95' },
+      { label: 'Split', value: '50 / 50' },
+    ],
+  },
+  {
+    key: 'adjustExpense',
+    label: 'Adjust expense',
+    description: 'Asymmetric split from annotations',
+    status: WORKFLOW_STEP_STATUS.SKIPPED,
+    startedAt: null,
+    completedAt: null,
+    details: null,
+  },
+]
+
 // -------- Slideover preview --------
 // URL state: ?preview=<id> is the single source of truth. The slideover
 // component reads :id and opens itself. Use router.replace so the
@@ -354,7 +445,8 @@ function closePreview () {
 
   <!-- MOCK: WorkflowTimeline visual preview. Temporary fixed right-side panel so
        we can iterate on the look. Shows when a row is selected (?preview=<id>).
-       Not the final placement — remove when wiring the real panel. -->
+       ⚠️ STEP 3: not the final placement — this becomes a tab in the single
+       resizable preview panel (alongside the image/OCR preview). -->
   <div
     v-if="previewId"
     class="fixed right-0 top-0 z-50 h-screen w-[380px] overflow-y-auto border-l border-default bg-default shadow-xl"
@@ -369,6 +461,24 @@ function closePreview () {
         @click="closePreview"
       />
     </div>
-    <uploads-workflow-timeline />
+    <UploadWorkflowTimeline
+      :steps="MOCK_STEPS"
+      :run-started-at="MOCK_RUN_STARTED_AT"
+    >
+      <!-- Create Expense step footer: link to the created expense. ⚠️ STEP 2:
+           the expense id isn't in workflow data — this is a placeholder. Wire
+           :to="`/expenses?preview=${expenseId}`" once the expense store is
+           composed in (upload → receipt → expense relation). -->
+      <template #footer-createExpense>
+        <UButton
+          label="View expense"
+          trailing-icon="i-lucide-arrow-right"
+          size="xs"
+          color="neutral"
+          variant="subtle"
+          disabled
+        />
+      </template>
+    </UploadWorkflowTimeline>
   </div>
 </template>
