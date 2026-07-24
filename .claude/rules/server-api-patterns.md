@@ -74,6 +74,12 @@ composable warms both, each leaf reads its own store getter) — see
 correct when the related rows are part of the *same aggregate* the endpoint owns
 (e.g. `/api/receipts/:id` returning the receipt WITH its uploads).
 
+## Sessions & Identity
+
+- **Sessions carry identity + authZ scope only** — not domain data. Domain lives in stores/DB, keyed by the session's userId.
+- **Single writer for session shape** — build the session object through the `toSessionUser` helper; don't hand-assemble it in multiple places.
+- Terminology: **`userId`** = our own app-generated `users.id` (a `text` id via `generateId()`); GitHub's id is always **`githubId`** (a numeric `bigint`). Keep them distinct.
+
 ## File Naming
 
 Files in `server/api/` are auto-registered as routes:

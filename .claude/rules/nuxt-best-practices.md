@@ -42,6 +42,24 @@ await callOnce('receipts', () => receiptsStore.fetchAll())
 
 See `docs/README.md` → "Data Fetching Patterns" for the full reference table.
 
+## URL State Ownership
+
+URL/query state belongs to the **page**, not to child components. The page owns the
+router; children **emit** (`@close`, `@select`) and let the page update the URL.
+
+```js
+// ✅ Page owns the router
+// child: emit('select', id)   →   page: router.push({ query: { preview: id } })
+
+// ❌ Child mutates the URL directly
+// (inside a panel/row component)
+useRouter().push({ query: { preview: id } })
+```
+
+This keeps deep-linking and back/forward behavior in one place, and pairs with the
+owner-vs-leaf fetch split (`rules/vue-component-conventions.md`): the URL owner also
+warms the store on id-change.
+
 ## Error Handling
 
 Prefer `createError()` over `new Error()` — it works correctly across both server and client contexts:

@@ -6,6 +6,17 @@ ESLint is configured via the Nuxt ESLint module with `@stylistic/eslint-plugin`.
 
 - No semicolons
 - Trailing commas required
+- Always brace `if`/`else` — no single-line bodies. Multi-line ternaries; one prop per line
+- Subpath imports for cross-boundary imports: `#shared/*`, `#server/*` — never `~~/`
+
+## Comments
+
+- No comments on self-explanatory code — skip the obvious restatement
+- Never strip existing JSDoc/inline comments when refactoring; ask first if a comment seems stale
+
+## Docs / Markdown
+
+- GitHub callouts use `> [!NOTE]` syntax, not bold `**Note:**`
 
 ## File Naming
 

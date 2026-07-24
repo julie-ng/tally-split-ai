@@ -73,6 +73,17 @@ A subtle case inside a **reused** container (e.g. a `UTabs` preview panel that s
 
 Rule: **inside a reused-by-id leaf, every fetch keys off the id via an immediate watch; getter computeds are fine as-is.**
 
+## Markup & Styling
+
+- **Single root element** — wrap templates in a root `<div>` so attributes inherit correctly
+- **No `<style scoped>`** — use Tailwind utilities only
+- Prefer **`UButton`** (with a `variant`) over hand-rolled buttons
+- When adding a slot, give it a **prop fallback** — the slot overrides, the prop is the default
+
+## Stores
+
+- **Always import Pinia stores explicitly** — never rely on auto-import for stores
+
 ## Validation Responsibility
 
 - Components do **NOT** validate input or type-check props
