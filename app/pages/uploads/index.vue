@@ -186,21 +186,46 @@ const paginationInfo = computed(() => {
   return { start, end, total }
 })
 
-// -------- Preview URL state --------
-// ?preview=<id> is the single source of truth for which upload is previewed.
-// Declared here (above the timeline block) because the timeline computeds and
-// the cross-store warm below reference previewId — const has no TDZ hoist, so it
-// must precede its first use. openPreview/closePreview (template handlers) live
-// further down.
+// route for the #id-cell NuxtLink (builds its own ?preview query for
+// middle-click/copy-link semantics). usePreviewPanel calls useRoute internally
+// for its own use; a second call here is fine.
 const route = useRoute()
-const router = useRouter()
-const previewId = computed(() => route.query.preview ?? null)
 
-// Active preview tab. Panel tabs are NEVER in the URL (only ?preview=<id> is) —
-// a plain ref, reset to 'workflow' on id-change (in the warm watch below), so
-// switching rows always lands on the pipeline view. See the locked URL rule in
-// project_design_direction_v1.
-const activeTab = ref('workflow')
+// -------- Preview panel (?preview / open / tab / esc + cross-store warm) --------
+// Shared plumbing via usePreviewPanel; the upload-specific warm fetches the
+// step-detail sources (annotations on the upload, then receipt → expense) so the
+// timeline's expandable bodies (2b) have data. All fetches are cache-aware +
+// 404-tolerant, so a standalone/unanalyzed upload yields nulls and those steps
+// render collapsed. Page-level composition — stores never reference each other.
+//
+// The warm derives the receipt id from the freshly-fetched upload record (NOT an
+// outer computed), so it's self-contained: `immediate: true` runs it during
+// setup, before the previewUpload/previewReceiptId consts below are declared.
+const annotations = ref(null)
+
+const {
+  previewId,
+  isPreviewOpen,
+  activeTab,
+  openPreview,
+  closePreview,
+} = usePreviewPanel({
+  defaultTab: 'workflow',
+  warm: async (id) => {
+    annotations.value = null
+    // Annotations live on the upload — fetch regardless of receipt existence.
+    annotations.value = await uploadsStore.fetchAnnotationsById(id)
+
+    const upload = await uploadsStore.fetchUploadById(id)
+    const receiptId = upload?.receiptId ?? upload?.receipt?.id ?? null
+    if (!receiptId) return
+    const receipt = await receiptsStore.fetchReceiptById(receiptId)
+    if (receipt) {
+      await expensesStore.fetchExpenseByReceiptId(receiptId)
+    }
+  },
+})
+
 const previewTabs = [
   { label: 'Workflow', value: 'workflow', slot: 'workflow' },
   { label: 'Image', value: 'image', slot: 'image' },
@@ -239,36 +264,10 @@ const previewUpload = computed(() =>
   previewId.value ? mergedUploads.value.find(u => u.id === previewId.value) : null,
 )
 
-// -------- Cross-store warm for step detail bodies (2b) --------
-// On preview-open, warm the receipt (upload.receiptId → receipts store), its
-// expense (receipt → expenses store), and the upload's annotations. All are
-// cache-aware + 404-tolerant, so a standalone/unanalyzed upload just yields
-// nulls and those steps render collapsed. This is page-level composition — the
-// stores never reference each other (see rules/pinia + design-direction).
-//
-// Inline here for now; the shared upload→receipt→expense warm is a candidate for
-// the usePreviewPanel extraction later (project_expenses_receipts_view_duplication).
+// The previewed upload's receipt id, for the reactive receipt/expense getters
+// below. (The actual warm — the fetches — runs in usePreviewPanel's warm
+// callback above; this is just the id derivation for the getters.)
 const previewReceiptId = computed(() => previewUpload.value?.receipt?.id ?? previewUpload.value?.receiptId ?? null)
-const annotations = ref(null)
-
-watch(previewId, async (id) => {
-  annotations.value = null
-  // Reset to the pipeline view whenever a different row is selected (also
-  // covers cold-load via immediate). Keyed off id, not the open event, so
-  // clicking another row while the panel is open resets too.
-  activeTab.value = 'workflow'
-  if (!id) return
-
-  // Annotations live on the upload — fetch regardless of receipt existence.
-  annotations.value = await uploadsStore.fetchAnnotationsById(id)
-
-  const receiptId = previewReceiptId.value
-  if (!receiptId) return
-  const receipt = await receiptsStore.fetchReceiptById(receiptId)
-  if (receipt) {
-    await expensesStore.fetchExpenseByReceiptId(receiptId)
-  }
-}, { immediate: true })
 
 // Store getters (reactive) for the previewed upload's receipt + expense.
 const previewReceipt = computed(() =>
@@ -396,21 +395,6 @@ const timelineRunStartedAt = computed(() => workflowStore.latestRunById(previewI
 
 // The expense the Create Expense footer links to (once warmed).
 const previewExpenseId = computed(() => previewExpense.value?.id ?? null)
-
-// -------- Preview open/close handlers --------
-// URL state (route/router/previewId) is declared up in the "Preview URL state"
-// section above. router.replace so the preview doesn't pollute browser history.
-function openPreview (event, row) {
-  // console.log('openPreview()', row)
-  const id = row.original.id
-  router.replace({ query: { ...route.query, preview: id } })
-}
-
-function closePreview () {
-  const query = { ...route.query }
-  delete query.preview
-  router.replace({ query })
-}
 </script>
 
 <template>
@@ -568,7 +552,7 @@ function closePreview () {
 
          Two-tab panel (Workflow · Image), activeTab a plain ref — panel tabs
          NEVER go in the URL (only ?preview=<id> is). -->
-    <UDashboardGroup v-if="previewId" unit="rem" class="contents">
+    <UDashboardGroup v-if="isPreviewOpen" unit="rem" class="contents">
       <UDashboardSidebar
         id="upload-preview"
         side="right"
