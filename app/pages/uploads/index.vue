@@ -295,190 +295,223 @@ function closePreview () {
 </script>
 
 <template>
-  <UDashboardPanel id="uploads-list">
-    <template #header>
-      <UDashboardNavbar title="Uploads">
-        <template #left>
-          <UBreadcrumb :items="[{ label: 'Uploads', class: 'font-semibold text-default' }]" />
-        </template>
-        <template #right>
-          <upload-button-modal color="neutral" variant="subtle" />
-        </template>
-      </UDashboardNavbar>
-    </template>
+  <!-- min-w-0 so this wrapper (a flex item) can shrink to its share of the row
+       instead of overflowing; overflow-hidden clips the resizable preview to the
+       available width. Mirrors the expenses list-detail layout. -->
+  <div class="flex flex-1 min-w-0 overflow-hidden">
+    <UDashboardPanel id="uploads-list" class="min-w-0">
+      <template #header>
+        <UDashboardNavbar title="Uploads">
+          <template #left>
+            <UBreadcrumb :items="[{ label: 'Uploads', class: 'font-semibold text-default' }]" />
+          </template>
+          <template #right>
+            <upload-button-modal color="neutral" variant="subtle" />
+          </template>
+        </UDashboardNavbar>
+      </template>
 
-    <template #body>
-      <div class="flex items-center justify-between">
-        <p class="text-sm text-dimmed">
-          Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} Uploads
-        </p>
-        <div class="flex items-center gap-2">
-          <UButton
-            class="cursor-pointer"
-            variant="outline"
-            color="neutral"
-            size="sm"
-            @click="uploadsStore.fetchUploads(); workflowStore.fetchAll()"
-          >
-            Refresh
-          </UButton>
-          <USelect
-            v-model="filterValue"
-            :items="FILTER_OPTIONS"
-            size="sm"
-            class="min-w-[160px]"
-          />
-        </div>
-      </div>
-
-      <ClientOnly>
-        <div class="border bg-default border-default">
-          <!-- TODO: autoResetPageIndex configuration works now to keep page when deleting items. But it will break as soon as we try to use filters -->
-          <UTable
-            ref="table"
-            v-model:pagination="pagination"
-            v-model:sorting="sorting"
-            :pagination-options="{
-              getPaginationRowModel: getPaginationRowModel(),
-              autoResetPageIndex: false,
-            }"
-            :sorting-options="{
-              enableSortingRemoval: false,
-            }"
-            :data="filteredUploads"
-            :columns="columns"
-            :meta="tableMeta"
-            :ui="tableStyles"
-            :loading="pending"
-            loading-color="primary"
-            loading-animation="carousel"
-            class="flex-1"
-            @select="openPreview"
-          >
-            <template #id-cell="{ row }">
-              <NuxtLink
-                :to="{ query: { ...route.query, preview: row.original.id } }"
-                replace
-                class="text-dimmed hover:text-blue-800 hover:underline font-mono"
-              >
-                {{ row.original.id }}
-              </NuxtLink>
-            </template>
-
-            <!-- <template #status-cell="{ row }">
-              <uploads-status-text :status="row.original.status" />
-            </template> -->
-
-            <template #originalFilename-cell="{ row }">
-              <div
-                class="flex items-center gap-1.5"
-                :class="previewId ? 'max-w-[200px] md:max-w-[240px] xl:max-w-[320px]' : ''"
-              >
-                <UTooltip
-                  v-if="row.original.receipt"
-                  text="View Receipt"
-                  :content="{ side: 'top' }"
-                  :delay-duration="0"
-                  arrow
-                >
-                  <UButton
-                    :to="`/receipts/${row.original.receipt.id}`"
-                    icon="i-lucide-receipt-euro"
-                    size="xs"
-                    color="primary"
-                    variant="ghost"
-                  />
-                </UTooltip>
-                <span :title="row.original.originalFilename" class="truncate">
-                  {{ row.original.originalFilename }}
-                </span>
-              </div>
-            </template>
-
-            <template #uploadedAt-cell="{ row }">
-              <time :datetime="row.original.uploadedAt" :title="row.original.uploadedAt">
-                {{ timestampUtils.toShortDatetime(row.original.uploadedAt) }}
-              </time>
-            </template>
-
-            <template #workflow-cell="{ row }">
-              <uploads-workflow-steps
-                :id="row.original.id"
-                :upload-status="row.original.status"
-              />
-            </template>
-
-            <template #actions-cell="{ row }">
-              <UDropdownMenu :items="getRowActions(row)">
-                <UButton
-                  icon="i-lucide-ellipsis-vertical"
-                  color="neutral"
-                  variant="ghost"
-                  class="cursor-pointer"
-                />
-              </UDropdownMenu>
-            </template>
-          </UTable>
-
-          <div class="flex justify-between items-center border-t border-default py-4 px-4">
-            <div class="text-sm text-toned">
-              Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }}
-            </div>
-            <UPagination
-              :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
-              :items-per-page="table?.tableApi?.getState().pagination.pageSize"
-              :total="table?.tableApi?.getFilteredRowModel().rows.length"
-              @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
+      <template #body>
+        <div class="flex items-center justify-between">
+          <p class="text-sm text-dimmed">
+            Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} Uploads
+          </p>
+          <div class="flex items-center gap-2">
+            <UButton
+              class="cursor-pointer"
+              variant="outline"
+              color="neutral"
+              size="sm"
+              @click="uploadsStore.fetchUploads(); workflowStore.fetchAll()"
+            >
+              Refresh
+            </UButton>
+            <USelect
+              v-model="filterValue"
+              :items="FILTER_OPTIONS"
+              size="sm"
+              class="min-w-[160px]"
             />
           </div>
         </div>
-      </ClientOnly>
-    </template>
-  </UDashboardPanel>
 
-  <!-- MOCK: existing image/OCR slideover temporarily disabled so it doesn't
-       overlap the WorkflowTimeline mock below. Restore when done. -->
-  <!-- <upload-preview-panel
-    :id="previewId"
-    @close="closePreview"
-  /> -->
+        <ClientOnly>
+          <div class="border bg-default border-default">
+            <!-- TODO: autoResetPageIndex configuration works now to keep page when deleting items. But it will break as soon as we try to use filters -->
+            <UTable
+              ref="table"
+              v-model:pagination="pagination"
+              v-model:sorting="sorting"
+              :pagination-options="{
+                getPaginationRowModel: getPaginationRowModel(),
+                autoResetPageIndex: false,
+              }"
+              :sorting-options="{
+                enableSortingRemoval: false,
+              }"
+              :data="filteredUploads"
+              :columns="columns"
+              :meta="tableMeta"
+              :ui="tableStyles"
+              :loading="pending"
+              loading-color="primary"
+              loading-animation="carousel"
+              class="flex-1"
+              @select="openPreview"
+            >
+              <template #id-cell="{ row }">
+                <NuxtLink
+                  :to="{ query: { ...route.query, preview: row.original.id } }"
+                  replace
+                  class="text-dimmed hover:text-blue-800 hover:underline font-mono"
+                >
+                  {{ row.original.id }}
+                </NuxtLink>
+              </template>
 
-  <!-- MOCK: WorkflowTimeline visual preview. Temporary fixed right-side panel so
-       we can iterate on the look. Shows when a row is selected (?preview=<id>).
-       ⚠️ STEP 3: not the final placement — this becomes a tab in the single
-       resizable preview panel (alongside the image/OCR preview). -->
-  <div
-    v-if="previewId"
-    class="fixed right-0 top-0 z-50 h-screen w-[380px] overflow-y-auto border-l border-default bg-default shadow-xl"
-  >
-    <div class="flex items-center justify-between border-b border-default px-4 py-3">
-      <span class="text-xs font-mono text-dimmed">MOCK · {{ previewId }}</span>
-      <UButton
-        icon="i-lucide-x"
-        color="neutral"
-        variant="ghost"
-        size="xs"
-        @click="closePreview"
-      />
-    </div>
-    <UploadWorkflowTimeline
-      :steps="MOCK_STEPS"
-      :run-started-at="MOCK_RUN_STARTED_AT"
-    >
-      <!-- Create Expense step footer: link to the created expense. ⚠️ STEP 2:
-           the expense id isn't in workflow data — this is a placeholder. Wire
-           :to="`/expenses?preview=${expenseId}`" once the expense store is
-           composed in (upload → receipt → expense relation). -->
-      <template #footer-createExpense>
-        <UButton
-          label="View expense"
-          trailing-icon="i-lucide-arrow-right"
-          size="xs"
-          color="neutral"
-          variant="subtle"
-          disabled
-        />
+              <!-- <template #status-cell="{ row }">
+              <uploads-status-text :status="row.original.status" />
+            </template> -->
+
+              <template #originalFilename-cell="{ row }">
+                <div
+                  class="flex items-center gap-1.5"
+                  :class="previewId ? 'max-w-[200px] md:max-w-[240px] xl:max-w-[320px]' : ''"
+                >
+                  <UTooltip
+                    v-if="row.original.receipt"
+                    text="View Receipt"
+                    :content="{ side: 'top' }"
+                    :delay-duration="0"
+                    arrow
+                  >
+                    <UButton
+                      :to="`/receipts/${row.original.receipt.id}`"
+                      icon="i-lucide-receipt-euro"
+                      size="xs"
+                      color="primary"
+                      variant="ghost"
+                    />
+                  </UTooltip>
+                  <span :title="row.original.originalFilename" class="truncate">
+                    {{ row.original.originalFilename }}
+                  </span>
+                </div>
+              </template>
+
+              <template #uploadedAt-cell="{ row }">
+                <time :datetime="row.original.uploadedAt" :title="row.original.uploadedAt">
+                  {{ timestampUtils.toShortDatetime(row.original.uploadedAt) }}
+                </time>
+              </template>
+
+              <template #workflow-cell="{ row }">
+                <uploads-workflow-steps
+                  :id="row.original.id"
+                  :upload-status="row.original.status"
+                />
+              </template>
+
+              <template #actions-cell="{ row }">
+                <UDropdownMenu :items="getRowActions(row)">
+                  <UButton
+                    icon="i-lucide-ellipsis-vertical"
+                    color="neutral"
+                    variant="ghost"
+                    class="cursor-pointer"
+                  />
+                </UDropdownMenu>
+              </template>
+            </UTable>
+
+            <div class="flex justify-between items-center border-t border-default py-4 px-4">
+              <div class="text-sm text-toned">
+                Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }}
+              </div>
+              <UPagination
+                :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
+                :items-per-page="table?.tableApi?.getState().pagination.pageSize"
+                :total="table?.tableApi?.getFilteredRowModel().rows.length"
+                @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
+              />
+            </div>
+          </div>
+        </ClientOnly>
       </template>
-    </UploadWorkflowTimeline>
+    </UDashboardPanel>
+
+    <!-- Resizable preview panel. Mirrors expenses' PreviewPanel.vue: a RIGHT-side
+         UDashboardSidebar (not UDashboardPanel) so the resize handle sits on its
+         LEFT edge and it holds a remembered width, letting the table panel flex
+         to full width when this closes. Own UDashboardGroup for an ISOLATED
+         collapse context (two sidebars sharing a group's sidebarCollapsed ref
+         clobber each other). unit="rem" matches the app group's resize math.
+
+         ⚠️ STEP 3: currently single-content (Workflow timeline only). This
+         becomes a UTabs panel — Workflow · Image/OCR — folding in the disabled
+         upload-preview-panel (image/OCR) as the second tab, with activeTab as a
+         plain ref (panel tabs NEVER go in the URL — only ?preview=<id> is). -->
+    <UDashboardGroup v-if="previewId" unit="rem" class="contents">
+      <UDashboardSidebar
+        id="upload-preview"
+        side="right"
+        resizable
+        :default-size="28"
+        :min-size="22"
+        :max-size="48"
+        :ui="{
+          root: 'overflow-hidden min-w-0',
+          header: 'h-auto py-3 items-start min-w-0',
+          body: 'overflow-hidden min-h-0 min-w-0 p-0',
+        }"
+      >
+        <template #header>
+          <div class="w-full min-w-0 pl-2">
+            <div class="flex items-center gap-2 min-w-0">
+              <p class="font-bold flex-1 min-w-0 truncate text-primary">
+                Workflow
+              </p>
+              <UButton
+                icon="i-lucide-x"
+                color="neutral"
+                variant="ghost"
+                aria-label="Close preview"
+                class="shrink-0"
+                @click="closePreview"
+              />
+            </div>
+            <p class="text-xs font-mono text-dimmed truncate">
+              {{ previewId }}
+            </p>
+          </div>
+        </template>
+
+        <template #default>
+          <!-- Scrolls itself; sidebar body no longer does (p-0 + overflow-hidden
+               above). min-h-0 lets this flex child shrink so overflow kicks in. -->
+          <div class="h-full min-h-0 overflow-y-auto">
+            <UploadWorkflowTimeline
+              :steps="MOCK_STEPS"
+              :run-started-at="MOCK_RUN_STARTED_AT"
+            >
+              <!-- Create Expense step footer: link to the created expense.
+                   ⚠️ STEP 2: the expense id isn't in workflow data — this is a
+                   placeholder. Wire :to="`/expenses?preview=${expenseId}`" once
+                   the expense store is composed in (upload → receipt → expense). -->
+              <template #footer-createExpense>
+                <UButton
+                  label="View expense"
+                  trailing-icon="i-lucide-arrow-right"
+                  size="xs"
+                  color="neutral"
+                  variant="subtle"
+                  disabled
+                />
+              </template>
+            </UploadWorkflowTimeline>
+          </div>
+        </template>
+      </UDashboardSidebar>
+    </UDashboardGroup>
   </div>
 </template>
