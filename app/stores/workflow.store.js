@@ -167,6 +167,19 @@ export const useWorkflowStore = defineStore('workflow', () => {
       normalizeStatus: row.normalize_status,
       createExpenseStatus: row.create_expense_status,
       adjustExpenseStatus: row.adjust_expense_status,
+      // Per-step timestamps (server-derived from status transitions). Null for
+      // steps not yet started, and for runs created before the timestamp
+      // migration (those render without durations).
+      ocrStartedAt: row.ocr_started_at,
+      ocrCompletedAt: row.ocr_completed_at,
+      annotationsStartedAt: row.annotations_started_at,
+      annotationsCompletedAt: row.annotations_completed_at,
+      normalizeStartedAt: row.normalize_started_at,
+      normalizeCompletedAt: row.normalize_completed_at,
+      createExpenseStartedAt: row.create_expense_started_at,
+      createExpenseCompletedAt: row.create_expense_completed_at,
+      adjustExpenseStartedAt: row.adjust_expense_started_at,
+      adjustExpenseCompletedAt: row.adjust_expense_completed_at,
       errors: row.errors,
       createdAt: row.created_at,
       completedAt: row.completed_at,

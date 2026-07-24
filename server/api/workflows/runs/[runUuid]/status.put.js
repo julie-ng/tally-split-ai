@@ -1,7 +1,44 @@
 import { z } from 'zod'
 import { eq } from 'drizzle-orm'
-import { WORKFLOW_STATUSES, WORKFLOW_STEP_STATUSES } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_STATUSES, WORKFLOW_STEP_STATUSES, WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 import { UPLOAD_ANALYSIS_STATUSES } from '#shared/enums/upload-analysis-status.js'
+
+// The five per-step status fields, each paired with its timestamp column bases.
+// Used to server-derive per-step timestamps from the status transition being
+// written, so trigger tasks never send times (see stampFor below).
+const STEP_STATUS_FIELDS = [
+  'ocr',
+  'annotations',
+  'normalize',
+  'createExpense',
+  'adjustExpense',
+]
+
+const TERMINAL_STEP_STATUSES = new Set([
+  WORKFLOW_STEP_STATUS.COMPLETED,
+  WORKFLOW_STEP_STATUS.FAILED,
+  WORKFLOW_STEP_STATUS.SKIPPED,
+])
+
+/**
+ * Given a step's new status, return the timestamp field to stamp with `now`.
+ *   → processing  ⇒ <step>StartedAt
+ *   → terminal    ⇒ <step>CompletedAt   (completed / failed / skipped)
+ *   → pending     ⇒ nothing (a step reset back to pending clears nothing here)
+ *
+ * @param {string} stepBase - e.g. 'ocr', 'createExpense'
+ * @param {string} status - a WORKFLOW_STEP_STATUS value
+ * @returns {string|null} the timestamp field name, or null if no stamp applies
+ */
+function stampFieldFor (stepBase, status) {
+  if (status === WORKFLOW_STEP_STATUS.PROCESSING) {
+    return `${stepBase}StartedAt`
+  }
+  if (TERMINAL_STEP_STATUSES.has(status)) {
+    return `${stepBase}CompletedAt`
+  }
+  return null
+}
 
 const statusUpdateSchema = z.object({
   // Orchestrator-level status
@@ -58,12 +95,23 @@ export default defineEventHandler(async (event) => {
   // Build workflow run updates (only include fields that were provided)
   const runUpdates = {}
   if (workflowUpdates.status !== undefined) runUpdates.status = workflowUpdates.status
-  if (workflowUpdates.ocrStatus !== undefined) runUpdates.ocrStatus = workflowUpdates.ocrStatus
-  if (workflowUpdates.annotationsStatus !== undefined) runUpdates.annotationsStatus = workflowUpdates.annotationsStatus
-  if (workflowUpdates.createExpenseStatus !== undefined) runUpdates.createExpenseStatus = workflowUpdates.createExpenseStatus
-  if (workflowUpdates.adjustExpenseStatus !== undefined) runUpdates.adjustExpenseStatus = workflowUpdates.adjustExpenseStatus
-  if (workflowUpdates.normalizeStatus !== undefined) runUpdates.normalizeStatus = workflowUpdates.normalizeStatus
   if (workflowUpdates.completedAt !== undefined) runUpdates.completedAt = workflowUpdates.completedAt ? new Date(workflowUpdates.completedAt) : null
+
+  // Per-step status writes, plus their server-derived timestamp. Each PUT
+  // carries at most one step's status transition; we stamp the matching
+  // started/completed column from the transition itself (see stampFieldFor).
+  const now = new Date()
+  for (const stepBase of STEP_STATUS_FIELDS) {
+    const statusField = `${stepBase}Status`
+    const value = workflowUpdates[statusField]
+    if (value === undefined) continue
+
+    runUpdates[statusField] = value
+    const stampField = stampFieldFor(stepBase, value)
+    if (stampField) {
+      runUpdates[stampField] = now
+    }
+  }
 
   // Merge per-step errors into the existing jsonb column. Read-modify-write
   // is acceptable here because each task writes one key and steps don't

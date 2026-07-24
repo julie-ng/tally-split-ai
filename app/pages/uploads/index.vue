@@ -182,95 +182,82 @@ const paginationInfo = computed(() => {
   return { start, end, total }
 })
 
-// -------- MOCK workflow-timeline data --------
-// ⚠️ STEP 2 (after DB schema change + migration): replace MOCK_STEPS with a
-// computed that maps the real workflow store → this step shape, e.g.
-//   mapWorkflowToSteps(workflowStore, previewId.value)
-// Lifted up here (out of the timeline component) so the component stays a
-// props-driven leaf. What's still faked and needs real wiring in step 2:
-//   • per-step startedAt/completedAt — NO per-step timestamp columns exist on
-//     workflow_runs yet (only run-level created_at/completed_at). These mock
-//     times exist purely so durations render for the visual.
-//   • details / summary — sourced from receipt/expense rows, NOT workflow_runs.
-//   • the Create Expense footer button's :to target (see template below).
-// Statuses use the real WORKFLOW_STEP_STATUS enum so every visual state shows.
-const MOCK_RUN_STARTED_AT = '2026-07-22T10:21:00'
-const MOCK_STEPS = [
-  {
-    key: 'upload',
-    label: 'Upload',
-    description: 'File received',
-    status: WORKFLOW_STEP_STATUS.COMPLETED,
-    startedAt: '2026-07-22T10:21:00',
-    completedAt: '2026-07-22T10:21:03',
-    details: [
-      { label: 'File', value: 'Scanned_20260629-1611-03.jpg' },
-      { label: 'Size', value: '343 KB' },
-    ],
-  },
-  {
-    key: 'ocr',
-    label: 'OCR Analysis',
-    description: 'Text extraction (Azure Document Intelligence)',
-    status: WORKFLOW_STEP_STATUS.COMPLETED,
-    startedAt: '2026-07-22T10:21:04',
-    completedAt: '2026-07-22T10:21:10',
-    details: [
-      { label: 'Merchant', value: 'EDEKA Yilmaz' },
-      { label: 'Address', value: 'Lerchenauer Str. 3, 80809 München' },
-      { label: 'Line items', value: '14' },
-      { label: 'Total', value: '€41.95' },
-    ],
-  },
-  {
-    key: 'annotations',
-    label: 'Handwritten analysis',
-    description: 'Detecting initials, circles, strikethroughs (GPT-4o)',
-    status: WORKFLOW_STEP_STATUS.COMPLETED,
-    startedAt: '2026-07-22T10:21:10',
-    completedAt: '2026-07-22T10:21:16',
-    summary: 'No handwritten annotations were detected to indicate who paid, and the total remains unchanged. The adjusted total is split evenly between the household members.',
-    details: [
-      { label: 'Initials found', value: 'None' },
-      { label: 'Strikethroughs', value: '0' },
-      { label: 'Confidence', value: '0.92' },
-    ],
-  },
-  {
-    key: 'normalize',
-    label: 'Normalize',
-    description: 'Cleaning date, title, filename',
-    status: WORKFLOW_STEP_STATUS.PROCESSING,
-    // MOCK: pin ~4s before load so the live elapsed counter reads a small number
-    // instead of hours. Real data won't need this. ⚠️ STEP 2.
-    startedAt: new Date(Date.now() - 4000).toISOString(),
-    completedAt: null,
-    details: null,
-  },
-  {
-    key: 'createExpense',
-    label: 'Create expense',
-    description: 'Expense from receipt total',
-    status: WORKFLOW_STEP_STATUS.PENDING,
-    startedAt: null,
-    completedAt: null,
-    // Mock rows so the Create Expense footer (link-to-expense button) has a body
-    // to sit under while iterating on the visual. ⚠️ STEP 2: real details.
-    details: [
-      { label: 'Amount', value: '€41.95' },
-      { label: 'Split', value: '50 / 50' },
-    ],
-  },
-  {
-    key: 'adjustExpense',
-    label: 'Adjust expense',
-    description: 'Asymmetric split from annotations',
-    status: WORKFLOW_STEP_STATUS.SKIPPED,
-    startedAt: null,
-    completedAt: null,
-    details: null,
-  },
+// -------- Workflow-timeline data (real) --------
+// Static per-step metadata. Status + timestamps come from the workflow store;
+// details/summary are still stubbed (see ⚠️ STEP 2b below). The `stepKey` is
+// the workflow_runs column base — `${stepKey}Status`, `${stepKey}StartedAt`,
+// `${stepKey}CompletedAt`. The Upload step is special: its status comes from the
+// upload row (not workflow_runs) and it has no per-step timestamps.
+const STEP_DEFS = [
+  { key: 'upload', stepKey: null, label: 'Upload', description: 'File received' },
+  { key: 'ocr', stepKey: 'ocr', label: 'OCR Analysis', description: 'Text extraction (Azure Document Intelligence)' },
+  { key: 'annotations', stepKey: 'annotations', label: 'Handwritten analysis', description: 'Detecting initials, circles, strikethroughs (GPT-4o)' },
+  { key: 'normalize', stepKey: 'normalize', label: 'Normalize', description: 'Cleaning date, title, filename' },
+  { key: 'createExpense', stepKey: 'createExpense', label: 'Create expense', description: 'Expense from receipt total' },
+  { key: 'adjustExpense', stepKey: 'adjustExpense', label: 'Adjust expense', description: 'Asymmetric split from annotations' },
 ]
+
+// Upload-row status → step status for the first circle (mirrors the inline
+// row-cell's uploadStepStatus in uploads/workflow-steps.vue). Accepts DB
+// UPLOAD_STATUS values and queue-side strings.
+function uploadStepStatus (status) {
+  switch (status) {
+    case 'uploaded': return WORKFLOW_STEP_STATUS.COMPLETED
+    case 'in-progress': return WORKFLOW_STEP_STATUS.PROCESSING
+    case 'failed':
+    case 'interrupted': return WORKFLOW_STEP_STATUS.FAILED
+    default: return WORKFLOW_STEP_STATUS.PENDING
+  }
+}
+
+// The upload row currently previewed (for the Upload step's status).
+const previewUpload = computed(() =>
+  previewId.value ? mergedUploads.value.find(u => u.id === previewId.value) : null,
+)
+
+// Real steps for the previewed upload's latest run. Reads status from
+// stepStatusesById and timestamps from the run row directly (the new per-step
+// *StartedAt/*CompletedAt columns).
+//
+// ⚠️ STEP 2b (NOT done): `details` (merchant, line items, split reasoning) and
+// `summary` come from the receipt/expense stores, NOT workflow_runs — they need
+// a cross-store warm+compose (upload → receipt → expense). Left null for now, so
+// steps render collapsed with no detail body. The Create Expense footer button's
+// :to is likewise still a placeholder (see template).
+const timelineSteps = computed(() => {
+  const id = previewId.value
+  if (!id) return []
+
+  const statuses = workflowStore.stepStatusesById(id)
+  const run = workflowStore.latestRunById(id)
+
+  return STEP_DEFS.map((def) => {
+    if (def.stepKey === null) {
+      // Upload step — status from the upload row, no workflow timestamps.
+      return {
+        key: def.key,
+        label: def.label,
+        description: def.description,
+        status: uploadStepStatus(previewUpload.value?.status),
+        startedAt: null,
+        completedAt: null,
+        details: null,
+      }
+    }
+    return {
+      key: def.key,
+      label: def.label,
+      description: def.description,
+      status: statuses[`${def.stepKey}Status`],
+      startedAt: run?.[`${def.stepKey}StartedAt`] ?? null,
+      completedAt: run?.[`${def.stepKey}CompletedAt`] ?? null,
+      details: null, // ⚠️ STEP 2b
+    }
+  })
+})
+
+// Run start = the latest run's created_at (shown once at the top).
+const timelineRunStartedAt = computed(() => workflowStore.latestRunById(previewId.value)?.createdAt ?? null)
 
 // -------- Slideover preview --------
 // URL state: ?preview=<id> is the single source of truth. The slideover
@@ -491,8 +478,8 @@ function closePreview () {
                above). min-h-0 lets this flex child shrink so overflow kicks in. -->
           <div class="h-full min-h-0 overflow-y-auto">
             <UploadWorkflowTimeline
-              :steps="MOCK_STEPS"
-              :run-started-at="MOCK_RUN_STARTED_AT"
+              :steps="timelineSteps"
+              :run-started-at="timelineRunStartedAt"
             >
               <!-- Create Expense step footer: link to the created expense.
                    ⚠️ STEP 2: the expense id isn't in workflow data — this is a

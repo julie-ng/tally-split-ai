@@ -207,6 +207,27 @@ export const workflowRuns = pgTable('workflow_runs', {
   adjustExpenseStatus: text('adjust_expense_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
   normalizeStatus: text('normalize_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),
 
+  // Per-step timestamps. Nullable — a step that hasn't started yet has both
+  // null; a running step has startedAt only. Stamped server-side in
+  // status.put.js by the status transition being written (→processing stamps
+  // startedAt; →completed/failed/skipped stamps completedAt), so trigger tasks
+  // don't send times. Rows created before this migration stay null (no
+  // backfill) — those older runs just render without durations.
+  //
+  // timestamptz because these are instants (rules/database-timestamps.md). The
+  // run-level createdAt/completedAt below are plain timestamp for historical
+  // reasons — don't copy them; new instants get TZ.
+  ocrStartedAt: timestamp('ocr_started_at', { withTimezone: true }),
+  ocrCompletedAt: timestamp('ocr_completed_at', { withTimezone: true }),
+  annotationsStartedAt: timestamp('annotations_started_at', { withTimezone: true }),
+  annotationsCompletedAt: timestamp('annotations_completed_at', { withTimezone: true }),
+  normalizeStartedAt: timestamp('normalize_started_at', { withTimezone: true }),
+  normalizeCompletedAt: timestamp('normalize_completed_at', { withTimezone: true }),
+  createExpenseStartedAt: timestamp('create_expense_started_at', { withTimezone: true }),
+  createExpenseCompletedAt: timestamp('create_expense_completed_at', { withTimezone: true }),
+  adjustExpenseStartedAt: timestamp('adjust_expense_started_at', { withTimezone: true }),
+  adjustExpenseCompletedAt: timestamp('adjust_expense_completed_at', { withTimezone: true }),
+
   // Per-step error messages, keyed by step name (e.g. { ocr, annotations,
   // adjustSplit, _orchestrator }). Null when the run has no errors.
   errors: jsonb('errors'),
