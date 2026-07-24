@@ -5,6 +5,8 @@ import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 import { useUploadsStore } from '~/stores/uploads.store'
 import { useUploadQueueStore } from '~/stores/upload-queue.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
+import { useReceiptsStore } from '~/stores/receipts.store'
+import { useExpensesStore } from '~/stores/expenses.store'
 
 useHead({
   title: 'Uploads',
@@ -13,6 +15,8 @@ useHead({
 const uploadsStore = useUploadsStore()
 const uploadQueueStore = useUploadQueueStore()
 const workflowStore = useWorkflowStore()
+const receiptsStore = useReceiptsStore()
+const expensesStore = useExpensesStore()
 uploadsStore.debug = true
 workflowStore.debug = true
 
@@ -182,6 +186,16 @@ const paginationInfo = computed(() => {
   return { start, end, total }
 })
 
+// -------- Preview URL state --------
+// ?preview=<id> is the single source of truth for which upload is previewed.
+// Declared here (above the timeline block) because the timeline computeds and
+// the cross-store warm below reference previewId — const has no TDZ hoist, so it
+// must precede its first use. openPreview/closePreview (template handlers) live
+// further down.
+const route = useRoute()
+const router = useRouter()
+const previewId = computed(() => route.query.preview ?? null)
+
 // -------- Workflow-timeline data (real) --------
 // Static per-step metadata. Status + timestamps come from the workflow store;
 // details/summary are still stubbed (see ⚠️ STEP 2b below). The `stepKey` is
@@ -215,15 +229,120 @@ const previewUpload = computed(() =>
   previewId.value ? mergedUploads.value.find(u => u.id === previewId.value) : null,
 )
 
-// Real steps for the previewed upload's latest run. Reads status from
-// stepStatusesById and timestamps from the run row directly (the new per-step
-// *StartedAt/*CompletedAt columns).
+// -------- Cross-store warm for step detail bodies (2b) --------
+// On preview-open, warm the receipt (upload.receiptId → receipts store), its
+// expense (receipt → expenses store), and the upload's annotations. All are
+// cache-aware + 404-tolerant, so a standalone/unanalyzed upload just yields
+// nulls and those steps render collapsed. This is page-level composition — the
+// stores never reference each other (see rules/pinia + design-direction).
 //
-// ⚠️ STEP 2b (NOT done): `details` (merchant, line items, split reasoning) and
-// `summary` come from the receipt/expense stores, NOT workflow_runs — they need
-// a cross-store warm+compose (upload → receipt → expense). Left null for now, so
-// steps render collapsed with no detail body. The Create Expense footer button's
-// :to is likewise still a placeholder (see template).
+// Inline here for now; the shared upload→receipt→expense warm is a candidate for
+// the usePreviewPanel extraction later (project_expenses_receipts_view_duplication).
+const previewReceiptId = computed(() => previewUpload.value?.receipt?.id ?? previewUpload.value?.receiptId ?? null)
+const annotations = ref(null)
+
+watch(previewId, async (id) => {
+  annotations.value = null
+  if (!id) return
+
+  // Annotations live on the upload — fetch regardless of receipt existence.
+  annotations.value = await uploadsStore.fetchAnnotationsById(id)
+
+  const receiptId = previewReceiptId.value
+  if (!receiptId) return
+  const receipt = await receiptsStore.fetchReceiptById(receiptId)
+  if (receipt) {
+    await expensesStore.fetchExpenseByReceiptId(receiptId)
+  }
+}, { immediate: true })
+
+// Store getters (reactive) for the previewed upload's receipt + expense.
+const previewReceipt = computed(() =>
+  previewReceiptId.value ? receiptsStore.getReceiptById(previewReceiptId.value) : null,
+)
+const previewExpense = computed(() =>
+  previewReceiptId.value ? expensesStore.getExpenseByReceiptId(previewReceiptId.value) : null,
+)
+
+// Build the detail rows + summary for a given step from the warmed stores.
+// Returns { details?, summary? } — a step with no data returns {} and renders
+// collapsed (the component's isExpandable guards on details/summary presence).
+function stepContent (stepKey) {
+  const upload = previewUpload.value
+  const receipt = previewReceipt.value
+  const expense = previewExpense.value
+
+  switch (stepKey) {
+    case null: // Upload
+      if (!upload) return {}
+      return {
+        details: [
+          { label: 'File', value: upload.originalFilename },
+          { label: 'Size', value: upload.size != null ? formatBytes(upload.size) : '—' },
+        ],
+      }
+
+    case 'ocr':
+      if (!receipt) return {}
+      return {
+        details: [
+          { label: 'Merchant', value: receipt.merchantName || '—' },
+          { label: 'Address', value: receipt.merchantAddress || '—' },
+          { label: 'Total', value: receipt.total != null ? receiptUtils.formatCurrency(receipt.total, receipt.currency) : '—' },
+        ],
+      }
+
+    case 'annotations': {
+      const data = annotations.value
+      if (!data) return {}
+      const count = data.annotations?.length ?? 0
+      return {
+        // The LLM's own note, verbatim.
+        summary: data.notes || undefined,
+        details: [
+          { label: 'Annotations found', value: String(count) },
+        ],
+      }
+    }
+
+    case 'normalize':
+      if (!receipt) return {}
+      return {
+        details: [
+          { label: 'Title', value: receipt.title || '—' },
+          { label: 'Date', value: receipt.date || '—' },
+        ],
+      }
+
+    case 'createExpense':
+      if (!expense) return {}
+      return {
+        details: [
+          { label: 'Amount', value: expense.splitAmount != null ? receiptUtils.formatCurrency(expense.splitAmount, expense.currency) : '—' },
+          { label: 'Settled', value: expense.isSettled ? 'Yes' : 'No' },
+        ],
+      }
+
+    case 'adjustExpense':
+      if (!expense) return {}
+      return {
+        details: [
+          { label: 'Your share', value: expense.userOneShare != null ? receiptUtils.formatCurrency(expense.userOneShare, expense.currency) : '—' },
+          { label: 'Their share', value: expense.userTwoShare != null ? receiptUtils.formatCurrency(expense.userTwoShare, expense.currency) : '—' },
+        ],
+        // ⚠️ The LLM split reasoning lives in the changes/history table
+        // (changes.reasoning), not on the expense row — a separate history
+        // fetch. Left out of 2b; add if the split-reasoning surface is wanted.
+      }
+
+    default:
+      return {}
+  }
+}
+
+// Real steps for the previewed upload's latest run. Status from stepStatusesById,
+// timestamps from the run row, detail bodies from the warmed receipt/expense/
+// annotations via stepContent().
 const timelineSteps = computed(() => {
   const id = previewId.value
   if (!id) return []
@@ -232,6 +351,8 @@ const timelineSteps = computed(() => {
   const run = workflowStore.latestRunById(id)
 
   return STEP_DEFS.map((def) => {
+    const content = stepContent(def.stepKey)
+
     if (def.stepKey === null) {
       // Upload step — status from the upload row, no workflow timestamps.
       return {
@@ -241,7 +362,7 @@ const timelineSteps = computed(() => {
         status: uploadStepStatus(previewUpload.value?.status),
         startedAt: null,
         completedAt: null,
-        details: null,
+        ...content,
       }
     }
     return {
@@ -251,7 +372,7 @@ const timelineSteps = computed(() => {
       status: statuses[`${def.stepKey}Status`],
       startedAt: run?.[`${def.stepKey}StartedAt`] ?? null,
       completedAt: run?.[`${def.stepKey}CompletedAt`] ?? null,
-      details: null, // ⚠️ STEP 2b
+      ...content,
     }
   })
 })
@@ -259,15 +380,12 @@ const timelineSteps = computed(() => {
 // Run start = the latest run's created_at (shown once at the top).
 const timelineRunStartedAt = computed(() => workflowStore.latestRunById(previewId.value)?.createdAt ?? null)
 
-// -------- Slideover preview --------
-// URL state: ?preview=<id> is the single source of truth. The slideover
-// component reads :id and opens itself. Use router.replace so the
-// slideover doesn't pollute browser history.
-const route = useRoute()
-const router = useRouter()
+// The expense the Create Expense footer links to (once warmed).
+const previewExpenseId = computed(() => previewExpense.value?.id ?? null)
 
-const previewId = computed(() => route.query.preview ?? null)
-
+// -------- Preview open/close handlers --------
+// URL state (route/router/previewId) is declared up in the "Preview URL state"
+// section above. router.replace so the preview doesn't pollute browser history.
 function openPreview (event, row) {
   // console.log('openPreview()', row)
   const id = row.original.id
@@ -482,9 +600,8 @@ function closePreview () {
               :run-started-at="timelineRunStartedAt"
             >
               <!-- Create Expense step footer: link to the created expense.
-                   ⚠️ STEP 2: the expense id isn't in workflow data — this is a
-                   placeholder. Wire :to="`/expenses?preview=${expenseId}`" once
-                   the expense store is composed in (upload → receipt → expense). -->
+                   Enabled once the expense is warmed (upload → receipt →
+                   expense); disabled while null (standalone/not-yet-created). -->
               <template #footer-createExpense>
                 <UButton
                   label="View expense"
@@ -492,7 +609,8 @@ function closePreview () {
                   size="xs"
                   color="neutral"
                   variant="subtle"
-                  disabled
+                  :to="previewExpenseId ? `/expenses?preview=${previewExpenseId}` : undefined"
+                  :disabled="!previewExpenseId"
                 />
               </template>
             </UploadWorkflowTimeline>
