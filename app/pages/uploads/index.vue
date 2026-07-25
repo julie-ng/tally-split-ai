@@ -217,7 +217,7 @@ const {
             <UBreadcrumb :items="[{ label: 'Uploads', class: 'font-semibold text-default' }]" />
           </template>
           <template #right>
-            <upload-button-modal color="neutral" variant="subtle" />
+            <UploadButtonModal color="neutral" variant="subtle" />
           </template>
         </UDashboardNavbar>
       </template>

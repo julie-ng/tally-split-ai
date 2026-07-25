@@ -158,7 +158,7 @@ const {
           <p class="text-sm mb-4">
             No expenses found for {{ monthName }} {{ year }}. Please upload receipts for analysis.
           </p>
-          <upload-button-modal label="Upload Receipts" />
+          <UploadButtonModal label="Upload Receipts" />
         </div>
       </template>
     </UDashboardPanel>
