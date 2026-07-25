@@ -31,13 +31,6 @@ export const useUploadsStore = defineStore('uploads', () => {
 
   const getPolygonsById = computed(() => id => polygons.value[id] ?? null)
 
-  const getJsonLinksById = computed(() => id => [
-    { label: 'Summary', href: `/api/analysis/summary/${id}` },
-    { label: 'Annotations', href: `/api/uploads/${id}/annotations` },
-    { label: 'OCR', href: `/api/uploads/${id}/ocr` },
-    { label: 'Polygons', href: `/api/uploads/${id}/polygons` },
-  ])
-
   // -------- ACTIONS --------
 
   /**
@@ -263,7 +256,6 @@ export const useUploadsStore = defineStore('uploads', () => {
     totalUploads,
     getUploadById,
     getPolygonsById,
-    getJsonLinksById,
 
     // Actions
     fetchUploads,
