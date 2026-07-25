@@ -280,6 +280,11 @@ const previewExpense = computed(() =>
   previewReceiptId.value ? expensesStore.getExpenseByReceiptId(previewReceiptId.value) : null,
 )
 
+// True while the cross-store warm is in flight: the upload links a receipt but
+// it isn't in the store yet. Drives skeletons in both tabs. A standalone upload
+// (no receiptId) is NOT warming — it has nothing to fetch and renders at once.
+const isPreviewWarming = computed(() => !!previewReceiptId.value && !previewReceipt.value)
+
 // Build the detail rows + summary for a given step from the warmed stores.
 // Returns { details?, summary? } — a step with no data returns {} and renders
 // collapsed (the component's isExpandable guards on details/summary presence).
@@ -617,7 +622,14 @@ const previewExpenseId = computed(() => previewExpense.value?.id ?? null)
             }"
           >
             <template #workflow>
+              <!-- Skeleton while the cross-store warm is in flight (receipt/
+                   expense not yet loaded). Once warm, the real timeline renders
+                   with its detail bodies. -->
+              <div v-if="isPreviewWarming" class="p-4 space-y-3">
+                <USkeleton v-for="n in 6" :key="n" class="h-12 w-full" />
+              </div>
               <UploadWorkflowTimeline
+                v-else
                 :steps="timelineSteps"
                 :run-started-at="timelineRunStartedAt"
               >
@@ -639,7 +651,14 @@ const previewExpenseId = computed(() => previewExpense.value?.id ?? null)
             </template>
 
             <template #image>
-              <UploadImageTab v-if="uploadId" :id="uploadId" />
+              <!-- Skeleton while warming; a few bars + an image-shaped block. -->
+              <div v-if="isPreviewWarming" class="p-4 space-y-3">
+                <USkeleton class="h-5 w-1/2" />
+                <USkeleton class="h-4 w-2/3" />
+                <USkeleton class="h-4 w-1/3" />
+                <USkeleton class="w-full aspect-3/4 rounded-lg" />
+              </div>
+              <UploadImageTab v-else-if="uploadId" :id="uploadId" />
             </template>
           </UTabs>
         </template>
