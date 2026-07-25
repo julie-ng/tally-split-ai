@@ -172,12 +172,54 @@ const expenseHref = computed(() =>
               <template #footer-createExpense>
                 <UButton
                   label="View expense"
-                  trailing-icon="i-lucide-arrow-right"
+                  icon="i-lucide-coins"
+                  size="xs"
+                  color="primary"
+                  variant="solid"
+                  :to="expenseHref"
+                  :disabled="!expenseId"
+                />
+              </template>
+
+              <!-- OCR step footer: raw JSON links (open externally). The
+                   /api/analysis/summary endpoint is intentionally NOT linked here
+                   (still used by the receipt analysis tab). -->
+              <template v-if="uploadId" #footer-ocr>
+                <div class="flex flex-wrap gap-2">
+                  <UButton
+                    label="View OCR (JSON)"
+                    icon="i-lucide-file-braces"
+                    size="xs"
+                    color="neutral"
+                    variant="subtle"
+                    :to="`/api/uploads/${uploadId}/ocr`"
+                    target="_blank"
+                    external
+                  />
+                  <UButton
+                    label="View Polygons (JSON)"
+                    icon="i-lucide-file-braces"
+                    size="xs"
+                    color="neutral"
+                    variant="subtle"
+                    :to="`/api/uploads/${uploadId}/polygons`"
+                    target="_blank"
+                    external
+                  />
+                </div>
+              </template>
+
+              <!-- Handwritten step footer: annotations JSON (open externally). -->
+              <template v-if="uploadId" #footer-annotations>
+                <UButton
+                  label="View Annotations (JSON)"
+                  icon="i-lucide-file-braces"
                   size="xs"
                   color="neutral"
                   variant="subtle"
-                  :to="expenseHref"
-                  :disabled="!expenseId"
+                  :to="`/api/uploads/${uploadId}/annotations`"
+                  target="_blank"
+                  external
                 />
               </template>
             </UploadWorkflowTimeline>
