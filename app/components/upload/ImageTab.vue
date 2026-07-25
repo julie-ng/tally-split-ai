@@ -43,28 +43,22 @@ provide('highlightedLabel', highlightedLabel)
 </script>
 
 <template>
-  <div v-if="upload" class="p-4 space-y-3">
-    <!-- Details first -->
-    <ui-collapsible-property-group title="Overview">
-      <upload-preview-overview :id="id" />
-    </ui-collapsible-property-group>
+  <div v-if="upload" class="px-4 py-6 space-y-3">
+    <h4 class="text-sm font-semibold">
+      Blob
+    </h4>
+
+    <!-- Overview -->
+    <UploadPreviewOverview :id="id" />
 
     <hr class="border-default">
 
-    <ui-collapsible-property-group title="AI Analysis">
-      <upload-preview-analysis :id="id" />
-    </ui-collapsible-property-group>
+    <h4 class="text-sm font-semibold">
+      Preview
+    </h4>
 
-    <hr class="border-default">
-
-    <ui-collapsible-property-group title="Azure Info">
-      <upload-preview-azure :id="id" />
-    </ui-collapsible-property-group>
-
-    <hr class="border-default">
-
-    <!-- Receipt image LAST (can be very tall). Full-width, natural height. -->
-    <blob-image-with-polygons
+    <!-- Receipt Image -->
+    <BlobImageWithPolygons
       v-if="hasPolygons"
       :blob-name="upload.blobName"
       :alt="upload.blobName"
@@ -74,7 +68,7 @@ provide('highlightedLabel', highlightedLabel)
       :highlighted-label="highlightedLabel"
       @update:highlighted-label="highlightedLabel = $event"
     />
-    <blob-image
+    <BlobImage
       v-else
       :blob-name="upload.blobName"
       :alt="upload.blobName"

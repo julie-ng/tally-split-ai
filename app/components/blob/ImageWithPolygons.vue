@@ -73,7 +73,7 @@ const polygonToSvgPoints = (polygon) => {
 
 <template>
   <div ref="containerRef" class="relative">
-    <blob-image
+    <BlobImage
       :blob-name="props.blobName"
       :alt="props.alt"
     />

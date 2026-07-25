@@ -28,6 +28,9 @@ import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
  *   isPreviewWarming: import('vue').ComputedRef<boolean>,
  *   timelineSteps: import('vue').ComputedRef<Array>,
  *   timelineRunStartedAt: import('vue').ComputedRef<string|null>,
+ *   timelineRunCompletedAt: import('vue').ComputedRef<string|null>,
+ *   timelineRunUuid: import('vue').ComputedRef<string|null>,
+ *   timelineRunStatus: import('vue').ComputedRef<string|null>,
  *   previewExpenseId: import('vue').ComputedRef<string|null>,
  * }}
  */
@@ -235,8 +238,13 @@ export function useUploadPreview (uploads) {
     })
   })
 
-  // Run start = the latest run's created_at (shown once at the top).
+  // Run start/finish (created_at / completed_at) — for the header duration.
   const timelineRunStartedAt = computed(() => workflowStore.latestRunById(uploadId.value)?.createdAt ?? null)
+  const timelineRunCompletedAt = computed(() => workflowStore.latestRunById(uploadId.value)?.completedAt ?? null)
+
+  // The latest run's uuid + status, shown in the timeline header.
+  const timelineRunUuid = computed(() => workflowStore.latestRunById(uploadId.value)?.uuid ?? null)
+  const timelineRunStatus = computed(() => workflowStore.latestRunById(uploadId.value)?.status ?? null)
 
   return {
     uploadId,
@@ -248,6 +256,9 @@ export function useUploadPreview (uploads) {
     isPreviewWarming,
     timelineSteps,
     timelineRunStartedAt,
+    timelineRunCompletedAt,
+    timelineRunUuid,
+    timelineRunStatus,
     previewExpenseId,
   }
 }

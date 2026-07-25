@@ -198,6 +198,9 @@ const {
   isPreviewWarming,
   timelineSteps,
   timelineRunStartedAt,
+  timelineRunCompletedAt,
+  timelineRunUuid,
+  timelineRunStatus,
   previewExpenseId,
 } = useUploadPreview(mergedUploads)
 </script>
@@ -355,6 +358,9 @@ const {
       :upload="previewUpload"
       :steps="timelineSteps"
       :run-started-at="timelineRunStartedAt"
+      :run-completed-at="timelineRunCompletedAt"
+      :run-uuid="timelineRunUuid"
+      :run-status="timelineRunStatus"
       :warming="isPreviewWarming"
       :expense-id="previewExpenseId"
     />

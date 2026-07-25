@@ -14,6 +14,7 @@ export default defineEventHandler(async (event) => {
       workflowRuns: {
         columns: {
           id: true,
+          uuid: true,
           status: true,
           ocrStatus: true,
           annotationsStatus: true,

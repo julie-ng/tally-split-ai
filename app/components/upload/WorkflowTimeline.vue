@@ -18,7 +18,7 @@
 //     workflow_runs. Step 2 warms those stores and composes them in.
 // This component needs NO change when real data arrives — only the page's
 // step-mapping (and the per-step footer slots it injects) do. Keep it dumb.
-import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 
 const props = defineProps({
   // Array of step objects the page maps from the workflow store. Shape:
@@ -33,19 +33,86 @@ const props = defineProps({
     type: String,
     default: null,
   },
+  // Run finish (workflow_runs.completed_at) — null while still running. Used with
+  // runStartedAt for the header duration.
+  runCompletedAt: {
+    type: String,
+    default: null,
+  },
+  // The workflow_runs uuid — shown dimmed/mono next to the header title.
+  runUuid: {
+    type: [String, null],
+    default: null,
+  },
+  // Run-level status (WORKFLOW_STATUS) — shown as a colored badge, right-aligned.
+  runStatus: {
+    type: [String, null],
+    default: null,
+  },
+})
+
+// Per-run-status label + UBadge color (a Nuxt UI color name, not a text class).
+const RUN_STATUS_CONFIG = {
+  [WORKFLOW_STATUS.QUEUED]: { label: 'Queued', color: 'neutral' },
+  [WORKFLOW_STATUS.PROCESSING]: { label: 'Processing', color: 'primary' },
+  [WORKFLOW_STATUS.COMPLETED]: { label: 'Completed', color: 'success' },
+  [WORKFLOW_STATUS.PARTIAL]: { label: 'Needs review', color: 'warning' },
+  [WORKFLOW_STATUS.FAILED]: { label: 'Failed', color: 'error' },
+  [WORKFLOW_STATUS.EXPIRED]: { label: 'Expired', color: 'neutral' },
+}
+
+const runStatusConfig = computed(() =>
+  props.runStatus ? RUN_STATUS_CONFIG[props.runStatus] ?? null : null,
+)
+
+// Tally of step outcomes for the "Pipeline Steps" summary line. `completed` is
+// "X of N ran"; skipped/failed are surfaced only when non-zero (skipped is
+// normal — e.g. consent-gated adjust — so it reads neutrally).
+const stepSummary = computed(() => {
+  const total = props.steps.length
+  let completed = 0
+  let skipped = 0
+  let failed = 0
+  for (const step of props.steps) {
+    if (step.status === WORKFLOW_STEP_STATUS.COMPLETED) completed++
+    else if (step.status === WORKFLOW_STEP_STATUS.SKIPPED) skipped++
+    else if (step.status === WORKFLOW_STEP_STATUS.FAILED) failed++
+  }
+
+  // Build the qualifier tail: "· 1 skipped · 1 failed" (only non-zero parts).
+  const parts = []
+  if (skipped > 0) parts.push(`${skipped} skipped`)
+  if (failed > 0) parts.push(`${failed} failed`)
+
+  return { total, completed, skipped, failed, tail: parts.join(' · ') }
 })
 
 // Live "now", ticked every second, so a processing step's elapsed counter
 // updates (1s, 2s, 3s…). One interval for the whole timeline; passed down to
 // each step. Only runs while some step is processing.
 const now = ref(Date.now())
+
+// Overall run duration next to the status badge. Finished runs show a static
+// start→finish span; a still-running run ticks live from start to `now`. Null
+// until we have a start time.
+const runDuration = computed(() => {
+  if (!props.runStartedAt) {
+    return null
+  }
+  const start = new Date(props.runStartedAt).getTime()
+  const end = props.runCompletedAt ? new Date(props.runCompletedAt).getTime() : now.value
+  return dateUtils.formatDuration(Math.max(0, Math.floor((end - start) / 1000)))
+})
 let ticker = null
-const hasProcessing = computed(() =>
-  props.steps.some(s => s.status === WORKFLOW_STEP_STATUS.PROCESSING),
+// Tick while any step is processing OR the run itself is unfinished (so the
+// run-level duration counts up live even between step transitions).
+const isLive = computed(() =>
+  (props.runStartedAt && !props.runCompletedAt)
+  || props.steps.some(s => s.status === WORKFLOW_STEP_STATUS.PROCESSING),
 )
 
 onMounted(() => {
-  if (hasProcessing.value) {
+  if (isLive.value) {
     ticker = setInterval(() => {
       now.value = Date.now()
     }, 1000)
@@ -88,14 +155,55 @@ function toggle (key) {
 </script>
 
 <template>
-  <div class="p-4">
+  <div class="px-4 py-6">
     <div class="mb-4">
-      <p class="text-sm font-semibold text-default">
-        Workflow
+      <div class="flex items-baseline justify-between gap-2 min-w-0">
+        <p class="text-sm font-semibold text-default min-w-0 truncate">
+          Workflow Run
+          <!-- <span v-if="runUuid" class="pl-2 font-normal text-dimmed">
+            {{ timestampUtils.toRelative(runStartedAt) }}
+          </span> -->
+        </p>
+        <!-- <span
+          v-if="runStatusConfig"
+          class="shrink-0 text-xs font-medium"
+          :class="runStatusConfig.class"
+        >
+          {{ runStatusConfig.label }}
+          12s
+        </span> -->
+        <div
+          v-if="runStatusConfig"
+          class="flex items-baseline gap-2 shrink-0"
+        >
+          <UBadge
+            :color="runStatusConfig.color"
+            variant="soft"
+          >
+            {{ runStatusConfig.label }}
+          </UBadge>
+          <span v-if="runDuration" class="text-xs text-dimmed tabular-nums">
+            {{ runDuration }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Started At -->
+      <ui-label-content v-if="runStartedAt" label="Started" :content="timestampUtils.toShortDatetime(runStartedAt) " />
+
+      <!-- Run ID -->
+      <ui-label-content label="Workflow Run ID">
+        <span class="font-mono text-xs">{{ runUuid }}</span>
+      </ui-label-content>
+    </div>
+
+    <div class="flex items-baseline justify-between gap-2 min-w-0 my-6">
+      <p class="text-sm font-semibold text-default shrink-0">
+        Pipeline Steps
       </p>
-      <p v-if="runStartedAt" class="text-xs text-dimmed">
-        Receipt processing pipeline started {{ timestampUtils.toShortDatetime(runStartedAt) }}
-      </p>
+      <span class="text-xs text-dimmed tabular-nums truncate">
+        {{ stepSummary.completed }} / {{ stepSummary.total }} completed<template v-if="stepSummary.tail"> · {{ stepSummary.tail }}</template>
+      </span>
     </div>
 
     <ol class="relative">

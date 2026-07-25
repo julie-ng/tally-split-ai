@@ -83,7 +83,7 @@ const dates = computed(() => {
           <ui-section-subtitle>
             Azure Blob Info
           </ui-section-subtitle>
-          <blob-info v-if="uploadId" :id="uploadId" />
+          <BlobInfo v-if="uploadId" :id="uploadId" />
         </section>
       </div>
     </div>

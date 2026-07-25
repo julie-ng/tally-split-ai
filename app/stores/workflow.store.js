@@ -158,6 +158,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
     const mapped = {
       id: row.id,
+      uuid: row.uuid,
       uploadId: row.upload_id,
       householdId: row.household_id,
       triggerRunId: row.trigger_run_id,

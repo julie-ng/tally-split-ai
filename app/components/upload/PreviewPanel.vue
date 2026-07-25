@@ -42,6 +42,21 @@ const props = defineProps({
     type: String,
     default: null,
   },
+  // Run finish (workflow_runs.completed_at); null while running.
+  runCompletedAt: {
+    type: String,
+    default: null,
+  },
+  // The workflow_runs uuid, shown dimmed in the timeline header.
+  runUuid: {
+    type: [String, null],
+    default: null,
+  },
+  // Run-level status (WORKFLOW_STATUS), shown as a badge in the timeline header.
+  runStatus: {
+    type: [String, null],
+    default: null,
+  },
   // True while the cross-store warm is in flight — drives the tab skeletons.
   warming: {
     type: Boolean,
@@ -135,7 +150,7 @@ const expenseHref = computed(() =>
             trigger: 'cursor-pointer',
             root: 'flex flex-col h-full min-h-0 w-full gap-0',
             list: 'shrink-0 px-4 gap-4',
-            content: 'flex-1 overflow-y-auto min-h-0 px-3 py-2',
+            content: 'flex-1 overflow-y-auto min-h-0 px-3',
           }"
         >
           <template #workflow>
@@ -147,6 +162,9 @@ const expenseHref = computed(() =>
               v-else
               :steps="steps"
               :run-started-at="runStartedAt"
+              :run-completed-at="runCompletedAt"
+              :run-uuid="runUuid"
+              :run-status="runStatus"
             >
               <!-- Create Expense step footer: link to the created expense.
                    Enabled once the expense is warmed; disabled while null
