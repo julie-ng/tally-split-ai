@@ -578,13 +578,13 @@ const previewExpenseId = computed(() => previewExpense.value?.id ?? null)
         }"
       >
         <template #header>
-          <!-- Title describes the UPLOAD (the panel now has two tabs, so the
-               title isn't tab-specific). Filename when known, else 'Upload';
-               id as the mono subtitle. -->
+          <!-- Title (neutral). Subtitle row: filename, then a separator + the
+               relative upload time (tooltip → full date w/ tz on hover). The
+               timestamp sits next to the filename, not pushed to the right edge. -->
           <div class="w-full min-w-0 pl-2">
             <div class="flex items-center gap-2 min-w-0">
-              <p class="font-bold flex-1 min-w-0 truncate text-primary">
-                {{ previewUpload?.originalFilename || 'Upload' }}
+              <p class="font-bold flex-1 min-w-0 truncate text-default">
+                Workflow Preview
               </p>
               <UButton
                 icon="i-lucide-x"
@@ -595,9 +595,25 @@ const previewExpenseId = computed(() => previewExpense.value?.id ?? null)
                 @click="closePreview"
               />
             </div>
-            <p class="text-xs font-mono text-dimmed truncate">
-              {{ uploadId }}
-            </p>
+            <div class="flex items-baseline gap-1.5 min-w-0 text-xs text-dimmed">
+              <span class="font-mono truncate">
+                Upload ID: {{ previewUpload?.id || 'Upload' }}
+              </span>
+              <template v-if="previewUpload?.uploadedAt">
+                <span class="shrink-0" aria-hidden="true">·</span>
+                <UTooltip
+                  :text="dateUtils.formatDate(new Date(previewUpload.uploadedAt))"
+                  :delay-duration="0"
+                >
+                  <time
+                    :datetime="previewUpload.uploadedAt"
+                    class="shrink-0 tabular-nums"
+                  >
+                    {{ timestampUtils.toRelative(previewUpload.uploadedAt) }}
+                  </time>
+                </UTooltip>
+              </template>
+            </div>
           </div>
         </template>
 
