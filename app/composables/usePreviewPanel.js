@@ -1,56 +1,105 @@
 /**
- * Generic driver for a `?preview=<id>`-synced side/tab preview panel — the
- * shared plumbing behind the expenses and uploads list-detail panels. Owns the
- * URL sync, open-state, active tab, esc-to-close, and the warm-on-id watch. The
- * caller supplies WHAT to warm (its own stores) and the default tab; it keeps
- * its own resource getters.
+ * Generic driver for a `?preview=<id>&tab=<tab>`-synced side/tab preview panel —
+ * the shared plumbing behind the expenses and uploads list-detail panels. Owns
+ * the URL sync (resource + tab), open-state, esc-to-close, and the warm-on-id
+ * watch. The caller supplies WHAT to warm (its own stores), the default tab, and
+ * the valid tab values; it keeps its own resource getters.
  *
- * `?preview=<id>` is the single source of truth for *which* row is previewed.
- * Open-state is seeded ONCE from the URL (so a cold-load `?preview=<id>`
- * auto-opens) then owned locally — NOT a computed off the id, which would
- * re-trigger on every row swap. Call from PAGE setup (the page owns the router;
- * this packages the canonical ?preview behavior). Panel tabs are NEVER in the
- * URL — `activeTab` is a plain ref, reset to `defaultTab` on id-change.
+ * Deliberately RESOURCE-AGNOSTIC: the selected id is exposed as `resourceId`
+ * (the subject the panel is about — an upload, an expense, whatever), NOT
+ * `previewId`. "Preview" is a presentation MODE that may change (panel today, a
+ * page later); the id names the resource, not the mode. Call sites alias it to
+ * their domain — `const { resourceId: uploadId } = usePreviewPanel(...)` — so the
+ * PAGE reads domain-true while the COMPOSABLE stays role-true.
+ *
+ * URL model:
+ * - `?preview=<id>` is the single source of truth for WHICH resource. Open-state
+ *   is seeded ONCE from it (cold-load auto-open) then owned locally — NOT a
+ *   computed off the id, which would re-trigger on every row swap.
+ * - `?tab=<tab>` is the source of truth for WHICH facet. Addressable +
+ *   refresh-stable + deep-linkable. A tab-only change leaves `resourceId`
+ *   value-identical, so the warm watch does NOT re-fire. Unknown/missing `tab`
+ *   falls back to `defaultTab`. Uses router.replace (no history spam) for both.
+ *
+ * Call from PAGE setup (the page owns the router; this packages the canonical
+ * ?preview/?tab behavior).
  *
  * @param {object} [options]
- * @param {string} [options.defaultTab='overview'] - tab selected on open + reset
- *   to on every id-change.
- * @param {(id: string) => (void | Promise<void>)} [options.warm] - caller's
- *   warm callback, run on id-change (and immediately on cold-load). Warm the
+ * @param {string} [options.defaultTab='overview'] - tab when `?tab` is absent or
+ *   invalid; the tab a newly-opened/switched resource lands on.
+ * @param {string[]} [options.tabs] - valid tab values. `?tab` outside this set is
+ *   ignored (falls back to defaultTab). Omit to accept any `?tab` value.
+ * @param {(id: string) => (void | Promise<void>)} [options.warm] - caller's warm
+ *   callback, run on resource-id change (and immediately on cold-load). Warm the
  *   caller's stores here. If it throws, the preview auto-closes (a stale/deleted
  *   ?preview id shouldn't leave a broken open panel).
  * @returns {{
- *   previewId: import('vue').ComputedRef<string|null>,
+ *   resourceId: import('vue').ComputedRef<string|null>,
  *   isPreviewOpen: import('vue').Ref<boolean>,
- *   activeTab: import('vue').Ref<string>,
+ *   activeTab: import('vue').WritableComputedRef<string>,
  *   openPreview: (event: Event, row: { original: { id: string } }) => void,
  *   closePreview: () => void,
  * }}
  */
 export function usePreviewPanel (options = {}) {
-  const { defaultTab = 'overview', warm } = options
+  const { defaultTab = 'overview', tabs, warm } = options
 
   const route = useRoute()
   const router = useRouter()
 
-  const previewId = computed(() => route.query.preview ?? null)
+  const resourceId = computed(() => route.query.preview ?? null)
 
   // Seeded once from the URL (cold-load auto-open), then owned locally.
-  const isPreviewOpen = ref(!!previewId.value)
+  const isPreviewOpen = ref(!!resourceId.value)
 
-  // Panel presentation only — never in the URL. Reset on id-change (below) so
-  // switching rows while open always lands on the default tab.
-  const activeTab = ref(defaultTab)
+  // Tab is URL-backed (?tab=) — addressable, refresh-stable, deep-linkable.
+  // Read: the query value if it's a known tab, else the default. Write: replace
+  // ?tab (keeping ?preview). Because resourceId reads ?preview (not ?tab), a
+  // tab write is value-identical for resourceId → the warm watch never re-fires.
+  const activeTab = computed({
+    get () {
+      const tab = route.query.tab
+      if (tab && (!tabs || tabs.includes(tab))) {
+        return tab
+      }
+      return defaultTab
+    },
+    set (value) {
+      router.replace({
+        query: {
+          ...route.query,
+          tab: value,
+        },
+      })
+    },
+  })
 
-  // Reset the tab + run the caller's warm whenever the selected id changes.
+  // True when the URL's ?tab is a real, valid tab (not absent/unknown).
+  function hasValidTabInUrl () {
+    const tab = route.query.tab
+    return !!tab && (!tabs || tabs.includes(tab))
+  }
+
+  // Run the caller's warm whenever the selected resource id changes.
   // immediate: on a cold hard-load the URL already carries ?preview=<id>, so
-  // previewId is born set and never "changes" — without immediate the warm
+  // resourceId is born set and never "changes" — without immediate the warm
   // never runs. Matches the immediate id-watches in the tab leaves.
-  watch(previewId, async (id) => {
+  watch(resourceId, async (id) => {
     if (!id) {
       return
     }
-    activeTab.value = defaultTab
+    // Cold-load canonicalization: a shared/typed `?preview=<id>` with no (or an
+    // unknown) ?tab gets the default written in, so the URL always carries the
+    // tab explicitly. Interactive opens already set ?tab in openPreview, so this
+    // only fires on the cold-load path — never a double navigation.
+    if (!hasValidTabInUrl()) {
+      router.replace({
+        query: {
+          ...route.query,
+          tab: defaultTab,
+        },
+      })
+    }
     if (!warm) {
       return
     }
@@ -67,16 +116,28 @@ export function usePreviewPanel (options = {}) {
 
   function openPreview (event, row) {
     isPreviewOpen.value = true
-    router.replace({ query: { ...route.query, preview: row.original.id } })
+    // Select the resource, KEEPING the current tab (sticky — reviewing images
+    // and clicking through rows stays on Image). activeTab resolves to the
+    // default when none/invalid is set, so this always writes an explicit tab.
+    // If the new resource lacks that tab, the activeTab getter falls back to
+    // default on read.
+    router.replace({
+      query: {
+        ...route.query,
+        preview: row.original.id,
+        tab: activeTab.value,
+      },
+    })
   }
 
   function closePreview () {
     const query = { ...route.query }
     delete query.preview
+    delete query.tab
     router.replace({ query })
   }
 
-  // Closing the open-state clears the URL param (X button, esc).
+  // Closing the open-state clears the URL params (X button, esc).
   watch(isPreviewOpen, (value) => {
     if (!value) {
       closePreview()
@@ -97,7 +158,7 @@ export function usePreviewPanel (options = {}) {
   })
 
   return {
-    previewId,
+    resourceId,
     isPreviewOpen,
     activeTab,
     openPreview,

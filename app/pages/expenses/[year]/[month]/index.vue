@@ -56,9 +56,10 @@ const {
   reset,
 } = useExpensesTableControls(expenses)
 
-// Preview panel: open-state, ?preview URL sync, esc-to-close, active tab, and
-// warm-on-id-change all live in the composable. Row click sets ?preview; the
-// panel's X (bound to isPreviewOpen) clears it.
+// Preview panel: open-state, URL sync (?preview=<id> + ?tab=<tab>),
+// esc-to-close, active tab, and warm-on-id-change all live in the composable.
+// Row click sets ?preview (resetting ?tab to default); the panel's X (bound to
+// isPreviewOpen) clears both. Selected expense + active tab are both URL-backed.
 const {
   previewExpenseId,
   previewExpense,

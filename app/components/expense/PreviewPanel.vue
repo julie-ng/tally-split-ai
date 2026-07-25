@@ -8,7 +8,7 @@ import { toBerlinLongDate, toBerlinTime } from '#shared/utils/expense-date.utils
 // the main table panel flex to full width when this closes. See the resize
 // experiment for why the sidebar (not panel) is the right primitive here.
 //
-// Behaviour (open-state, ?preview URL sync, esc, tab reset) lives in
+// Behaviour (open-state, URL sync of ?preview=<id> + ?tab=<tab>, esc) lives in
 // useExpensePreview(); this owns only layout + tabs. Leaf content is keyed by
 // expenseId and read from the store (warm) — no fetching here.
 const open = defineModel('open', {
@@ -16,6 +16,8 @@ const open = defineModel('open', {
   default: false,
 })
 
+// URL-backed via the composable's activeTab (a writable computed over ?tab).
+// v-model here just plumbs the tab selection up; the composable persists it.
 const activeTab = defineModel('activeTab', {
   type: String,
   default: 'overview',

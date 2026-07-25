@@ -169,7 +169,7 @@ const tableStyles = {
 
 const tableMeta = computed(() => ({
   class: {
-    tr: row => row?.original?.id === previewId.value ? 'bg-primary/10' : '',
+    tr: row => row?.original?.id === uploadId.value ? 'bg-primary/10' : '',
   },
 }))
 
@@ -203,14 +203,17 @@ const route = useRoute()
 // setup, before the previewUpload/previewReceiptId consts below are declared.
 const annotations = ref(null)
 
+// resourceId aliased to uploadId — the composable is resource-agnostic; this
+// page is domain-specific (see project_design_direction_v1 side-panel naming).
 const {
-  previewId,
+  resourceId: uploadId,
   isPreviewOpen,
   activeTab,
   openPreview,
   closePreview,
 } = usePreviewPanel({
   defaultTab: 'workflow',
+  tabs: ['workflow', 'image'],
   warm: async (id) => {
     annotations.value = null
     // Annotations live on the upload — fetch regardless of receipt existence.
@@ -261,7 +264,7 @@ function uploadStepStatus (status) {
 
 // The upload row currently previewed (for the Upload step's status).
 const previewUpload = computed(() =>
-  previewId.value ? mergedUploads.value.find(u => u.id === previewId.value) : null,
+  uploadId.value ? mergedUploads.value.find(u => u.id === uploadId.value) : null,
 )
 
 // The previewed upload's receipt id, for the reactive receipt/expense getters
@@ -357,7 +360,7 @@ function stepContent (stepKey) {
 // timestamps from the run row, detail bodies from the warmed receipt/expense/
 // annotations via stepContent().
 const timelineSteps = computed(() => {
-  const id = previewId.value
+  const id = uploadId.value
   if (!id) return []
 
   const statuses = workflowStore.stepStatusesById(id)
@@ -391,7 +394,7 @@ const timelineSteps = computed(() => {
 })
 
 // Run start = the latest run's created_at (shown once at the top).
-const timelineRunStartedAt = computed(() => workflowStore.latestRunById(previewId.value)?.createdAt ?? null)
+const timelineRunStartedAt = computed(() => workflowStore.latestRunById(uploadId.value)?.createdAt ?? null)
 
 // The expense the Create Expense footer links to (once warmed).
 const previewExpenseId = computed(() => previewExpense.value?.id ?? null)
@@ -463,8 +466,10 @@ const previewExpenseId = computed(() => previewExpense.value?.id ?? null)
               @select="openPreview"
             >
               <template #id-cell="{ row }">
+                <!-- Keeps the current ?tab (sticky, matches openPreview) so
+                     clicking the ID stays on whichever facet you're viewing. -->
                 <NuxtLink
-                  :to="{ query: { ...route.query, preview: row.original.id } }"
+                  :to="{ query: { ...route.query, preview: row.original.id, tab: activeTab } }"
                   replace
                   class="text-dimmed hover:text-blue-800 hover:underline font-mono"
                 >
@@ -479,7 +484,7 @@ const previewExpenseId = computed(() => previewExpense.value?.id ?? null)
               <template #originalFilename-cell="{ row }">
                 <div
                   class="flex items-center gap-1.5"
-                  :class="previewId ? 'max-w-[200px] md:max-w-[240px] xl:max-w-[320px]' : ''"
+                  :class="uploadId ? 'max-w-[200px] md:max-w-[240px] xl:max-w-[320px]' : ''"
                 >
                   <UTooltip
                     v-if="row.original.receipt"
@@ -550,8 +555,9 @@ const previewExpenseId = computed(() => previewExpense.value?.id ?? null)
          collapse context (two sidebars sharing a group's sidebarCollapsed ref
          clobber each other). unit="rem" matches the app group's resize math.
 
-         Two-tab panel (Workflow · Image), activeTab a plain ref — panel tabs
-         NEVER go in the URL (only ?preview=<id> is). -->
+         Two-tab panel (Workflow · Image). Both the selected upload (?preview=<id>)
+         and the active tab (?tab=<tab>) are URL-backed via usePreviewPanel, so
+         the panel is deep-linkable + refresh-stable. -->
     <UDashboardGroup v-if="isPreviewOpen" unit="rem" class="contents">
       <UDashboardSidebar
         id="upload-preview"
@@ -585,14 +591,14 @@ const previewExpenseId = computed(() => previewExpense.value?.id ?? null)
               />
             </div>
             <p class="text-xs font-mono text-dimmed truncate">
-              {{ previewId }}
+              {{ uploadId }}
             </p>
           </div>
         </template>
 
         <template #default>
-          <!-- Two facets of one upload as tabs (activeTab is a plain ref — panel
-               tabs never go in the URL). Workflow = the pipeline timeline;
+          <!-- Two facets of one upload as tabs (activeTab is URL-backed via
+               ?tab= — see usePreviewPanel). Workflow = the pipeline timeline;
                Image = the receipt image + OCR/analysis. Same :ui as the expenses
                preview: fixed tab list on top, scrolling content below (min-h-0
                on the root + content is load-bearing). -->
@@ -633,7 +639,7 @@ const previewExpenseId = computed(() => previewExpense.value?.id ?? null)
             </template>
 
             <template #image>
-              <UploadImageTab v-if="previewId" :id="previewId" />
+              <UploadImageTab v-if="uploadId" :id="uploadId" />
             </template>
           </UTabs>
         </template>

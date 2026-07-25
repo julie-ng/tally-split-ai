@@ -12,7 +12,7 @@ import { useReceiptsStore } from '~/stores/receipts.store'
  *   previewExpenseId: import('vue').ComputedRef<string|null>,
  *   previewExpense: import('vue').ComputedRef<object|null>,
  *   isPreviewOpen: import('vue').Ref<boolean>,
- *   activeTab: import('vue').Ref<string>,
+ *   activeTab: import('vue').WritableComputedRef<string>,
  *   openPreview: (event: Event, row: { original: { id: string } }) => void,
  *   closePreview: () => void,
  * }}
@@ -28,13 +28,14 @@ export function useExpensePreview () {
   // receipt fields. The upload image (SAS URL) is fetched lazily on tab open.
   // A throw here (stale/deleted ?preview id) auto-closes the panel.
   const {
-    previewId: previewExpenseId,
+    resourceId: previewExpenseId,
     isPreviewOpen,
     activeTab,
     openPreview,
     closePreview,
   } = usePreviewPanel({
     defaultTab: 'overview',
+    tabs: ['overview', 'receipt', 'history'],
     warm: async (id) => {
       const expense = await expensesStore.fetchExpense(id)
       if (expense?.receiptId) {
