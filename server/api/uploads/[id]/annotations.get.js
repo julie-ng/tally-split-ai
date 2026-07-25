@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
 
   const upload = await db.query.uploads.findFirst({
     where: eq(schema.uploads.id, id),
-    columns: { annotationsJson: true },
+    columns: { annotationsJson: true, analysisStatus: true, analyzedAt: true, blobUrl: true },
   })
 
   if (!upload) {
@@ -21,5 +21,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'No annotations data available' })
   }
 
-  return upload.annotationsJson
+  return {
+    uploadId: id,
+    analysisStatus: upload.analysisStatus,
+    analyzedAt: upload.analyzedAt,
+    blobUrl: upload.blobUrl,
+    ...upload.annotationsJson,
+  }
 })
