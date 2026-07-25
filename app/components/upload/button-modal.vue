@@ -40,7 +40,7 @@ async function onFilesUpdate (files) {
 
     <UModal v-model:open="showModal" title="Upload Files">
       <template #body>
-        <uploads-drop-zone @on-update="onFilesUpdate" />
+        <UploadsDropZone @on-update="onFilesUpdate" />
       </template>
     </UModal>
   </div>

@@ -79,17 +79,3 @@ function _showFiles (files) {
     </label>
   </div>
 </template>
-
-<style>
-.dropzone {
-  background: #f1f1f1;
-  border: 2px dashed #ccc;
-  margin: 1em 0;
-  padding: 5em 3em;
-  text-align: center;
-}
-
-.dropzone.active {
-  background: #ccc;
-}
-</style>
