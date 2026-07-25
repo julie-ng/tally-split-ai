@@ -1,12 +1,9 @@
 <script setup>
 import { h, resolveComponent } from 'vue'
 import { getPaginationRowModel } from '@tanstack/vue-table'
-import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 import { useUploadsStore } from '~/stores/uploads.store'
 import { useUploadQueueStore } from '~/stores/upload-queue.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
-import { useReceiptsStore } from '~/stores/receipts.store'
-import { useExpensesStore } from '~/stores/expenses.store'
 
 useHead({
   title: 'Uploads',
@@ -15,8 +12,6 @@ useHead({
 const uploadsStore = useUploadsStore()
 const uploadQueueStore = useUploadQueueStore()
 const workflowStore = useWorkflowStore()
-const receiptsStore = useReceiptsStore()
-const expensesStore = useExpensesStore()
 uploadsStore.debug = true
 workflowStore.debug = true
 
@@ -187,218 +182,24 @@ const paginationInfo = computed(() => {
 // for its own use; a second call here is fine.
 const route = useRoute()
 
-// -------- Preview panel (?preview / open / tab / esc + cross-store warm) --------
-// Shared plumbing via usePreviewPanel; the upload-specific warm fetches the
-// step-detail sources (annotations on the upload, then receipt → expense) so the
-// timeline's expandable bodies (2b) have data. All fetches are cache-aware +
-// 404-tolerant, so a standalone/unanalyzed upload yields nulls and those steps
-// render collapsed. Page-level composition — stores never reference each other.
-//
-// The warm derives the receipt id from the freshly-fetched upload record (NOT an
-// outer computed), so it's self-contained: `immediate: true` runs it during
-// setup, before the previewUpload/previewReceiptId consts below are declared.
-const annotations = ref(null)
-
-// resourceId aliased to uploadId — the composable is resource-agnostic; this
-// page is domain-specific (see project_design_direction_v1 side-panel naming).
+// -------- Preview panel --------
+// All the panel's plumbing + data (?preview/?tab URL sync, cross-store warm,
+// timeline steps, warming flag) lives in useUploadPreview. The page passes the
+// merged list so previewUpload resolves instantly, then wires openPreview to the
+// table + these values as props to <UploadPreviewPanel>.
+// closePreview isn't destructured — the panel closes via v-model:open, which
+// flips isPreviewOpen (usePreviewPanel then clears the URL).
 const {
-  resourceId: uploadId,
+  uploadId,
   isPreviewOpen,
   activeTab,
   openPreview,
-  closePreview,
-} = usePreviewPanel({
-  defaultTab: 'workflow',
-  tabs: ['workflow', 'image'],
-  warm: async (id) => {
-    annotations.value = null
-    // Annotations live on the upload — fetch regardless of receipt existence.
-    annotations.value = await uploadsStore.fetchAnnotationsById(id)
-
-    const upload = await uploadsStore.fetchUploadById(id)
-    const receiptId = upload?.receiptId ?? upload?.receipt?.id ?? null
-    if (!receiptId) return
-    const receipt = await receiptsStore.fetchReceiptById(receiptId)
-    if (receipt) {
-      await expensesStore.fetchExpenseByReceiptId(receiptId)
-    }
-  },
-})
-
-const previewTabs = [
-  { label: 'Workflow', value: 'workflow', slot: 'workflow' },
-  { label: 'Image', value: 'image', slot: 'image' },
-]
-
-// -------- Workflow-timeline data (real) --------
-// Static per-step metadata. Status + timestamps come from the workflow store;
-// details/summary are still stubbed (see ⚠️ STEP 2b below). The `stepKey` is
-// the workflow_runs column base — `${stepKey}Status`, `${stepKey}StartedAt`,
-// `${stepKey}CompletedAt`. The Upload step is special: its status comes from the
-// upload row (not workflow_runs) and it has no per-step timestamps.
-const STEP_DEFS = [
-  { key: 'upload', stepKey: null, label: 'Upload', description: 'File received' },
-  { key: 'ocr', stepKey: 'ocr', label: 'OCR Analysis', description: 'Text extraction (Azure Document Intelligence)' },
-  { key: 'annotations', stepKey: 'annotations', label: 'Handwritten analysis', description: 'Detecting initials, circles, strikethroughs (GPT-4o)' },
-  { key: 'normalize', stepKey: 'normalize', label: 'Normalize', description: 'Cleaning date, title, filename' },
-  { key: 'createExpense', stepKey: 'createExpense', label: 'Create expense', description: 'Expense from receipt total' },
-  { key: 'adjustExpense', stepKey: 'adjustExpense', label: 'Adjust expense', description: 'Asymmetric split from annotations' },
-]
-
-// Upload-row status → step status for the first circle (mirrors the inline
-// row-cell's uploadStepStatus in uploads/workflow-steps.vue). Accepts DB
-// UPLOAD_STATUS values and queue-side strings.
-function uploadStepStatus (status) {
-  switch (status) {
-    case 'uploaded': return WORKFLOW_STEP_STATUS.COMPLETED
-    case 'in-progress': return WORKFLOW_STEP_STATUS.PROCESSING
-    case 'failed':
-    case 'interrupted': return WORKFLOW_STEP_STATUS.FAILED
-    default: return WORKFLOW_STEP_STATUS.PENDING
-  }
-}
-
-// The upload row currently previewed (for the Upload step's status).
-const previewUpload = computed(() =>
-  uploadId.value ? mergedUploads.value.find(u => u.id === uploadId.value) : null,
-)
-
-// The previewed upload's receipt id, for the reactive receipt/expense getters
-// below. (The actual warm — the fetches — runs in usePreviewPanel's warm
-// callback above; this is just the id derivation for the getters.)
-const previewReceiptId = computed(() => previewUpload.value?.receipt?.id ?? previewUpload.value?.receiptId ?? null)
-
-// Store getters (reactive) for the previewed upload's receipt + expense.
-const previewReceipt = computed(() =>
-  previewReceiptId.value ? receiptsStore.getReceiptById(previewReceiptId.value) : null,
-)
-const previewExpense = computed(() =>
-  previewReceiptId.value ? expensesStore.getExpenseByReceiptId(previewReceiptId.value) : null,
-)
-
-// True while the cross-store warm is in flight: the upload links a receipt but
-// it isn't in the store yet. Drives skeletons in both tabs. A standalone upload
-// (no receiptId) is NOT warming — it has nothing to fetch and renders at once.
-const isPreviewWarming = computed(() => !!previewReceiptId.value && !previewReceipt.value)
-
-// Build the detail rows + summary for a given step from the warmed stores.
-// Returns { details?, summary? } — a step with no data returns {} and renders
-// collapsed (the component's isExpandable guards on details/summary presence).
-function stepContent (stepKey) {
-  const upload = previewUpload.value
-  const receipt = previewReceipt.value
-  const expense = previewExpense.value
-
-  switch (stepKey) {
-    case null: // Upload
-      if (!upload) return {}
-      return {
-        details: [
-          { label: 'File', value: upload.originalFilename },
-          { label: 'Size', value: upload.size != null ? formatBytes(upload.size) : '—' },
-        ],
-      }
-
-    case 'ocr':
-      if (!receipt) return {}
-      return {
-        details: [
-          { label: 'Merchant', value: receipt.merchantName || '—' },
-          { label: 'Address', value: receipt.merchantAddress || '—' },
-          { label: 'Total', value: receipt.total != null ? receiptUtils.formatCurrency(receipt.total, receipt.currency) : '—' },
-        ],
-      }
-
-    case 'annotations': {
-      const data = annotations.value
-      if (!data) return {}
-      const count = data.annotations?.length ?? 0
-      return {
-        // The LLM's own note, verbatim.
-        summary: data.notes || undefined,
-        details: [
-          { label: 'Annotations found', value: String(count) },
-        ],
-      }
-    }
-
-    case 'normalize':
-      if (!receipt) return {}
-      return {
-        details: [
-          { label: 'Title', value: receipt.title || '—' },
-          { label: 'Date', value: receipt.date || '—' },
-        ],
-      }
-
-    case 'createExpense':
-      if (!expense) return {}
-      return {
-        details: [
-          { label: 'Amount', value: expense.splitAmount != null ? receiptUtils.formatCurrency(expense.splitAmount, expense.currency) : '—' },
-          { label: 'Settled', value: expense.isSettled ? 'Yes' : 'No' },
-        ],
-      }
-
-    case 'adjustExpense':
-      if (!expense) return {}
-      return {
-        details: [
-          { label: 'Your share', value: expense.userOneShare != null ? receiptUtils.formatCurrency(expense.userOneShare, expense.currency) : '—' },
-          { label: 'Their share', value: expense.userTwoShare != null ? receiptUtils.formatCurrency(expense.userTwoShare, expense.currency) : '—' },
-        ],
-        // ⚠️ The LLM split reasoning lives in the changes/history table
-        // (changes.reasoning), not on the expense row — a separate history
-        // fetch. Left out of 2b; add if the split-reasoning surface is wanted.
-      }
-
-    default:
-      return {}
-  }
-}
-
-// Real steps for the previewed upload's latest run. Status from stepStatusesById,
-// timestamps from the run row, detail bodies from the warmed receipt/expense/
-// annotations via stepContent().
-const timelineSteps = computed(() => {
-  const id = uploadId.value
-  if (!id) return []
-
-  const statuses = workflowStore.stepStatusesById(id)
-  const run = workflowStore.latestRunById(id)
-
-  return STEP_DEFS.map((def) => {
-    const content = stepContent(def.stepKey)
-
-    if (def.stepKey === null) {
-      // Upload step — status from the upload row, no workflow timestamps.
-      return {
-        key: def.key,
-        label: def.label,
-        description: def.description,
-        status: uploadStepStatus(previewUpload.value?.status),
-        startedAt: null,
-        completedAt: null,
-        ...content,
-      }
-    }
-    return {
-      key: def.key,
-      label: def.label,
-      description: def.description,
-      status: statuses[`${def.stepKey}Status`],
-      startedAt: run?.[`${def.stepKey}StartedAt`] ?? null,
-      completedAt: run?.[`${def.stepKey}CompletedAt`] ?? null,
-      ...content,
-    }
-  })
-})
-
-// Run start = the latest run's created_at (shown once at the top).
-const timelineRunStartedAt = computed(() => workflowStore.latestRunById(uploadId.value)?.createdAt ?? null)
-
-// The expense the Create Expense footer links to (once warmed).
-const previewExpenseId = computed(() => previewExpense.value?.id ?? null)
+  previewUpload,
+  isPreviewWarming,
+  timelineSteps,
+  timelineRunStartedAt,
+  previewExpenseId,
+} = useUploadPreview(mergedUploads)
 </script>
 
 <template>
@@ -545,132 +346,17 @@ const previewExpenseId = computed(() => previewExpense.value?.id ?? null)
       </template>
     </UDashboardPanel>
 
-    <!-- Resizable preview panel. Mirrors expenses' PreviewPanel.vue: a RIGHT-side
-         UDashboardSidebar (not UDashboardPanel) so the resize handle sits on its
-         LEFT edge and it holds a remembered width, letting the table panel flex
-         to full width when this closes. Own UDashboardGroup for an ISOLATED
-         collapse context (two sidebars sharing a group's sidebarCollapsed ref
-         clobber each other). unit="rem" matches the app group's resize math.
-
-         Two-tab panel (Workflow · Image). Both the selected upload (?preview=<id>)
-         and the active tab (?tab=<tab>) are URL-backed via usePreviewPanel, so
-         the panel is deep-linkable + refresh-stable. -->
-    <UDashboardGroup v-if="isPreviewOpen" unit="rem" class="contents">
-      <UDashboardSidebar
-        id="upload-preview"
-        side="right"
-        resizable
-        :default-size="28"
-        :min-size="22"
-        :max-size="48"
-        :ui="{
-          root: 'overflow-hidden min-w-0',
-          header: 'h-auto py-3 items-start min-w-0',
-          body: 'overflow-hidden min-h-0 min-w-0 p-0',
-        }"
-      >
-        <template #header>
-          <!-- Title (neutral). Subtitle row: filename, then a separator + the
-               relative upload time (tooltip → full date w/ tz on hover). The
-               timestamp sits next to the filename, not pushed to the right edge. -->
-          <div class="w-full min-w-0 pl-2">
-            <div class="flex items-center gap-2 min-w-0">
-              <p class="font-bold flex-1 min-w-0 truncate text-default">
-                Workflow Preview
-              </p>
-              <UButton
-                icon="i-lucide-x"
-                color="neutral"
-                variant="ghost"
-                aria-label="Close preview"
-                class="shrink-0"
-                @click="closePreview"
-              />
-            </div>
-            <div class="flex items-baseline gap-1.5 min-w-0 text-xs text-dimmed">
-              <span class="font-mono truncate">
-                Upload ID: {{ previewUpload?.id || 'Upload' }}
-              </span>
-              <template v-if="previewUpload?.uploadedAt">
-                <span class="shrink-0" aria-hidden="true">·</span>
-                <UTooltip
-                  :text="dateUtils.formatDate(new Date(previewUpload.uploadedAt))"
-                  :delay-duration="0"
-                >
-                  <time
-                    :datetime="previewUpload.uploadedAt"
-                    class="shrink-0 tabular-nums"
-                  >
-                    {{ timestampUtils.toRelative(previewUpload.uploadedAt) }}
-                  </time>
-                </UTooltip>
-              </template>
-            </div>
-          </div>
-        </template>
-
-        <template #default>
-          <!-- Two facets of one upload as tabs (activeTab is URL-backed via
-               ?tab= — see usePreviewPanel). Workflow = the pipeline timeline;
-               Image = the receipt image + OCR/analysis. Same :ui as the expenses
-               preview: fixed tab list on top, scrolling content below (min-h-0
-               on the root + content is load-bearing). -->
-          <UTabs
-            v-model="activeTab"
-            :items="previewTabs"
-            size="md"
-            variant="link"
-            color="primary"
-            :ui="{
-              indicator: 'border-b-3 border-primary',
-              trigger: 'cursor-pointer',
-              root: 'flex flex-col h-full min-h-0 w-full gap-0',
-              list: 'shrink-0 px-4 gap-4',
-              content: 'flex-1 overflow-y-auto min-h-0',
-            }"
-          >
-            <template #workflow>
-              <!-- Skeleton while the cross-store warm is in flight (receipt/
-                   expense not yet loaded). Once warm, the real timeline renders
-                   with its detail bodies. -->
-              <div v-if="isPreviewWarming" class="p-4 space-y-3">
-                <USkeleton v-for="n in 6" :key="n" class="h-12 w-full" />
-              </div>
-              <UploadWorkflowTimeline
-                v-else
-                :steps="timelineSteps"
-                :run-started-at="timelineRunStartedAt"
-              >
-                <!-- Create Expense step footer: link to the created expense.
-                     Enabled once the expense is warmed (upload → receipt →
-                     expense); disabled while null (standalone/not-yet-created). -->
-                <template #footer-createExpense>
-                  <UButton
-                    label="View expense"
-                    trailing-icon="i-lucide-arrow-right"
-                    size="xs"
-                    color="neutral"
-                    variant="subtle"
-                    :to="previewExpenseId ? `/expenses?preview=${previewExpenseId}` : undefined"
-                    :disabled="!previewExpenseId"
-                  />
-                </template>
-              </UploadWorkflowTimeline>
-            </template>
-
-            <template #image>
-              <!-- Skeleton while warming; a few bars + an image-shaped block. -->
-              <div v-if="isPreviewWarming" class="p-4 space-y-3">
-                <USkeleton class="h-5 w-1/2" />
-                <USkeleton class="h-4 w-2/3" />
-                <USkeleton class="h-4 w-1/3" />
-                <USkeleton class="w-full aspect-3/4 rounded-lg" />
-              </div>
-              <UploadImageTab v-else-if="uploadId" :id="uploadId" />
-            </template>
-          </UTabs>
-        </template>
-      </UDashboardSidebar>
-    </UDashboardGroup>
+    <!-- Resizable preview panel. Behaviour + data in useUploadPreview; layout in
+         the component. Mirrors expenses' list-detail split. -->
+    <UploadPreviewPanel
+      v-model:open="isPreviewOpen"
+      v-model:active-tab="activeTab"
+      :upload-id="uploadId"
+      :upload="previewUpload"
+      :steps="timelineSteps"
+      :run-started-at="timelineRunStartedAt"
+      :warming="isPreviewWarming"
+      :expense-id="previewExpenseId"
+    />
   </div>
 </template>
