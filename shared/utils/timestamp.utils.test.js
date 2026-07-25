@@ -175,4 +175,30 @@ describe('timestampUtils', () => {
       expect(cet).toBe('15.06.2025')
     })
   })
+
+  describe('toRelative', () => {
+    const now = new Date('2026-07-25T12:00:00Z')
+
+    it('should return "-" for undefined/empty', () => {
+      expect(timestampUtils.toRelative(undefined, now)).toBe('-')
+      expect(timestampUtils.toRelative('', now)).toBe('-')
+    })
+
+    it('should say "just now" for very recent times', () => {
+      expect(timestampUtils.toRelative('2026-07-25T11:59:30Z', now)).toBe('just now')
+      expect(timestampUtils.toRelative(now, now)).toBe('just now')
+    })
+
+    it('should format past times', () => {
+      expect(timestampUtils.toRelative('2026-07-25T11:58:00Z', now)).toBe('2 minutes ago')
+      expect(timestampUtils.toRelative('2026-07-25T09:00:00Z', now)).toBe('3 hours ago')
+      expect(timestampUtils.toRelative('2026-07-23T12:00:00Z', now)).toBe('2 days ago')
+      expect(timestampUtils.toRelative('2026-07-24T12:00:00Z', now)).toBe('yesterday')
+    })
+
+    it('should format future times', () => {
+      expect(timestampUtils.toRelative('2026-07-25T15:00:00Z', now)).toBe('in 3 hours')
+      expect(timestampUtils.toRelative('2026-07-27T12:00:00Z', now)).toBe('in 2 days')
+    })
+  })
 })
