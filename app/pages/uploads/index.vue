@@ -140,10 +140,6 @@ const columns = [
     header: sortableHeader('Size'),
     cell: ({ row }) => `${formatBytes(row.getValue('size'))}`,
   },
-  // {
-  //   accessorKey: 'status',
-  //   header: 'Upload Status',
-  // },
   {
     accessorKey: 'uploadedAt',
     header: sortableHeader('Uploaded'),
@@ -481,10 +477,6 @@ const previewExpenseId = computed(() => previewExpense.value?.id ?? null)
                   {{ row.original.id }}
                 </NuxtLink>
               </template>
-
-              <!-- <template #status-cell="{ row }">
-              <uploads-status-text :status="row.original.status" />
-            </template> -->
 
               <template #originalFilename-cell="{ row }">
                 <div
