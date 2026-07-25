@@ -130,17 +130,21 @@ export function usePreviewPanel (options = {}) {
     })
   }
 
+  // closePreview flips the open-state; the watch below clears the URL. Panel
+  // visibility is driven by isPreviewOpen (the v-if), so closing MUST set it —
+  // clearing the URL alone leaves isPreviewOpen true and the panel open. This is
+  // the single close path for both the X button and esc.
   function closePreview () {
-    const query = { ...route.query }
-    delete query.preview
-    delete query.tab
-    router.replace({ query })
+    isPreviewOpen.value = false
   }
 
-  // Closing the open-state clears the URL params (X button, esc).
+  // When the panel closes, clear the URL params (?preview + ?tab).
   watch(isPreviewOpen, (value) => {
     if (!value) {
-      closePreview()
+      const query = { ...route.query }
+      delete query.preview
+      delete query.tab
+      router.replace({ query })
     }
   })
 
