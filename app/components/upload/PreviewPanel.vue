@@ -135,7 +135,7 @@ const expenseHref = computed(() =>
             trigger: 'cursor-pointer',
             root: 'flex flex-col h-full min-h-0 w-full gap-0',
             list: 'shrink-0 px-4 gap-4',
-            content: 'flex-1 overflow-y-auto min-h-0',
+            content: 'flex-1 overflow-y-auto min-h-0 px-3 py-2',
           }"
         >
           <template #workflow>

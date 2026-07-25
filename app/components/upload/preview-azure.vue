@@ -19,11 +19,6 @@ const upload = computed(() => uploadsStore.getUploadById(props.id))
         {{ formatBytes(upload.size) }}
       </div>
     </ui-label-content>
-    <ui-label-content label="Blob Name">
-      <div class="text-xs mt-1">
-        {{ upload.blobName }}
-      </div>
-    </ui-label-content>
     <ui-label-content label="Blob Url">
       <div class="text-xs mt-1">
         {{ upload.blobUrl }}
