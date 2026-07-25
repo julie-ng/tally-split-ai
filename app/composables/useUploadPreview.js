@@ -45,12 +45,31 @@ export function useUploadPreview (uploads) {
   // annotations payload, cached in the store but returned by value.
   const annotations = ref(null)
 
-  // Generic ?preview/?tab/open/esc plumbing + the upload-specific warm. The warm
-  // fetches the step-detail sources: annotations live on the upload; then the
-  // linked receipt → its expense. All cache-aware + 404-tolerant, so a
+  // Fetch the step-detail sources for an upload: annotations live on the upload;
+  // then the linked receipt → its expense. All cache-aware + 404-tolerant, so a
   // standalone/unanalyzed upload yields nulls and those steps render collapsed.
-  // The receipt id is derived from the freshly-fetched upload INSIDE the warm
-  // (not an outer computed) so it's self-contained under immediate.
+  // The receipt id is derived from the freshly-fetched upload (force-refreshed —
+  // a fresh run creates the receipt AFTER the initial warm, so the cached upload
+  // row may not carry receiptId yet). Runs on preview-open AND on re-warm below.
+  async function warmDetails (id) {
+    if (!id) return
+    annotations.value = await uploadsStore.fetchAnnotationsById(id)
+
+    // Force-refresh the upload row: a fresh run creates the receipt AFTER the
+    // initial warm, so the cached row may lack receiptId. refreshUploadById
+    // bypasses the cache and patches state; read the fresh row back from the getter.
+    await uploadsStore.refreshUploadById(id)
+    const upload = uploadsStore.getUploadById(id)
+    const receiptId = upload?.receiptId ?? upload?.receipt?.id ?? null
+    if (!receiptId) return
+    const receipt = await receiptsStore.fetchReceiptById(receiptId, true)
+    if (receipt) {
+      await expensesStore.fetchExpenseByReceiptId(receiptId)
+    }
+  }
+
+  // Generic ?preview/?tab/open/esc plumbing. warm runs on preview-open (and cold
+  // load). A live-progressing run also re-warms via the watch below.
   const {
     resourceId: uploadId,
     isPreviewOpen,
@@ -62,15 +81,7 @@ export function useUploadPreview (uploads) {
     tabs: ['workflow', 'image'],
     warm: async (id) => {
       annotations.value = null
-      annotations.value = await uploadsStore.fetchAnnotationsById(id)
-
-      const upload = await uploadsStore.fetchUploadById(id)
-      const receiptId = upload?.receiptId ?? upload?.receipt?.id ?? null
-      if (!receiptId) return
-      const receipt = await receiptsStore.fetchReceiptById(receiptId)
-      if (receipt) {
-        await expensesStore.fetchExpenseByReceiptId(receiptId)
-      }
+      await warmDetails(id)
     },
   })
 
@@ -98,6 +109,27 @@ export function useUploadPreview (uploads) {
   const isPreviewWarming = computed(() => !!previewReceiptId.value && !previewReceipt.value)
 
   const previewExpenseId = computed(() => previewExpense.value?.id ?? null)
+
+  // Re-warm while a live run progresses. The workflow store gets step statuses
+  // live via realtime, but the DETAIL sources (receipt, expense, annotations) are
+  // created by the pipeline AFTER the initial preview-open warm — so on a fresh
+  // run, steps stay non-expandable (no details) until something re-fetches. Watch
+  // the run's step-status signature; whenever it changes (a step advanced) and
+  // the panel is open, re-pull the details so bodies fill in live. Cache-aware,
+  // so this is cheap once everything's loaded. Fixes project_timeline_detail_liveness_gap.
+  const runStatusSignature = computed(() => {
+    const id = uploadId.value
+    if (!id) return null
+    const s = workflowStore.stepStatusesById(id)
+    const run = workflowStore.latestRunById(id)
+    return `${run?.status}|${s.ocrStatus}|${s.annotationsStatus}|${s.normalizeStatus}|${s.createExpenseStatus}|${s.adjustExpenseStatus}`
+  })
+
+  watch(runStatusSignature, () => {
+    if (isPreviewOpen.value && uploadId.value) {
+      warmDetails(uploadId.value)
+    }
+  })
 
   // -------- Timeline steps --------
   // Static per-step metadata. `stepKey` is the workflow_runs column base

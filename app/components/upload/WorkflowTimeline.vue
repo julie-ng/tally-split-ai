@@ -54,7 +54,7 @@ const props = defineProps({
 // Per-run-status label + UBadge color (a Nuxt UI color name, not a text class).
 const RUN_STATUS_CONFIG = {
   [WORKFLOW_STATUS.QUEUED]: { label: 'Queued', color: 'neutral' },
-  [WORKFLOW_STATUS.PROCESSING]: { label: 'Processing', color: 'primary' },
+  [WORKFLOW_STATUS.PROCESSING]: { label: 'Processing…', color: 'primary' },
   [WORKFLOW_STATUS.COMPLETED]: { label: 'Completed', color: 'success' },
   [WORKFLOW_STATUS.PARTIAL]: { label: 'Needs review', color: 'warning' },
   [WORKFLOW_STATUS.FAILED]: { label: 'Failed', color: 'error' },
@@ -92,23 +92,24 @@ const stepSummary = computed(() => {
 // each step. Only runs while some step is processing.
 const now = ref(Date.now())
 
-// Overall run duration next to the status badge. Finished runs show a static
-// start→finish span; a still-running run ticks live from start to `now`. Null
-// until we have a start time.
+// Overall run duration next to the status badge — ONLY for a finished run
+// (start→finish). Shown blank while still running: createdAt/completedAt are
+// plain `timestamp` (no TZ) columns, so `completedAt − createdAt` cancels the
+// parse offset (correct), but `now − createdAt` does NOT (createdAt misparses as
+// local → a bogus ~120m). So no live counter here; blank until complete.
 const runDuration = computed(() => {
-  if (!props.runStartedAt) {
+  if (!props.runStartedAt || !props.runCompletedAt) {
     return null
   }
   const start = new Date(props.runStartedAt).getTime()
-  const end = props.runCompletedAt ? new Date(props.runCompletedAt).getTime() : now.value
+  const end = new Date(props.runCompletedAt).getTime()
   return dateUtils.formatDuration(Math.max(0, Math.floor((end - start) / 1000)))
 })
 let ticker = null
-// Tick while any step is processing OR the run itself is unfinished (so the
-// run-level duration counts up live even between step transitions).
+// Tick only while a step is processing (drives per-step elapsed counters, which
+// anchor on the TZ-correct per-step *StartedAt timestamptz columns).
 const isLive = computed(() =>
-  (props.runStartedAt && !props.runCompletedAt)
-  || props.steps.some(s => s.status === WORKFLOW_STEP_STATUS.PROCESSING),
+  props.steps.some(s => s.status === WORKFLOW_STEP_STATUS.PROCESSING),
 )
 
 onMounted(() => {
