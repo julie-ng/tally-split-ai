@@ -7,12 +7,16 @@ useHead({
 
 const route = useRoute()
 
-const errorMessages = {
+const errorMessages: Record<string, string> = {
   github_oauth_error: 'GitHub authentication failed. Please try again.',
   server_error: 'Something went wrong on our end. Please try again in a moment.',
 }
 
-const errorMessage = computed(() => errorMessages[route.query.error] ?? null)
+// route.query.error is string | string[] | undefined — coerce to a lookup key.
+const errorMessage = computed(() => {
+  const key = Array.isArray(route.query.error) ? route.query.error[0] : route.query.error
+  return key ? errorMessages[key] ?? null : null
+})
 </script>
 
 <template>

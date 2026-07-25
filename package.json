@@ -72,7 +72,8 @@
     "eslint": "^9.39.2",
     "sass-embedded": "^1.99.0",
     "trigger.dev": "^4.4.5",
-    "vitest": "^4.0.15"
+    "vitest": "^4.0.15",
+    "vue-tsc": "^3.3.8"
   },
   "overrides": {
     "@depot/cli": "0.0.1-cli.2.101.60",

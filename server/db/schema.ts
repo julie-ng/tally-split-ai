@@ -33,7 +33,6 @@ export const households = pgTable('households', {
 /**
  * Receipts table - stores business/finance data extracted from receipt uploads
  */
-// @ts-expect-error implicit return type any
 export const receipts = pgTable('receipts', {
   id: text('id').primaryKey().$defaultFn(() => generateId()),
 
@@ -56,7 +55,6 @@ export const receipts = pgTable('receipts', {
   analysisStatus: text('analysis_status', { enum: RECEIPT_ANALYSIS_STATUSES }).notNull().default('unanalyzed'),
 
   // Household scope for authZ.
-  // @ts-expect-error implicit return type any
   householdId: text('household_id').notNull().references(() => households.id, { onDelete: 'restrict' }),
 
   // Timestamps
@@ -69,7 +67,6 @@ export const receipts = pgTable('receipts', {
  */
 export const uploads = pgTable('uploads', {
   id: text('id').primaryKey().$defaultFn(() => generateId()),
-  // @ts-expect-error implicit return type any
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
   title: text('title').notNull().default('Untitled'),
 
@@ -112,11 +109,9 @@ export const uploads = pgTable('uploads', {
 /**
  * Expenses table - tracks expense splitting between two household members
  */
-// @ts-expect-error implicit type any
 export const expenses = pgTable('expenses', {
   id: text('id').primaryKey().$defaultFn(() => generateId()),
 
-  // @ts-expect-error implicit return type any
   receiptId: text('receipt_id').references(() => receipts.id, { onDelete: 'cascade' }),
 
   // Household scope for authZ. Stamped once at expense creation and never changed
@@ -145,13 +140,10 @@ export const expenses = pgTable('expenses', {
 
   // Household member slots — assigned at split-create time by users.createdAt order.
   // Nullable to support demo/portfolio uploads where the household has only 1 member.
-  // @ts-expect-error implicit return type any
   userOneId: text('user_one_id').references(() => users.id, { onDelete: 'restrict' }),
-  // @ts-expect-error implicit return type any
   userTwoId: text('user_two_id').references(() => users.id, { onDelete: 'restrict' }),
 
   // Who paid — nullable until resolved (LLM via initials, or human edit).
-  // @ts-expect-error implicit return type any
   paidByUserId: text('paid_by_user_id').references(() => users.id, { onDelete: 'set null' }),
   // Frozen LLM signal — see docs/SCHEMA.md. Never updated by humans.
   paidByMatch: text('paid_by_match', { enum: PAID_BY_MATCHES }).notNull().default('unresolved'),
@@ -252,12 +244,9 @@ export const changes = pgTable('changes', {
 /**
  * Receipt history - per-field change tracking for receipts
  */
-// @ts-expect-error implicit return type any
 export const receiptHistory = pgTable('receipt_history', {
   id: serial('id').primaryKey(),
-  // @ts-expect-error implicit return type any
   changeId: integer('change_id').notNull().references(() => changes.id, { onDelete: 'cascade' }),
-  // @ts-expect-error implicit return type any
   receiptId: text('receipt_id').references(() => receipts.id, { onDelete: 'cascade' }),
   field: text('field').notNull(),
   oldValue: text('old_value'),
@@ -268,12 +257,9 @@ export const receiptHistory = pgTable('receipt_history', {
 /**
  * Expense history - per-field change tracking for expenses
  */
-// @ts-expect-error implicit return type any
 export const expenseHistory = pgTable('expense_history', {
   id: serial('id').primaryKey(),
-  // @ts-expect-error implicit return type any
   changeId: integer('change_id').notNull().references(() => changes.id, { onDelete: 'cascade' }),
-  // @ts-expect-error implicit return type any
   expenseId: text('expense_id').references(() => expenses.id, { onDelete: 'cascade' }),
   field: text('field').notNull(),
   oldValue: text('old_value'),
@@ -284,11 +270,9 @@ export const expenseHistory = pgTable('expense_history', {
 /**
  * Users
  */
-// @ts-expect-error implicit return type any
 export const users = pgTable('users', {
   id: text('id').primaryKey().$defaultFn(() => generateId()),
   githubId: bigint('github_id', { mode: 'number' }).notNull(),
-  // @ts-expect-error implicit return type any
   householdId: text('household_id').notNull().references(() => households.id, { onDelete: 'restrict' }),
   username: text('username').notNull(),
   displayName: text('display_name'),

@@ -42,14 +42,19 @@ const csp = [
   `object-src 'none'`,
 ].join('; ')
 
+// Prod uses Turso (libsql); dev falls back to @nuxt/content's local default.
+// The libsql config type requires string url/authToken; these come from env
+// (string | undefined). At runtime prod always has them set — @nuxt/content
+// fails clearly if not. The type mismatch is suppressed at the `content:` usage
+// site below (that's where the type flows), not here.
 const contentConfig = isDev
   ? {}
   : {
     database: {
-       type: 'libsql',
-       url: process.env.TURSO_DATABASE_URL,
-       authToken: process.env.TURSO_AUTH_TOKEN,
-     }
+      type: 'libsql' as const, // literal, not string — matches LibSQLDatabaseConfig
+      url: process.env.TURSO_DATABASE_URL,
+      authToken: process.env.TURSO_AUTH_TOKEN,
+    },
   }
 
 export default defineNuxtConfig({
@@ -110,6 +115,10 @@ export default defineNuxtConfig({
     },
   },
   runtimeConfig: {
+    // `password` is intentionally omitted here — nuxt-auth-utils injects it from
+    // NUXT_SESSION_PASSWORD at runtime (never hardcode the session secret). The
+    // SessionConfig type marks it required, so suppress that one mismatch.
+    // @ts-expect-error password is provided via NUXT_SESSION_PASSWORD env
     session: {
       name: 'tally-split-session',
       maxAge: 60 * 60 * 24, // 1 day
@@ -178,5 +187,6 @@ export default defineNuxtConfig({
   pinia: {
     storesDirs: ['~/stores/**'],
   },
-  content: contentConfig
+  // @ts-expect-error contentConfig.database url/authToken are env-provided (string | undefined); set in prod
+  content: contentConfig,
 })
