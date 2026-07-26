@@ -43,7 +43,7 @@ const highlightedLabel = inject('highlightedLabel', ref(null))
       :blob-name="upload.blobName"
       :blob-url="upload.blobUrl"
     >
-      <blob-image-with-polygons
+      <BlobImageWithPolygons
         v-if="hasPolygons"
         :blob-name="upload.blobName"
         :alt="altText"
@@ -53,7 +53,7 @@ const highlightedLabel = inject('highlightedLabel', ref(null))
         :highlighted-label="highlightedLabel"
         @update:highlighted-label="highlightedLabel = $event"
       />
-      <blob-image
+      <BlobImage
         v-else
         :blob-name="upload.blobName"
         :alt="altText"

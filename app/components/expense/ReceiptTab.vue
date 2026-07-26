@@ -173,7 +173,7 @@ function amount (value) {
           :to="`/receipts/${receiptId}`"
           class="block w-3/4 mx-auto rounded-lg overflow-hidden ring-1 ring-default hover:ring-primary transition"
         >
-          <blob-image :blob-name="blobName" :alt="altText" />
+          <BlobImage :blob-name="blobName" :alt="altText" />
         </NuxtLink>
       </div>
     </div>
