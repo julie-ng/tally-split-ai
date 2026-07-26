@@ -1,11 +1,32 @@
 <script setup>
 // Controls row for the uploads list: batch actions (left, when rows selected) +
-// count / refresh / filter (right). Mirrors ExpensesToolbar. Sort and further
-// filters will be added here — the layout is built to grow.
+// count / refresh / status filter / sort / clear-filters (right). Mirrors
+// ExpensesToolbar. All dropdown state comes from useUploadsTableControls via
+// props — this component only surfaces it.
 defineProps({
-  filterOptions: {
+  statusLabel: {
+    type: String,
+    required: true,
+  },
+  statusMenuItems: {
     type: Array,
     required: true,
+  },
+  sortLabel: {
+    type: String,
+    required: true,
+  },
+  sortIcon: {
+    type: String,
+    default: 'i-lucide-arrow-down-wide-narrow',
+  },
+  sortMenuItems: {
+    type: Array,
+    required: true,
+  },
+  hasActiveFilters: {
+    type: Boolean,
+    default: false,
   },
   paginationInfo: {
     type: Object,
@@ -16,13 +37,7 @@ defineProps({
     default: 0,
   },
 })
-defineEmits(['refresh', 'batch-delete'])
-
-// The active filter value is two-way bound so the page owns the source of truth.
-const filterValue = defineModel('filterValue', {
-  type: String,
-  default: 'all',
-})
+defineEmits(['reset', 'refresh', 'batch-delete'])
 </script>
 
 <template>
@@ -57,12 +72,56 @@ const filterValue = defineModel('filterValue', {
         @click="$emit('refresh')"
       />
 
-      <USelect
-        v-model="filterValue"
-        :items="filterOptions"
+      <UDropdownMenu :items="statusMenuItems">
+        <UButton
+          color="neutral"
+          variant="outline"
+          size="sm"
+          leading-icon="i-lucide-filter"
+          trailing-icon="i-lucide-chevron-down"
+        >
+          {{ statusLabel }}
+        </UButton>
+
+        <template #check-leading="{ item }">
+          <UIcon
+            name="i-lucide-check"
+            class="size-4 shrink-0"
+            :class="item.active ? '' : 'invisible'"
+          />
+        </template>
+      </UDropdownMenu>
+
+      <UDropdownMenu :items="sortMenuItems">
+        <UButton
+          color="neutral"
+          variant="outline"
+          size="sm"
+          :leading-icon="sortIcon"
+          trailing-icon="i-lucide-chevron-down"
+        >
+          {{ sortLabel }}
+        </UButton>
+
+        <template #check-leading="{ item }">
+          <UIcon
+            name="i-lucide-check"
+            class="size-4 shrink-0"
+            :class="item.active ? '' : 'invisible'"
+          />
+        </template>
+      </UDropdownMenu>
+
+      <UButton
+        color="neutral"
+        :variant="hasActiveFilters ? 'solid' : 'subtle'"
         size="sm"
-        class="min-w-[160px]"
-      />
+        icon="i-lucide-x"
+        :disabled="!hasActiveFilters"
+        @click="$emit('reset')"
+      >
+        Filters
+      </UButton>
     </div>
   </div>
 </template>

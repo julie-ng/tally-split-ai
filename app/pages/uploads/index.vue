@@ -76,27 +76,22 @@ const mergedUploads = computed(() => {
   return Array.from(merged.values())
 })
 
-const FILTER_OPTIONS = [
-  { label: 'All uploads', value: 'all' },
-  { label: 'Completed', value: 'completed' },
-  { label: 'Has errors', value: 'errored' },
-]
-const filterValue = ref('all')
-
-const filteredUploads = computed(() => {
-  if (filterValue.value === 'all') return mergedUploads.value
-  if (filterValue.value === 'errored') {
-    return mergedUploads.value.filter(u => workflowStore.hasErrorsById(u.id))
-  }
-  // 'completed' — no errors
-  return mergedUploads.value.filter(u => !workflowStore.hasErrorsById(u.id))
-})
-
-const pagination = ref({
-  pageIndex: 0,
-  pageSize: 50,
-})
-const sorting = ref([{ id: 'uploadedAt', desc: true }])
+// Table view-state: status filter + sort + pagination (mirrors the expenses
+// page's useExpensesTableControls). Produces filteredUploads + sorting for the
+// table and the dropdown state for the toolbar.
+const {
+  filteredUploads,
+  sorting,
+  pagination,
+  paginationInfo,
+  statusLabel,
+  statusMenuItems,
+  sortLabel,
+  sortIcon,
+  sortMenuItems,
+  hasActiveFilters,
+  reset,
+} = useUploadsTableControls(mergedUploads)
 
 // Batch delete: composable owns row-selection + the handler (confirm, toasts,
 // optimistic store update + receipt eviction). Refresh the workflow list after
@@ -106,34 +101,6 @@ const {
   selectedCount,
   batchDelete,
 } = useUploadBatchActions({ onMutated: () => workflowStore.fetchAll() })
-
-// Pagination bounds derived from the filtered data + current page state (no
-// tableApi dependency, so it stays correct now the table owns its own tableApi).
-// `filteredUploads` already reflects the active filter. Mirrors the expenses
-// page's paginationInfo shape.
-const paginationInfo = computed(() => {
-  const total = filteredUploads.value.length
-  if (total === 0) {
-    return { start: 0, end: 0, total: 0 }
-  }
-  const { pageIndex, pageSize } = pagination.value
-  const start = pageIndex * pageSize + 1
-  const end = Math.min((pageIndex + 1) * pageSize, total)
-  return { start, end, total }
-})
-
-// Clamp pageIndex when filtered data shrinks below the current page (e.g. after
-// a batch delete or filter change). Mirrors useExpensesTableControls.
-watch(
-  () => filteredUploads.value.length,
-  (total) => {
-    const { pageIndex, pageSize } = pagination.value
-    const lastValidPage = Math.max(0, Math.ceil(total / pageSize) - 1)
-    if (pageIndex > lastValidPage) {
-      pagination.value.pageIndex = lastValidPage
-    }
-  },
-)
 
 // -------- Preview panel --------
 // All the panel's plumbing + data (?preview/?tab URL sync, cross-store warm,
@@ -181,11 +148,16 @@ const {
              between them. Mirrors the expenses page structure. -->
         <div>
           <UploadsToolbar
-            v-model:filter-value="filterValue"
-            :filter-options="FILTER_OPTIONS"
+            :status-label="statusLabel"
+            :status-menu-items="statusMenuItems"
+            :sort-label="sortLabel"
+            :sort-icon="sortIcon"
+            :sort-menu-items="sortMenuItems"
+            :has-active-filters="hasActiveFilters"
             :pagination-info="paginationInfo"
             :selected-count="selectedCount"
             class="mb-3"
+            @reset="reset"
             @refresh="uploadsStore.fetchUploads(); workflowStore.fetchAll()"
             @batch-delete="batchDelete"
           />

@@ -34,6 +34,23 @@ function formatISODate (isoDate) {
 }
 
 /**
+ * Format a bare ISO date string as day + short month, no year.
+ * Parses as UTC (getUTCDate / timeZone: 'UTC') so a date-only string like
+ * "2025-06-28" never shifts a day across the local/Berlin offset.
+ * @param {string} isoDate - ISO date string (e.g., "2025-06-28")
+ * @returns {string|null} - e.g. "28 Jun", or null if input is empty
+ */
+function formatDayMonth (isoDate) {
+  if (!isoDate) {
+    return null
+  }
+  const date = new Date(isoDate)
+  const day = date.getUTCDate()
+  const month = date.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' })
+  return `${day} ${month}`
+}
+
+/**
  * Remove seconds from a time string
  * @param {string} time - Time string (e.g., "11:59:34" or "11:59")
  * @returns {string} - Time string without seconds (e.g., "11:59")
@@ -70,6 +87,7 @@ function getMonthName (month) {
 
 export const dateUtils = {
   formatDate,
+  formatDayMonth,
   formatDuration,
   formatISODate,
   getMonthName,

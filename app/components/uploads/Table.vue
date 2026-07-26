@@ -103,13 +103,24 @@ const columns = [
       }),
     ]),
   },
-  {
-    accessorKey: 'id',
-    header: 'Upload ID',
-  },
+  // {
+  //   accessorKey: 'id',
+  //   header: 'Upload ID',
+  // },
   {
     accessorKey: 'originalFilename',
-    header: 'File',
+    header: 'Upload',
+  },
+  {
+    id: 'receiptDate',
+    accessorFn: row => row.receipt?.date ?? null,
+    header: sortableHeader('Receipt Date'),
+    sortUndefined: 'last',
+    meta: { class: { th: 'w-[110px]', td: 'w-[110px]' } },
+  },
+  {
+    accessorKey: 'workflow',
+    header: 'Progress',
   },
   {
     accessorKey: 'size',
@@ -119,10 +130,6 @@ const columns = [
   {
     accessorKey: 'uploadedAt',
     header: sortableHeader('Uploaded'),
-  },
-  {
-    accessorKey: 'workflow',
-    header: 'Progress',
   },
 ]
 
@@ -135,7 +142,7 @@ const tableStyles = {
 
 const tableMeta = computed(() => ({
   class: {
-    tr: row => row?.original?.id === props.previewId ? 'bg-primary/10' : '',
+    tr: row => row?.original?.id === props.previewId ? 'bg-elevated/90' : '',
   },
 }))
 
@@ -195,34 +202,80 @@ function onSelect (event, row) {
 
         <template #originalFilename-cell="{ row }">
           <div
-            class="flex items-center gap-1.5"
-            :class="previewId ? 'max-w-[200px] md:max-w-[240px] xl:max-w-[320px]' : ''"
+            class="flex items-center gap-3"
+            :class="previewId ? 'max-w-[220px] md:max-w-[260px] xl:max-w-[340px]' : ''"
           >
-            <UTooltip
+            <!-- Larger icon tile with a background. Links to the receipt when one
+                 exists (tooltip'd); otherwise a neutral, non-interactive tile. -->
+            <UButton
               v-if="row.original.receipt"
-              text="View Receipt"
-              :content="{ side: 'top' }"
-              :delay-duration="0"
-              arrow
-            >
-              <UButton
-                :to="`/receipts/${row.original.receipt.id}`"
-                icon="i-lucide-receipt-euro"
-                size="xs"
-                color="primary"
-                variant="ghost"
-              />
-            </UTooltip>
-            <span :title="row.original.originalFilename" class="truncate">
-              {{ row.original.originalFilename }}
-            </span>
+              :to="`/receipts/${row.original.receipt.id}`"
+              icon="i-lucide-receipt-euro"
+              color="neutral"
+              variant="soft"
+              class="size-9 shrink-0 rounded-lg justify-center text-dimmed hover:text-default"
+              @click.stop
+            />
+            <UButton
+              v-else
+              icon="i-lucide-file-exclamation-point"
+              color="error"
+              variant="soft"
+              class="size-9 shrink-0 rounded-lg justify-center"
+            />
+
+            <!-- Two lines: expense title (receipt.title) on top, original
+                 filename below in smaller dimmed text. When there's no title yet
+                 (in-flight/failed), the filename becomes the primary line so the
+                 row is still identifiable.
+
+                 create-expense copies receipt.title → expense.title at creation,
+                 so they START equal — but BOTH are independently editable and can
+                 DRIFT. We surface receipt.title only because it's already on this
+                 row's join and no expense is joined. TODO (design-direction
+                 cleanup): the UI should read expense.title from a backend API
+                 that presents it as such. Architectural — touches many
+                 components. -->
+            <div class="min-w-0">
+              <template v-if="row.original.receipt?.title">
+                <p :title="row.original.receipt.title" class="truncate text-toned font-medium">
+                  {{ row.original.receipt.title }}
+                </p>
+                <p :title="row.original.originalFilename" class="truncate text-xs text-dimmed">
+                  {{ row.original.originalFilename }}
+                </p>
+              </template>
+              <p v-else :title="row.original.originalFilename" class="truncate text-dimmed">
+                {{ row.original.originalFilename }}
+              </p>
+            </div>
           </div>
         </template>
 
+        <template #receiptDate-cell="{ row }">
+          <UTooltip
+            v-if="row.original.receipt?.date"
+            :text="dateUtils.formatISODate(row.original.receipt.date)"
+            :delay-duration="0"
+          >
+            <time :datetime="row.original.receipt.date" class="tabular-nums">
+              {{ dateUtils.formatDayMonth(row.original.receipt.date) }}
+            </time>
+          </UTooltip>
+          <span v-else class="text-dimmed">—</span>
+        </template>
+
         <template #uploadedAt-cell="{ row }">
-          <time :datetime="row.original.uploadedAt" :title="row.original.uploadedAt">
-            {{ timestampUtils.toShortDatetime(row.original.uploadedAt) }}
-          </time>
+          <UTooltip
+            v-if="row.original.uploadedAt"
+            :text="timestampUtils.toShortDatetime(row.original.uploadedAt)"
+            :delay-duration="0"
+          >
+            <time :datetime="row.original.uploadedAt">
+              {{ timestampUtils.toRelative(row.original.uploadedAt) }}
+            </time>
+          </UTooltip>
+          <span v-else>—</span>
         </template>
 
         <template #workflow-cell="{ row }">

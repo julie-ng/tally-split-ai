@@ -68,6 +68,36 @@ describe('formatISODate()', () => {
   })
 })
 
+describe('formatDayMonth()', () => {
+  it('should format as day + short month, no year', () => {
+    expect(dateUtils.formatDayMonth('2025-11-18')).toBe('18 Nov')
+    expect(dateUtils.formatDayMonth('2025-06-28')).toBe('28 Jun')
+  })
+
+  it('should NOT zero-pad single-digit days', () => {
+    expect(dateUtils.formatDayMonth('2025-01-05')).toBe('5 Jan')
+    expect(dateUtils.formatDayMonth('2025-09-01')).toBe('1 Sept')
+  })
+
+  it('should parse as UTC so a date-only string never shifts a day', () => {
+    // If this parsed in local/Berlin time, midnight UTC could roll back to the
+    // 17th. getUTCDate keeps it on the 18th regardless of the runner's offset.
+    expect(dateUtils.formatDayMonth('2025-11-18')).toBe('18 Nov')
+    expect(dateUtils.formatDayMonth('2025-01-01')).toBe('1 Jan')
+    expect(dateUtils.formatDayMonth('2024-12-31')).toBe('31 Dec')
+  })
+
+  it('should use en-GB short months (Sept, not Sep)', () => {
+    expect(dateUtils.formatDayMonth('2025-09-15')).toBe('15 Sept')
+  })
+
+  it('should return null for empty input', () => {
+    expect(dateUtils.formatDayMonth(null)).toBeNull()
+    expect(dateUtils.formatDayMonth(undefined)).toBeNull()
+    expect(dateUtils.formatDayMonth('')).toBeNull()
+  })
+})
+
 describe('getMonthName()', () => {
   it('should return correct name for each month', () => {
     expect(dateUtils.getMonthName(1)).toBe('January')
