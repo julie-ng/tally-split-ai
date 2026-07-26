@@ -156,7 +156,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
             <!-- Extracted Info -->
             <USeparator class="my-3" />
             <p class="font-semibold my-2 text-primary">
-              Transaction Info <analyzed-by-ai-icon />
+              Transaction Info <AddedByIcon source="ocr" />
             </p>
             <!-- Receipt Date, time -->
             <data-key-value-table :items="dates" />
@@ -169,7 +169,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
             <!-- Merchant -->
             <p class="font-semibold my-2 text-primary">
               Merchant
-              <analyzed-by-ai-icon />
+              <AddedByIcon source="ocr" />
             </p>
             <analysis-merchant-info :merchant="validatedFields.merchant" class="mb-4" />
             <USeparator class="my-3" />
@@ -184,7 +184,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
             <ui-collapsible-property-group class="py-2">
               <template #title>
                 <p class="font-semibold text-primary">
-                  Line Items <analyzed-by-ai-icon />
+                  Line Items <AddedByIcon source="ocr" />
                 </p>
               </template>
               <receipt-items-table
@@ -200,7 +200,7 @@ const upload = computed(() => props.receipt.uploads?.[0])
             <ui-collapsible-property-group class="py-2" :is-open="false">
               <template #title>
                 <p class="font-semibold text-primary">
-                  OCR Analysis <analyzed-by-ai-icon />
+                  OCR Analysis <AddedByIcon source="ocr" />
                 </p>
               </template>
               <ui-label-content label="Status" :content="upload?.analysisStatus" />
