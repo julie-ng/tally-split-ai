@@ -30,7 +30,7 @@ import { eq, and, inArray } from 'drizzle-orm'
  *   deletedIds = upload ids removed; deletedReceiptIds = receipt ids the cascade
  *   removed (so the caller can evict them from the receipts cache).
  */
-export async function deleteMany (db, { householdId, ids }) {
+export async function deleteManyUploads (db, { householdId, ids }) {
   return db.transaction(async (tx) => {
     // Resolve which requested ids the household actually owns. Lock the rows for
     // the duration of the tx.

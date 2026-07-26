@@ -1,5 +1,5 @@
-import { deleteMany } from './uploads/delete-many.js'
+import { deleteManyUploads } from './uploads/delete-many.js'
 
 export const uploadsUtils = {
-  deleteMany,
+  deleteMany: deleteManyUploads,
 }
