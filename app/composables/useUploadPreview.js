@@ -146,7 +146,7 @@ export function useUploadPreview (uploads) {
   ]
 
   // Upload-row status → step status for the first circle (mirrors the inline
-  // row-cell's uploadStepStatus in uploads/workflow-steps.vue). Accepts DB
+  // row-cell's uploadStepStatus in uploads/TableWorkflowBubbles.vue). Accepts DB
   // UPLOAD_STATUS values and queue-side strings.
   function uploadStepStatus (status) {
     switch (status) {

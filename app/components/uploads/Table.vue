@@ -291,7 +291,7 @@ function onSelect (event, row) {
         </template>
 
         <template #workflow-cell="{ row }">
-          <uploads-workflow-steps
+          <UploadsTableWorkflowBubbles
             :id="row.original.id"
             :upload-status="row.original.status"
           />

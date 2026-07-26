@@ -86,15 +86,14 @@ function tooltipText (step) {
 }
 
 // Icon + tint per step status, from the shared UI config (keyed off
-// WORKFLOW_STEP_STATUS). Unknown/absent status falls back to PENDING — matches
-// the old `default: text-neutral-300 / i-lucide-circle`.
+// WORKFLOW_STEP_STATUS). Unknown/absent status falls back to PENDING.
 function stepConfig (status) {
   return WORKFLOW_STEP_STATUS_UI_CONFIG[status]
     ?? WORKFLOW_STEP_STATUS_UI_CONFIG[WORKFLOW_STEP_STATUS.PENDING]
 }
 
 // Retry lives in the preview panel's timeline (useUploadPreview → WorkflowTimeline),
-// not here — this cell is just the 6-circle progress glance.
+// not here — this cell is just the row-level workflow bubbles (one per step).
 </script>
 
 <template>
@@ -108,10 +107,10 @@ function stepConfig (status) {
       >
         <span
           class="size-5 text-center rounded-full"
-          :class="stepConfig(step.status).glanceIconClass"
+          :class="stepConfig(step.status).bubbleIconClass"
         >
           <UIcon
-            :name="stepConfig(step.status).glanceIcon"
+            :name="stepConfig(step.status).bubbleIcon"
             class="size-4 align-middle"
             :class="stepConfig(step.status).spin ? 'animate-spin' : ''"
           />

@@ -2,7 +2,7 @@
 // Detail-view timeline for ONE upload's workflow run. Props-driven leaf: it
 // renders the `steps` it's handed and owns no data of its own (the page/preview
 // owner warms the store and maps it to this shape). Singular name = one upload;
-// the plural row-cell summary lives in uploads/workflow-steps.vue.
+// the plural row-cell summary lives in uploads/TableWorkflowBubbles.vue.
 //
 // Owns only RUN-LEVEL concerns: the run-start header, the single live `now`
 // ticker (one interval, shared by every processing step), and which steps are

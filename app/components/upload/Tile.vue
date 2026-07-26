@@ -5,7 +5,7 @@
 // Self-contained + REACTIVE: reads the live workflow store getters by upload id
 // (fed by the workflow_runs realtime subscription), so the tile flips live as
 // the pipeline runs — in-flight → done/error — WITHOUT a manual refresh. Mirrors
-// uploads/workflow-steps.vue (the 6-circle progress cell), which is live the
+// uploads/TableWorkflowBubbles.vue (the row-level step bubbles), which is live the
 // same way.
 //
 // State precedence:

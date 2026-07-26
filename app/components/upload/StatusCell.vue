@@ -2,7 +2,7 @@
 // Run-level status cell for the uploads table. Self-contained + REACTIVE: reads
 // the live workflow store by upload id (fed by the workflow_runs realtime
 // subscription), so it flips live as the pipeline advances — same pattern as
-// UploadTile / uploads/workflow-steps.vue.
+// UploadTile / uploads/TableWorkflowBubbles.vue.
 //
 // Two visual treatments:
 //   • COMPLETED → subtle "dot + label" (matches UploadWorkflowTimelineStep's
