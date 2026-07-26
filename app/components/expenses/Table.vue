@@ -125,29 +125,14 @@ const tableMeta = computed(() => ({
   },
 }))
 
-// Auto-jump to the page that contains the previewed row so the highlight is
-// visible after a deep-link. Use TanStack's sorted/filtered row model so the
-// math accounts for current sort + filters, not raw data order.
-watch(
-  [
-    () => props.previewExpenseId,
-    () => props.data, () => props.sorting,
-    () => table.value?.tableApi,
-  ],
-  ([id, _rows, _sorting, api]) => {
-    if (!id || !api) {
-      return
-    }
-    const sortedRows = api.getSortedRowModel().rows
-    const index = sortedRows.findIndex(r => r.original.id === id)
-    if (index < 0) {
-      return
-    }
-    const size = api.getState().pagination.pageSize
-    api.setPageIndex(Math.floor(index / size))
-  },
-  { immediate: true },
-)
+// Deep-link awareness: jump to the page holding the previewed row. Shared with
+// the uploads table via the composable.
+usePreviewRowJump({
+  previewId: () => props.previewExpenseId,
+  data: () => props.data,
+  sorting: () => props.sorting,
+  tableApi: () => table.value?.tableApi,
+})
 
 function onSelect (event, row) {
   emit('select', event, row)

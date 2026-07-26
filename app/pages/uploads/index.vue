@@ -1,11 +1,7 @@
 <script setup>
-import { h, resolveComponent } from 'vue'
-import { getPaginationRowModel } from '@tanstack/vue-table'
-import { UCheckbox } from '#components'
 import { useUploadsStore } from '~/stores/uploads.store'
 import { useUploadQueueStore } from '~/stores/upload-queue.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
-import { UPLOAD_STATUS } from '#shared/enums/upload-status.js'
 
 useHead({
   title: 'Uploads',
@@ -96,99 +92,11 @@ const filteredUploads = computed(() => {
   return mergedUploads.value.filter(u => !workflowStore.hasErrorsById(u.id))
 })
 
-const table = useTemplateRef('table')
 const pagination = ref({
   pageIndex: 0,
   pageSize: 50,
 })
 const sorting = ref([{ id: 'uploadedAt', desc: true }])
-
-function sortableHeader (label) {
-  return ({ column }) => {
-    const sorted = column.getIsSorted()
-    return h(resolveComponent('UButton'), {
-      variant: 'ghost',
-      color: 'neutral',
-      size: 'sm',
-      class: '-mx-2',
-      onClick: () => column.toggleSorting(),
-      label,
-      leadingIcon: sorted === 'asc'
-        ? 'i-lucide-arrow-up-narrow-wide'
-        : sorted === 'desc'
-          ? 'i-lucide-arrow-down-wide-narrow'
-          : 'i-lucide-arrow-up-down',
-      ui: sorted ? undefined : { leadingIcon: 'text-dimmed' },
-    })
-  }
-}
-
-// A DB-backed upload row is deletable; in-flight queue rows (queued/in-progress/
-// failed/interrupted) have no DB record yet, so their checkbox is disabled and
-// their ids never reach the batch-delete endpoint.
-function isDeletableRow (upload) {
-  return upload.status === UPLOAD_STATUS.UPLOADED
-    || upload.status === UPLOAD_STATUS.INITIALIZED
-}
-
-const columns = [
-  {
-    id: 'select',
-    enableSorting: false,
-    meta: { class: { th: 'w-[36px] px-2', td: 'w-[36px] px-2' } },
-    header: ({ table }) => h(UCheckbox, {
-      'modelValue': table.getIsSomePageRowsSelected() ? 'indeterminate' : table.getIsAllPageRowsSelected(),
-      'onUpdate:modelValue': value => table.toggleAllPageRowsSelected(!!value),
-      'ariaLabel': 'Select all',
-    }),
-    // Stop the click bubbling to the row's @select handler so ticking a box
-    // doesn't also open the preview panel (box and row-click are independent).
-    cell: ({ row }) => h('div', { onClick: e => e.stopPropagation() }, [
-      h(UCheckbox, {
-        'modelValue': row.getIsSelected(),
-        'disabled': !row.getCanSelect(),
-        'onUpdate:modelValue': value => row.toggleSelected(!!value),
-        'ariaLabel': 'Select row',
-      }),
-    ]),
-  },
-  {
-    accessorKey: 'id',
-    header: 'Upload ID',
-  },
-  {
-    accessorKey: 'originalFilename',
-    header: 'File',
-  },
-  {
-    accessorKey: 'size',
-    header: sortableHeader('Size'),
-    cell: ({ row }) => `${formatBytes(row.getValue('size'))}`,
-  },
-  {
-    accessorKey: 'uploadedAt',
-    header: sortableHeader('Uploaded'),
-  },
-  {
-    accessorKey: 'workflow',
-    header: 'Progress',
-  },
-]
-
-// const expanded = ref({})
-
-const tableStyles = {
-  base: 'min-w-full',
-  th: 'text-toned font-semibold',
-  td: 'p-3 align-middle',
-  tr: 'hover:bg-elevated/50',
-}
-
-const tableMeta = computed(() => ({
-  class: {
-    tr: row => row?.original?.id === uploadId.value ? 'bg-primary/10' : '',
-  },
-}))
 
 // Batch delete: composable owns row-selection + the handler (confirm, toasts,
 // optimistic store update + receipt eviction). Refresh the workflow list after
@@ -199,21 +107,33 @@ const {
   batchDelete,
 } = useUploadBatchActions({ onMutated: () => workflowStore.fetchAll() })
 
+// Pagination bounds derived from the filtered data + current page state (no
+// tableApi dependency, so it stays correct now the table owns its own tableApi).
+// `filteredUploads` already reflects the active filter. Mirrors the expenses
+// page's paginationInfo shape.
 const paginationInfo = computed(() => {
-  if (!table.value?.tableApi) return { start: 0, end: 0, total: 0 }
-
-  const state = table.value.tableApi.getState().pagination
-  const total = table.value.tableApi.getFilteredRowModel().rows.length
-  const start = state.pageIndex * state.pageSize + 1
-  const end = Math.min((state.pageIndex + 1) * state.pageSize, total)
-
+  const total = filteredUploads.value.length
+  if (total === 0) {
+    return { start: 0, end: 0, total: 0 }
+  }
+  const { pageIndex, pageSize } = pagination.value
+  const start = pageIndex * pageSize + 1
+  const end = Math.min((pageIndex + 1) * pageSize, total)
   return { start, end, total }
 })
 
-// route for the #id-cell NuxtLink (builds its own ?preview query for
-// middle-click/copy-link semantics). usePreviewPanel calls useRoute internally
-// for its own use; a second call here is fine.
-const route = useRoute()
+// Clamp pageIndex when filtered data shrinks below the current page (e.g. after
+// a batch delete or filter change). Mirrors useExpensesTableControls.
+watch(
+  () => filteredUploads.value.length,
+  (total) => {
+    const { pageIndex, pageSize } = pagination.value
+    const lastValidPage = Math.max(0, Math.ceil(total / pageSize) - 1)
+    if (pageIndex > lastValidPage) {
+      pagination.value.pageIndex = lastValidPage
+    }
+  },
+)
 
 // -------- Preview panel --------
 // All the panel's plumbing + data (?preview/?tab URL sync, cross-store warm,
@@ -256,108 +176,32 @@ const {
       </template>
 
       <template #body>
-        <UploadsToolbar
-          v-model:filter-value="filterValue"
-          :filter-options="FILTER_OPTIONS"
-          :pagination-info="paginationInfo"
-          :selected-count="selectedCount"
-          class="mb-3"
-          @refresh="uploadsStore.fetchUploads(); workflowStore.fetchAll()"
-          @batch-delete="batchDelete"
-        />
+        <!-- Toolbar + table wrapped in one div so they're a SINGLE child of the
+             dashboard body — otherwise the body's flex `gap-6` opens a gap
+             between them. Mirrors the expenses page structure. -->
+        <div>
+          <UploadsToolbar
+            v-model:filter-value="filterValue"
+            :filter-options="FILTER_OPTIONS"
+            :pagination-info="paginationInfo"
+            :selected-count="selectedCount"
+            class="mb-3"
+            @refresh="uploadsStore.fetchUploads(); workflowStore.fetchAll()"
+            @batch-delete="batchDelete"
+          />
 
-        <ClientOnly>
-          <div class="border bg-default border-default">
-            <!-- TODO: autoResetPageIndex configuration works now to keep page when deleting items. But it will break as soon as we try to use filters -->
-            <UTable
-              ref="table"
-              v-model:pagination="pagination"
-              v-model:sorting="sorting"
-              v-model:row-selection="rowSelection"
-              :pagination-options="{
-                getPaginationRowModel: getPaginationRowModel(),
-                autoResetPageIndex: false,
-              }"
-              :sorting-options="{
-                enableSortingRemoval: false,
-              }"
-              :get-row-id="(row) => row.id"
-              :enable-row-selection="(row) => isDeletableRow(row.original)"
-              :data="filteredUploads"
-              :columns="columns"
-              :meta="tableMeta"
-              :ui="tableStyles"
-              :loading="pending"
-              loading-color="primary"
-              loading-animation="carousel"
-              class="flex-1"
-              @select="openPreview"
-            >
-              <template #id-cell="{ row }">
-                <!-- Keeps the current ?tab (sticky, matches openPreview) so
-                     clicking the ID stays on whichever facet you're viewing. -->
-                <NuxtLink
-                  :to="{ query: { ...route.query, preview: row.original.id, tab: activeTab } }"
-                  replace
-                  class="text-dimmed hover:text-blue-800 hover:underline font-mono"
-                >
-                  {{ row.original.id }}
-                </NuxtLink>
-              </template>
-
-              <template #originalFilename-cell="{ row }">
-                <div
-                  class="flex items-center gap-1.5"
-                  :class="uploadId ? 'max-w-[200px] md:max-w-[240px] xl:max-w-[320px]' : ''"
-                >
-                  <UTooltip
-                    v-if="row.original.receipt"
-                    text="View Receipt"
-                    :content="{ side: 'top' }"
-                    :delay-duration="0"
-                    arrow
-                  >
-                    <UButton
-                      :to="`/receipts/${row.original.receipt.id}`"
-                      icon="i-lucide-receipt-euro"
-                      size="xs"
-                      color="primary"
-                      variant="ghost"
-                    />
-                  </UTooltip>
-                  <span :title="row.original.originalFilename" class="truncate">
-                    {{ row.original.originalFilename }}
-                  </span>
-                </div>
-              </template>
-
-              <template #uploadedAt-cell="{ row }">
-                <time :datetime="row.original.uploadedAt" :title="row.original.uploadedAt">
-                  {{ timestampUtils.toShortDatetime(row.original.uploadedAt) }}
-                </time>
-              </template>
-
-              <template #workflow-cell="{ row }">
-                <uploads-workflow-steps
-                  :id="row.original.id"
-                  :upload-status="row.original.status"
-                />
-              </template>
-            </UTable>
-
-            <div class="flex justify-between items-center border-t border-default py-4 px-4">
-              <div class="text-sm text-toned">
-                Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }}
-              </div>
-              <UPagination
-                :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
-                :items-per-page="table?.tableApi?.getState().pagination.pageSize"
-                :total="table?.tableApi?.getFilteredRowModel().rows.length"
-                @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
-              />
-            </div>
-          </div>
-        </ClientOnly>
+          <UploadsTable
+            v-model:pagination="pagination"
+            v-model:sorting="sorting"
+            v-model:row-selection="rowSelection"
+            :data="filteredUploads"
+            :preview-id="uploadId"
+            :active-tab="activeTab"
+            :pagination-info="paginationInfo"
+            :loading="pending"
+            @select="openPreview"
+          />
+        </div>
       </template>
     </UDashboardPanel>
 
