@@ -174,8 +174,8 @@ const expenseHref = computed(() =>
                   label="View expense"
                   icon="i-lucide-coins"
                   size="xs"
-                  color="primary"
-                  variant="solid"
+                  color="neutral"
+                  variant="subtle"
                   :to="expenseHref"
                   :disabled="!expenseId"
                 />
@@ -191,7 +191,7 @@ const expenseHref = computed(() =>
                     icon="i-lucide-file-braces"
                     size="xs"
                     color="neutral"
-                    variant="subtle"
+                    variant="outline"
                     :to="`/api/uploads/${uploadId}/ocr`"
                     target="_blank"
                     external
@@ -201,7 +201,7 @@ const expenseHref = computed(() =>
                     icon="i-lucide-file-braces"
                     size="xs"
                     color="neutral"
-                    variant="subtle"
+                    variant="outline"
                     :to="`/api/uploads/${uploadId}/polygons`"
                     target="_blank"
                     external
@@ -216,7 +216,7 @@ const expenseHref = computed(() =>
                   icon="i-lucide-file-braces"
                   size="xs"
                   color="neutral"
-                  variant="subtle"
+                  variant="outline"
                   :to="`/api/uploads/${uploadId}/annotations`"
                   target="_blank"
                   external
