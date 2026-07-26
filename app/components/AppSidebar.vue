@@ -121,6 +121,7 @@ function getLinks (collapsed) {
         children: expanded
           ? [
               { label: 'Colors', to: '/ui/colors', active: isActive('/ui/colors') },
+              { label: 'Statuses', to: '/ui/statuses', active: isActive('/ui/statuses') },
               { label: 'Buttons', to: '/ui/buttons', active: isActive('/ui/buttons') },
             ]
           : [],
