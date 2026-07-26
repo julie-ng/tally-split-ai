@@ -108,6 +108,12 @@ const columns = [
   //   header: 'Upload ID',
   // },
   {
+    id: 'tile',
+    enableSorting: false,
+    header: '',
+    meta: { class: { th: 'w-[52px] pr-0', td: 'w-[52px] pr-0' } },
+  },
+  {
     accessorKey: 'originalFilename',
     header: 'Upload',
   },
@@ -200,55 +206,44 @@ function onSelect (event, row) {
           </NuxtLink>
         </template>
 
+        <!-- Header-less tile column: a live, reactive icon (in-flight / error /
+             receipt) that flips as the pipeline runs. Own column so the "Upload"
+             header aligns with the text, not the tile. -->
+        <template #tile-cell="{ row }">
+          <UploadTile
+            :id="row.original.id"
+            :status="row.original.status"
+            :receipt="row.original.receipt"
+          />
+        </template>
+
         <template #originalFilename-cell="{ row }">
+          <!-- Two lines: expense title (receipt.title) on top, original filename
+               below in smaller dimmed text. When there's no title yet (in-flight/
+               failed), the filename becomes the primary line so the row is still
+               identifiable.
+
+               create-expense copies receipt.title → expense.title at creation,
+               so they START equal — but BOTH are independently editable and can
+               DRIFT. We surface receipt.title only because it's already on this
+               row's join and no expense is joined. TODO (design-direction
+               cleanup): the UI should read expense.title from a backend API that
+               presents it as such. Architectural — touches many components. -->
           <div
-            class="flex items-center gap-3"
+            class="min-w-0"
             :class="previewId ? 'max-w-[220px] md:max-w-[260px] xl:max-w-[340px]' : ''"
           >
-            <!-- Larger icon tile with a background. Links to the receipt when one
-                 exists (tooltip'd); otherwise a neutral, non-interactive tile. -->
-            <UButton
-              v-if="row.original.receipt"
-              :to="`/receipts/${row.original.receipt.id}`"
-              icon="i-lucide-receipt-euro"
-              color="neutral"
-              variant="soft"
-              class="size-9 shrink-0 rounded-lg justify-center text-dimmed hover:text-default"
-              @click.stop
-            />
-            <UButton
-              v-else
-              icon="i-lucide-file-exclamation-point"
-              color="error"
-              variant="soft"
-              class="size-9 shrink-0 rounded-lg justify-center"
-            />
-
-            <!-- Two lines: expense title (receipt.title) on top, original
-                 filename below in smaller dimmed text. When there's no title yet
-                 (in-flight/failed), the filename becomes the primary line so the
-                 row is still identifiable.
-
-                 create-expense copies receipt.title → expense.title at creation,
-                 so they START equal — but BOTH are independently editable and can
-                 DRIFT. We surface receipt.title only because it's already on this
-                 row's join and no expense is joined. TODO (design-direction
-                 cleanup): the UI should read expense.title from a backend API
-                 that presents it as such. Architectural — touches many
-                 components. -->
-            <div class="min-w-0">
-              <template v-if="row.original.receipt?.title">
-                <p :title="row.original.receipt.title" class="truncate text-toned font-medium">
-                  {{ row.original.receipt.title }}
-                </p>
-                <p :title="row.original.originalFilename" class="truncate text-xs text-dimmed">
-                  {{ row.original.originalFilename }}
-                </p>
-              </template>
-              <p v-else :title="row.original.originalFilename" class="truncate text-dimmed">
+            <template v-if="row.original.receipt?.title">
+              <p :title="row.original.receipt.title" class="truncate text-toned font-medium">
+                {{ row.original.receipt.title }}
+              </p>
+              <p :title="row.original.originalFilename" class="truncate text-xs text-dimmed">
                 {{ row.original.originalFilename }}
               </p>
-            </div>
+            </template>
+            <p v-else :title="row.original.originalFilename" class="truncate text-dimmed">
+              {{ row.original.originalFilename }}
+            </p>
           </div>
         </template>
 
