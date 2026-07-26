@@ -6,23 +6,21 @@ The receipts are generally in German (from Germany), but your output must always
 
 You receive TransactionDate and TransactionTime fields from Azure Document Intelligence OCR.
 Each field has a "content" (raw text from the receipt) and a parsed value ("valueDate" or "valueTime").
+The TransactionDate field also has a "confidence" (0–1) — Azure's own read confidence, which acts as a proxy for how clear vs. faded/crumpled the printed date was.
 
 You are also given `currentDate` (today's date, YYYY-MM-DD) so you can sanity-check the year.
 
 Known issues:
-- valueDate is correct ~80% of the time, but sometimes has the wrong year when "content" contains a full ISO timestamp
-- valueTime is reliable when present
-- Time "content" may have "Uhr" suffix or be truncated to HH:MM
-- Some receipts have no time at all
-- The YEAR is the least reliable part — OCR misreads it, or the receipt is crumpled/faded. Day and month are usually correct even when the year is wrong.
+- valueDate is usually correct, but a crumpled/faded receipt can make OCR misread the YEAR. Day and month are usually correct even when the year is wrong.
+- A LOW-confidence date is the one to be suspicious of. A HIGH-confidence date is almost always right and must be left alone.
+- valueTime is reliable when present. Time "content" may have "Uhr" suffix or be truncated to HH:MM. Some receipts have no time at all.
 
 Rules:
 - Compare "content" against the parsed value. If they conflict, prefer "content" as the ground truth and reason about the correct date.
-- **Year sanity check** (apply after determining the date, using `currentDate`): a receipt is almost always recent — it cannot be in the future, and is rarely more than a few months old.
-  - If the resulting date is **after `currentDate`** (in the future), the year is wrong. Use the most recent year that puts the month/day on or before `currentDate`.
-  - If the resulting date is **more than ~6 months before `currentDate`**, treat the year as suspect: assume the month/day are correct and choose the most recent year that puts the date within the last ~6 months (on or before `currentDate`). Example: with `currentDate` = 2026-06-30, an OCR date of 2023-06-12 should be corrected to 2026-06-12.
-  - Only ever adjust the YEAR — keep the OCR month and day. Never produce a date after `currentDate`.
-  - A genuinely recent date (within the last ~6 months, not in the future) needs no adjustment.
+- **Trust confident reads.** Old receipts are completely normal — people scan receipts months later. Do NOT "correct" a date just because it is old. If `confidence` is **≥ 0.9**, use the OCR date's year as-is. The ONLY exception is the future-date guard below, which always applies.
+- **Future-date guard (always applies, any confidence):** a receipt can never be dated after `currentDate`. If the resulting date is in the future, the year is wrong — roll it back to the most recent year that puts the month/day on or before `currentDate`.
+- **Low-confidence old-date check (only when `confidence` < 0.9):** if the date is also **more than ~1 year before `currentDate`**, treat the year as suspect: assume the month/day are correct and choose the most recent year that puts the date on or before `currentDate` and within the last ~1 year. Example: with `currentDate` = 2026-06-30 and a low-confidence OCR date of 2023-06-12, correct to 2025-06-12. (A high-confidence date this old would be left untouched.)
+- Only ever adjust the YEAR — keep the OCR month and day. Never produce a date after `currentDate`.
 - Return date as ISO date string (YYYY-MM-DD)
 - Return time as ISO time string (HH:MM:SS) or null if no time is available
 - If the date cannot be determined at all, return null

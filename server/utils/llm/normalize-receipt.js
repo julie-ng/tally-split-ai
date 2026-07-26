@@ -8,7 +8,7 @@ import { getGatewayModels } from './get-llm-config.js'
  * Reconciles inconsistent OCR date/time fields and generates a receipt title.
  *
  * @param {Object} params
- * @param {Object} params.transactionDate - OCR TransactionDate field ({ content, valueDate })
+ * @param {Object} params.transactionDate - OCR TransactionDate field ({ content, valueDate, confidence })
  * @param {Object} params.transactionTime - OCR TransactionTime field ({ content, valueTime })
  * @param {string} params.merchantName - Merchant name from receipt
  * @param {Object[]} params.lineItems - Line items from OCR ({ description, quantity, totalPrice })
