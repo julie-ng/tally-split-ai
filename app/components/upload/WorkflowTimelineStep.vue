@@ -3,12 +3,44 @@
 // the next step, the clickable header (label · status · duration · chevron),
 // and — when expanded — the StepContent body.
 //
-// Pure leaf: owns per-step VISUAL concerns (STATUS_CONFIG lookup, dot, duration
+// Pure leaf: owns per-step VISUAL concerns (timeline icon lookup, duration
 // display) but no run-level state. The parent (UploadWorkflowTimeline) owns the
 // live `now` tick and the expanded set; this component just receives them and
 // emits @toggle.
 import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
-import { WORKFLOW_STEP_STATUS_UI_CONFIG } from '#shared/enums/workflow-status-ui.config.js'
+
+// Timeline-VISUAL config for the gutter dot — deliberately SEPARATE from the
+// status-STATE config (UiStatusLabel / workflow-status-ui.config). The gutter
+// dot is a big element that only *references* the step status; on purpose it does
+// NOT carry the full status palette (a large icon in five saturated colors is too
+// noisy), and it has its own bare glyphs. Local to this one component — hardcoded
+// here rather than shared. Every class is a COMPLETE literal (Tailwind purge).
+const TIMELINE_STEP_CONFIG = {
+  [WORKFLOW_STEP_STATUS.COMPLETED]: {
+    icon: 'i-lucide-check',
+    iconClass: 'bg-inverted text-inverted border-inverted',
+  },
+  [WORKFLOW_STEP_STATUS.PROCESSING]: {
+    icon: 'i-lucide-loader-circle',
+    iconClass: 'bg-primary/10 text-primary border-primary',
+    spin: true,
+  },
+  [WORKFLOW_STEP_STATUS.PENDING]: {
+    icon: 'i-lucide-circle',
+    iconClass: 'bg-elevated text-dimmed border-default',
+    dashed: true,
+    dim: true,
+  },
+  [WORKFLOW_STEP_STATUS.SKIPPED]: {
+    icon: 'i-lucide-minus',
+    iconClass: 'bg-elevated text-muted border-default',
+    dim: true,
+  },
+  [WORKFLOW_STEP_STATUS.FAILED]: {
+    icon: 'i-lucide-x',
+    iconClass: 'bg-error/10 text-error border-error',
+  },
+}
 
 const props = defineProps({
   // { key, label, description?, status (WORKFLOW_STEP_STATUS),
@@ -36,9 +68,9 @@ const props = defineProps({
 
 defineEmits(['toggle'])
 
-const config = computed(() =>
-  WORKFLOW_STEP_STATUS_UI_CONFIG[props.step.status]
-  ?? WORKFLOW_STEP_STATUS_UI_CONFIG[WORKFLOW_STEP_STATUS.PENDING],
+const timelineStep = computed(() =>
+  TIMELINE_STEP_CONFIG[props.step.status]
+  ?? TIMELINE_STEP_CONFIG[WORKFLOW_STEP_STATUS.PENDING],
 )
 
 const isExpandable = computed(() =>
@@ -73,16 +105,16 @@ const isProcessing = computed(() => props.step.status === WORKFLOW_STEP_STATUS.P
       aria-hidden="true"
     />
 
-    <!-- Status dot (mt nudges the check to align with the step label, which
-         sits below the box's top padding) -->
+    <!-- Timeline step icon (mt nudges the glyph to align with the step label,
+         which sits below the box's top padding) -->
     <span
       class="relative z-10 mt-3 flex size-5 shrink-0 items-center justify-center rounded-full border"
-      :class="config.dot"
+      :class="timelineStep.iconClass"
     >
       <UIcon
-        :name="config.timelineIcon"
+        :name="timelineStep.icon"
         class="size-3"
-        :class="config.spin ? 'animate-spin' : ''"
+        :class="timelineStep.spin ? 'animate-spin' : ''"
       />
     </span>
 
@@ -90,8 +122,8 @@ const isProcessing = computed(() => props.step.status === WORKFLOW_STEP_STATUS.P
     <div
       class="flex-1 min-w-0 rounded-lg border border-default bg-default"
       :class="[
-        config.dashed ? 'border-dashed' : '',
-        config.dim ? 'opacity-60' : '',
+        timelineStep.dashed ? 'border-dashed' : '',
+        timelineStep.dim ? 'opacity-60' : '',
       ]"
     >
       <!-- Header (clickable when expandable) -->
