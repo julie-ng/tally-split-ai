@@ -66,10 +66,28 @@ export function useUploadsTableControls (uploadsRef) {
   const sortBy = ref('uploadedAt')
   const sortOrder = ref('desc') // 'desc' | 'asc'
 
-  const sorting = computed(() => [{
-    id: sortBy.value,
-    desc: sortOrder.value === 'desc',
-  }])
+  // WRITABLE computed over sortBy/sortOrder, in TanStack's [{ id, desc }] shape.
+  // Writable both ways so the table can bind it with v-model:sorting: the getter
+  // feeds TanStack, and the setter routes a header-click back into sortBy/
+  // sortOrder — keeping the toolbar dropdown label + the table sort in sync from
+  // either trigger. (A plain read-only computed here caused the
+  // "computed value is readonly" warning + dead header icons.)
+  const sorting = computed({
+    get () {
+      return [{
+        id: sortBy.value,
+        desc: sortOrder.value === 'desc',
+      }]
+    },
+    set (value) {
+      const next = Array.isArray(value) ? value[0] : null
+      if (!next?.id) {
+        return
+      }
+      sortBy.value = next.id
+      sortOrder.value = next.desc ? 'desc' : 'asc'
+    },
+  })
 
   const sortLabel = computed(() => {
     const option = sortOptions.find(o => o.value === sortBy.value)

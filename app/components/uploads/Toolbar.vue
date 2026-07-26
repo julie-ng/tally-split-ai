@@ -116,11 +116,11 @@ defineEmits(['reset', 'refresh', 'batch-delete'])
         color="neutral"
         :variant="hasActiveFilters ? 'solid' : 'subtle'"
         size="sm"
-        icon="i-lucide-x"
+        icon="i-lucide-undo-2"
         :disabled="!hasActiveFilters"
         @click="$emit('reset')"
       >
-        Filters
+        Reset
       </UButton>
     </div>
   </div>

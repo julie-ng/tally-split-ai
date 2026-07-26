@@ -205,6 +205,7 @@ export function useUploadPreview (uploads) {
           details: [
             { label: 'Title', value: receipt.title || '—' },
             { label: 'Date', value: receipt.date || '—' },
+            { label: 'Receipt ID', value: receipt.id },
           ],
         }
 
@@ -214,6 +215,7 @@ export function useUploadPreview (uploads) {
           details: [
             { label: 'Amount', value: expense.splitAmount != null ? receiptUtils.formatCurrency(expense.splitAmount, expense.currency) : '—' },
             { label: 'Settled', value: expense.isSettled ? 'Yes' : 'No' },
+            { label: 'Expense ID', value: expense.id },
           ],
         }
 
@@ -291,6 +293,7 @@ export function useUploadPreview (uploads) {
     timelineRunCompletedAt,
     timelineRunUuid,
     timelineRunStatus,
+    previewReceiptId,
     previewExpenseId,
   }
 }

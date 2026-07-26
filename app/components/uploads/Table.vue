@@ -116,7 +116,7 @@ const columns = [
     accessorFn: row => row.receipt?.date ?? null,
     header: sortableHeader('Receipt Date'),
     sortUndefined: 'last',
-    meta: { class: { th: 'w-[110px]', td: 'w-[110px]' } },
+    meta: { class: { th: 'w-[110px]', td: 'w-[110px] text-right' } },
   },
   {
     accessorKey: 'workflow',

@@ -62,6 +62,12 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  // The linked receipt id, for the Normalize footer link + header id row (null
+  // until the pipeline creates the receipt / warm resolves it).
+  receiptId: {
+    type: [String, null],
+    default: null,
+  },
   // The created expense id, for the Create Expense footer link (null until warm).
   expenseId: {
     type: [String, null],
@@ -73,6 +79,10 @@ const tabs = [
   { label: 'Workflow', value: 'workflow', slot: 'workflow' },
   { label: 'Image', value: 'image', slot: 'image' },
 ]
+
+const receiptHref = computed(() =>
+  props.receiptId ? `/receipts/${props.receiptId}` : undefined,
+)
 
 const expenseHref = computed(() =>
   props.expenseId ? `/expenses?preview=${props.expenseId}` : undefined,
@@ -207,6 +217,20 @@ const expenseHref = computed(() =>
                     external
                   />
                 </div>
+              </template>
+
+              <!-- Normalize step footer: link to the receipt this step wrote
+                   date/title into. Enabled once the receipt is warmed. -->
+              <template #footer-normalize>
+                <UButton
+                  label="View receipt"
+                  icon="i-lucide-receipt-euro"
+                  size="xs"
+                  color="neutral"
+                  variant="subtle"
+                  :to="receiptHref"
+                  :disabled="!receiptId"
+                />
               </template>
 
               <!-- Handwritten step footer: annotations JSON (open externally). -->

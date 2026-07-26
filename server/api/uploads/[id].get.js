@@ -18,10 +18,12 @@ export default defineEventHandler(async (event) => {
   if (!includes.includes('annotationsJson')) columns.annotationsJson = false
 
   // Query for the specific upload with relations.
-  // Receipt is intentionally slim ({id, title}) — matches the slim list
-  // endpoint shape so refreshUploadById can replace list entries
-  // without losing receipt data. Components that need full receipt fields
-  // should fetch via the receipts store.
+  // Receipt projection MUST match the list endpoint (/api/uploads/index.get.js:
+  // { id, title, date }) — refreshUploadById replaces the list entry with this
+  // one, so any field the list carries but this omits gets wiped from the merged
+  // row. (That's how the Receipt Date column flashed then blanked: date was on
+  // the list row but missing here.) Keep the two in sync. Components needing
+  // fuller receipt fields still fetch via the receipts store.
   const upload = await db.query.uploads.findFirst({
     where: eq(schema.uploads.id, id),
     columns: Object.keys(columns).length > 0 ? columns : undefined,
@@ -30,6 +32,7 @@ export default defineEventHandler(async (event) => {
         columns: {
           id: true,
           title: true,
+          date: true,
         },
       },
       workflowRuns: true,
