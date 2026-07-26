@@ -9,9 +9,6 @@ useHead({
   title: 'Status Styles',
 })
 
-// A representative duration so the trailing time is visible in samples.
-const SAMPLE_DURATION = '40s'
-
 // Run statuses (badge / subtle types), in pipeline order.
 const runStatuses = Object.values(WORKFLOW_STATUS)
 
@@ -66,8 +63,9 @@ const stepStatuses = [
           which — e.g. <code class="font-mono">UploadStatusCell</code> uses
           <code class="font-mono">subtle</code> for <strong>completed</strong> and
           <code class="font-mono">badge</code> for everything else (that exception
-          lives in the caller, not <code class="font-mono">UiStatus</code>). Both
-          types take an optional <code class="font-mono">duration</code>.
+          lives in the caller, not <code class="font-mono">UiStatus</code>).
+          Duration is NOT part of <code class="font-mono">UiStatus</code> — it's a
+          caller-computed inline sibling (see Example usage).
         </p>
 
         <div class="rounded-lg border border-default overflow-hidden max-w-3xl">
@@ -91,10 +89,10 @@ const stepStatuses = [
                   {{ status }}
                 </td>
                 <td class="px-4 py-3">
-                  <UiStatus type="badge" :status="status" :duration="SAMPLE_DURATION" />
+                  <UiStatus type="badge" :status="status" />
                 </td>
                 <td class="px-4 py-3">
-                  <UiStatus type="subtle" :status="status" :duration="SAMPLE_DURATION" />
+                  <UiStatus type="subtle" :status="status" />
                 </td>
               </tr>
             </tbody>
@@ -156,14 +154,20 @@ const stepStatuses = [
         </h2>
         <pre class="rounded-lg border border-default bg-elevated/40 p-4 overflow-x-auto max-w-3xl"><code class="font-mono text-xs text-toned">&lt;!-- run status --&gt;
 &lt;UiStatus type="badge" status="partial" /&gt;
-&lt;UiStatus type="subtle" status="completed" :duration="run.duration" /&gt;
+&lt;UiStatus type="subtle" status="completed" /&gt;
 
 &lt;!-- step status --&gt;
 &lt;UiStatus type="bubble" status="processing" /&gt;
 &lt;UiStatus type="step" status="failed" /&gt;
 
 &lt;!-- optional label override --&gt;
-&lt;UiStatus type="badge" status="partial" label="Needs your review" /&gt;</code></pre>
+&lt;UiStatus type="badge" status="partial" label="Needs your review" /&gt;
+
+&lt;!-- duration is the CALLER's concern (separate inline sibling) --&gt;
+&lt;span class="inline-flex items-baseline gap-2"&gt;
+  &lt;UiStatus type="badge" :status="run.status" /&gt;
+  &lt;span class="text-xs text-dimmed tabular-nums"&gt;run.duration&lt;/span&gt;
+&lt;/span&gt;</code></pre>
       </section>
     </template>
   </UDashboardPanel>

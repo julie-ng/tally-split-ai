@@ -10,7 +10,6 @@
 // body pattern lives in UploadWorkflowTimelineStepContent. Dumb leaf — the page/
 // preview owner warms the stores and maps everything to the `steps` shape.
 import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
-import { WORKFLOW_STATUS_UI_CONFIG } from '#shared/enums/workflow-status-ui.config.js'
 
 const props = defineProps({
   // Array of step objects the page maps from the workflow store. Shape:
@@ -60,10 +59,6 @@ const props = defineProps({
 })
 
 defineEmits(['retry'])
-
-const runStatusConfig = computed(() =>
-  props.runStatus ? WORKFLOW_STATUS_UI_CONFIG[props.runStatus] ?? null : null,
-)
 
 // Tally of step outcomes for the "Pipeline Steps" summary line. `completed` is
 // "X of N ran"; skipped/failed are surfaced only when non-zero (skipped is
@@ -160,24 +155,11 @@ function toggle (key) {
             {{ timestampUtils.toRelative(runStartedAt) }}
           </span> -->
         </p>
-        <!-- <span
-          v-if="runStatusConfig"
-          class="shrink-0 text-xs font-medium"
-          :class="runStatusConfig.class"
-        >
-          {{ runStatusConfig.label }}
-          12s
-        </span> -->
         <div
-          v-if="runStatusConfig"
+          v-if="runStatus"
           class="flex items-baseline gap-2 shrink-0"
         >
-          <UBadge
-            :color="runStatusConfig.color"
-            variant="soft"
-          >
-            {{ runStatusConfig.label }}
-          </UBadge>
+          <UiStatus type="badge" :status="runStatus" />
           <span v-if="runDuration" class="text-xs text-dimmed tabular-nums">
             {{ runDuration }}
           </span>

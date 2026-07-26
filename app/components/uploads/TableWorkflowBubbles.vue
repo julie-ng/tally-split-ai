@@ -1,7 +1,6 @@
 <script setup>
 import { UPLOAD_STATUS } from '#shared/enums/upload-status.js'
 import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
-import { WORKFLOW_STEP_STATUS_UI_CONFIG } from '#shared/enums/workflow-status-ui.config.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { useWorkflowStore } from '~/stores/workflow.store'
 
@@ -85,13 +84,6 @@ function tooltipText (step) {
   return base
 }
 
-// Icon + tint per step status, from the shared UI config (keyed off
-// WORKFLOW_STEP_STATUS). Unknown/absent status falls back to PENDING.
-function stepConfig (status) {
-  return WORKFLOW_STEP_STATUS_UI_CONFIG[status]
-    ?? WORKFLOW_STEP_STATUS_UI_CONFIG[WORKFLOW_STEP_STATUS.PENDING]
-}
-
 // Retry lives in the preview panel's timeline (useUploadPreview → WorkflowTimeline),
 // not here — this cell is just the row-level workflow bubbles (one per step).
 </script>
@@ -105,16 +97,7 @@ function stepConfig (status) {
         :text="tooltipText(step)"
         arrow
       >
-        <span
-          class="size-5 text-center rounded-full"
-          :class="stepConfig(step.status).bubbleIconClass"
-        >
-          <UIcon
-            :name="stepConfig(step.status).bubbleIcon"
-            class="size-4 align-middle"
-            :class="stepConfig(step.status).spin ? 'animate-spin' : ''"
-          />
-        </span>
+        <UiStatus type="bubble" :status="step.status" />
       </UTooltip>
     </div>
   </div>

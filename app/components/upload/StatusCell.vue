@@ -4,16 +4,14 @@
 // subscription), so it flips live as the pipeline advances — same pattern as
 // UploadTile / uploads/TableWorkflowBubbles.vue.
 //
-// Two visual treatments:
-//   • COMPLETED → subtle "dot + label" (matches UploadWorkflowTimelineStep's
-//     completed header) — the common, quiet state.
-//   • everything else (queued/processing/partial/failed/expired) → a soft UBadge
-//     (matches UploadWorkflowTimeline's run-status badge) so it POPS.
+// Renders via <UiStatus>, picking the `type` per status:
+//   • COMPLETED → 'subtle' (quiet dot + label) — the common state.
+//   • everything else (queued/processing/partial/failed/expired) → 'badge' (soft
+//     UBadge) so it POPS. Both get a trailing duration sibling when finished.
 //   • no run at all → "No workflow run" badge. Every upload SHOULD get a
 //     workflow_runs row at DB-create time regardless of the Trigger.dev worker,
 //     so this is an anomaly worth surfacing loudly (not a normal "manual" state).
 import { WORKFLOW_STATUS } from '#shared/enums/workflow-status.js'
-import { WORKFLOW_STATUS_UI_CONFIG } from '#shared/enums/workflow-status-ui.config.js'
 import { useWorkflowStore } from '~/stores/workflow.store'
 
 const props = defineProps({
@@ -32,42 +30,29 @@ const status = computed(() => latestRun.value?.status ?? null)
 // completed AND finished-but-failed states (expired/failed/partial all get a
 // completedAt). Matches the preview timeline. durationBetween returns null until
 // completedAt exists, and is TZ-safe here because we pass completedAt (not a live
-// now) — see the util's note.
+// now) — see the util's note. Rendered as a sibling to <UiStatus> — duration is
+// the caller's concern, not part of the status atom.
 const duration = computed(() =>
   dateUtils.durationBetween(latestRun.value?.createdAt, latestRun.value?.completedAt),
 )
 
-const config = computed(() => (status.value ? WORKFLOW_STATUS_UI_CONFIG[status.value] ?? null : null))
-
 const isCompleted = computed(() => status.value === WORKFLOW_STATUS.COMPLETED)
+
+// The completed→subtle, else→badge exception lives HERE (the caller), not in
+// UiStatus — UiStatus renders whatever `type` it's handed.
+const statusType = computed(() => (isCompleted.value ? 'subtle' : 'badge'))
 </script>
 
 <template>
-  <!-- Completed → subtle dot + label + duration (shared indicator) -->
-  <UploadStatusIndicator
-    v-if="isCompleted && config"
-    :label="config.label"
-    :dot-color="config.dot"
-    :duration="duration"
-  />
-
-  <!-- Any other status → badge (pops), with duration when the run finished.
-       A finished-but-not-completed run (expired/failed/partial) still has a
-       completedAt, so it shows a duration too — matches the preview timeline. -->
-  <span
-    v-else-if="config"
-    class="inline-flex items-baseline gap-2"
-  >
-    <UBadge
-      :color="config.color"
-      variant="soft"
-    >
-      {{ config.label }}
-    </UBadge>
+  <!-- Known run status: UiStatus (type chosen above) + duration sibling. -->
+  <span v-if="status" class="inline-flex items-baseline gap-2">
+    <UiStatus :type="statusType" :status="status" />
     <span v-if="duration" class="text-xs text-dimmed tabular-nums">{{ duration }}</span>
   </span>
 
-  <!-- No run at all → anomaly badge -->
+  <!-- No run at all → anomaly badge. Not an enum status, so hand-rolled: every
+       upload SHOULD get a workflow_runs row at DB-create time, so this is worth
+       surfacing loudly (not a normal state). -->
   <UBadge
     v-else
     color="error"
