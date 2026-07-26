@@ -84,31 +84,18 @@ const isExpandable = computed(() =>
 )
 
 // Static duration for a completed step (start → finish). Null when either
-// timestamp is missing.
-//
-// ⚠️ STEP 2 (after DB schema change + migration): per-step startedAt/completedAt
-// do NOT exist on workflow_runs yet — only run-level created_at/completed_at.
-// Until the migration adds per-step timestamp columns, real data omits these and
-// no duration renders (no crash — the guards below return null). MOCK data does
-// carry them so the visual can be verified now.
-const duration = computed(() => {
-  const { startedAt, completedAt } = props.step
-  if (!startedAt || !completedAt) {
-    return null
-  }
-  const seconds = Math.round((new Date(completedAt) - new Date(startedAt)) / 1000)
-  return dateUtils.formatDuration(seconds)
-})
+// per-step timestamp is missing (e.g. runs created before the timestamp columns
+// existed) — durationBetween guards, no crash.
+const duration = computed(() =>
+  dateUtils.durationBetween(props.step.startedAt, props.step.completedAt),
+)
 
 // Elapsed for a still-running step, from its start to the parent's live `now`.
-// ⚠️ STEP 2: same missing-timestamp caveat as `duration` above.
-const elapsed = computed(() => {
-  const { startedAt } = props.step
-  if (!startedAt) {
-    return null
-  }
-  return dateUtils.formatDuration(Math.floor((props.now - new Date(startedAt)) / 1000))
-})
+// Passing a live `now` as the end is SAFE here (unlike the run-level cells)
+// because per-step *StartedAt are TZ-aware timestamptz columns.
+const elapsed = computed(() =>
+  dateUtils.durationBetween(props.step.startedAt, props.now),
+)
 
 const isCompleted = computed(() => props.step.status === WORKFLOW_STEP_STATUS.COMPLETED)
 const isProcessing = computed(() => props.step.status === WORKFLOW_STEP_STATUS.PROCESSING)
@@ -155,34 +142,15 @@ const isProcessing = computed(() => props.step.status === WORKFLOW_STEP_STATUS.P
           <p class="text-sm font-medium text-default max-w-[70%] truncate mb-0.5">
             {{ step.label }}
           </p>
-          <span class="ml-auto flex shrink-0 items-center gap-1.5 text-xs">
-            <!-- Leading status dot (e.g. green for completed) -->
-            <span
-              v-if="config.dotColor"
-              class="size-2 rounded-full"
-              :class="config.dotColor"
-            />
-            <span
-              class="font-medium"
-              :class="config.labelClass"
-            >
-              {{ config.label }}
-            </span>
-            <!-- Completed → static duration; Processing → live elapsed.
-                 Both render only when timestamps exist (⚠️ step 2). -->
-            <span
-              v-if="isCompleted && duration"
-              class="text-muted tabular-nums"
-            >
-              · {{ duration }}
-            </span>
-            <span
-              v-else-if="isProcessing && elapsed"
-              class="text-muted tabular-nums"
-            >
-              · {{ elapsed }}
-            </span>
-          </span>
+          <!-- Shared status indicator: dot + label + trailing time. Completed →
+               static duration; Processing → live elapsed (both ⚠️ step 2). -->
+          <UploadStatusIndicator
+            class="ml-auto shrink-0"
+            :label="config.label"
+            :dot-color="config.dotColor"
+            :label-class="config.labelClass"
+            :duration="isCompleted ? duration : isProcessing ? elapsed : null"
+          />
           <UIcon
             v-if="isExpandable"
             name="i-lucide-chevron-down"

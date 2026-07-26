@@ -21,6 +21,8 @@ const activeTab = defineModel('activeTab', {
   default: 'workflow',
 })
 
+defineEmits(['retry'])
+
 const props = defineProps({
   // The previewed upload id (for the Image tab leaf + open guard).
   uploadId: {
@@ -59,6 +61,19 @@ const props = defineProps({
   },
   // True while the cross-store warm is in flight — drives the tab skeletons.
   warming: {
+    type: Boolean,
+    default: false,
+  },
+  // Retry affordance for the timeline header — owner-gated + owner-handled.
+  canRetry: {
+    type: Boolean,
+    default: false,
+  },
+  isRetryExpired: {
+    type: Boolean,
+    default: false,
+  },
+  isRetrying: {
     type: Boolean,
     default: false,
   },
@@ -175,6 +190,10 @@ const expenseHref = computed(() =>
               :run-completed-at="runCompletedAt"
               :run-uuid="runUuid"
               :run-status="runStatus"
+              :can-retry="canRetry"
+              :is-expired="isRetryExpired"
+              :retrying="isRetrying"
+              @retry="$emit('retry')"
             >
               <!-- Create Expense step footer: link to the created expense.
                    Enabled once the expense is warmed; disabled while null

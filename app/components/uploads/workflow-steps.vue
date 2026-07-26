@@ -104,21 +104,8 @@ function stepColor (status) {
   }
 }
 
-// Retry surfacing. EXPIRED specifically means no worker ever ran it (TTL),
-// which reads differently to the user than a step that ran and failed.
-const canRetry = computed(() => workflowStore.hasErrorsById(props.id))
-const isExpired = computed(() => workflowStore.isExpiredById(props.id))
-const retrying = ref(false)
-
-async function retry () {
-  retrying.value = true
-  try {
-    await workflowStore.triggerWorkflow(props.id)
-  }
-  finally {
-    retrying.value = false
-  }
-}
+// Retry lives in the preview panel's timeline (useUploadPreview → WorkflowTimeline),
+// not here — this cell is just the 6-circle progress glance.
 </script>
 
 <template>
@@ -144,20 +131,5 @@ async function retry () {
         </span>
       </UTooltip>
     </div>
-
-    <!-- Retry. Provisional placement — surfaces the re-trigger path/store
-         action so it's wired; the broader uploads UI rework will reposition
-         this. Shown whenever the run errored, with EXPIRED ("no worker ran
-         it") called out distinctly from a step that ran and failed. -->
-    <UButton
-      v-if="canRetry"
-      :icon="isExpired ? 'i-lucide-clock-alert' : 'i-lucide-rotate-ccw'"
-      :label="retrying ? 'Retrying…' : 'Retry'"
-      :loading="retrying"
-      size="xs"
-      color="neutral"
-      variant="ghost"
-      @click="retry"
-    />
   </div>
 </template>

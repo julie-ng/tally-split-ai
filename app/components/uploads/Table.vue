@@ -108,6 +108,13 @@ const columns = [
       }),
     ]),
   },
+  {
+    id: 'receiptDate',
+    accessorFn: row => row.receipt?.date ?? null,
+    header: sortableHeader('Receipt Date'),
+    sortUndefined: 'last',
+    meta: { class: { th: 'w-[110px]', td: 'w-[110px] text-right' } },
+  },
   // {
   //   accessorKey: 'id',
   //   header: 'Upload ID',
@@ -118,29 +125,35 @@ const columns = [
     header: '',
     meta: { class: { th: 'w-[52px] pr-0', td: 'w-[52px] pr-0' } },
   },
+  // Column-width strategy: UPLOAD is the ONLY width-less column, so it absorbs
+  // all the table's slack and the fixed columns after it pack tightly. Status has
+  // a fixed width + left-aligned content so the "Completed · 32s" and "· 4m 47s"
+  // durations line up across rows instead of drifting with the label length.
   {
     accessorKey: 'originalFilename',
     header: 'Upload',
   },
   {
-    id: 'receiptDate',
-    accessorFn: row => row.receipt?.date ?? null,
-    header: sortableHeader('Receipt Date'),
-    sortUndefined: 'last',
-    meta: { class: { th: 'w-[110px]', td: 'w-[110px] text-right' } },
+    id: 'status',
+    enableSorting: false,
+    header: 'Status',
+    meta: { class: { th: 'w-[160px]', td: 'w-[160px]' } },
   },
   {
     accessorKey: 'workflow',
-    header: 'Progress',
+    header: 'Workflow',
+    meta: { class: { th: 'w-[200px]', td: 'w-[200px]' } },
   },
   {
     accessorKey: 'size',
     header: sortableHeader('Size'),
     cell: ({ row }) => `${formatBytes(row.getValue('size'))}`,
+    meta: { class: { th: 'w-[100px]', td: 'w-[100px]' } },
   },
   {
     accessorKey: 'uploadedAt',
     header: sortableHeader('Uploaded'),
+    meta: { class: { th: 'w-[140px]', td: 'w-[140px]' } },
   },
 ]
 
@@ -253,15 +266,14 @@ function onSelect (event, row) {
         </template>
 
         <template #receiptDate-cell="{ row }">
-          <UTooltip
+          <!-- Full date incl. year (tooltip dropped — nothing left to reveal). -->
+          <time
             v-if="row.original.receipt?.date"
-            :text="dateUtils.formatISODate(row.original.receipt.date)"
-            :delay-duration="0"
+            :datetime="row.original.receipt.date"
+            class="tabular-nums"
           >
-            <time :datetime="row.original.receipt.date" class="tabular-nums">
-              {{ dateUtils.formatDayMonth(row.original.receipt.date) }}
-            </time>
-          </UTooltip>
+            {{ dateUtils.formatISODate(row.original.receipt.date) }}
+          </time>
           <span v-else class="text-dimmed">—</span>
         </template>
 
@@ -283,6 +295,10 @@ function onSelect (event, row) {
             :id="row.original.id"
             :upload-status="row.original.status"
           />
+        </template>
+
+        <template #status-cell="{ row }">
+          <UploadStatusCell :id="row.original.id" />
         </template>
       </UTable>
 

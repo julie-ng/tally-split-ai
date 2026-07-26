@@ -280,6 +280,24 @@ export function useUploadPreview (uploads) {
   const timelineRunUuid = computed(() => workflowStore.latestRunById(uploadId.value)?.uuid ?? null)
   const timelineRunStatus = computed(() => workflowStore.latestRunById(uploadId.value)?.status ?? null)
 
+  // Retry: re-trigger the whole pipeline for the previewed upload. canRetry when
+  // the run errored/failed/expired; isRetryExpired flags the "no worker ran it"
+  // case. The timeline is a dumb leaf, so the retry logic lives here (the owner).
+  const canRetry = computed(() => !!uploadId.value && workflowStore.hasErrorsById(uploadId.value))
+  const isRetryExpired = computed(() => !!uploadId.value && workflowStore.isExpiredById(uploadId.value))
+  const isRetrying = ref(false)
+
+  async function retry () {
+    if (!uploadId.value) return
+    isRetrying.value = true
+    try {
+      await workflowStore.triggerWorkflow(uploadId.value)
+    }
+    finally {
+      isRetrying.value = false
+    }
+  }
+
   return {
     uploadId,
     isPreviewOpen,
@@ -293,6 +311,10 @@ export function useUploadPreview (uploads) {
     timelineRunCompletedAt,
     timelineRunUuid,
     timelineRunStatus,
+    canRetry,
+    isRetryExpired,
+    isRetrying,
+    retry,
     previewReceiptId,
     previewExpenseId,
   }

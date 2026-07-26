@@ -139,6 +139,30 @@ describe('formatDuration()', () => {
   })
 })
 
+describe('durationBetween()', () => {
+  it('formats the gap between two timestamps', () => {
+    expect(dateUtils.durationBetween('2026-01-01T00:00:00Z', '2026-01-01T00:00:06Z')).toBe('6s')
+    expect(dateUtils.durationBetween('2026-01-01T00:00:00Z', '2026-01-01T00:01:04Z')).toBe('1m 4s')
+  })
+
+  it('accepts Date objects and epoch millis', () => {
+    const start = new Date('2026-01-01T00:00:00Z')
+    const end = new Date('2026-01-01T00:03:46Z')
+    expect(dateUtils.durationBetween(start, end)).toBe('3m 46s')
+    expect(dateUtils.durationBetween(start.getTime(), end.getTime())).toBe('3m 46s')
+  })
+
+  it('returns null when either bound is missing', () => {
+    expect(dateUtils.durationBetween(null, '2026-01-01T00:00:06Z')).toBeNull()
+    expect(dateUtils.durationBetween('2026-01-01T00:00:00Z', null)).toBeNull()
+    expect(dateUtils.durationBetween(null, null)).toBeNull()
+  })
+
+  it('clamps a negative gap to 0s', () => {
+    expect(dateUtils.durationBetween('2026-01-01T00:00:06Z', '2026-01-01T00:00:00Z')).toBe('0s')
+  })
+})
+
 describe('timeWithoutSeconds()', () => {
   it('should remove seconds from time string', () => {
     const result = dateUtils.timeWithoutSeconds('11:59:34')

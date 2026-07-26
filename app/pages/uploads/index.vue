@@ -121,6 +121,10 @@ const {
   timelineRunCompletedAt,
   timelineRunUuid,
   timelineRunStatus,
+  canRetry,
+  isRetryExpired,
+  isRetrying,
+  retry,
   previewReceiptId,
   previewExpenseId,
 } = useUploadPreview(mergedUploads)
@@ -191,8 +195,12 @@ const {
       :run-uuid="timelineRunUuid"
       :run-status="timelineRunStatus"
       :warming="isPreviewWarming"
+      :can-retry="canRetry"
+      :is-retry-expired="isRetryExpired"
+      :is-retrying="isRetrying"
       :receipt-id="previewReceiptId"
       :expense-id="previewExpenseId"
+      @retry="retry"
     />
   </div>
 </template>

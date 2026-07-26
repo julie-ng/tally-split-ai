@@ -71,6 +71,29 @@ function formatDuration (totalSeconds) {
   return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`
 }
 
+/**
+ * Elapsed time between two timestamps, formatted (start → end).
+ * Returns null if either bound is missing, so callers can `v-if` on it.
+ * Clamps negatives to 0.
+ *
+ * Used by the workflow status cells + timeline for run/step durations. NOTE for
+ * those callers: workflow_runs timestamps are plain `timestamp` (no TZ), so pass
+ * a completed `end` (completedAt) — `end − start` cancels the parse offset, but a
+ * live `now − start` does NOT (start misparses as local → bogus). Don't pass a
+ * live `now` as `end` for those columns.
+ *
+ * @param {string|number|Date|null} start
+ * @param {string|number|Date|null} end
+ * @returns {string|null} e.g. "1m 4s", or null if start/end missing
+ */
+function durationBetween (start, end) {
+  if (!start || !end) {
+    return null
+  }
+  const seconds = Math.max(0, Math.floor((new Date(end) - new Date(start)) / 1000))
+  return formatDuration(seconds)
+}
+
 const monthNames = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
@@ -86,6 +109,7 @@ function getMonthName (month) {
 }
 
 export const dateUtils = {
+  durationBetween,
   formatDate,
   formatDayMonth,
   formatDuration,

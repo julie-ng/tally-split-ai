@@ -9,11 +9,13 @@
 // same way.
 //
 // State precedence:
-//   1. in-flight  → cloud-upload / primary   (queue row still uploading, OR the
+//   1. in-flight  → cloud-upload / primary    (queue row still uploading, OR the
 //                    workflow is queued/processing)
-//   2. error      → file-exclamation / error (run failed / partial / expired)
-//   3. has receipt→ receipt-euro / neutral   (links to the receipt)
-//   4. otherwise  → receipt-text / neutral   (done, no receipt — e.g. standalone)
+//   2. expired    → clock-alert / warning     (no worker ran it — yellow, matches
+//                    the status badge; retryable, not a true failure)
+//   3. error      → file-exclamation / error  (run failed / partial)
+//   4. has receipt→ receipt-euro / neutral    (links to the receipt)
+//   5. otherwise  → receipt-text / neutral    (done, no receipt — e.g. standalone)
 //
 // NOTE: the receipt LINK target (receipt.id) is NOT live — it rides on the
 // merged list row, which only refreshes on manual refetch / preview-open (the
@@ -56,11 +58,17 @@ const isInFlight = computed(() =>
 )
 
 const hasError = computed(() => workflowStore.hasErrorsById(props.id))
+const isExpired = computed(() => workflowStore.isExpiredById(props.id))
 
 // Resolved tile: icon + UButton color, and whether it links to a receipt.
 const tile = computed(() => {
   if (isInFlight.value) {
     return { icon: 'i-lucide-cloud-upload', color: 'primary', to: null }
+  }
+  // Expired (TTL, no worker) reads as warning/retryable — yellow, matching the
+  // status badge — distinct from a run that ran and failed.
+  if (isExpired.value) {
+    return { icon: 'i-lucide-clock-alert', color: 'warning', to: null }
   }
   if (hasError.value) {
     return { icon: 'i-lucide-file-exclamation-point', color: 'error', to: null }

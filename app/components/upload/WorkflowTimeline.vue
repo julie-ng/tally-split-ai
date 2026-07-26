@@ -7,17 +7,8 @@
 // Owns only RUN-LEVEL concerns: the run-start header, the single live `now`
 // ticker (one interval, shared by every processing step), and which steps are
 // expanded. Per-step visuals live in UploadWorkflowTimelineStep; the expanded
-// body pattern lives in UploadWorkflowTimelineStepContent.
-//
-// ⚠️ STEP 2 (after DB schema change + migration): the `steps` passed in are
-// currently MOCK. Two things rendered here do NOT yet exist in real data:
-//   • per-step startedAt/completedAt — NO per-step timestamp columns on
-//     workflow_runs yet (only run-level created_at/completed_at). Until the
-//     migration adds them, durations just don't render (guarded, no crash).
-//   • details / summary — these come from receipt/expense rows, NOT
-//     workflow_runs. Step 2 warms those stores and composes them in.
-// This component needs NO change when real data arrives — only the page's
-// step-mapping (and the per-step footer slots it injects) do. Keep it dumb.
+// body pattern lives in UploadWorkflowTimelineStepContent. Dumb leaf — the page/
+// preview owner warms the stores and maps everything to the `steps` shape.
 import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
 
 const props = defineProps({
@@ -49,7 +40,25 @@ const props = defineProps({
     type: [String, null],
     default: null,
   },
+  // Retry affordance. This component stays DUMB (no store access): the owner
+  // (useUploadPreview via PreviewPanel) decides whether retry is offered and
+  // handles the @retry emit. canRetry = the run errored/failed/expired;
+  // isExpired distinguishes "no worker ran it" from a step that ran and failed.
+  canRetry: {
+    type: Boolean,
+    default: false,
+  },
+  isExpired: {
+    type: Boolean,
+    default: false,
+  },
+  retrying: {
+    type: Boolean,
+    default: false,
+  },
 })
+
+defineEmits(['retry'])
 
 // Per-run-status label + UBadge color (a Nuxt UI color name, not a text class).
 const RUN_STATUS_CONFIG = {
@@ -58,7 +67,7 @@ const RUN_STATUS_CONFIG = {
   [WORKFLOW_STATUS.COMPLETED]: { label: 'Completed', color: 'success' },
   [WORKFLOW_STATUS.PARTIAL]: { label: 'Needs review', color: 'warning' },
   [WORKFLOW_STATUS.FAILED]: { label: 'Failed', color: 'error' },
-  [WORKFLOW_STATUS.EXPIRED]: { label: 'Expired', color: 'neutral' },
+  [WORKFLOW_STATUS.EXPIRED]: { label: 'Expired', color: 'warning' },
 }
 
 const runStatusConfig = computed(() =>
@@ -93,18 +102,13 @@ const stepSummary = computed(() => {
 const now = ref(Date.now())
 
 // Overall run duration next to the status badge — ONLY for a finished run
-// (start→finish). Shown blank while still running: createdAt/completedAt are
-// plain `timestamp` (no TZ) columns, so `completedAt − createdAt` cancels the
-// parse offset (correct), but `now − createdAt` does NOT (createdAt misparses as
-// local → a bogus ~120m). So no live counter here; blank until complete.
-const runDuration = computed(() => {
-  if (!props.runStartedAt || !props.runCompletedAt) {
-    return null
-  }
-  const start = new Date(props.runStartedAt).getTime()
-  const end = new Date(props.runCompletedAt).getTime()
-  return dateUtils.formatDuration(Math.max(0, Math.floor((end - start) / 1000)))
-})
+// (start→finish). Blank while still running: createdAt/completedAt are plain
+// `timestamp` (no TZ), so `completedAt − createdAt` cancels the parse offset
+// (correct), but `now − createdAt` does NOT (bogus ~120m). durationBetween is
+// null until runCompletedAt exists, so no live counter here — see the util note.
+const runDuration = computed(() =>
+  dateUtils.durationBetween(props.runStartedAt, props.runCompletedAt),
+)
 let ticker = null
 // Tick only while a step is processing (drives per-step elapsed counters, which
 // anchor on the TZ-correct per-step *StartedAt timestamptz columns).
@@ -196,6 +200,21 @@ function toggle (key) {
       <ui-label-content label="Workflow Run ID">
         <span class="font-mono text-xs">{{ runUuid }}</span>
       </ui-label-content>
+
+      <!-- Retry: re-trigger the whole pipeline. Shown when the run errored/
+           failed/expired (owner-gated via canRetry). EXPIRED ("no worker ran
+           it") gets a distinct icon from a run that ran and failed. -->
+      <UButton
+        v-if="canRetry"
+        class="mt-3 cursor-pointer"
+        :icon="isExpired ? 'i-lucide-clock-alert' : 'i-lucide-rotate-ccw'"
+        :label="retrying ? 'Retrying…' : 'Retry Workflow'"
+        :loading="retrying"
+        size="sm"
+        color="neutral"
+        variant="solid"
+        @click="$emit('retry')"
+      />
     </div>
 
     <div class="flex items-baseline justify-between gap-2 min-w-0 my-6">
