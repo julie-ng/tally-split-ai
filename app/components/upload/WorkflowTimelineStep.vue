@@ -105,15 +105,14 @@ const isProcessing = computed(() => props.step.status === WORKFLOW_STEP_STATUS.P
           <p class="text-sm font-medium text-default max-w-[70%] truncate mb-0.5">
             {{ step.label }}
           </p>
-          <!-- Shared status indicator: dot + label + trailing time. Completed →
-               static duration; Processing → live elapsed (both ⚠️ step 2). -->
-          <UploadStatusIndicator
+          <!-- Status label (subtle) + trailing time. Completed → static duration;
+               Processing → live elapsed; else → placeholder. -->
+          <UiStatusLabel
+            type="subtle"
+            :status="step.status"
             class="ml-auto shrink-0"
-            :label="config.label"
-            :dot-color="config.dotColor"
-            :label-class="config.labelClass"
-            :duration="isCompleted ? duration : isProcessing ? elapsed : null"
           />
+          <UiDuration :value="isCompleted ? duration : isProcessing ? elapsed : null" />
           <UIcon
             v-if="isExpandable"
             name="i-lucide-chevron-down"

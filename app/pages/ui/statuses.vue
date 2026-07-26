@@ -1,6 +1,6 @@
 <script setup>
 // Living reference for every status → presentation variation, rendered through
-// the single <UiStatus> component. Shows each `type` + `status` combination so
+// the single <UiStatusLabel> component. Shows each `type` + `status` combination so
 // we can SEE what's available and copy the exact call. Driven by the enums so it
 // stays in sync as statuses are added.
 import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
@@ -43,11 +43,11 @@ const stepStatuses = [
       </h1>
       <p class="text-sm text-muted mb-8 max-w-2xl">
         Every status presentation, rendered through one component:
-        <code class="font-mono">&lt;UiStatus&gt;</code>. Pass a
+        <code class="font-mono">&lt;UiStatusLabel&gt;</code>. Pass a
         <code class="font-mono">type</code> (visual form) and a
         <code class="font-mono">status</code> (enum value); all color/icon/label
-        config lives inside the component. The <code class="font-mono">type</code>
-        also picks which enum the status belongs to.
+        config lives inside the component. Duration is separate —
+        <code class="font-mono">&lt;UiDuration&gt;</code>.
       </p>
 
       <!-- ── Run-status types (badge / subtle) ───────────────────────────── -->
@@ -63,8 +63,8 @@ const stepStatuses = [
           which — e.g. <code class="font-mono">UploadStatusCell</code> uses
           <code class="font-mono">subtle</code> for <strong>completed</strong> and
           <code class="font-mono">badge</code> for everything else (that exception
-          lives in the caller, not <code class="font-mono">UiStatus</code>).
-          Duration is NOT part of <code class="font-mono">UiStatus</code> — it's a
+          lives in the caller, not <code class="font-mono">UiStatusLabel</code>).
+          Duration is NOT part of <code class="font-mono">UiStatusLabel</code> — it's a
           caller-computed inline sibling (see Example usage).
         </p>
 
@@ -89,10 +89,10 @@ const stepStatuses = [
                   {{ status }}
                 </td>
                 <td class="px-4 py-3">
-                  <UiStatus type="badge" :status="status" />
+                  <UiStatusLabel type="badge" :status="status" />
                 </td>
                 <td class="px-4 py-3">
-                  <UiStatus type="subtle" :status="status" />
+                  <UiStatusLabel type="subtle" :status="status" />
                 </td>
               </tr>
             </tbody>
@@ -107,10 +107,10 @@ const stepStatuses = [
           <span class="font-mono font-normal text-muted">WORKFLOW_STEP_STATUS</span>
         </h2>
         <p class="text-xs text-muted mb-4 max-w-2xl">
-          One pipeline step (OCR, Normalize, …). Two types:
+          One pipeline step (OCR, Normalize, …). One type:
           <code class="font-mono">bubble</code> (icon only, no text — the uploads
-          table row) and <code class="font-mono">step</code> (dot + glyph + label —
-          the preview timeline).
+          table row). The preview timeline keeps its own bespoke markup and does
+          NOT use <code class="font-mono">UiStatusLabel</code>.
         </p>
 
         <div class="rounded-lg border border-default overflow-hidden max-w-3xl">
@@ -123,9 +123,6 @@ const stepStatuses = [
                 <th class="px-4 py-2 font-semibold text-center">
                   type="bubble"
                 </th>
-                <th class="px-4 py-2 font-semibold">
-                  type="step"
-                </th>
               </tr>
             </thead>
             <tbody class="divide-y divide-default">
@@ -135,11 +132,8 @@ const stepStatuses = [
                 </td>
                 <td class="px-4 py-3">
                   <div class="flex justify-center">
-                    <UiStatus type="bubble" :status="status" />
+                    <UiStatusLabel type="bubble" :status="status" />
                   </div>
-                </td>
-                <td class="px-4 py-3">
-                  <UiStatus type="step" :status="status" />
                 </td>
               </tr>
             </tbody>
@@ -153,20 +147,19 @@ const stepStatuses = [
           Example usage
         </h2>
         <pre class="rounded-lg border border-default bg-elevated/40 p-4 overflow-x-auto max-w-3xl"><code class="font-mono text-xs text-toned">&lt;!-- run status --&gt;
-&lt;UiStatus type="badge" status="partial" /&gt;
-&lt;UiStatus type="subtle" status="completed" /&gt;
+&lt;UiStatusLabel type="badge" status="partial" /&gt;
+&lt;UiStatusLabel type="subtle" status="completed" /&gt;
 
 &lt;!-- step status --&gt;
-&lt;UiStatus type="bubble" status="processing" /&gt;
-&lt;UiStatus type="step" status="failed" /&gt;
+&lt;UiStatusLabel type="bubble" status="processing" /&gt;
 
 &lt;!-- optional label override --&gt;
-&lt;UiStatus type="badge" status="partial" label="Needs your review" /&gt;
+&lt;UiStatusLabel type="badge" status="partial" label="Needs your review" /&gt;
 
-&lt;!-- duration is the CALLER's concern (separate inline sibling) --&gt;
+&lt;!-- duration is separate — pair with &lt;UiDuration&gt; as inline siblings --&gt;
 &lt;span class="inline-flex items-baseline gap-2"&gt;
-  &lt;UiStatus type="badge" :status="run.status" /&gt;
-  &lt;span class="text-xs text-dimmed tabular-nums"&gt;run.duration&lt;/span&gt;
+  &lt;UiStatusLabel type="badge" :status="run.status" /&gt;
+  &lt;UiDuration :value="run.duration" /&gt;
 &lt;/span&gt;</code></pre>
       </section>
     </template>

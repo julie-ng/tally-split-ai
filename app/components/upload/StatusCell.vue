@@ -4,7 +4,7 @@
 // subscription), so it flips live as the pipeline advances — same pattern as
 // UploadTile / uploads/TableWorkflowBubbles.vue.
 //
-// Renders via <UiStatus>, picking the `type` per status:
+// Renders via <UiStatusLabel>, picking the `type` per status:
 //   • COMPLETED → 'subtle' (quiet dot + label) — the common state.
 //   • everything else (queued/processing/partial/failed/expired) → 'badge' (soft
 //     UBadge) so it POPS. Both get a trailing duration sibling when finished.
@@ -30,7 +30,7 @@ const status = computed(() => latestRun.value?.status ?? null)
 // completed AND finished-but-failed states (expired/failed/partial all get a
 // completedAt). Matches the preview timeline. durationBetween returns null until
 // completedAt exists, and is TZ-safe here because we pass completedAt (not a live
-// now) — see the util's note. Rendered as a sibling to <UiStatus> — duration is
+// now) — see the util's note. Rendered as a sibling to <UiStatusLabel> — duration is
 // the caller's concern, not part of the status atom.
 const duration = computed(() =>
   dateUtils.durationBetween(latestRun.value?.createdAt, latestRun.value?.completedAt),
@@ -39,14 +39,14 @@ const duration = computed(() =>
 const isCompleted = computed(() => status.value === WORKFLOW_STATUS.COMPLETED)
 
 // The completed→subtle, else→badge exception lives HERE (the caller), not in
-// UiStatus — UiStatus renders whatever `type` it's handed.
+// UiStatusLabel — it renders whatever `type` it's handed.
 const statusType = computed(() => (isCompleted.value ? 'subtle' : 'badge'))
 </script>
 
 <template>
-  <!-- Known run status: UiStatus (type chosen above) + duration sibling. -->
+  <!-- Known run status: UiStatusLabel (type chosen above) + duration sibling. -->
   <span v-if="status" class="inline-flex items-baseline gap-2">
-    <UiStatus :type="statusType" :status="status" />
+    <UiStatusLabel :type="statusType" :status="status" />
     <span v-if="duration" class="text-xs text-dimmed tabular-nums">{{ duration }}</span>
   </span>
 

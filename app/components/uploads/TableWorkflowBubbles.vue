@@ -97,7 +97,7 @@ function tooltipText (step) {
         :text="tooltipText(step)"
         arrow
       >
-        <UiStatus type="bubble" :status="step.status" />
+        <UiStatusLabel type="bubble" :status="step.status" />
       </UTooltip>
     </div>
   </div>

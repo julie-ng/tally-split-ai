@@ -159,7 +159,7 @@ function toggle (key) {
           v-if="runStatus"
           class="flex items-baseline gap-2 shrink-0"
         >
-          <UiStatus type="badge" :status="runStatus" />
+          <UiStatusLabel type="badge" :status="runStatus" />
           <span v-if="runDuration" class="text-xs text-dimmed tabular-nums">
             {{ runDuration }}
           </span>
