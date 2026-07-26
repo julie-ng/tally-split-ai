@@ -141,6 +141,42 @@ export const useUploadsStore = defineStore('uploads', () => {
   }
 
   /**
+   * Batch-delete uploads by id via POST /api/uploads/delete.
+   *
+   * Only real DB ids should be passed here — in-flight queue rows have no DB
+   * record and are removed from the upload-queue store instead (the page splits
+   * them; the table disables selection on queue rows anyway).
+   *
+   * @param {string[]} ids - Upload ids to delete
+   * @returns {Promise<{ deletedCount: number, deletedIds: string[], deletedReceiptIds: string[] }>}
+   */
+  async function batchDelete (ids) {
+    try {
+      const result = await $fetch('/api/uploads/delete', {
+        method: 'POST',
+        body: { ids },
+      })
+
+      // Evict deleted rows from local state (mutate in place to preserve the
+      // array reference).
+      const deleted = new Set(result.deletedIds ?? [])
+      for (let i = uploads.value.length - 1; i >= 0; i--) {
+        if (deleted.has(uploads.value[i].id)) {
+          uploads.value.splice(i, 1)
+        }
+      }
+
+      _log(`[UploadsStore] ✅ batch deleted ${result.deletedCount} upload(s)`)
+      return result
+    }
+    catch (err) {
+      console.error('[UploadsStore] ❌ failed to batch delete uploads:', err)
+      error.value = toPiniaError(err)
+      throw err
+    }
+  }
+
+  /**
    * Fetch bounding polygons for an upload (lazy loads if not in state)
    * @param {string} id - Upload id
    * @returns {Promise<Object|null>} Polygon data { page, polygons } or null
@@ -267,5 +303,6 @@ export const useUploadsStore = defineStore('uploads', () => {
     clearAnalysisCacheById,
     refreshUploadById,
     deleteUpload,
+    batchDelete,
   }
 })

@@ -1,9 +1,11 @@
 <script setup>
 import { h, resolveComponent } from 'vue'
 import { getPaginationRowModel } from '@tanstack/vue-table'
+import { UCheckbox } from '#components'
 import { useUploadsStore } from '~/stores/uploads.store'
 import { useUploadQueueStore } from '~/stores/upload-queue.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
+import { UPLOAD_STATUS } from '#shared/enums/upload-status.js'
 
 useHead({
   title: 'Uploads',
@@ -121,7 +123,35 @@ function sortableHeader (label) {
   }
 }
 
+// A DB-backed upload row is deletable; in-flight queue rows (queued/in-progress/
+// failed/interrupted) have no DB record yet, so their checkbox is disabled and
+// their ids never reach the batch-delete endpoint.
+function isDeletableRow (upload) {
+  return upload.status === UPLOAD_STATUS.UPLOADED
+    || upload.status === UPLOAD_STATUS.INITIALIZED
+}
+
 const columns = [
+  {
+    id: 'select',
+    enableSorting: false,
+    meta: { class: { th: 'w-[36px] px-2', td: 'w-[36px] px-2' } },
+    header: ({ table }) => h(UCheckbox, {
+      'modelValue': table.getIsSomePageRowsSelected() ? 'indeterminate' : table.getIsAllPageRowsSelected(),
+      'onUpdate:modelValue': value => table.toggleAllPageRowsSelected(!!value),
+      'ariaLabel': 'Select all',
+    }),
+    // Stop the click bubbling to the row's @select handler so ticking a box
+    // doesn't also open the preview panel (box and row-click are independent).
+    cell: ({ row }) => h('div', { onClick: e => e.stopPropagation() }, [
+      h(UCheckbox, {
+        'modelValue': row.getIsSelected(),
+        'disabled': !row.getCanSelect(),
+        'onUpdate:modelValue': value => row.toggleSelected(!!value),
+        'ariaLabel': 'Select row',
+      }),
+    ]),
+  },
   {
     accessorKey: 'id',
     header: 'Upload ID',
@@ -143,10 +173,6 @@ const columns = [
     accessorKey: 'workflow',
     header: 'Progress',
   },
-  {
-    accessorKey: 'actions',
-    header: '',
-  },
 ]
 
 // const expanded = ref({})
@@ -164,7 +190,14 @@ const tableMeta = computed(() => ({
   },
 }))
 
-const { getRowActions } = useUploadRowActions()
+// Batch delete: composable owns row-selection + the handler (confirm, toasts,
+// optimistic store update + receipt eviction). Refresh the workflow list after
+// a delete so removed runs disappear from the store.
+const {
+  rowSelection,
+  selectedCount,
+  batchDelete,
+} = useUploadBatchActions({ onMutated: () => workflowStore.fetchAll() })
 
 const paginationInfo = computed(() => {
   if (!table.value?.tableApi) return { start: 0, end: 0, total: 0 }
@@ -223,28 +256,15 @@ const {
       </template>
 
       <template #body>
-        <div class="flex items-center justify-between">
-          <p class="text-sm text-dimmed">
-            Showing {{ paginationInfo.start }}-{{ paginationInfo.end }} of {{ paginationInfo.total }} Uploads
-          </p>
-          <div class="flex items-center gap-2">
-            <UButton
-              class="cursor-pointer"
-              variant="outline"
-              color="neutral"
-              size="sm"
-              @click="uploadsStore.fetchUploads(); workflowStore.fetchAll()"
-            >
-              Refresh
-            </UButton>
-            <USelect
-              v-model="filterValue"
-              :items="FILTER_OPTIONS"
-              size="sm"
-              class="min-w-[160px]"
-            />
-          </div>
-        </div>
+        <UploadsToolbar
+          v-model:filter-value="filterValue"
+          :filter-options="FILTER_OPTIONS"
+          :pagination-info="paginationInfo"
+          :selected-count="selectedCount"
+          class="mb-3"
+          @refresh="uploadsStore.fetchUploads(); workflowStore.fetchAll()"
+          @batch-delete="batchDelete"
+        />
 
         <ClientOnly>
           <div class="border bg-default border-default">
@@ -253,6 +273,7 @@ const {
               ref="table"
               v-model:pagination="pagination"
               v-model:sorting="sorting"
+              v-model:row-selection="rowSelection"
               :pagination-options="{
                 getPaginationRowModel: getPaginationRowModel(),
                 autoResetPageIndex: false,
@@ -260,6 +281,8 @@ const {
               :sorting-options="{
                 enableSortingRemoval: false,
               }"
+              :get-row-id="(row) => row.id"
+              :enable-row-selection="(row) => isDeletableRow(row.original)"
               :data="filteredUploads"
               :columns="columns"
               :meta="tableMeta"
@@ -319,17 +342,6 @@ const {
                   :id="row.original.id"
                   :upload-status="row.original.status"
                 />
-              </template>
-
-              <template #actions-cell="{ row }">
-                <UDropdownMenu :items="getRowActions(row)">
-                  <UButton
-                    icon="i-lucide-ellipsis-vertical"
-                    color="neutral"
-                    variant="ghost"
-                    class="cursor-pointer"
-                  />
-                </UDropdownMenu>
               </template>
             </UTable>
 
