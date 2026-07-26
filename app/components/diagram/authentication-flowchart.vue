@@ -18,7 +18,7 @@ import authNDiagram from '~~/docs/diagrams/auth-n.flowchart.mmd?raw'
     />
 
     <template #body>
-      <UiMermaid :code="authNDiagram" />
+      <MermaidDiagram :code="authNDiagram" />
     </template>
   </UModal>
 </template>

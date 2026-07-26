@@ -18,7 +18,7 @@ import tokenLifecycle from '~~/docs/diagrams/token-lifecycle.sequence.mmd?raw'
     />
 
     <template #body>
-      <UiMermaid :code="tokenLifecycle" />
+      <MermaidDiagram :code="tokenLifecycle" />
     </template>
   </UModal>
 </template>
