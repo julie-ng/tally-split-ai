@@ -1,6 +1,7 @@
 <script setup>
 import { UPLOAD_STATUS } from '#shared/enums/upload-status.js'
 import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_STEP_STATUS_UI_CONFIG } from '#shared/enums/workflow-status-ui.config.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { useWorkflowStore } from '~/stores/workflow.store'
 
@@ -84,24 +85,12 @@ function tooltipText (step) {
   return base
 }
 
-function stepIcon (status) {
-  switch (status) {
-    case WORKFLOW_STEP_STATUS.COMPLETED: return 'i-lucide-circle-check'
-    case WORKFLOW_STEP_STATUS.FAILED: return 'i-lucide-circle-alert'
-    case WORKFLOW_STEP_STATUS.PROCESSING: return 'i-lucide-loader-circle'
-    case WORKFLOW_STEP_STATUS.SKIPPED: return 'i-lucide-circle-minus'
-    default: return 'i-lucide-circle'
-  }
-}
-
-function stepColor (status) {
-  switch (status) {
-    case WORKFLOW_STEP_STATUS.COMPLETED: return 'text-green-500'
-    case WORKFLOW_STEP_STATUS.FAILED: return 'text-amber-500'
-    case WORKFLOW_STEP_STATUS.PROCESSING: return 'text-blue-500'
-    case WORKFLOW_STEP_STATUS.SKIPPED: return 'text-neutral-400'
-    default: return 'text-neutral-300'
-  }
+// Icon + tint per step status, from the shared UI config (keyed off
+// WORKFLOW_STEP_STATUS). Unknown/absent status falls back to PENDING — matches
+// the old `default: text-neutral-300 / i-lucide-circle`.
+function stepConfig (status) {
+  return WORKFLOW_STEP_STATUS_UI_CONFIG[status]
+    ?? WORKFLOW_STEP_STATUS_UI_CONFIG[WORKFLOW_STEP_STATUS.PENDING]
 }
 
 // Retry lives in the preview panel's timeline (useUploadPreview → WorkflowTimeline),
@@ -119,14 +108,12 @@ function stepColor (status) {
       >
         <span
           class="size-5 text-center rounded-full"
-          :class="stepColor(step.status)"
+          :class="stepConfig(step.status).glanceIconClass"
         >
           <UIcon
-            :name="stepIcon(step.status)"
+            :name="stepConfig(step.status).glanceIcon"
             class="size-4 align-middle"
-            :class="[
-              step.status === WORKFLOW_STEP_STATUS.PROCESSING && 'animate-spin',
-            ]"
+            :class="stepConfig(step.status).spin ? 'animate-spin' : ''"
           />
         </span>
       </UTooltip>

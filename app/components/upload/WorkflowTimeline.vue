@@ -9,7 +9,8 @@
 // expanded. Per-step visuals live in UploadWorkflowTimelineStep; the expanded
 // body pattern lives in UploadWorkflowTimelineStepContent. Dumb leaf — the page/
 // preview owner warms the stores and maps everything to the `steps` shape.
-import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_STATUS_UI_CONFIG } from '#shared/enums/workflow-status-ui.config.js'
 
 const props = defineProps({
   // Array of step objects the page maps from the workflow store. Shape:
@@ -60,18 +61,8 @@ const props = defineProps({
 
 defineEmits(['retry'])
 
-// Per-run-status label + UBadge color (a Nuxt UI color name, not a text class).
-const RUN_STATUS_CONFIG = {
-  [WORKFLOW_STATUS.QUEUED]: { label: 'Queued', color: 'neutral' },
-  [WORKFLOW_STATUS.PROCESSING]: { label: 'Processing…', color: 'primary' },
-  [WORKFLOW_STATUS.COMPLETED]: { label: 'Completed', color: 'success' },
-  [WORKFLOW_STATUS.PARTIAL]: { label: 'Needs review', color: 'warning' },
-  [WORKFLOW_STATUS.FAILED]: { label: 'Failed', color: 'error' },
-  [WORKFLOW_STATUS.EXPIRED]: { label: 'Expired', color: 'warning' },
-}
-
 const runStatusConfig = computed(() =>
-  props.runStatus ? RUN_STATUS_CONFIG[props.runStatus] ?? null : null,
+  props.runStatus ? WORKFLOW_STATUS_UI_CONFIG[props.runStatus] ?? null : null,
 )
 
 // Tally of step outcomes for the "Pipeline Steps" summary line. `completed` is

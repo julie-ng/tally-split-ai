@@ -22,6 +22,8 @@
 // detail-liveness gap). The ICON STATE is live via the workflow store; the link
 // simply activates once the row's receipt lands.
 import { UPLOAD_STATUS } from '#shared/enums/upload-status.js'
+import { WORKFLOW_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_STATUS_UI_CONFIG } from '#shared/enums/workflow-status-ui.config.js'
 import { useWorkflowStore } from '~/stores/workflow.store'
 
 const props = defineProps({
@@ -61,17 +63,20 @@ const hasError = computed(() => workflowStore.hasErrorsById(props.id))
 const isExpired = computed(() => workflowStore.isExpiredById(props.id))
 
 // Resolved tile: icon + UButton color, and whether it links to a receipt.
+// State colors are pulled from the shared status UI config so "processing =
+// primary / expired = warning / failed = error" stay defined in one place
+// (the ICONS are tile-specific — its states aren't 1:1 with WORKFLOW_STATUS).
 const tile = computed(() => {
   if (isInFlight.value) {
-    return { icon: 'i-lucide-cloud-upload', color: 'primary', to: null }
+    return { icon: 'i-lucide-cloud-upload', color: WORKFLOW_STATUS_UI_CONFIG[WORKFLOW_STATUS.PROCESSING].color, to: null }
   }
   // Expired (TTL, no worker) reads as warning/retryable — yellow, matching the
   // status badge — distinct from a run that ran and failed.
   if (isExpired.value) {
-    return { icon: 'i-lucide-clock-alert', color: 'warning', to: null }
+    return { icon: 'i-lucide-clock-alert', color: WORKFLOW_STATUS_UI_CONFIG[WORKFLOW_STATUS.EXPIRED].color, to: null }
   }
   if (hasError.value) {
-    return { icon: 'i-lucide-file-exclamation-point', color: 'error', to: null }
+    return { icon: 'i-lucide-file-exclamation-point', color: WORKFLOW_STATUS_UI_CONFIG[WORKFLOW_STATUS.FAILED].color, to: null }
   }
   if (props.receipt) {
     return { icon: 'i-lucide-receipt-euro', color: 'neutral', to: `/receipts/${props.receipt.id}` }

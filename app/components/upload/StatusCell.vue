@@ -13,6 +13,7 @@
 //     workflow_runs row at DB-create time regardless of the Trigger.dev worker,
 //     so this is an anomaly worth surfacing loudly (not a normal "manual" state).
 import { WORKFLOW_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_STATUS_UI_CONFIG } from '#shared/enums/workflow-status-ui.config.js'
 import { useWorkflowStore } from '~/stores/workflow.store'
 
 const props = defineProps({
@@ -36,17 +37,7 @@ const duration = computed(() =>
   dateUtils.durationBetween(latestRun.value?.createdAt, latestRun.value?.completedAt),
 )
 
-// label + UBadge color per status (mirrors WorkflowTimeline's RUN_STATUS_CONFIG).
-const STATUS_CONFIG = {
-  [WORKFLOW_STATUS.QUEUED]: { label: 'Queued', color: 'neutral' },
-  [WORKFLOW_STATUS.PROCESSING]: { label: 'Processing…', color: 'primary' },
-  [WORKFLOW_STATUS.COMPLETED]: { label: 'Completed', color: 'success' },
-  [WORKFLOW_STATUS.PARTIAL]: { label: 'Needs review', color: 'warning' },
-  [WORKFLOW_STATUS.FAILED]: { label: 'Failed', color: 'error' },
-  [WORKFLOW_STATUS.EXPIRED]: { label: 'Expired', color: 'warning' },
-}
-
-const config = computed(() => (status.value ? STATUS_CONFIG[status.value] ?? null : null))
+const config = computed(() => (status.value ? WORKFLOW_STATUS_UI_CONFIG[status.value] ?? null : null))
 
 const isCompleted = computed(() => status.value === WORKFLOW_STATUS.COMPLETED)
 </script>
@@ -56,7 +47,7 @@ const isCompleted = computed(() => status.value === WORKFLOW_STATUS.COMPLETED)
   <UploadStatusIndicator
     v-if="isCompleted && config"
     :label="config.label"
-    dot-color="bg-success"
+    :dot-color="config.dot"
     :duration="duration"
   />
 

@@ -8,6 +8,7 @@
 // live `now` tick and the expanded set; this component just receives them and
 // emits @toggle.
 import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_STEP_STATUS_UI_CONFIG } from '#shared/enums/workflow-status-ui.config.js'
 
 const props = defineProps({
   // { key, label, description?, status (WORKFLOW_STEP_STATUS),
@@ -35,47 +36,9 @@ const props = defineProps({
 
 defineEmits(['toggle'])
 
-// Per-status visual config, keyed off WORKFLOW_STEP_STATUS (never raw strings).
-const STATUS_CONFIG = {
-  [WORKFLOW_STEP_STATUS.COMPLETED]: {
-    icon: 'i-lucide-check',
-    dot: 'bg-inverted text-inverted border-inverted',
-    label: 'Completed',
-    labelClass: 'text-default',
-    dotColor: 'bg-success',
-  },
-  [WORKFLOW_STEP_STATUS.PROCESSING]: {
-    icon: 'i-lucide-loader-circle',
-    dot: 'bg-primary/10 text-primary border-primary',
-    iconClass: 'animate-spin',
-    label: 'Processing',
-    labelClass: 'text-primary',
-  },
-  [WORKFLOW_STEP_STATUS.PENDING]: {
-    icon: 'i-lucide-circle',
-    dot: 'bg-elevated text-dimmed border-default',
-    label: 'Pending',
-    labelClass: 'text-dimmed',
-    dashed: true,
-    dim: true,
-  },
-  [WORKFLOW_STEP_STATUS.SKIPPED]: {
-    icon: 'i-lucide-minus',
-    dot: 'bg-elevated text-muted border-default',
-    label: 'Skipped',
-    labelClass: 'text-muted',
-    dim: true,
-  },
-  [WORKFLOW_STEP_STATUS.FAILED]: {
-    icon: 'i-lucide-x',
-    dot: 'bg-error/10 text-error border-error',
-    label: 'Failed',
-    labelClass: 'text-error',
-  },
-}
-
 const config = computed(() =>
-  STATUS_CONFIG[props.step.status] ?? STATUS_CONFIG[WORKFLOW_STEP_STATUS.PENDING],
+  WORKFLOW_STEP_STATUS_UI_CONFIG[props.step.status]
+  ?? WORKFLOW_STEP_STATUS_UI_CONFIG[WORKFLOW_STEP_STATUS.PENDING],
 )
 
 const isExpandable = computed(() =>
@@ -117,9 +80,9 @@ const isProcessing = computed(() => props.step.status === WORKFLOW_STEP_STATUS.P
       :class="config.dot"
     >
       <UIcon
-        :name="config.icon"
+        :name="config.timelineIcon"
         class="size-3"
-        :class="config.iconClass"
+        :class="config.spin ? 'animate-spin' : ''"
       />
     </span>
 
