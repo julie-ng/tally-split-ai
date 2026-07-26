@@ -148,7 +148,7 @@ const columns = [
     accessorKey: 'size',
     header: sortableHeader('Size'),
     cell: ({ row }) => `${formatBytes(row.getValue('size'))}`,
-    meta: { class: { th: 'w-[100px]', td: 'w-[100px]' } },
+    meta: { class: { th: 'w-[100px]', td: 'w-[100px] text-xs' } },
   },
   {
     accessorKey: 'uploadedAt',
@@ -255,11 +255,11 @@ function onSelect (event, row) {
               <p :title="row.original.receipt.title" class="truncate text-toned font-medium">
                 {{ row.original.receipt.title }}
               </p>
-              <p :title="row.original.originalFilename" class="truncate text-xs text-dimmed">
+              <p :title="row.original.originalFilename" class="truncate text-xs text-dimmed mt-0.5">
                 {{ row.original.originalFilename }}
               </p>
             </template>
-            <p v-else :title="row.original.originalFilename" class="truncate text-dimmed">
+            <p v-else :title="row.original.originalFilename" class="truncate text-dimmed mt-0.5">
               {{ row.original.originalFilename }}
             </p>
           </div>
@@ -270,11 +270,11 @@ function onSelect (event, row) {
           <time
             v-if="row.original.receipt?.date"
             :datetime="row.original.receipt.date"
-            class="tabular-nums"
+            class="tabular-nums text-xs"
           >
             {{ dateUtils.formatISODate(row.original.receipt.date) }}
           </time>
-          <span v-else class="text-dimmed">—</span>
+          <span v-else class="text-dimmed text-xs">—</span>
         </template>
 
         <template #uploadedAt-cell="{ row }">
@@ -283,7 +283,7 @@ function onSelect (event, row) {
             :text="timestampUtils.toShortDatetime(row.original.uploadedAt)"
             :delay-duration="0"
           >
-            <time :datetime="row.original.uploadedAt">
+            <time :datetime="row.original.uploadedAt" class="text-xs">
               {{ timestampUtils.toRelative(row.original.uploadedAt) }}
             </time>
           </UTooltip>
