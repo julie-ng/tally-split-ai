@@ -86,15 +86,20 @@ const columns = [
   {
     id: 'select',
     enableSorting: false,
-    meta: { class: { th: 'w-[36px] px-2', td: 'w-[36px] px-2' } },
-    header: ({ table }) => h(UCheckbox, {
-      'modelValue': table.getIsSomePageRowsSelected() ? 'indeterminate' : table.getIsAllPageRowsSelected(),
-      'onUpdate:modelValue': value => table.toggleAllPageRowsSelected(!!value),
-      'ariaLabel': 'Select all',
-    }),
+    meta: { class: { th: 'w-[48px] px-2', td: 'w-[48px] px-2' } },
+    // Centered in its cell so the box doesn't hug the left edge (looked squished
+    // against the tile column). Header wraps its checkbox the same way so the
+    // "select all" box lines up with the column below it.
+    header: ({ table }) => h('div', { class: 'flex justify-center' }, [
+      h(UCheckbox, {
+        'modelValue': table.getIsSomePageRowsSelected() ? 'indeterminate' : table.getIsAllPageRowsSelected(),
+        'onUpdate:modelValue': value => table.toggleAllPageRowsSelected(!!value),
+        'ariaLabel': 'Select all',
+      }),
+    ]),
     // Stop the click bubbling to the row's @select handler so ticking a box
     // doesn't also open the preview panel (box and row-click are independent).
-    cell: ({ row }) => h('div', { onClick: e => e.stopPropagation() }, [
+    cell: ({ row }) => h('div', { class: 'flex justify-center', onClick: e => e.stopPropagation() }, [
       h(UCheckbox, {
         'modelValue': row.getIsSelected(),
         'disabled': !row.getCanSelect(),
