@@ -104,7 +104,7 @@ export default defineEventHandler(async (event) => {
   const {
     blobUrl,
     sasToken,
-    uploadUrl,
+    sasUrl,
     expiresAt,
   } = azureStorageUtils.generateBlobSasToken(blobName, {
     permissions: 'read',
@@ -119,7 +119,7 @@ export default defineEventHandler(async (event) => {
     blobName: blobName,
     blobUrl,
     sasToken,
-    blobUrlWithSas: uploadUrl,
+    blobUrlWithSas: sasUrl,
     expiresAt,
   }
 })

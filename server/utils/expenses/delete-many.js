@@ -75,7 +75,7 @@ export async function deleteMany (db, { householdId, ids }) {
         azureStorageUtils.generateBlobSasToken(name, {
           permissions: 'delete',
           expiresInMinutes: 5,
-        }).uploadUrl,
+        }).sasUrl,
       )
 
       // Delete the receipts → cascade removes their expenses, uploads, history.

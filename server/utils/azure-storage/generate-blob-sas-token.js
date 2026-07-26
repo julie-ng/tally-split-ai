@@ -12,7 +12,9 @@ import { generateBlobUrl } from './generate-blob-url.js'
  * @param {Object} options - SAS token options
  * @param {string} options.permissions - Permissions: 'read', 'create', or 'delete'
  * @param {number} options.expiresInMinutes - Token validity duration in minutes
- * @returns {Object} Object containing sasToken, blobUrl, uploadUrl, and expiresAt
+ * @returns {Object} Object containing sasToken, blobUrl, sasUrl, and expiresAt.
+ *   `sasUrl` is `blobUrl?sasToken` — the blob URL carrying whichever permission
+ *   was requested (create/read/delete), NOT upload-specific.
  */
 export function generateBlobSasToken (blobName, { permissions = 'read', expiresInMinutes = 5 } = {}) {
   const { account, container, accountKey } = useAzureStorageConfig()
@@ -59,7 +61,7 @@ export function generateBlobSasToken (blobName, { permissions = 'read', expiresI
   return {
     sasToken,
     blobUrl,
-    uploadUrl: `${blobUrl}?${sasToken}`,
+    sasUrl: `${blobUrl}?${sasToken}`,
     expiresAt: expiresOn.toISOString(),
   }
 }
