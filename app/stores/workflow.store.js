@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { WORKFLOW_RUN_STATUS } from '#shared/enums/workflow-run-status.js'
 import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-step-status.js'
-import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
+import { WORKFLOW_STEP, WORKFLOW_STEP_KEYS } from '#shared/enums/workflow-step.js'
 
 /**
  * Store for managing workflow run data.
@@ -48,25 +48,22 @@ export const useWorkflowStore = defineStore('workflow', () => {
     return runs.value[id]?.[0]?.status === WORKFLOW_RUN_STATUS.EXPIRED
   })
 
-  const DEFAULT_STEP_STATUSES = {
-    ocrStatus: WORKFLOW_STEP_STATUS.PENDING,
-    annotationsStatus: WORKFLOW_STEP_STATUS.PENDING,
-    normalizeStatus: WORKFLOW_STEP_STATUS.PENDING,
-    createExpenseStatus: WORKFLOW_STEP_STATUS.PENDING,
-    adjustExpenseStatus: WORKFLOW_STEP_STATUS.PENDING,
-  }
+  // { ocrStatus: 'pending', annotationsStatus: 'pending', … } — derived from the
+  // step registry so adding a step doesn't need an edit here.
+  const DEFAULT_STEP_STATUSES = Object.fromEntries(
+    WORKFLOW_STEP_KEYS.map(key => [`${key}Status`, WORKFLOW_STEP_STATUS.PENDING]),
+  )
 
   const stepStatusesById = computed(() => (id) => {
     const latest = runs.value[id]?.[0]
     if (!latest) return { ...DEFAULT_STEP_STATUSES }
 
-    return {
-      ocrStatus: latest.ocrStatus ?? WORKFLOW_STEP_STATUS.PENDING,
-      annotationsStatus: latest.annotationsStatus ?? WORKFLOW_STEP_STATUS.PENDING,
-      normalizeStatus: latest.normalizeStatus ?? WORKFLOW_STEP_STATUS.PENDING,
-      createExpenseStatus: latest.createExpenseStatus ?? WORKFLOW_STEP_STATUS.PENDING,
-      adjustExpenseStatus: latest.adjustExpenseStatus ?? WORKFLOW_STEP_STATUS.PENDING,
-    }
+    return Object.fromEntries(
+      WORKFLOW_STEP_KEYS.map((key) => {
+        const field = `${key}Status`
+        return [field, latest[field] ?? WORKFLOW_STEP_STATUS.PENDING]
+      }),
+    )
   })
 
   const isProcessingById = computed(() => (id) => {
@@ -146,6 +143,31 @@ export const useWorkflowStore = defineStore('workflow', () => {
   }
 
   /**
+   * Map a workflow_runs row's per-step columns (snake_case, from a realtime
+   * payload) to the camelCase shape the store exposes — for every step in the
+   * registry, its status + started/completed timestamps.
+   *
+   * The registry key IS the camelCase column base ('createExpense'), so the DB
+   * column name is its snake_case form ('create_expense_status').
+   *
+   * @param {object} row - payload.new from a postgres_changes event
+   * @returns {object} e.g. { ocrStatus, ocrStartedAt, ocrCompletedAt, … }
+   * @private
+   */
+  function _mapStepFields (row) {
+    return Object.fromEntries(
+      WORKFLOW_STEP_KEYS.flatMap((key) => {
+        const snake = key.replace(/[A-Z]/g, c => `_${c.toLowerCase()}`)
+        return [
+          [`${key}Status`, row[`${snake}_status`]],
+          [`${key}StartedAt`, row[`${snake}_started_at`]],
+          [`${key}CompletedAt`, row[`${snake}_completed_at`]],
+        ]
+      }),
+    )
+  }
+
+  /**
    * Ingest a full workflow_runs row from a Supabase Realtime change event.
    *
    * Unlike the old SSE path (per-step deltas via updateStepStatus), a
@@ -170,24 +192,11 @@ export const useWorkflowStore = defineStore('workflow', () => {
       householdId: row.household_id,
       triggerRunId: row.trigger_run_id,
       status: row.status,
-      ocrStatus: row.ocr_status,
-      annotationsStatus: row.annotations_status,
-      normalizeStatus: row.normalize_status,
-      createExpenseStatus: row.create_expense_status,
-      adjustExpenseStatus: row.adjust_expense_status,
-      // Per-step timestamps (server-derived from status transitions). Null for
-      // steps not yet started, and for runs created before the timestamp
-      // migration (those render without durations).
-      ocrStartedAt: row.ocr_started_at,
-      ocrCompletedAt: row.ocr_completed_at,
-      annotationsStartedAt: row.annotations_started_at,
-      annotationsCompletedAt: row.annotations_completed_at,
-      normalizeStartedAt: row.normalize_started_at,
-      normalizeCompletedAt: row.normalize_completed_at,
-      createExpenseStartedAt: row.create_expense_started_at,
-      createExpenseCompletedAt: row.create_expense_completed_at,
-      adjustExpenseStartedAt: row.adjust_expense_started_at,
-      adjustExpenseCompletedAt: row.adjust_expense_completed_at,
+      // Per-step status + timestamps, derived from the step registry rather
+      // than hand-listed. Timestamps are server-derived from status transitions;
+      // null for steps not yet started, and for runs created before the
+      // timestamp migration (those render without durations).
+      ..._mapStepFields(row),
       errors: row.errors,
       createdAt: row.created_at,
       completedAt: row.completed_at,

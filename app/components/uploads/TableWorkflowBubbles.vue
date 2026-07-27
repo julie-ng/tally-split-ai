@@ -1,6 +1,6 @@
 <script setup>
 import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-step-status.js'
-import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
+import { WORKFLOW_STEP_REGISTRY } from '#shared/enums/workflow-step.js'
 import { useWorkflowStore } from '~/stores/workflow.store'
 
 const props = defineProps({
@@ -19,40 +19,20 @@ const workflowStore = useWorkflowStore()
 const stepStatuses = computed(() => workflowStore.stepStatusesById(props.id))
 const latestRun = computed(() => workflowStore.latestRunById(props.id))
 
-// `errorKey` is null for the Upload step (errors live on the queue, not
-// the workflow run); other rows match WORKFLOW_STEP enum values used as
-// keys in workflow_runs.errors.
+// Upload first (a pseudo-step — status comes from the upload row, and errors
+// live on the queue, so errorKey is null), then the real pipeline steps from the
+// registry. A step's registry key IS its key in workflow_runs.errors.
 const steps = computed(() => [
   {
     label: 'Upload',
     status: uploadStepStatus(props.uploadStatus),
     errorKey: null,
   },
-  {
-    label: 'OCR',
-    status: stepStatuses.value.ocrStatus,
-    errorKey: WORKFLOW_STEP.OCR,
-  },
-  {
-    label: 'Annotations',
-    status: stepStatuses.value.annotationsStatus,
-    errorKey: WORKFLOW_STEP.ANNOTATIONS,
-  },
-  {
-    label: 'Normalize',
-    status: stepStatuses.value.normalizeStatus,
-    errorKey: WORKFLOW_STEP.NORMALIZE,
-  },
-  {
-    label: 'Create Expense',
-    status: stepStatuses.value.createExpenseStatus,
-    errorKey: WORKFLOW_STEP.EXPENSE,
-  },
-  {
-    label: 'Adjust Expense',
-    status: stepStatuses.value.adjustExpenseStatus,
-    errorKey: WORKFLOW_STEP.ADJUST_EXPENSE,
-  },
+  ...WORKFLOW_STEP_REGISTRY.map(step => ({
+    label: step.label,
+    status: stepStatuses.value[`${step.key}Status`],
+    errorKey: step.key,
+  })),
 ])
 
 function tooltipText (step) {

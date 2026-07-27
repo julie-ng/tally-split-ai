@@ -1,3 +1,4 @@
+import { WORKFLOW_STEP_REGISTRY } from '#shared/enums/workflow-step.js'
 import { useUploadsStore } from '~/stores/uploads.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
 import { useReceiptsStore } from '~/stores/receipts.store'
@@ -121,7 +122,8 @@ export function useUploadPreview (uploads) {
     if (!id) return null
     const s = workflowStore.stepStatusesById(id)
     const run = workflowStore.latestRunById(id)
-    return `${run?.status}|${s.ocrStatus}|${s.annotationsStatus}|${s.normalizeStatus}|${s.createExpenseStatus}|${s.adjustExpenseStatus}`
+    const steps = WORKFLOW_STEP_REGISTRY.map(step => s[`${step.key}Status`])
+    return [run?.status, ...steps].join('|')
   })
 
   watch(runStatusSignature, () => {
@@ -131,17 +133,18 @@ export function useUploadPreview (uploads) {
   })
 
   // -------- Timeline steps --------
-  // Static per-step metadata. `stepKey` is the workflow_runs column base
-  // (`${stepKey}Status`, `${stepKey}StartedAt`, `${stepKey}CompletedAt`). The
-  // Upload step is special: status comes from the upload row (not workflow_runs)
-  // and it has no per-step timestamps.
+  // The Upload pseudo-step (stepKey null — status comes from the upload row, and
+  // it has no workflow_runs columns), then the real steps from the registry.
+  // `stepKey` is the workflow_runs column base: `${stepKey}Status`,
+  // `${stepKey}StartedAt`, `${stepKey}CompletedAt`.
   const STEP_DEFS = [
     { key: 'upload', stepKey: null, label: 'Upload', description: 'File received' },
-    { key: 'ocr', stepKey: 'ocr', label: 'OCR Analysis', description: 'Text extraction (Azure Document Intelligence)' },
-    { key: 'annotations', stepKey: 'annotations', label: 'Handwritten analysis', description: 'Detecting initials, circles, strikethroughs (GPT-4o)' },
-    { key: 'normalize', stepKey: 'normalize', label: 'Normalize', description: 'Cleaning date, title, filename' },
-    { key: 'createExpense', stepKey: 'createExpense', label: 'Create expense', description: 'Expense from receipt total' },
-    { key: 'adjustExpense', stepKey: 'adjustExpense', label: 'Adjust expense', description: 'Asymmetric split from annotations' },
+    ...WORKFLOW_STEP_REGISTRY.map(step => ({
+      key: step.key,
+      stepKey: step.key,
+      label: step.timelineLabel,
+      description: step.description,
+    })),
   ]
 
   // Detail rows + summary for a given step, from the warmed stores. Returns

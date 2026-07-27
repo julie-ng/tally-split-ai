@@ -3,17 +3,7 @@ import { eq } from 'drizzle-orm'
 import { WORKFLOW_RUN_STATUSES } from '#shared/enums/workflow-run-status.js'
 import { WORKFLOW_STEP_STATUSES, WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-step-status.js'
 import { UPLOAD_ANALYSIS_STATUS, UPLOAD_ANALYSIS_STATUSES } from '#shared/enums/upload-analysis-status.js'
-
-// The five per-step status fields, each paired with its timestamp column bases.
-// Used to server-derive per-step timestamps from the status transition being
-// written, so trigger tasks never send times (see stampFor below).
-const STEP_STATUS_FIELDS = [
-  'ocr',
-  'annotations',
-  'normalize',
-  'createExpense',
-  'adjustExpense',
-]
+import { WORKFLOW_STEP_KEYS } from '#shared/enums/workflow-step.js'
 
 const TERMINAL_STEP_STATUSES = new Set([
   WORKFLOW_STEP_STATUS.COMPLETED,
@@ -102,7 +92,7 @@ export default defineEventHandler(async (event) => {
   // carries at most one step's status transition; we stamp the matching
   // started/completed column from the transition itself (see stampFieldFor).
   const now = new Date()
-  for (const stepBase of STEP_STATUS_FIELDS) {
+  for (const stepBase of WORKFLOW_STEP_KEYS) {
     const statusField = `${stepBase}Status`
     const value = workflowUpdates[statusField]
     if (value === undefined) continue
