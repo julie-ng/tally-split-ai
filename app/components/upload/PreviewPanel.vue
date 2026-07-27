@@ -54,7 +54,7 @@ const props = defineProps({
     type: [String, null],
     default: null,
   },
-  // Run-level status (WORKFLOW_STATUS), shown as a badge in the timeline header.
+  // Run-level status (WORKFLOW_RUN_STATUS), shown as a badge in the timeline header.
   runStatus: {
     type: [String, null],
     default: null,

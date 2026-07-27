@@ -1,18 +1,18 @@
 import { describe, it, expect } from 'vitest'
 import { mapTriggerStatusToWorkflowStatus } from './trigger-status-map.utils.js'
-import { WORKFLOW_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_RUN_STATUS } from '#shared/enums/workflow-run-status.js'
 
 describe('mapTriggerStatusToWorkflowStatus', () => {
   it('maps EXPIRED to our EXPIRED (the "no worker" signal)', () => {
-    expect(mapTriggerStatusToWorkflowStatus('EXPIRED')).toBe(WORKFLOW_STATUS.EXPIRED)
+    expect(mapTriggerStatusToWorkflowStatus('EXPIRED')).toBe(WORKFLOW_RUN_STATUS.EXPIRED)
   })
 
   it('maps terminal crash/failure states to FAILED', () => {
-    expect(mapTriggerStatusToWorkflowStatus('TIMED_OUT')).toBe(WORKFLOW_STATUS.FAILED)
-    expect(mapTriggerStatusToWorkflowStatus('CRASHED')).toBe(WORKFLOW_STATUS.FAILED)
-    expect(mapTriggerStatusToWorkflowStatus('SYSTEM_FAILURE')).toBe(WORKFLOW_STATUS.FAILED)
-    expect(mapTriggerStatusToWorkflowStatus('FAILED')).toBe(WORKFLOW_STATUS.FAILED)
-    expect(mapTriggerStatusToWorkflowStatus('CANCELED')).toBe(WORKFLOW_STATUS.FAILED)
+    expect(mapTriggerStatusToWorkflowStatus('TIMED_OUT')).toBe(WORKFLOW_RUN_STATUS.FAILED)
+    expect(mapTriggerStatusToWorkflowStatus('CRASHED')).toBe(WORKFLOW_RUN_STATUS.FAILED)
+    expect(mapTriggerStatusToWorkflowStatus('SYSTEM_FAILURE')).toBe(WORKFLOW_RUN_STATUS.FAILED)
+    expect(mapTriggerStatusToWorkflowStatus('FAILED')).toBe(WORKFLOW_RUN_STATUS.FAILED)
+    expect(mapTriggerStatusToWorkflowStatus('CANCELED')).toBe(WORKFLOW_RUN_STATUS.FAILED)
   })
 
   it('returns null for in-flight states (leave the run alone)', () => {

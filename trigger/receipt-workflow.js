@@ -1,5 +1,6 @@
 import { task, logger } from '@trigger.dev/sdk/v3'
-import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_RUN_STATUS } from '#shared/enums/workflow-run-status.js'
+import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-step-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { UPLOAD_ANALYSIS_STATUS } from '#shared/enums/upload-analysis-status.js'
 import { analyzeOcr } from './analyze-ocr.js'
@@ -22,7 +23,7 @@ export const receiptWorkflow = task({
     logger.log(`Starting receipt workflow for ${uploadId}`)
 
     // Update workflow status
-    await updateWorkflowStatus(authHeaders, { status: WORKFLOW_STATUS.PROCESSING })
+    await updateWorkflowStatus(authHeaders, { status: WORKFLOW_RUN_STATUS.PROCESSING })
 
     let hasStepErrors = false
     // eslint-disable-next-line no-useless-assignment
@@ -151,7 +152,7 @@ export const receiptWorkflow = task({
       logger.error(`Receipt workflow failed for ${uploadId}`, { error: err.message })
 
       await updateWorkflowStatus(authHeaders, {
-        status: WORKFLOW_STATUS.FAILED,
+        status: WORKFLOW_RUN_STATUS.FAILED,
         completedAt: new Date().toISOString(),
         analysisStatus: UPLOAD_ANALYSIS_STATUS.COMPLETED,
         errors: { [WORKFLOW_STEP.ORCHESTRATOR]: err.message },
@@ -161,7 +162,7 @@ export const receiptWorkflow = task({
     }
 
     // Finalize: update workflow first, then upload (prevents false positives)
-    const finalStatus = hasStepErrors ? WORKFLOW_STATUS.PARTIAL : WORKFLOW_STATUS.COMPLETED
+    const finalStatus = hasStepErrors ? WORKFLOW_RUN_STATUS.PARTIAL : WORKFLOW_RUN_STATUS.COMPLETED
 
     await updateWorkflowStatus(authHeaders, {
       status: finalStatus,

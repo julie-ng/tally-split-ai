@@ -1,7 +1,8 @@
 import { z } from 'zod'
 import { eq } from 'drizzle-orm'
-import { WORKFLOW_STATUSES, WORKFLOW_STEP_STATUSES, WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
-import { UPLOAD_ANALYSIS_STATUSES } from '#shared/enums/upload-analysis-status.js'
+import { WORKFLOW_RUN_STATUSES } from '#shared/enums/workflow-run-status.js'
+import { WORKFLOW_STEP_STATUSES, WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-step-status.js'
+import { UPLOAD_ANALYSIS_STATUS, UPLOAD_ANALYSIS_STATUSES } from '#shared/enums/upload-analysis-status.js'
 
 // The five per-step status fields, each paired with its timestamp column bases.
 // Used to server-derive per-step timestamps from the status transition being
@@ -42,7 +43,7 @@ function stampFieldFor (stepBase, status) {
 
 const statusUpdateSchema = z.object({
   // Orchestrator-level status
-  status: z.enum(WORKFLOW_STATUSES).optional(),
+  status: z.enum(WORKFLOW_RUN_STATUSES).optional(),
 
   // Per-step statuses
   ocrStatus: z.enum(WORKFLOW_STEP_STATUSES).optional(),
@@ -138,7 +139,7 @@ export default defineEventHandler(async (event) => {
   // Update upload analysis status if provided
   if (analysisStatus) {
     const uploadUpdates = { analysisStatus }
-    if (analysisStatus === 'completed') {
+    if (analysisStatus === UPLOAD_ANALYSIS_STATUS.COMPLETED) {
       uploadUpdates.analyzedAt = new Date()
     }
     await db

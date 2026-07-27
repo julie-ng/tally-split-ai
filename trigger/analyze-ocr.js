@@ -1,6 +1,6 @@
 import { task, logger } from '@trigger.dev/sdk/v3'
 import DocumentIntelligence, { getLongRunningPoller, isUnexpected } from '@azure-rest/ai-document-intelligence'
-import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-step-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { azureOcrExtract } from '#server/utils/azure-ocr.utils.js'
 import { getAzureDocumentIntelligenceConfig } from '#server/utils/azure-document-intelligence.js'

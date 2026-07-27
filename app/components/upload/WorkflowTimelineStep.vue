@@ -7,7 +7,7 @@
 // display) but no run-level state. The parent (UploadWorkflowTimeline) owns the
 // live `now` tick and the expanded set; this component just receives them and
 // emits @toggle.
-import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-step-status.js'
 
 // Timeline-VISUAL config for the gutter dot — deliberately SEPARATE from the
 // status-STATE config (UiStatusLabel / workflow-status-ui.config). The gutter

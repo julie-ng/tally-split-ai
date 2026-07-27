@@ -1,5 +1,5 @@
 // Single source of truth for status → presentation (label + color) across the
-// uploads/workflow UI. Keyed off the WORKFLOW_STATUS / WORKFLOW_STEP_STATUS
+// uploads/workflow UI. Keyed off the WORKFLOW_RUN_STATUS / WORKFLOW_STEP_STATUS
 // enums so there's one map per enum, not a copy per component.
 //
 // ── The Tailwind rule this file obeys ──────────────────────────────────────
@@ -11,20 +11,26 @@
 // literal text at build time; a runtime-built class name gets purged and renders
 // unstyled. So the maps store full strings and callers just look them up.
 
-import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from './workflow-status.js'
+import { WORKFLOW_RUN_STATUS } from './workflow-run-status.js'
+import { WORKFLOW_STEP_STATUS } from './workflow-step-status.js'
 
 // Run-level (orchestrator) status → badge/dot presentation.
 //   color    — semantic name for `:color` (UBadge)
 //   label    — human label
 //   dot      — full literal bg-* class for the "dot + label" indicator
-export const WORKFLOW_STATUS_UI_CONFIG = {
-  [WORKFLOW_STATUS.QUEUED]: { label: 'Queued', color: 'neutral', dot: 'bg-neutral-400' },
-  [WORKFLOW_STATUS.PROCESSING]: { label: 'Processing…', color: 'primary', dot: 'bg-primary' },
-  [WORKFLOW_STATUS.COMPLETED]: { label: 'Completed', color: 'success', dot: 'bg-success' },
-  [WORKFLOW_STATUS.PARTIAL]: { label: 'Needs review', color: 'warning', dot: 'bg-warning' },
-  [WORKFLOW_STATUS.FAILED]: { label: 'Failed', color: 'error', dot: 'bg-error' },
+export const WORKFLOW_RUN_STATUS_UI_CONFIG = {
+  [WORKFLOW_RUN_STATUS.QUEUED]: { label: 'Queued', color: 'neutral', dot: 'bg-neutral-400' },
+  [WORKFLOW_RUN_STATUS.PROCESSING]: { label: 'Processing…', color: 'primary', dot: 'bg-primary' },
+  [WORKFLOW_RUN_STATUS.COMPLETED]: { label: 'Completed', color: 'success', dot: 'bg-success' },
+  // 'Partial' is a TECHNICAL outcome — the pipeline ran to the end but a
+  // non-fatal step failed (HTTP 206 in spirit). It is NOT the human-attention
+  // signal: this label used to read "Needs review", which conflated the two.
+  // "Needs review" is reserved for a DERIVED, expense-level signal (LLM
+  // confidence + paidByMatch + partial), which doesn't exist yet.
+  [WORKFLOW_RUN_STATUS.PARTIAL]: { label: 'Partial', color: 'warning', dot: 'bg-warning' },
+  [WORKFLOW_RUN_STATUS.FAILED]: { label: 'Failed', color: 'error', dot: 'bg-error' },
   // Expired = "no worker ran it" — retryable, reads yellow/warning (NOT error).
-  [WORKFLOW_STATUS.EXPIRED]: { label: 'Expired', color: 'warning', dot: 'bg-warning' },
+  [WORKFLOW_RUN_STATUS.EXPIRED]: { label: 'Expired', color: 'warning', dot: 'bg-warning' },
 }
 
 // Step-level (per-step) status → presentation. Two visual contexts share this

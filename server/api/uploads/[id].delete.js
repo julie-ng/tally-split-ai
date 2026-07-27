@@ -1,4 +1,5 @@
 import { eq, and, ne, count } from 'drizzle-orm'
+import { UPLOAD_STATUS } from '#shared/enums/upload-status.js'
 
 /**
  * Delete Azure blobs (original + thumbnail) for an upload.
@@ -7,7 +8,7 @@ import { eq, and, ne, count } from 'drizzle-orm'
 async function deleteAzureBlobs (log, upload) {
   const results = { originalBlob: false, thumbnail: false }
 
-  if (upload.status !== 'uploaded') return results
+  if (upload.status !== UPLOAD_STATUS.UPLOADED) return results
 
   if (upload.blobName) {
     await azureStorageUtils.deleteBlob(upload.blobName)

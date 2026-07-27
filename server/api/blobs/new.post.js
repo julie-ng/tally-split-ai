@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { UPLOAD_STATUS } from '#shared/enums/upload-status.js'
 import { generateId } from '#shared/utils/generate-id.js'
 
 export default defineEventHandler(async (event) => {
@@ -48,7 +49,7 @@ export default defineEventHandler(async (event) => {
     userId,
     householdId,
     title: receiptTitle || 'Untitled',
-    status: 'initialized',
+    status: UPLOAD_STATUS.INITIALIZED,
     blobName: blobPath,
     blobUrl,
     thumbnailName: thumbnailPath,

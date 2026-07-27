@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
-import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_RUN_STATUS } from '#shared/enums/workflow-run-status.js'
+import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-step-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 
 /**
@@ -23,22 +24,28 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
   const runCountById = computed(() => id => runs.value[id]?.length ?? 0)
 
+  // Reads the LATEST run's status only — "is this upload currently broken?".
+  //
+  // A previous version also returned true when an upload had >= 2 runs, on the
+  // theory that a re-run implied something had failed. That was wrong: Trigger's
+  // own retries (maxAttempts) re-execute WITHIN a run and create no new rows, so
+  // extra rows only ever come from a human pressing re-run. It flagged uploads
+  // the user had already fixed — run #1 fails, retry, run #2 succeeds, and the
+  // error badge stayed lit forever. Run HISTORY is a separate question from
+  // CURRENT state; if history is ever worth surfacing, use runCountById.
   const hasErrorsById = computed(() => (id) => {
-    const count = runs.value[id]?.length ?? 0
-    if (count >= 2) return true
-
     const latest = runs.value[id]?.[0]
     if (!latest) return false
 
-    return latest.status === WORKFLOW_STATUS.FAILED
-      || latest.status === WORKFLOW_STATUS.PARTIAL
-      || latest.status === WORKFLOW_STATUS.EXPIRED
+    return latest.status === WORKFLOW_RUN_STATUS.FAILED
+      || latest.status === WORKFLOW_RUN_STATUS.PARTIAL
+      || latest.status === WORKFLOW_RUN_STATUS.EXPIRED
   })
 
   // Distinct from FAILED: the run was never dequeued by a worker (TTL expired).
   // Set by the reconcile path, not by the workflow callback.
   const isExpiredById = computed(() => (id) => {
-    return runs.value[id]?.[0]?.status === WORKFLOW_STATUS.EXPIRED
+    return runs.value[id]?.[0]?.status === WORKFLOW_RUN_STATUS.EXPIRED
   })
 
   const DEFAULT_STEP_STATUSES = {
@@ -65,8 +72,8 @@ export const useWorkflowStore = defineStore('workflow', () => {
   const isProcessingById = computed(() => (id) => {
     const latest = runs.value[id]?.[0]
     if (!latest) return false
-    return latest.status === WORKFLOW_STATUS.QUEUED
-      || latest.status === WORKFLOW_STATUS.PROCESSING
+    return latest.status === WORKFLOW_RUN_STATUS.QUEUED
+      || latest.status === WORKFLOW_RUN_STATUS.PROCESSING
   })
 
   // -------- ACTIONS --------
@@ -117,7 +124,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
   function updateStepStatus (id, step, status, error) {
     // Create skeleton run if none exists yet (SSE arrived before fetch)
     if (!runs.value[id]?.length) {
-      runs.value[id] = [{ ...DEFAULT_STEP_STATUSES, status: WORKFLOW_STATUS.PROCESSING }]
+      runs.value[id] = [{ ...DEFAULT_STEP_STATUSES, status: WORKFLOW_RUN_STATUS.PROCESSING }]
     }
 
     const latest = runs.value[id][0]

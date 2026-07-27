@@ -11,7 +11,7 @@
 //   • no run at all → "No workflow run" badge. Every upload SHOULD get a
 //     workflow_runs row at DB-create time regardless of the Trigger.dev worker,
 //     so this is an anomaly worth surfacing loudly (not a normal "manual" state).
-import { WORKFLOW_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_RUN_STATUS } from '#shared/enums/workflow-run-status.js'
 import { useWorkflowStore } from '~/stores/workflow.store'
 
 const props = defineProps({
@@ -36,7 +36,7 @@ const duration = computed(() =>
   dateUtils.durationBetween(latestRun.value?.createdAt, latestRun.value?.completedAt),
 )
 
-const isCompleted = computed(() => status.value === WORKFLOW_STATUS.COMPLETED)
+const isCompleted = computed(() => status.value === WORKFLOW_RUN_STATUS.COMPLETED)
 
 // The completed→subtle, else→badge exception lives HERE (the caller), not in
 // UiStatusLabel — it renders whatever `type` it's handed.

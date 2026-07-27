@@ -3,14 +3,15 @@
 // the single <UiStatusLabel> component. Shows each `type` + `status` combination so
 // we can SEE what's available and copy the exact call. Driven by the enums so it
 // stays in sync as statuses are added.
-import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_RUN_STATUS } from '#shared/enums/workflow-run-status.js'
+import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-step-status.js'
 
 useHead({
   title: 'Status Styles',
 })
 
 // Run statuses (badge / subtle types), in pipeline order.
-const runStatuses = Object.values(WORKFLOW_STATUS)
+const runStatuses = Object.values(WORKFLOW_RUN_STATUS)
 
 // Step statuses (bubble / step types), in a readable order.
 const stepStatuses = [
@@ -54,7 +55,7 @@ const stepStatuses = [
       <section class="mb-12">
         <h2 class="text-sm font-semibold text-highlighted mb-1">
           Run status
-          <span class="font-mono font-normal text-muted">WORKFLOW_STATUS</span>
+          <span class="font-mono font-normal text-muted">WORKFLOW_RUN_STATUS</span>
         </h2>
         <p class="text-xs text-muted mb-4 max-w-2xl">
           The orchestrator-level status of a whole run. Two types:

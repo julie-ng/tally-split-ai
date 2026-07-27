@@ -1,5 +1,5 @@
 import { task, logger } from '@trigger.dev/sdk/v3'
-import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-step-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { llmUtils } from '#server/utils/llm.utils.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'

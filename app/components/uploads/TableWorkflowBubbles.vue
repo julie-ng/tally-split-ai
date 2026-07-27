@@ -1,6 +1,6 @@
 <script setup>
 import { UPLOAD_STATUS } from '#shared/enums/upload-status.js'
-import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-step-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { useWorkflowStore } from '~/stores/workflow.store'
 

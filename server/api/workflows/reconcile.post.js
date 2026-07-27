@@ -1,6 +1,6 @@
 import { runs } from '@trigger.dev/sdk/v3'
 import { and, eq, inArray, isNotNull, lt } from 'drizzle-orm'
-import { WORKFLOW_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_RUN_STATUS } from '#shared/enums/workflow-run-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { UPLOAD_ANALYSIS_STATUS } from '#shared/enums/upload-analysis-status.js'
 import { mapTriggerStatusToWorkflowStatus } from '#shared/utils/workflow/trigger-status-map.utils.js'
@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
     .innerJoin(schema.uploads, eq(schema.workflowRuns.uploadId, schema.uploads.id))
     .where(and(
       eq(schema.uploads.householdId, householdId),
-      inArray(schema.workflowRuns.status, [WORKFLOW_STATUS.QUEUED, WORKFLOW_STATUS.PROCESSING]),
+      inArray(schema.workflowRuns.status, [WORKFLOW_RUN_STATUS.QUEUED, WORKFLOW_RUN_STATUS.PROCESSING]),
       isNotNull(schema.workflowRuns.triggerRunId),
       lt(schema.workflowRuns.createdAt, staleBefore),
     ))
@@ -71,7 +71,7 @@ export default defineEventHandler(async (event) => {
       continue
     }
 
-    const message = mapped === WORKFLOW_STATUS.EXPIRED
+    const message = mapped === WORKFLOW_RUN_STATUS.EXPIRED
       ? 'Workflow expired before any worker started it (no worker available, or it did not start in time).'
       : `Workflow ended without completing (Trigger status: ${triggerRun.status}).`
 

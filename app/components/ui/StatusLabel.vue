@@ -26,7 +26,7 @@
 // DURATION is a separate concern — see <UiDuration>. Render it as an inline
 // sibling beside this component.
 import {
-  WORKFLOW_STATUS_UI_CONFIG,
+  WORKFLOW_RUN_STATUS_UI_CONFIG,
   WORKFLOW_STEP_STATUS_UI_CONFIG,
 } from '#shared/enums/workflow-status-ui.config.js'
 
@@ -37,7 +37,7 @@ const props = defineProps({
     required: true,
     validator: v => ['badge', 'subtle', 'bubble'].includes(v),
   },
-  // A status enum value — WORKFLOW_STATUS (badge/subtle) or WORKFLOW_STEP_STATUS
+  // A status enum value — WORKFLOW_RUN_STATUS (badge/subtle) or WORKFLOW_STEP_STATUS
   // (bubble). Which enum is inferred from `type`.
   status: {
     type: String,
@@ -60,7 +60,7 @@ const config = computed(() => {
   if (props.type === 'bubble') {
     return WORKFLOW_STEP_STATUS_UI_CONFIG[props.status] ?? null
   }
-  return WORKFLOW_STATUS_UI_CONFIG[props.status]
+  return WORKFLOW_RUN_STATUS_UI_CONFIG[props.status]
     ?? WORKFLOW_STEP_STATUS_UI_CONFIG[props.status]
     ?? null
 })

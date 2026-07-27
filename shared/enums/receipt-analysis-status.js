@@ -3,5 +3,7 @@ export const RECEIPT_ANALYSIS_STATUS = {
   ANALYZED: 'analyzed',
 }
 
-// Array form for Drizzle enum columns and Zod z.enum()
+/*
+ * Generate array variants for Drizzle enums and Zod `enum()` consumers
+ */
 export const RECEIPT_ANALYSIS_STATUSES = /** @type {['unanalyzed', 'analyzed']} */ (Object.values(RECEIPT_ANALYSIS_STATUS))

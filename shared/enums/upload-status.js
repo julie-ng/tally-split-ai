@@ -7,4 +7,7 @@ export const UPLOAD_STATUS = {
   FAILED: 'failed',
 }
 
+/*
+ * Generate array variants for Drizzle enums and Zod `enum()` consumers
+ */
 export const UPLOAD_STATUSES = /** @type {['initialized', 'uploaded', 'failed']} */ (Object.values(UPLOAD_STATUS))

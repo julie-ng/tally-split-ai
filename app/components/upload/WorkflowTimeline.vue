@@ -9,7 +9,7 @@
 // expanded. Per-step visuals live in UploadWorkflowTimelineStep; the expanded
 // body pattern lives in UploadWorkflowTimelineStepContent. Dumb leaf — the page/
 // preview owner warms the stores and maps everything to the `steps` shape.
-import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-step-status.js'
 
 const props = defineProps({
   // Array of step objects the page maps from the workflow store. Shape:
@@ -35,7 +35,7 @@ const props = defineProps({
     type: [String, null],
     default: null,
   },
-  // Run-level status (WORKFLOW_STATUS) — shown as a colored badge, right-aligned.
+  // Run-level status (WORKFLOW_RUN_STATUS) — shown as a colored badge, right-aligned.
   runStatus: {
     type: [String, null],
     default: null,

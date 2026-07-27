@@ -2,7 +2,7 @@ import { useUploadsStore } from '~/stores/uploads.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
 import { useReceiptsStore } from '~/stores/receipts.store'
 import { useExpensesStore } from '~/stores/expenses.store'
-import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-step-status.js'
 
 /**
  * Drives the tabbed upload preview panel (UploadPreviewPanel) on the uploads

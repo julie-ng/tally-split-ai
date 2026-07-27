@@ -1,6 +1,7 @@
 import { tasks } from '@trigger.dev/sdk/v3'
 import { eq } from 'drizzle-orm'
-import { WORKFLOW_STATUS, WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_RUN_STATUS } from '#shared/enums/workflow-run-status.js'
+import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-step-status.js'
 
 /**
  * Manual single-task trigger for OCR (dev/admin use).
@@ -37,7 +38,7 @@ export default defineEventHandler(async (event) => {
     .values({
       uploadId: upload.id,
       householdId: event.context.householdId, // write-once AuthZ scope
-      status: WORKFLOW_STATUS.PROCESSING,
+      status: WORKFLOW_RUN_STATUS.PROCESSING,
       ocrStatus: WORKFLOW_STEP_STATUS.PENDING,
       annotationsStatus: WORKFLOW_STEP_STATUS.PENDING,
       createExpenseStatus: WORKFLOW_STEP_STATUS.PENDING,

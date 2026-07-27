@@ -1,4 +1,4 @@
-import { WORKFLOW_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_RUN_STATUS } from '#shared/enums/workflow-run-status.js'
 
 /**
  * Trigger.dev run statuses that mean the run reached a terminal state WITHOUT
@@ -9,16 +9,16 @@ import { WORKFLOW_STATUS } from '#shared/enums/workflow-status.js'
  * @see https://trigger.dev/docs/runs (run statuses)
  */
 const TRIGGER_TERMINAL_FAILURE = {
-  EXPIRED: WORKFLOW_STATUS.EXPIRED, // never dequeued within TTL — "no worker"
-  TIMED_OUT: WORKFLOW_STATUS.FAILED,
-  CRASHED: WORKFLOW_STATUS.FAILED,
-  SYSTEM_FAILURE: WORKFLOW_STATUS.FAILED,
-  FAILED: WORKFLOW_STATUS.FAILED,
-  CANCELED: WORKFLOW_STATUS.FAILED,
+  EXPIRED: WORKFLOW_RUN_STATUS.EXPIRED, // never dequeued within TTL — "no worker"
+  TIMED_OUT: WORKFLOW_RUN_STATUS.FAILED,
+  CRASHED: WORKFLOW_RUN_STATUS.FAILED,
+  SYSTEM_FAILURE: WORKFLOW_RUN_STATUS.FAILED,
+  FAILED: WORKFLOW_RUN_STATUS.FAILED,
+  CANCELED: WORKFLOW_RUN_STATUS.FAILED,
 }
 
 /**
- * Map a Trigger.dev run status to one of our WORKFLOW_STATUS values, for the
+ * Map a Trigger.dev run status to one of our WORKFLOW_RUN_STATUS values, for the
  * on-load reconcile path.
  *
  * Returns a status ONLY for terminal-failure Trigger states — the cases our
@@ -30,7 +30,7 @@ const TRIGGER_TERMINAL_FAILURE = {
  *    row is a separate (SSE-race) concern, not a failure to surface.
  *
  * @param {string} triggerStatus - Trigger.dev run.status (e.g. 'EXPIRED')
- * @returns {string|null} A WORKFLOW_STATUS value, or null to leave unchanged.
+ * @returns {string|null} A WORKFLOW_RUN_STATUS value, or null to leave unchanged.
  */
 export function mapTriggerStatusToWorkflowStatus (triggerStatus) {
   if (!triggerStatus) {

@@ -4,7 +4,8 @@ import { PAID_BY_MATCHES } from '#shared/enums/paid-by-match.js'
 import { RECEIPT_ANALYSIS_STATUSES } from '#shared/enums/receipt-analysis-status.js'
 import { UPLOAD_ANALYSIS_STATUSES } from '#shared/enums/upload-analysis-status.js'
 import { UPLOAD_STATUSES } from '#shared/enums/upload-status.js'
-import { WORKFLOW_STATUSES, WORKFLOW_STEP_STATUSES } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_RUN_STATUSES } from '#shared/enums/workflow-run-status.js'
+import { WORKFLOW_STEP_STATUSES } from '#shared/enums/workflow-step-status.js'
 import { generateId } from '#shared/utils/generate-id.js'
 
 /**
@@ -190,7 +191,7 @@ export const workflowRuns = pgTable('workflow_runs', {
   triggerRunId: text('trigger_run_id'),
 
   // Overall workflow status
-  status: text('status', { enum: WORKFLOW_STATUSES }).notNull().default('queued'),
+  status: text('status', { enum: WORKFLOW_RUN_STATUSES }).notNull().default('queued'),
 
   // Per-step statuses
   ocrStatus: text('ocr_status', { enum: WORKFLOW_STEP_STATUSES }).notNull().default('pending'),

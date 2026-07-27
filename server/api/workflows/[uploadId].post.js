@@ -1,9 +1,10 @@
 import { tasks } from '@trigger.dev/sdk/v3'
 import { eq, and, inArray } from 'drizzle-orm'
 import { workflowRunInsertSchema } from '#shared/utils/zod-schemas/workflow-run.schema.js'
-import { WORKFLOW_STATUS } from '#shared/enums/workflow-status.js'
+import { WORKFLOW_RUN_STATUS } from '#shared/enums/workflow-run-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { UPLOAD_ANALYSIS_STATUS } from '#shared/enums/upload-analysis-status.js'
+import { UPLOAD_STATUS } from '#shared/enums/upload-status.js'
 import { getTaskActions } from '#shared/config/task-permissions.js'
 import { deriveInitials } from '#shared/utils/initials.utils.js'
 
@@ -53,7 +54,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Upload not found' })
   }
 
-  if (upload.status !== 'uploaded') {
+  if (upload.status !== UPLOAD_STATUS.UPLOADED) {
     throw createError({
       statusCode: 400,
       message: `Upload must be completed before analysis. Current status: ${upload.status}`,
@@ -64,7 +65,7 @@ export default defineEventHandler(async (event) => {
   const existingRun = await db.query.workflowRuns.findFirst({
     where: and(
       eq(schema.workflowRuns.uploadId, upload.id),
-      inArray(schema.workflowRuns.status, [WORKFLOW_STATUS.QUEUED, WORKFLOW_STATUS.PROCESSING]),
+      inArray(schema.workflowRuns.status, [WORKFLOW_RUN_STATUS.QUEUED, WORKFLOW_RUN_STATUS.PROCESSING]),
     ),
   })
 
@@ -140,7 +141,7 @@ export default defineEventHandler(async (event) => {
     await db
       .update(schema.workflowRuns)
       .set({
-        status: WORKFLOW_STATUS.FAILED,
+        status: WORKFLOW_RUN_STATUS.FAILED,
         completedAt: new Date(),
         errors: { [WORKFLOW_STEP.ORCHESTRATOR]: `Failed to enqueue workflow: ${err.message}` },
       })
