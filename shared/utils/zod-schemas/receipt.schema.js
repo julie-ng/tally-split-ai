@@ -37,8 +37,9 @@ export const receiptInputSchema = z.object({
   total: z.number().nullable().optional(),
   currency: z.string().nullable().optional(),
 
-  // Change tracking metadata (not persisted on the receipt itself)
-  llm: z.object({
+  // Provenance for the `changes` ledger row this write produces — NOT persisted
+  // on the receipt itself. Any principal may send it; a human sends nothing.
+  change: z.object({
     sourceVersion: z.string().nullable().optional(),
   }).optional(),
 })

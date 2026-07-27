@@ -107,7 +107,7 @@ export const adjustExpense = task({
         // Slot-based payer: 'user1' | 'user2' | 'mismatched' | null. The endpoint
         // maps slot → userId and sets paidByMatch accordingly.
         paidBySlot: result.paidBy ?? null,
-        llm: {
+        change: {
           confidence: result.confidence,
           reasoning: result.reasoning,
           fieldConfidence,

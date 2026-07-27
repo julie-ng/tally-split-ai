@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const { adjustedTotal, userOneShare, userTwoShare, paidBySlot, needsReview, llm } = result.data
+  const { adjustedTotal, userOneShare, userTwoShare, paidBySlot, needsReview, change } = result.data
 
   // tx is the Drizzle transaction object — same query API as db, but every
   // operation runs in one Postgres transaction (commits on resolve, rolls
@@ -89,10 +89,10 @@ export default defineEventHandler(async (event) => {
       entityId: expenseId,
       entityIdColumn: 'expenseId',
       source: event.context.securityPrincipal,
-      sourceVersion: llm?.sourceVersion ?? null,
-      confidence: llm?.confidence ?? null,
-      reasoning: llm?.reasoning ?? null,
-      fieldConfidence: llm?.fieldConfidence ?? null,
+      sourceVersion: change?.sourceVersion ?? null,
+      confidence: change?.confidence ?? null,
+      reasoning: change?.reasoning ?? null,
+      fieldConfidence: change?.fieldConfidence ?? null,
     }, before, updated)
 
     return updated

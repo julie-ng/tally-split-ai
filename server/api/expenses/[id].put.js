@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Separate LLM metadata from split data
-  const { llm, ...splitData } = result.data
+  const { change, ...splitData } = result.data
 
   const updates = {
     ...splitData,
@@ -79,10 +79,10 @@ export default defineEventHandler(async (event) => {
       entityId: expenseId,
       entityIdColumn: 'expenseId',
       source: event.context.securityPrincipal,
-      sourceVersion: llm?.sourceVersion ?? null,
-      confidence: llm?.confidence ?? null,
-      reasoning: llm?.reasoning ?? null,
-      fieldConfidence: llm?.fieldConfidence ?? null,
+      sourceVersion: change?.sourceVersion ?? null,
+      confidence: change?.confidence ?? null,
+      reasoning: change?.reasoning ?? null,
+      fieldConfidence: change?.fieldConfidence ?? null,
     }, before, updated)
   })
 

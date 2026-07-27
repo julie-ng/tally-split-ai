@@ -192,12 +192,10 @@ export const receiptWorkflow = task({
           if (reason) {
             await api.put(`/api/expenses/${expenseId}`, {
               needsReview: true,
-              // `reasoning` is NOT LLM-only (see schema.ts changes table) —
-              // recording WHY here is what stops the UI having to infer
+              // `reasoning` is NOT LLM-only (see the changes table in schema.ts)
+              // — recording WHY here is what stops the UI having to infer
               // "orchestrator set it, therefore the run was partial".
-              // ⚠️ The `llm:` wrapper is misnamed for a deterministic caller;
-              // rename deferred to the Vercel Workflows migration.
-              llm: { reasoning: reason },
+              change: { reasoning: reason },
             })
             logger.info(`Flagged expense ${expenseId} for review`, { reason })
           }

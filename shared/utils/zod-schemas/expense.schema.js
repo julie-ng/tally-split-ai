@@ -62,8 +62,11 @@ export const expenseUpdateSchema = z.object({
   isSettled: z.boolean().optional(),
   needsReview: z.boolean().optional(),
 
-  // Change tracking metadata (not persisted on the expense itself)
-  llm: z.object({
+  // Provenance for the `changes` ledger row this write produces — NOT persisted
+  // on the expense itself. Any principal may send it: an LLM task fills
+  // confidence/sourceVersion, a deterministic task usually sends only
+  // `reasoning`, and a human sends nothing (all null).
+  change: z.object({
     confidence: z.number().min(0).max(1).nullable().optional(),
     reasoning: z.string().nullable().optional(),
     fieldConfidence: z.record(z.string(), z.number().min(0).max(1)).nullable().optional(),
@@ -90,8 +93,8 @@ export const expenseTaskResolutionSchema = z.object({
   // LLM. Humans write the same field via PUT /api/expenses/[id].
   needsReview: z.boolean().optional(),
 
-  // Change tracking metadata
-  llm: z.object({
+  // Provenance for the `changes` ledger row — see expenseUpdateSchema above.
+  change: z.object({
     confidence: z.number().min(0).max(1).nullable().optional(),
     reasoning: z.string().nullable().optional(),
     fieldConfidence: z.record(z.string(), z.number().min(0).max(1)).nullable().optional(),

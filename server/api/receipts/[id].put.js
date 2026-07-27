@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Separate LLM metadata from receipt data
-  const { llm, ...receiptData } = result.data
+  const { change, ...receiptData } = result.data
 
   const updates = {
     ...receiptData,
@@ -58,7 +58,7 @@ export default defineEventHandler(async (event) => {
       entityId: receiptId,
       entityIdColumn: 'receiptId',
       source: event.context.securityPrincipal,
-      sourceVersion: llm?.sourceVersion ?? null,
+      sourceVersion: change?.sourceVersion ?? null,
     }, before, updated)
   })
 
