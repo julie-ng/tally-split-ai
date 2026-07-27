@@ -3,6 +3,7 @@ import { useLocalStorage } from '@vueuse/core'
 import { useUserStore } from '~/stores/user.store'
 import { fileStripSerializer } from '~/utils/local-storage-serializer.utils'
 import { UPLOAD_QUEUE_STATUS } from '#shared/enums/upload-queue-status.js'
+import { UPLOAD_STATUS } from '#shared/enums/upload-status.js'
 import { uploadBlobToAzure } from '~/utils/azure-upload.utils'
 import { generateThumbnail, uploadThumbnailToAzure } from '~/utils/thumbnail.utils'
 
@@ -199,7 +200,10 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
         body: {
           contentType: upload.file.type || 'application/octet-stream',
           size: upload.file.size,
-          status: 'uploaded',
+          // The DB row's vocabulary (UPLOAD_STATUS), not the queue's — this is
+          // the client telling the server the blob landed. The queue row's own
+          // status is UPLOAD_QUEUE_STATUS.COMPLETED, set by the caller.
+          status: UPLOAD_STATUS.UPLOADED,
           uploadedAt: new Date().toISOString(),
           title: extractReceiptTitle(upload.originalFilename),
         },
