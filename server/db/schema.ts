@@ -228,13 +228,21 @@ export const workflowRuns = pgTable('workflow_runs', {
 
 /**
  * Changes table - tracks who/what made a mutation (one row per operation)
+ *
+ * Three kinds of writer, distinguished by source + sourceVersion:
+ *   human           source 'user:<id>',  sourceVersion null
+ *   LLM task        source 'task:<name>', sourceVersion e.g. 'gpt-4o:2024-11-20'
+ *   deterministic task source 'task:<name>', sourceVersion null
  */
 export const changes = pgTable('changes', {
   id: serial('id').primaryKey(),
   source: text('source').notNull(), // 'user:<userId>' or 'task:<taskName>'
-  sourceVersion: text('source_version'), // e.g. 'gpt-4o:2024-11-20', trigger task version, or null
-  confidence: real('confidence'), // 0-1 score for AI-generated changes, null for human edits
-  reasoning: text('reasoning'), // LLM explanation for AI-generated changes
+  sourceVersion: text('source_version'), // e.g. 'gpt-4o:2024-11-20' for LLM writes; null for humans AND deterministic tasks
+  confidence: real('confidence'), // 0-1 score, LLM writes only; null for humans and deterministic tasks
+  // Why the change was made. Usually an LLM explanation, but NOT LLM-only — a
+  // deterministic task can (and should) record its reason too, e.g. the
+  // orchestrator flagging an expense for review because the run was PARTIAL.
+  reasoning: text('reasoning'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 

@@ -10,9 +10,9 @@ import { diffFields } from '#shared/utils/diff.utils.js'
  * @param {number} opts.entityId - The receipt or split ID
  * @param {string} opts.entityIdColumn - Column name for the FK ('receiptId' or 'expenseId')
  * @param {string} opts.source - Actor identifier, e.g. 'user:<uuid>' or 'task:analyze-ocr'
- * @param {string|null} [opts.sourceVersion] - Version string, e.g. 'gpt-4o:2024-11-20'
- * @param {number|null} [opts.confidence] - 0-1 overall confidence score for AI-generated changes
- * @param {string|null} [opts.reasoning] - LLM explanation for AI-generated changes
+ * @param {string|null} [opts.sourceVersion] - Version string, e.g. 'gpt-4o:2024-11-20'. Null for humans AND deterministic tasks
+ * @param {number|null} [opts.confidence] - 0-1 overall confidence score, LLM writes only
+ * @param {string|null} [opts.reasoning] - Why the change was made. Usually an LLM explanation, but NOT LLM-only — a deterministic task can record its reason too
  * @param {Object<string, number>} [opts.fieldConfidence] - Per-field confidence scores, keyed by field name
  * @param {object} before - Row state before update
  * @param {object} after - Row state after update
