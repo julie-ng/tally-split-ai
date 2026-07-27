@@ -49,10 +49,6 @@ const columns = [
     header: 'Receipt ID',
   },
   {
-    accessorKey: 'analysisStatus',
-    header: 'Status',
-  },
-  {
     accessorKey: 'title',
     header: 'Title',
   },
@@ -209,7 +205,6 @@ const paginationInfo = computed(() => {
           >
             Delete ({{ selectedCount }})
           </UButton>
-          <bulk-analyze-button />
           <UButton
             color="neutral"
             variant="subtle"
@@ -296,16 +291,6 @@ const paginationInfo = computed(() => {
               <div v-else class="text-dimmed text-right">
                 —
               </div>
-            </template>
-
-            <!-- Analysis Status -->
-            <template #analysisStatus-cell="{ row }">
-              <UBadge
-                :color="badgeStyleHelpers.analysisBadgeColor(row.original.analysisStatus)"
-                :variant="badgeStyleHelpers.analysisBadgeVariant(row.original.analysisStatus)"
-              >
-                {{ row.original.analysisStatus }}
-              </UBadge>
             </template>
           </UTable>
 

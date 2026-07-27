@@ -141,6 +141,13 @@
       "when": 1784883927883,
       "tag": "0019_workflow_run_step_timestamps",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1785146656864,
+      "tag": "0020_drop_receipt_analysis_status",
+      "breakpoints": true
     }
   ]
 }

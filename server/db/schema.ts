@@ -1,7 +1,6 @@
 import { pgTable, text, integer, bigint, serial, real, boolean, timestamp, jsonb, uuid, uniqueIndex } from 'drizzle-orm/pg-core'
 import { relations, sql } from 'drizzle-orm'
 import { PAID_BY_MATCHES } from '#shared/enums/paid-by-match.js'
-import { RECEIPT_ANALYSIS_STATUSES } from '#shared/enums/receipt-analysis-status.js'
 import { UPLOAD_ANALYSIS_STATUSES } from '#shared/enums/upload-analysis-status.js'
 import { UPLOAD_STATUSES } from '#shared/enums/upload-status.js'
 import { WORKFLOW_RUN_STATUSES } from '#shared/enums/workflow-run-status.js'
@@ -51,9 +50,6 @@ export const receipts = pgTable('receipts', {
   tip: real('tip'),
   total: real('total'),
   currency: text('currency'),
-
-  // Status tracking
-  analysisStatus: text('analysis_status', { enum: RECEIPT_ANALYSIS_STATUSES }).notNull().default('unanalyzed'),
 
   // Household scope for authZ.
   householdId: text('household_id').notNull().references(() => households.id, { onDelete: 'restrict' }),

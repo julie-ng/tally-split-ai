@@ -72,7 +72,6 @@ export const analyzeOcr = task({
         total: fields.Total?.valueCurrency?.amount || null,
         currency: fields.Total?.valueCurrency?.currencyCode || null,
         tax: fields.TotalTax?.valueCurrency?.amount || null,
-        analysisStatus: 'analyzed',
       })
 
       // 5. Store OCR results on upload (no receiptId — orchestrator handles receipt creation)

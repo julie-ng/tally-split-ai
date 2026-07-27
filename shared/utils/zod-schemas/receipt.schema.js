@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { RECEIPT_ANALYSIS_STATUSES } from '#shared/enums/receipt-analysis-status.js'
 
 /**
  * Receipt Object - Business/finance data extracted from receipt images
@@ -17,7 +16,6 @@ export const receiptSchema = z.object({
   tip: z.number().nullable(),
   total: z.number().nullable(),
   currency: z.string().nullable(),
-  analysisStatus: z.enum(RECEIPT_ANALYSIS_STATUSES),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 })
@@ -38,7 +36,6 @@ export const receiptInputSchema = z.object({
   tip: z.number().nullable().optional(),
   total: z.number().nullable().optional(),
   currency: z.string().nullable().optional(),
-  analysisStatus: z.enum(RECEIPT_ANALYSIS_STATUSES).optional(),
 
   // Change tracking metadata (not persisted on the receipt itself)
   llm: z.object({

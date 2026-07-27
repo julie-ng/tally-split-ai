@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-import { asyncUtils } from '#shared/utils/async.utils.js'
 
 /**
  * Store for managing receipts with map-based caching and freshness tracking
@@ -16,8 +15,6 @@ export const useReceiptsStore = defineStore('receipts', () => {
   const receiptsById = ref({})
   const loading = ref({}) // Per-ID loading: { [id]: boolean, all: boolean }
   const saving = ref({}) // Per-ID saving: { [id]: boolean }
-  const analyzing = ref({}) // Per-ID analyzing: { [id]: boolean }
-  const bulkAnalyzing = ref(false) // True while a bulk analyze operation is in progress
   const errors = ref({}) // Per-ID errors: { [id]: error, all: error }
 
   const CACHE_TTL = 300000 // 5 minutes in milliseconds
@@ -39,24 +36,6 @@ export const useReceiptsStore = defineStore('receipts', () => {
    * Check if a receipt is saving
    */
   const isReceiptSaving = computed(() => id => saving.value[id] || false)
-
-  /**
-   * Check if a receipt is being analyzed
-   */
-  const isReceiptAnalyzing = computed(() => id => analyzing.value[id] || false)
-
-  /**
-   * Check if a receipt has been analyzed
-   */
-  const isReceiptAnalyzed = computed(() => (id) => {
-    const receipt = receiptsById.value[id]?.data
-    return receipt?.analysisStatus === 'analyzed'
-  })
-
-  /**
-   * Get the upload id for a receipt's first upload
-   */
-  const getUploadId = computed(() => id => receiptsById.value[id]?.data?.uploads?.[0]?.id)
 
   /**
    * Get error for a receipt
@@ -313,59 +292,6 @@ export const useReceiptsStore = defineStore('receipts', () => {
   }
 
   /**
-   * Trigger Azure Document Intelligence analysis for a receipt
-   * Fetches uploadId from cached receipt, calls analysis API, then force-refetches receipt
-   * @param {string} id - Receipt id
-   */
-  async function analyzeReceipt (id) {
-    await _ensureReceipt(id)
-    const uploadId = getUploadId.value(id)
-    if (!uploadId) {
-      throw createError({ statusCode: 400, message: 'No upload found for this receipt' })
-    }
-
-    analyzing.value[id] = true
-    errors.value[id] = null
-
-    try {
-      await $fetch(`/api/analysis/ocr/${uploadId}`, { method: 'POST' })
-      await fetchReceiptById(id, true)
-    }
-    catch (err) {
-      errors.value[id] = err
-      throw err
-    }
-    finally {
-      analyzing.value[id] = false
-    }
-  }
-
-  /**
-   * Analyze multiple receipts sequentially with a 100ms delay between each
-   * to stay well under Azure Document Intelligence's 15/sec rate limit.
-   * Does not stop on individual errors — each failure is tracked in errors[id].
-   * @param {number[]} ids - Array of receipt IDs to analyze
-   */
-  async function analyzeBulk (ids, { onEach } = {}) {
-    bulkAnalyzing.value = true
-    try {
-      for (const id of ids) {
-        try {
-          await analyzeReceipt(id)
-          if (onEach) onEach(id, null)
-        }
-        catch (err) {
-          if (onEach) onEach(id, err)
-        }
-        await asyncUtils.sleep(100)
-      }
-    }
-    finally {
-      bulkAnalyzing.value = false
-    }
-  }
-
-  /**
    * Clear error for a specific receipt
    */
   function clearReceiptError (id) {
@@ -410,17 +336,12 @@ export const useReceiptsStore = defineStore('receipts', () => {
     receiptsById,
     loading,
     saving,
-    analyzing,
-    bulkAnalyzing,
     errors,
 
     // Getters
     getReceiptById,
     isReceiptLoading,
     isReceiptSaving,
-    isReceiptAnalyzing,
-    isReceiptAnalyzed,
-    getUploadId,
     getReceiptError,
     allReceipts,
     totalReceipts,
@@ -432,8 +353,6 @@ export const useReceiptsStore = defineStore('receipts', () => {
     fetchReceiptById,
     updateReceipt,
     deleteReceipt,
-    analyzeReceipt,
-    analyzeBulk,
     clearReceiptError,
     invalidateReceipt,
     evictReceipt,

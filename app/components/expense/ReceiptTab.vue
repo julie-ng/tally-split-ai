@@ -1,7 +1,6 @@
 <script setup>
 import { useExpensesStore } from '~/stores/expenses.store'
 import { useReceiptsStore } from '~/stores/receipts.store'
-import { RECEIPT_ANALYSIS_STATUS } from '#shared/enums/receipt-analysis-status.js'
 
 // Receipt tab of the expense preview. Shows the source receipt's key fields plus
 // its upload image. Ownership:
@@ -31,10 +30,6 @@ const receipt = computed(() => receiptId.value
 // Receipt warming is kicked off by useExpensePreview on open; still pending if
 // it's linked but not yet in the store.
 const receiptPending = computed(() => !!receiptId.value && !receipt.value)
-
-const isAnalyzed = computed(() =>
-  receipt.value?.analysisStatus === RECEIPT_ANALYSIS_STATUS.ANALYZED,
-)
 
 // First upload's blob is the receipt image.
 const upload = computed(() => receipt.value?.uploads?.[0])
@@ -70,18 +65,11 @@ function amount (value) {
 
     <!-- Receipt loaded -->
     <div v-else-if="receipt" class="space-y-5">
-      <!-- Title + analysis status -->
+      <!-- Title -->
       <div class="flex items-center justify-between gap-2">
         <h3 class="font-semibold truncate">
           {{ receipt.title || 'Receipt' }}
         </h3>
-        <UBadge
-          :label="isAnalyzed ? 'Analyzed' : 'Unanalyzed'"
-          :color="isAnalyzed ? 'info' : 'neutral'"
-          variant="subtle"
-          size="sm"
-          class="shrink-0"
-        />
       </div>
 
       <!-- Merchant -->

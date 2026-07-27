@@ -8,18 +8,7 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  isAnalyzed: {
-    type: Boolean,
-    required: true,
-  },
-  hasUploads: {
-    type: Boolean,
-    required: false,
-    default: true,
-  },
 })
-
-const canAnalyze = computed(() => props.hasUploads && !props.isAnalyzed)
 </script>
 
 <template>
@@ -31,24 +20,8 @@ const canAnalyze = computed(() => props.hasUploads && !props.isAnalyzed)
       <template v-else>
         {{ `Receipt ${id}` }}
       </template>
-      <UBadge
-        v-if="isAnalyzed"
-        icon="i-lucide-focus"
-        color="info"
-        variant="outline"
-        size="lg"
-        class="ml-2"
-      >
-        Analyzed
-      </UBadge>
     </h1>
     <div class="flex items-center gap-2">
-      <!-- TODO: show disabled status for button if already analyzed -->
-      <receipt-analyze-button
-        v-if="!isAnalyzed"
-        :id="props.id"
-        :can-analyze="canAnalyze"
-      />
       <UButton
         :to="`/receipts/${props.id}/edit`"
         icon="i-lucide-pencil"
