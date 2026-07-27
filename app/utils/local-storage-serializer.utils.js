@@ -1,3 +1,5 @@
+import { UPLOAD_QUEUE_STATUS } from '#shared/enums/upload-queue-status.js'
+
 /**
  * Custom serializer for useLocalStorage that strips File objects.
  *
@@ -27,7 +29,7 @@ export const fileStripSerializer = {
   },
   write: (v) => {
     const persistable = v.filter(item =>
-      item.status === 'queued' || item.status === 'interrupted',
+      item.status === UPLOAD_QUEUE_STATUS.QUEUED || item.status === UPLOAD_QUEUE_STATUS.INTERRUPTED,
     )
     const serializable = persistable.map((item) => {
       /* eslint-disable-next-line no-unused-vars */

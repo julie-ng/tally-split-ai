@@ -26,7 +26,7 @@ export function useUploadRowActions () {
       && !workflowStore.isProcessingById(upload.id)
   }
 
-  // Queue rows (status === 'queued' | 'in-progress' | 'failed' | 'interrupted')
+  // Queue rows (any UPLOAD_QUEUE_STATUS value)
   // have no DB record yet — DELETE /api/uploads/:id would 404.
   function isQueueRow (upload) {
     return upload.status !== UPLOAD_STATUS.UPLOADED

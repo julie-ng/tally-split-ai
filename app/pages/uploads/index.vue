@@ -1,4 +1,5 @@
 <script setup>
+import { UPLOAD_QUEUE_STATUS } from '#shared/enums/upload-queue-status.js'
 import { useUploadsStore } from '~/stores/uploads.store'
 import { useUploadQueueStore } from '~/stores/upload-queue.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
@@ -38,7 +39,7 @@ const { uploads: queueUploads } = storeToRefs(uploadQueueStore)
 // so id collisions with DB rows shouldn't happen by design.
 const inFlightQueueRows = computed(() =>
   queueUploads.value
-    .filter(q => q.status !== 'completed')
+    .filter(q => q.status !== UPLOAD_QUEUE_STATUS.COMPLETED)
     .map(q => ({
       id: q.id,
       originalFilename: q.originalFilename,
@@ -58,11 +59,10 @@ const mergedUploads = computed(() => {
     merged.set(dbRow.id, dbRow)
   }
 
-  // Queue's status ('queued'/'in-progress'/'failed'/'interrupted') is more
-  // current than DB's coarse 'initialized'/'uploaded'/'failed', so it wins
-  // on the status field while the queue row exists. A queue row without a
-  // matching DB row gets used as-is (brief window between drop and
-  // /api/blobs/new returning).
+  // The queue row's UPLOAD_QUEUE_STATUS is more current than the DB row's
+  // coarser UPLOAD_STATUS, so it wins on the status field while the queue row
+  // exists. A queue row without a matching DB row gets used as-is (brief window
+  // between drop and /api/blobs/new returning).
   for (const queueRow of inFlightQueueRows.value) {
     const existing = merged.get(queueRow.id)
     if (existing) {

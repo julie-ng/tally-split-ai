@@ -2,7 +2,6 @@ import { useUploadsStore } from '~/stores/uploads.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
 import { useReceiptsStore } from '~/stores/receipts.store'
 import { useExpensesStore } from '~/stores/expenses.store'
-import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-step-status.js'
 
 /**
  * Drives the tabbed upload preview panel (UploadPreviewPanel) on the uploads
@@ -144,19 +143,6 @@ export function useUploadPreview (uploads) {
     { key: 'createExpense', stepKey: 'createExpense', label: 'Create expense', description: 'Expense from receipt total' },
     { key: 'adjustExpense', stepKey: 'adjustExpense', label: 'Adjust expense', description: 'Asymmetric split from annotations' },
   ]
-
-  // Upload-row status → step status for the first circle (mirrors the inline
-  // row-cell's uploadStepStatus in uploads/TableWorkflowBubbles.vue). Accepts DB
-  // UPLOAD_STATUS values and queue-side strings.
-  function uploadStepStatus (status) {
-    switch (status) {
-      case 'uploaded': return WORKFLOW_STEP_STATUS.COMPLETED
-      case 'in-progress': return WORKFLOW_STEP_STATUS.PROCESSING
-      case 'failed':
-      case 'interrupted': return WORKFLOW_STEP_STATUS.FAILED
-      default: return WORKFLOW_STEP_STATUS.PENDING
-    }
-  }
 
   // Detail rows + summary for a given step, from the warmed stores. Returns
   // { details?, summary? } — a step with no data returns {} and renders

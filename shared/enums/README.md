@@ -31,31 +31,46 @@ Each enum file exports:
 
 Several enums share values (`failed`, `completed`) while describing completely different subjects - which is a **coincidental overlap of vocabulary**.
 
+- Translating between two vocabularies is an explicit, named, tested function, e.g. [`app/utils/upload-step-status.utils.js`](../../app/utils/upload-step-status.utils.js).
+- Never an inline `switch` copy-pasted per component. Two such copies existed and drifted — one handled a case the other didn't.
+
 To help keep them straight, 4 types of enums have been identified:
 
 ### Type 1 - Lifecycle Status
 
-_**Where** is this in its lifecycle?_
+_**Where** is the resource in its lifecycle?_
 
 Moves over time. Has a start state, transitions, and usually terminal states.
 
-| File | Subject |
-|:--|:--|
-| `workflow-run-status.js` | one orchestration run, as a whole |
-| `workflow-step-status.js` | one step within a run |
-| `upload-status.js` | the persisted blob row |
-| `upload-analysis-status.js` | rollup of the run status onto the upload |
+#### Applicable resources
+
+- workflow runs 
+- workflow steps
+- uploads
+
+
+| File | Subject | Persistence |
+|:--|:--|:--|
+| `workflow-run-status.js` | one orchestration run, as a whole | ✅ DB |
+| `workflow-step-status.js` | one step within a run | ✅ DB |
+| `upload-status.js` | the persisted blob row | ✅ DB |
+| `upload-analysis-status.js` | rollup of the run status onto the upload | ✅ DB |
+| `upload-queue-status.js` | the browser's transfer job | ❌ Browser-only |
 
 - A run is an **aggregate** over steps.
 - A `partial` run means some steps failed (not skipped), e.g. annotations or payer assignment. But receipt and expense were created, so the pipeline continues.
 - Steps can be `skipped`. They are deliberately separate enums, not one superset.
+- The browser uploads directly to Azure via SAS URLs, so the transfer lifecycle never reaches Postgres. Only a finished upload produces a DB write.
+
+> [!WARNING]
+> `UPLOAD_QUEUE_STATUS` values are **frozen**. They are persisted in localStorage, so renaming one breaks restore for uploads that were in flight when the tab closed.
 
 ### Type 2 - Classification 
 
 _**What** kind of result was this?_
 
 - Stamped **once** and frozen. 
-- Records an outcome, not aposition in a lifecycle.
+- Records an outcome, not a position in a lifecycle.
 
 | File | Subject |
 |:--|:--|
@@ -76,7 +91,7 @@ _**Which** one of a fixed set?_
 | `workflow-step.js` | which pipeline step (`ocr`, `annotations`, …) |
 
 > [!WARNING]
-> For `WORKFLOW_STEP`, the column names, e.g. `create_expense_status` are dervied from **values**, e.g. `createExpense`, not the keys, e.g. `EXPENSE`.
+> For `WORKFLOW_STEP`, the column names, e.g. `create_expense_status` are derived from **values**, e.g. `createExpense`, not the keys, e.g. `EXPENSE`.
 
 ### Type 4 - UI config
 

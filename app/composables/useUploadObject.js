@@ -1,3 +1,4 @@
+import { UPLOAD_QUEUE_STATUS } from '#shared/enums/upload-queue-status.js'
 import { useUserStore } from '~/stores/user.store'
 
 /**
@@ -10,7 +11,7 @@ import { useUserStore } from '~/stores/user.store'
  * @property {number} size - File size in bytes
  * @property {string} blobUrl - Azure blob URL
  * @property {UploadDetails} upload - Upload details
- * @property {'queued'|'in-progress'|'completed'|'failed'} status - Upload status
+ * @property {string} status - An UPLOAD_QUEUE_STATUS value (client-only; see shared/enums/upload-queue-status.js)
  * @property {Date} queuedAt - When upload was queued
  * @property {Array<string>} errors - Array of error messages
  * @property {File} file - The actual file object
@@ -26,7 +27,7 @@ export function useUploadObject () {
   const userStore = useUserStore()
 
   /**
-   * Create a standardized upload object with 'queued' status
+   * Create a standardized upload object with QUEUED status
    *
    * @param {File} file - The file to upload
    * @param {Object} blobResult - Result from /api/blobs/new endpoint
@@ -35,7 +36,7 @@ export function useUploadObject () {
    * @param {string} blobResult.blob.path - Azure blob path
    * @param {string} blobResult.blob.url - Blob URL (no SAS token)
    * @param {string} blobResult.id - Upload id from server
-   * @returns {Promise<UploadObject>} Standardized upload object with 'queued' status
+   * @returns {Promise<UploadObject>} Standardized upload object with QUEUED status
    */
   async function createUploadObject (file, blobResult) {
     return {
@@ -50,7 +51,7 @@ export function useUploadObject () {
         progress: 0,
         retries: 0,
       },
-      status: 'queued',
+      status: UPLOAD_QUEUE_STATUS.QUEUED,
       queuedAt: new Date(),
       errors: [],
       file,

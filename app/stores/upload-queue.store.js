@@ -2,6 +2,7 @@ import { defineStore, skipHydrate } from 'pinia'
 import { useLocalStorage } from '@vueuse/core'
 import { useUserStore } from '~/stores/user.store'
 import { fileStripSerializer } from '~/utils/local-storage-serializer.utils'
+import { UPLOAD_QUEUE_STATUS } from '#shared/enums/upload-queue-status.js'
 import { uploadBlobToAzure } from '~/utils/azure-upload.utils'
 import { generateThumbnail, uploadThumbnailToAzure } from '~/utils/thumbnail.utils'
 
@@ -35,11 +36,11 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
   const byStatus = computed(() => {
     const groups = { queued: [], inProgress: [], completed: [], failed: [], interrupted: [] }
     uploads.value.forEach((upload) => {
-      if (upload.status === 'queued') groups.queued.push(upload)
-      else if (upload.status === 'in-progress') groups.inProgress.push(upload)
-      else if (upload.status === 'completed') groups.completed.push(upload)
-      else if (upload.status === 'failed') groups.failed.push(upload)
-      else if (upload.status === 'interrupted') groups.interrupted.push(upload)
+      if (upload.status === UPLOAD_QUEUE_STATUS.QUEUED) groups.queued.push(upload)
+      else if (upload.status === UPLOAD_QUEUE_STATUS.IN_PROGRESS) groups.inProgress.push(upload)
+      else if (upload.status === UPLOAD_QUEUE_STATUS.COMPLETED) groups.completed.push(upload)
+      else if (upload.status === UPLOAD_QUEUE_STATUS.FAILED) groups.failed.push(upload)
+      else if (upload.status === UPLOAD_QUEUE_STATUS.INTERRUPTED) groups.interrupted.push(upload)
     })
     return groups
   })
@@ -159,7 +160,7 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
   function returnToQueue (id) {
     const index = uploads.value.findIndex(u => u.id === id)
     if (index !== -1) {
-      uploads.value[index].status = 'queued'
+      uploads.value[index].status = UPLOAD_QUEUE_STATUS.QUEUED
     }
     else {
       console.error(`Cannot find ${id}.`)
@@ -167,18 +168,18 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
   }
 
   /**
-   * Remove all uploads with 'queued' status from the queue
+   * Remove all QUEUED uploads from the queue
    */
   function emptyQueue () {
     console.log('🍍 [Empty Queue]')
-    uploads.value = uploads.value.filter(u => u.status !== 'queued')
+    uploads.value = uploads.value.filter(u => u.status !== UPLOAD_QUEUE_STATUS.QUEUED)
   }
 
   /**
    * Remove all completed uploads from the queue
    */
   function clearCompleted () {
-    uploads.value = uploads.value.filter(u => u.status !== 'completed')
+    uploads.value = uploads.value.filter(u => u.status !== UPLOAD_QUEUE_STATUS.COMPLETED)
   }
 
   /**
@@ -249,7 +250,7 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
 
       const u = findUpload()
       if (u) {
-        u.status = 'completed'
+        u.status = UPLOAD_QUEUE_STATUS.COMPLETED
         u.upload.progress = 100
         console.log(`🍍 [Uploaded] (${id}) ${u.originalFilename}`)
         await updateUploadRecord(u)
@@ -261,7 +262,7 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
     catch (error) {
       const u = findUpload()
       if (u) {
-        u.status = 'failed'
+        u.status = UPLOAD_QUEUE_STATUS.FAILED
         u.errors.push(error.message)
         console.error(`🍍 [Failed:inner] (${id}) ${u.originalFilename}:`, error.message)
       }
@@ -274,8 +275,8 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
    *
    * Concurrency model:
    *  - `claimedIds` (module Set) blocks parallel callers for the same id.
-   *  - The synchronous status flip from 'queued' → 'in-progress' is the primary
-   *    guard: a second `startUpload(sameId)` observes 'in-progress' and bails.
+   *  - The synchronous status flip QUEUED → IN_PROGRESS is the primary
+   *    guard: a second `startUpload(sameId)` observes IN_PROGRESS and bails.
    *
    * @param {string} id - The unique hash identifier for the upload
    * @returns {Promise<boolean>} True if upload started and succeeded, false otherwise
@@ -295,10 +296,10 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
 
       const upload = uploads.value[index]
 
-      // Atomic claim: only the caller that observes status === 'queued' here
+      // Atomic claim: only the caller that observes QUEUED here
       // proceeds. Synchronous in single-threaded JS, so a second concurrent
       // caller sees the flipped status below and returns false.
-      if (upload.status !== 'queued') {
+      if (upload.status !== UPLOAD_QUEUE_STATUS.QUEUED) {
         return false
       }
 
@@ -307,7 +308,7 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
         return false
       }
 
-      uploads.value[index].status = 'in-progress'
+      uploads.value[index].status = UPLOAD_QUEUE_STATUS.IN_PROGRESS
 
       // Generate and upload thumbnail in the background (don't block main upload)
       const uploadObj = uploads.value[index]
@@ -345,9 +346,9 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
 
     uploads.value[index].upload.retries += 1
     uploads.value[index].upload.progress = 0
-    // startUpload's atomic claim only runs on 'queued' status, so we reset it
+    // startUpload's atomic claim only runs on QUEUED, so we reset it
     // here. Failed/interrupted retries enter the same path as a fresh upload.
-    uploads.value[index].status = 'queued'
+    uploads.value[index].status = UPLOAD_QUEUE_STATUS.QUEUED
 
     console.log(`🔄 Retrying upload (${id}), attempt #${uploads.value[index].upload.retries}`)
 
@@ -417,8 +418,8 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
    */
   function markInterrupted () {
     uploads.value.forEach((upload) => {
-      if (upload.status === 'queued' || upload.status === 'in-progress') {
-        upload.status = 'interrupted'
+      if (upload.status === UPLOAD_QUEUE_STATUS.QUEUED || upload.status === UPLOAD_QUEUE_STATUS.IN_PROGRESS) {
+        upload.status = UPLOAD_QUEUE_STATUS.INTERRUPTED
       }
     })
   }
