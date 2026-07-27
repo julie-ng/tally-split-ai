@@ -556,6 +556,83 @@ export const useExpensesStore = defineStore('expenses', () => {
   }
 
   /**
+   * Batch set/clear the review flag. Mirrors _setSettled: optimistic flip,
+   * then reconcile against the server-confirmed rows.
+   *
+   * Unlike settling there are no eligibility rules — any expense can be flagged
+   * or cleared, either direction. Rows already at the target value are filtered
+   * out server-side, so they come back unconfirmed and roll back to the value
+   * they already had (a no-op).
+   *
+   * @param {string[]} ids
+   * @param {boolean} needsReview - target value
+   * @private
+   */
+  async function _setNeedsReview (ids, needsReview) {
+    _log(`[ExpensesStore] _setNeedsReview(${ids.length} ids, needsReview=${needsReview})`)
+
+    if (ids.length === 0) {
+      return { success: true, updatedCount: 0, updatedIds: [] }
+    }
+
+    const originals = {}
+    for (const id of ids) {
+      if (expenses.value[id]) {
+        originals[id] = { ...expenses.value[id] }
+      }
+    }
+
+    for (const id of ids) {
+      if (expenses.value[id]) {
+        expenses.value[id] = { ...expenses.value[id], needsReview }
+      }
+    }
+
+    try {
+      const result = await $fetch('/api/expenses', {
+        method: 'PATCH',
+        body: { ids, patch: { needsReview } },
+      })
+      _log(`[ExpensesStore] ✅ updated ${result.updatedCount}/${ids.length} expenses (needsReview=${needsReview})`)
+
+      const confirmed = new Set(result.updatedIds ?? [])
+      for (const row of result.updated ?? []) {
+        expenses.value[row.id] = { ...expenses.value[row.id], ...row }
+      }
+      for (const id of ids) {
+        if (!confirmed.has(id) && originals[id]) {
+          expenses.value[id] = originals[id]
+        }
+      }
+
+      return result
+    }
+    catch (err) {
+      for (const id in originals) {
+        expenses.value[id] = originals[id]
+      }
+      console.error('[ExpensesStore] ❌ failed to batch update review flag:', err)
+      throw err
+    }
+  }
+
+  /**
+   * Flag expenses for human review.
+   * @param {string[]} ids
+   */
+  function markNeedsReview (ids) {
+    return _setNeedsReview(ids, true)
+  }
+
+  /**
+   * Clear the review flag — "looked at it, it's fine".
+   * @param {string[]} ids
+   */
+  function markReviewed (ids) {
+    return _setNeedsReview(ids, false)
+  }
+
+  /**
    * Batch delete a list of expenses. Server silently drops IDs the caller
    * doesn't own. Optimistically removes from the cache, reconciles against the
    * server-confirmed deletedIds, and restores anything that wasn't deleted.
@@ -661,6 +738,8 @@ export const useExpensesStore = defineStore('expenses', () => {
     clearExpenseError,
     markSettled,
     markUnsettled,
+    markNeedsReview,
+    markReviewed,
     batchDelete,
   }
 })

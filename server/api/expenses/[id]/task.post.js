@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const { adjustedTotal, userOneShare, userTwoShare, paidBySlot, llm } = result.data
+  const { adjustedTotal, userOneShare, userTwoShare, paidBySlot, needsReview, llm } = result.data
 
   // tx is the Drizzle transaction object — same query API as db, but every
   // operation runs in one Postgres transaction (commits on resolve, rolls
@@ -74,6 +74,9 @@ export default defineEventHandler(async (event) => {
     }
     if (userOneShare !== undefined) updates.userOneShare = userOneShare
     if (userTwoShare !== undefined) updates.userTwoShare = userTwoShare
+    // Written by the deterministic review step. A human can flip the same field
+    // via PUT — last write wins, and `changes` records who did which.
+    if (needsReview !== undefined) updates.needsReview = needsReview
 
     const [updated] = await tx
       .update(schema.expenses)

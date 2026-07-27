@@ -15,7 +15,11 @@ export const VALID_RESOURCES = ['upload', 'receipt', 'expense', 'workflow', 'tok
 export const VALID_PERMISSIONS = ['read', 'write', 'delete']
 
 export const TASK_PERMISSIONS = {
-  'receipt-workflow': ['receipt:read', 'receipt:write', 'upload:read', 'upload:write', 'workflow:read', 'workflow:write'],
+  // expense:write — the orchestrator's own deterministic review step sets
+  // expenses.needsReview after the run finishes (see _reviewReason in
+  // trigger/receipt-workflow.js). Creating/adjusting expenses stays delegated to
+  // the create-expense / adjust-expense children.
+  'receipt-workflow': ['receipt:read', 'receipt:write', 'upload:read', 'upload:write', 'expense:write', 'workflow:read', 'workflow:write'],
   'analyze-ocr': ['upload:read', 'upload:write', 'workflow:read', 'workflow:write', 'token:read'],
   'analyze-annotations': ['upload:read', 'upload:write', 'workflow:read', 'workflow:write', 'token:read'],
   'create-expense': ['receipt:read', 'receipt:write', 'expense:write', 'upload:read', 'workflow:read', 'workflow:write'],

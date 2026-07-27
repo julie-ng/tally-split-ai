@@ -12,6 +12,44 @@ import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
 
 const TASK_ID = 'receipt-workflow'
 
+// Confidence below which an expense is flagged for human review. Not wired up
+// yet — see the TODO in _reviewReason() for what it's waiting on.
+//
+// ⚠️ A FIFTH copy of the 0.8/0.5 confidence buckets. The others live in
+// dashboard/metrics.get.js (raw SQL), expense/LLMAnalysis.vue (twice),
+// dashboard/confidence-graph.vue (label strings) and pages/dashboard.vue
+// (prose). They all agree today; centralise them in shared/utils/ when one of
+// them next needs to move, and import it here rather than adding a sixth.
+// eslint-disable-next-line no-unused-vars
+const REVIEW_CONFIDENCE_THRESHOLD = 0.5
+
+/**
+ * Decide whether a finished run should flag its expense for human attention,
+ * and say WHY. Deterministic — no LLM.
+ *
+ * Returns the reason string (recorded in `changes.reasoning`), or null to leave
+ * the flag alone. Note it never CLEARS the flag: only a human does that.
+ *
+ * @param {object} state
+ * @param {boolean} state.hasStepErrors - a non-fatal step failed → run is PARTIAL
+ * @returns {string|null}
+ */
+function _reviewReason ({ hasStepErrors }) {
+  // A PARTIAL run is a PIPELINE fact, not a data-quality one — the expense may
+  // well be fine. It's included because a degraded run is worth a human glance,
+  // and the reason text lets the user tell it apart from a data-quality flag.
+  if (hasStepErrors) {
+    return 'Pipeline finished with errors — some steps did not complete, so the expense may be incomplete.'
+  }
+
+  // TODO: extend with the data-quality signals once they're cheap to read here:
+  //   • paidByMatch ∈ {mismatched, missing} — on the expense row already
+  //   • LLM confidence < REVIEW_CONFIDENCE_THRESHOLD — two joins away via
+  //     expense_history → changes, so it needs either a fetch or denormalising
+  //     the confidence onto the expense row.
+  return null
+}
+
 export const receiptWorkflow = task({
   id: TASK_ID,
   maxDuration: 600,
@@ -143,6 +181,30 @@ export const receiptWorkflow = task({
           adjustExpenseStatus: WORKFLOW_STEP_STATUS.SKIPPED,
         })
         logger.info('Adjust-split skipped — household has not consented to LLM analysis')
+      }
+
+      // Step 6: Review flag — DETERMINISTIC, no LLM. Runs last so it can see the
+      // final state of the whole run. Non-fatal: a failure here must not fail an
+      // otherwise-good run, so it's caught locally rather than thrown.
+      if (expenseId) {
+        try {
+          const reason = _reviewReason({ hasStepErrors })
+          if (reason) {
+            await api.put(`/api/expenses/${expenseId}`, {
+              needsReview: true,
+              // `reasoning` is NOT LLM-only (see schema.ts changes table) —
+              // recording WHY here is what stops the UI having to infer
+              // "orchestrator set it, therefore the run was partial".
+              // ⚠️ The `llm:` wrapper is misnamed for a deterministic caller;
+              // rename deferred to the Vercel Workflows migration.
+              llm: { reasoning: reason },
+            })
+            logger.info(`Flagged expense ${expenseId} for review`, { reason })
+          }
+        }
+        catch (err) {
+          logger.warn(`Could not set review flag for ${expenseId}`, { error: err.message })
+        }
       }
     }
     catch (err) {

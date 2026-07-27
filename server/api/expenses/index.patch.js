@@ -4,16 +4,26 @@ import { z } from 'zod'
  * Batch-patch expenses in the caller's household.
  *
  * Collection-level PATCH: { ids, patch }. `patch` is an allow-list — only the
- * fields named in the schema can be batch-updated. Today that is `isSettled`
- * (batch settle / unsettle). The actual mutation, eligibility rules, and
- * side effects live in server/utils/expenses (expensesUtils.setSettled); this
- * handler only validates, routes by the patched field, and shapes the response.
+ * fields named in the schema can be batch-updated:
+ *   - isSettled   → batch settle / unsettle
+ *   - needsReview → batch flag / clear the review flag
+ *
+ * Exactly ONE field per request: each routes to a different op with its own
+ * eligibility rules and side effects, so mixing them would make the response
+ * shape ("what was updated, and why not the rest") ambiguous.
+ *
+ * The actual mutations live in server/utils/expenses; this handler only
+ * validates, routes by the patched field, and shapes the response.
  */
 const batchPatchSchema = z.object({
   ids: z.array(z.string()).min(1).max(500),
   patch: z.object({
-    isSettled: z.boolean(),
-  }),
+    isSettled: z.boolean().optional(),
+    needsReview: z.boolean().optional(),
+  }).refine(
+    p => Object.values(p).filter(v => v !== undefined).length === 1,
+    { message: 'Patch exactly one field per request (isSettled or needsReview)' },
+  ),
 })
 
 export default defineEventHandler(async (event) => {
@@ -34,21 +44,28 @@ export default defineEventHandler(async (event) => {
 
   const { ids, patch } = result.data
 
-  try {
-    const updated = await expensesUtils.setSettled(db, {
-      householdId,
-      ids,
-      isSettled: patch.isSettled,
-      principal: event.context.securityPrincipal,
-    })
+  const principal = event.context.securityPrincipal
 
-    const verb = patch.isSettled ? 'settled' : 'unsettled'
+  // Route by which field was patched. Each op owns its own eligibility rules;
+  // `verb` is only for logging + the response message.
+  const isSettlePatch = patch.isSettled !== undefined
+  const run = isSettlePatch
+    ? () => expensesUtils.setSettled(db, { householdId, ids, isSettled: patch.isSettled, principal })
+    : () => expensesUtils.setNeedsReview(db, { householdId, ids, needsReview: patch.needsReview, principal })
+
+  const verb = isSettlePatch
+    ? (patch.isSettled ? 'settled' : 'unsettled')
+    : (patch.needsReview ? 'flagged for review' : 'cleared for review')
+
+  try {
+    const updated = await run()
+
     const updatedIds = updated.map(r => r.id)
     log.info(
       {
         requested: ids.length,
         updated: updated.length,
-        isSettled: patch.isSettled,
+        patch,
         requestedIds: ids,
         updatedIds,
       },
@@ -67,7 +84,7 @@ export default defineEventHandler(async (event) => {
     log.error(
       {
         requested: ids.length,
-        isSettled: patch.isSettled,
+        patch,
         err,
       },
       'Failed to batch patch expenses',

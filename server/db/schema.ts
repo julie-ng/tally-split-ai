@@ -149,6 +149,25 @@ export const expenses = pgTable('expenses', {
   isSettled: boolean('is_settled').notNull().default(false),
   settledAt: timestamp('settled_at'),
 
+  // Flagged for human attention. Written by BOTH principals — that's the point:
+  //   • the system (deterministic review step) raises it for low LLM confidence,
+  //     an unmatched payer, or a PARTIAL run
+  //   • a human clears it ("looked, it's fine") AND can raise it ("this is
+  //     wrong, I'll come back to it")
+  //
+  // Deliberately NOT derived: reviewing is unobservable (browsing a row isn't
+  // reviewing it), and a user-raised flag on an expense the pipeline was
+  // confident about can't be computed from any signal.
+  //
+  // One column, not two. `is_reviewed` alongside this would be two columns
+  // describing one situation — they can disagree, which is the same drift trap
+  // as uploads.analysis_status vs workflow_runs.status. There's no reviewedAt
+  // either: who/when/why already live in `changes` + `expense_history`.
+  //
+  // Known gap (accepted): once cleared, "reviewed and fine" is indistinguishable
+  // from "never flagged" — both read false.
+  needsReview: boolean('needs_review').notNull().default(false),
+
   notes: text('notes'),
 
   // Timestamps

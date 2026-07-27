@@ -17,6 +17,7 @@ export const expenseSchema = z.object({
   paidByUserId: z.string().nullable(),
   paidByMatch: z.enum(PAID_BY_MATCHES),
   isSettled: z.boolean(),
+  needsReview: z.boolean(),
   settledAt: z.string().nullable(),
   notes: z.string().nullable(),
   createdAt: z.iso.datetime(),
@@ -44,6 +45,11 @@ export const expenseRequestSchema = z.object({
  * Expense Update Schema - for partial updates from humans (and from tasks for
  * non-paidBy fields). The paidByUserId / paidByMatch fields are intentionally
  * excluded — paidBy resolution flows through POST /api/expenses/[id]/task.
+ *
+ * `needsReview` IS accepted here, unlike paidByMatch: a human both clears the
+ * flag ("looked, it's fine") and raises it ("this is wrong, fix later"). The
+ * system writes the same field via the task endpoint — two principals, one
+ * column, deliberately.
  */
 export const expenseUpdateSchema = z.object({
   title: z.string().optional(),
@@ -54,6 +60,7 @@ export const expenseUpdateSchema = z.object({
   paidByUserId: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
   isSettled: z.boolean().optional(),
+  needsReview: z.boolean().optional(),
 
   // Change tracking metadata (not persisted on the expense itself)
   llm: z.object({
@@ -78,6 +85,10 @@ export const expenseTaskResolutionSchema = z.object({
   // Payer as a household slot. 'mismatched' = LLM found initials but they map to
   // no member; null = no payer signal.
   paidBySlot: z.enum(['user1', 'user2', 'mismatched']).nullable().optional(),
+
+  // Flag for human attention. Sent by the DETERMINISTIC review step, not the
+  // LLM. Humans write the same field via PUT /api/expenses/[id].
+  needsReview: z.boolean().optional(),
 
   // Change tracking metadata
   llm: z.object({
