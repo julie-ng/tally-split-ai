@@ -15,11 +15,34 @@ import { useWorkflowStore } from '~/stores/workflow.store'
  * ES256 JWT from /api/realtime/token and hands it to Supabase via setAuth. Household
  * scoping is enforced by RLS on workflow_runs (migration 0018): Supabase only
  * forwards rows for the user's own household, so there is no client-side filter.
+ *
+ * TWO TRANSPORTS, deliberately:
+ *
+ *  1. `postgres_changes` on workflow_runs — the original, still the only user of
+ *     handleRowChange(). Streams whole row images.
+ *  2. `broadcast` via subscribe() — payloads built by a Postgres trigger, so they
+ *     carry only the columns we choose. All NEW subscribed content uses this.
+ *
+ * They coexist indefinitely; moving workflow_runs across is optional and currently
+ * unjustified (see notes/2026-07-26-realtime-data-flow-analysis.md §5 Phase 4).
+ *
+ * DEPENDENCY DIRECTION — this store must eventually import NO other store. The
+ * three imports above serve handleRowChange() (the postgres_changes path) only.
+ * subscribe() is deliberately generic: content stores call it and own their own
+ * ingest, so the arrow points store → realtime, never the reverse. Do not add
+ * store imports for broadcast topics. See §4.4.
  */
 export const useRealtimeStore = defineStore('realtime', () => {
   const client = ref(null)
   const channel = ref(null)
   const isConnected = ref(false)
+  // Broadcast channels opened via subscribe(), keyed by topic. Separate from the
+  // `channel` ref above, which is the single postgres_changes channel.
+  //
+  // Kept so disconnect() can tear them ALL down: the SDK holds channels on the
+  // client, so removing only the workflow-runs one would leave content channels
+  // live across a logout and into the next user's session.
+  const broadcastChannels = new Map()
   let refreshTimer = null
   // Unix seconds when the current token expires. Used to decide, on tab-visible,
   // whether the token went stale while the tab was backgrounded (the refresh
@@ -121,7 +144,89 @@ export const useRealtimeStore = defineStore('realtime', () => {
       client.value.removeChannel(channel.value)
     }
     channel.value = null
+
+    if (client.value) {
+      for (const broadcastChannel of broadcastChannels.values()) {
+        client.value.removeChannel(broadcastChannel)
+      }
+    }
+    broadcastChannels.clear()
+
     isConnected.value = false
+  }
+
+  /**
+   * Subscribe to a Broadcast topic. The generic primitive Phase 1+ is built on.
+   *
+   * Content stores call this with their own topic and their own ingest function;
+   * this store never learns what a receipt or an expense is. Because each store
+   * subscribes to its own topic, the subscription IS the routing — there is no
+   * dispatcher and no event-name switch.
+   *
+   *   // in receipts.store.js
+   *   const unsubscribe = useRealtimeStore().subscribe(
+   *     `household:${householdId}:receipts`,
+   *     ingestReceipt,
+   *   )
+   *
+   * Requires connect() to have run first — it establishes the client and calls
+   * setAuth(), which Realtime Authorization needs before a private channel can be
+   * joined. Returns a no-op unsubscribe if the client isn't configured, so callers
+   * never need a null check.
+   *
+   * Listens for '*' rather than a named event: our triggers pass TG_OP, so the
+   * event is INSERT / UPDATE / DELETE. Ingests upsert by id and don't care which
+   * (a row can arrive as an INSERT the client never saw — see §4.6.1), so routing
+   * on it would only add a branch that every caller writes identically.
+   *
+   * @param {string} topic - `household:<householdId>:<resource>`. MUST match the
+   *   topic the Postgres trigger passes to realtime.send(), and MUST be prefixed
+   *   `household:<householdId>:` or the RLS policy (migration 0022) refuses the join.
+   * @param {(payload: object) => void} handler - Receives the trigger's payload —
+   *   the object built by realtime.send(), NOT a row image. It is partial by
+   *   design, so handlers must merge, never replace.
+   * @returns {() => void} unsubscribe
+   */
+  function subscribe (topic, handler) {
+    const supabase = getClient()
+    if (!supabase) return () => {}
+
+    // Re-subscribing the same topic would open a second channel receiving
+    // duplicate messages. Stores register once from the layout, but HMR and
+    // double-invoked setup make this cheap insurance.
+    if (broadcastChannels.has(topic)) {
+      return () => unsubscribe(topic)
+    }
+
+    const broadcastChannel = supabase
+      .channel(topic, { config: { private: true } })
+      .on('broadcast', { event: '*' }, message => handler(message.payload))
+      .subscribe((status) => {
+        // Deliberately does NOT touch isConnected — that tracks the
+        // workflow_runs channel, which drives the UI's live indicator. A content
+        // topic failing shouldn't report the whole connection as down.
+        //
+        // CHANNEL_ERROR here most likely means the RLS policy refused the join
+        // (bad topic prefix, or the user's household_id didn't resolve) — the
+        // SDK reports authorization failure the same way as a transport error.
+        if (status === 'CHANNEL_ERROR') {
+          console.error(`[RealtimeStore] channel error on "${topic}" — check the realtime.messages policy and topic prefix`)
+        }
+      })
+
+    broadcastChannels.set(topic, broadcastChannel)
+
+    return () => unsubscribe(topic)
+  }
+
+  function unsubscribe (topic) {
+    const broadcastChannel = broadcastChannels.get(topic)
+    if (!broadcastChannel) return
+
+    broadcastChannels.delete(topic)
+    if (client.value) {
+      client.value.removeChannel(broadcastChannel)
+    }
   }
 
   /**
@@ -166,6 +271,11 @@ export const useRealtimeStore = defineStore('realtime', () => {
     }
   }
 
+  /**
+   * setAuth() is client-global, not per-channel: it updates the access token on
+   * the shared socket, so the postgres_changes channel and every broadcast
+   * channel are all re-authorized by this one call. No per-channel loop needed.
+   */
   async function _refreshToken (supabase) {
     const token = await fetchToken()
     await supabase.realtime.setAuth(token)
@@ -233,5 +343,6 @@ export const useRealtimeStore = defineStore('realtime', () => {
     isConnected,
     connect,
     disconnect,
+    subscribe,
   }
 })
