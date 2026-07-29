@@ -54,8 +54,8 @@ export const receipts = pgTable('receipts', {
   householdId: text('household_id').notNull().references(() => households.id, { onDelete: 'restrict' }),
 
   // Timestamps
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
 /**
@@ -84,7 +84,7 @@ export const uploads = pgTable('uploads', {
   // here was dropped (mig 0027) — nothing read it, and it could disagree with
   // workflow_runs. Run/step status is the source of truth for WHAT happened;
   // this records WHEN, which workflow_runs doesn't carry per-upload.
-  analyzedAt: timestamp('analyzed_at'),
+  analyzedAt: timestamp('analyzed_at', { withTimezone: true }),
 
   // OCR results (Azure Document Intelligence)
   ocrText: text('ocr_text'), // plain text OCR output
@@ -100,9 +100,9 @@ export const uploads = pgTable('uploads', {
   householdId: text('household_id').notNull().references(() => households.id, { onDelete: 'restrict' }),
 
   // Timestamps
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  uploadedAt: timestamp('uploaded_at'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  uploadedAt: timestamp('uploaded_at', { withTimezone: true }),
 })
 
 /**
@@ -149,7 +149,7 @@ export const expenses = pgTable('expenses', {
 
   // Settlement tracking
   isSettled: boolean('is_settled').notNull().default(false),
-  settledAt: timestamp('settled_at'),
+  settledAt: timestamp('settled_at', { withTimezone: true }),
 
   // Flagged for human attention. Written by BOTH principals — that's the point:
   //   • the system (deterministic review step) raises it for low LLM confidence,
@@ -173,8 +173,8 @@ export const expenses = pgTable('expenses', {
   notes: text('notes'),
 
   // Timestamps
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, table => [
   // A receipt has at most one expense (permanent invariant). Partial index so
   // standalone expenses (receiptId null) are exempt — multiple null-receiptId
@@ -224,9 +224,9 @@ export const workflowRuns = pgTable('workflow_runs', {
   // don't send times. Rows created before this migration stay null (no
   // backfill) — those older runs just render without durations.
   //
-  // timestamptz because these are instants (rules/database-timestamps.md). The
-  // run-level createdAt/completedAt below are plain timestamp for historical
-  // reasons — don't copy them; new instants get TZ.
+  // timestamptz because these are instants (rules/database-timestamps.md).
+  // Every timestamp in this schema is now timestamptz — mig 0028 converted the
+  // last naive ones, which had been rendering as local time in the browser.
   ocrStartedAt: timestamp('ocr_started_at', { withTimezone: true }),
   ocrCompletedAt: timestamp('ocr_completed_at', { withTimezone: true }),
   annotationsStartedAt: timestamp('annotations_started_at', { withTimezone: true }),
@@ -243,8 +243,8 @@ export const workflowRuns = pgTable('workflow_runs', {
   errors: jsonb('errors'),
 
   // Timestamps
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  completedAt: timestamp('completed_at'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
 })
 
 /**
@@ -264,7 +264,7 @@ export const changes = pgTable('changes', {
   // deterministic task can (and should) record its reason too, e.g. the
   // orchestrator flagging an expense for review because the run was PARTIAL.
   reasoning: text('reasoning'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
 /**
