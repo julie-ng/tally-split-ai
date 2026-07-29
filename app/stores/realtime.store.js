@@ -1,7 +1,5 @@
 import { defineStore } from 'pinia'
 import { createClient } from '@supabase/supabase-js'
-import { useUploadQueueStore } from '~/stores/upload-queue.store'
-import { useWorkflowStore } from '~/stores/workflow.store'
 
 /**
  * Realtime store — Supabase Realtime (websockets) for live workflow_runs updates.
@@ -33,15 +31,18 @@ import { useWorkflowStore } from '~/stores/workflow.store'
  */
 export const useRealtimeStore = defineStore('realtime', () => {
   const client = ref(null)
-  const channel = ref(null)
   const isConnected = ref(false)
-  // Broadcast channels opened via subscribe(), keyed by topic. Separate from the
-  // `channel` ref above, which is the single postgres_changes channel.
-  //
-  // Kept so disconnect() can tear them ALL down: the SDK holds channels on the
-  // client, so removing only the workflow-runs one would leave content channels
-  // live across a logout and into the next user's session.
+  // Guards connect() against concurrent/duplicate calls — it no longer opens a
+  // channel of its own, so there's no channel ref to check.
+  let isConnecting = false
+
+  // Broadcast channels opened via subscribe(), keyed by topic. Kept so
+  // disconnect() can tear them ALL down: the SDK holds channels on the client, so
+  // leaving any behind would keep it live across a logout into the next session.
   const broadcastChannels = new Map()
+  // Topics currently joined. isConnected is derived from this being non-empty —
+  // all channels are equal now, so no single one owns the connection's state.
+  const joinedTopics = new Set()
 
   // Monotonic count of times we've (re)joined after a drop. Bumped on SUBSCRIBED
   // when we were previously disconnected — NOT on the first connect.
@@ -114,7 +115,8 @@ export const useRealtimeStore = defineStore('realtime', () => {
   }
 
   async function connect () {
-    if (channel.value) return
+    if (isConnecting) return
+    isConnecting = true
 
     const supabase = getClient()
     if (!supabase) return
@@ -136,45 +138,6 @@ export const useRealtimeStore = defineStore('realtime', () => {
     if (typeof document !== 'undefined') {
       document.addEventListener('visibilitychange', _onVisibilityChange)
     }
-
-    channel.value = supabase
-      .channel('workflow-runs')
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'workflow_runs' },
-        payload => handleRowChange(payload))
-      .subscribe((status) => {
-        // The SDK auto-reconnects (exponential backoff) on CHANNEL_ERROR /
-        // TIMED_OUT and rejoins after network interruptions, re-firing
-        // SUBSCRIBED on recovery. So a dropped channel needs no user-facing
-        // toast and no manual retry — we only track isConnected for the UI.
-        //
-        // ⚠️ Detection is NOT immediate: a dropped socket surfaces via heartbeat
-        // timeout, ~30s in testing. So `isConnected` can read true for half a
-        // minute after connectivity is actually gone — don't treat it as a
-        // real-time liveness signal.
-        if (status === 'SUBSCRIBED') {
-          // A SUBSCRIBED while already disconnected is a RE-join: there was a
-          // window where pushes were missed. Anything cached before this is
-          // suspect. (Broadcast has no replay here — missed messages are gone.)
-          if (hasConnectedOnce) {
-            reconnectCount.value += 1
-            _recordConnectionEvent('rejoined', `reconnect #${reconnectCount.value} — data cached before now may have missed pushes`)
-          }
-          else {
-            hasConnectedOnce = true
-            _recordConnectionEvent('subscribed')
-          }
-          isConnected.value = true
-        }
-        else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-          // Only record a genuine transition — the SDK can re-fire these while
-          // already down, which would otherwise flood the log.
-          if (isConnected.value) {
-            _recordConnectionEvent('dropped', status)
-          }
-          isConnected.value = false
-        }
-      })
   }
 
   function disconnect () {
@@ -185,10 +148,7 @@ export const useRealtimeStore = defineStore('realtime', () => {
     if (typeof document !== 'undefined') {
       document.removeEventListener('visibilitychange', _onVisibilityChange)
     }
-    if (channel.value && client.value) {
-      client.value.removeChannel(channel.value)
-    }
-    channel.value = null
+    isConnecting = false
 
     if (client.value) {
       for (const broadcastChannel of broadcastChannels.values()) {
@@ -196,6 +156,7 @@ export const useRealtimeStore = defineStore('realtime', () => {
       }
     }
     broadcastChannels.clear()
+    joinedTopics.clear()
 
     isConnected.value = false
     // Logout teardown — the next login is a first connect, not a re-join.
@@ -257,18 +218,45 @@ export const useRealtimeStore = defineStore('realtime', () => {
       .channel(topic, { config: { private: true } })
       .on('broadcast', { event: '*' }, message => handler(message.payload, message.event))
       .subscribe((status) => {
-        // Deliberately does NOT touch isConnected — that tracks the
-        // workflow_runs channel, which drives the UI's live indicator. A content
-        // topic failing shouldn't report the whole connection as down.
+        // Every topic is now an equal Broadcast channel on one shared socket, so
+        // connection state is derived from the SET of joined topics rather than
+        // from one privileged channel. isConnected = "at least one topic joined".
+        //
+        // ⚠️ A drop is NOT detected immediately: it surfaces via heartbeat
+        // timeout, ~30s in testing. So `isConnected` can read true for half a
+        // minute after connectivity is gone — not a real-time liveness signal.
         //
         // TEMPORARY (Phase 1 verification): the SUBSCRIBED line separates "joined
         // but nothing published" (look at the Postgres trigger) from "never
         // joined" (look at 0022's policy). Drop it once Broadcast is trusted.
         if (status === 'SUBSCRIBED') {
           hasJoined = true
+          joinedTopics.add(topic)
           console.log(`📡 [Broadcast] joined "${topic}"`)
+
+          // First topic back after a total drop is the RE-join: there was a window
+          // where pushes were missed, so anything cached before now is suspect.
+          // (Broadcast has no replay here — missed messages are gone.)
+          if (!isConnected.value) {
+            if (hasConnectedOnce) {
+              reconnectCount.value += 1
+              _recordConnectionEvent('rejoined', `reconnect #${reconnectCount.value} — data cached before now may have missed pushes`)
+            }
+            else {
+              hasConnectedOnce = true
+              _recordConnectionEvent('subscribed')
+            }
+            isConnected.value = true
+          }
         }
-        else if (status === 'CHANNEL_ERROR') {
+        else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          joinedTopics.delete(topic)
+          // Every topic gone = the socket is down, not just one subscription.
+          if (isConnected.value && joinedTopics.size === 0) {
+            _recordConnectionEvent('dropped', status)
+            isConnected.value = false
+          }
+
           // CHANNEL_ERROR covers BOTH an auth refusal and a transport failure —
           // the SDK reports them identically. Distinguish by whether we ever
           // joined: a channel that joined once has a working policy, so a later
@@ -297,45 +285,6 @@ export const useRealtimeStore = defineStore('realtime', () => {
     if (client.value) {
       client.value.removeChannel(broadcastChannel)
     }
-  }
-
-  /**
-   * Handle a workflow_runs change. Household scoping is enforced by RLS on
-   * workflow_runs (migration 0018) — Supabase only forwards rows for the user's
-   * own household, so there is no client-side household filter here.
-   */
-  function handleRowChange (payload) {
-    const row = payload.new
-    if (!row) return
-
-    const uploadId = row.upload_id
-    if (!uploadId) return
-
-    // 1. Upload queue (client-side upload progress) — set all step statuses.
-    const uploadQueueStore = useUploadQueueStore()
-    const queueItem = uploadQueueStore.uploads.find(u => u.id === uploadId)
-    if (queueItem) {
-      queueItem.workflowStatus = {
-        ocr: row.ocr_status,
-        annotations: row.annotations_status,
-        normalize: row.normalize_status,
-        createExpense: row.create_expense_status,
-        adjustExpense: row.adjust_expense_status,
-        _orchestrator: row.status,
-      }
-    }
-
-    // 2. Workflow store (DB-backed data) — ingest the full authoritative row.
-    const workflowStore = useWorkflowStore()
-    workflowStore.ingestRun(row)
-
-    // NOTE: a "fetch the upload row at most once" special case used to live here
-    // — hand-tuned down from ~14 redundant refetches per run, because a run-status
-    // event carries no information about WHAT changed.
-    //
-    // Deleted 2026-07-29 (realtime Phase 3): `uploads` broadcasts its own INSERT
-    // (mig 0025), so a row this client has never seen arrives as data. No inference
-    // from run status, and nothing to hand-tune.
   }
 
   /**

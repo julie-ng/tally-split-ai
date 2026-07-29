@@ -183,6 +183,13 @@
       "when": 1785328661122,
       "tag": "0025_add_uploads_broadcast_trigger",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1785339307359,
+      "tag": "0026_workflow_runs_broadcast_trigger",
+      "breakpoints": true
     }
   ]
 }
