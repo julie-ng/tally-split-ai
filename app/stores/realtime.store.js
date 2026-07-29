@@ -43,6 +43,32 @@ export const useRealtimeStore = defineStore('realtime', () => {
   // client, so removing only the workflow-runs one would leave content channels
   // live across a logout and into the next user's session.
   const broadcastChannels = new Map()
+
+  // Monotonic count of times we've (re)joined after a drop. Bumped on SUBSCRIBED
+  // when we were previously disconnected — NOT on the first connect.
+  //
+  // The point: a store can cache this alongside its data, and if the value has
+  // moved since, there was a gap during which pushes were missed — so that row is
+  // suspect REGARDLESS of age. Elapsed time is the wrong staleness signal when the
+  // real risk is a dropped connection, not a long one.
+  const reconnectCount = ref(0)
+  // Distinguishes the first SUBSCRIBED (normal) from a later one (a re-join).
+  let hasConnectedOnce = false
+
+  // Rolling connection-event log, newest last. Debugging aid: correlate "the UI
+  // went stale" with an actual drop. Capped so a long session can't grow it without
+  // bound.
+  const connectionEvents = ref([])
+  const MAX_CONNECTION_EVENTS = 50
+
+  function _recordConnectionEvent (event, detail) {
+    const entry = { event, detail, at: new Date().toISOString() }
+    connectionEvents.value.push(entry)
+    if (connectionEvents.value.length > MAX_CONNECTION_EVENTS) {
+      connectionEvents.value.shift()
+    }
+    console.log(`🔌 [Realtime] ${event}${detail ? ` — ${detail}` : ''}`)
+  }
   let refreshTimer = null
   // Unix seconds when the current token expires. Used to decide, on tab-visible,
   // whether the token went stale while the tab was backgrounded (the refresh
@@ -122,11 +148,31 @@ export const useRealtimeStore = defineStore('realtime', () => {
         // TIMED_OUT and rejoins after network interruptions, re-firing
         // SUBSCRIBED on recovery. So a dropped channel needs no user-facing
         // toast and no manual retry — we only track isConnected for the UI.
+        //
+        // ⚠️ Detection is NOT immediate: a dropped socket surfaces via heartbeat
+        // timeout, ~30s in testing. So `isConnected` can read true for half a
+        // minute after connectivity is actually gone — don't treat it as a
+        // real-time liveness signal.
         if (status === 'SUBSCRIBED') {
-          console.log('[RealtimeStore] subscribed')
+          // A SUBSCRIBED while already disconnected is a RE-join: there was a
+          // window where pushes were missed. Anything cached before this is
+          // suspect. (Broadcast has no replay here — missed messages are gone.)
+          if (hasConnectedOnce) {
+            reconnectCount.value += 1
+            _recordConnectionEvent('rejoined', `reconnect #${reconnectCount.value} — data cached before now may have missed pushes`)
+          }
+          else {
+            hasConnectedOnce = true
+            _recordConnectionEvent('subscribed')
+          }
           isConnected.value = true
         }
         else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          // Only record a genuine transition — the SDK can re-fire these while
+          // already down, which would otherwise flood the log.
+          if (isConnected.value) {
+            _recordConnectionEvent('dropped', status)
+          }
           isConnected.value = false
         }
       })
@@ -153,6 +199,9 @@ export const useRealtimeStore = defineStore('realtime', () => {
     broadcastChannels.clear()
 
     isConnected.value = false
+    // Logout teardown — the next login is a first connect, not a re-join.
+    hasConnectedOnce = false
+    _recordConnectionEvent('disconnected', 'logout')
   }
 
   /**
@@ -202,6 +251,9 @@ export const useRealtimeStore = defineStore('realtime', () => {
       return () => unsubscribe(topic)
     }
 
+    // Whether this topic has EVER joined — see the CHANNEL_ERROR branch below.
+    let hasJoined = false
+
     const broadcastChannel = supabase
       .channel(topic, { config: { private: true } })
       .on('broadcast', { event: '*' }, message => handler(message.payload, message.event))
@@ -210,18 +262,26 @@ export const useRealtimeStore = defineStore('realtime', () => {
         // workflow_runs channel, which drives the UI's live indicator. A content
         // topic failing shouldn't report the whole connection as down.
         //
-        // CHANNEL_ERROR here most likely means the RLS policy refused the join
-        // (bad topic prefix, or the user's household_id didn't resolve) — the
-        // SDK reports authorization failure the same way as a transport error.
-        //
         // TEMPORARY (Phase 1 verification): the SUBSCRIBED line separates "joined
         // but nothing published" (look at the Postgres trigger) from "never
         // joined" (look at 0022's policy). Drop it once Broadcast is trusted.
         if (status === 'SUBSCRIBED') {
+          hasJoined = true
           console.log(`📡 [Broadcast] joined "${topic}"`)
         }
         else if (status === 'CHANNEL_ERROR') {
-          console.error(`[RealtimeStore] channel error on "${topic}" — check the realtime.messages policy and topic prefix`)
+          // CHANNEL_ERROR covers BOTH an auth refusal and a transport failure —
+          // the SDK reports them identically. Distinguish by whether we ever
+          // joined: a channel that joined once has a working policy, so a later
+          // error is the network (heartbeat timeout, socket drop) and the SDK
+          // will auto-reconnect. Only a failure on the FIRST join implicates the
+          // policy or topic string.
+          if (hasJoined) {
+            _recordConnectionEvent('topic-dropped', topic)
+          }
+          else {
+            console.error(`[RealtimeStore] could not join "${topic}" — check the realtime.messages policy (0022) and the topic prefix`)
+          }
         }
       })
 
@@ -291,6 +351,7 @@ export const useRealtimeStore = defineStore('realtime', () => {
     const token = await fetchToken()
     await supabase.realtime.setAuth(token)
     _scheduleTokenRefresh(supabase)
+    _recordConnectionEvent('token-refreshed')
   }
 
   function _scheduleTokenRefresh (supabase) {
@@ -352,6 +413,10 @@ export const useRealtimeStore = defineStore('realtime', () => {
 
   return {
     isConnected,
+    // Bumped on every re-join. Cache it alongside data to detect a missed-push
+    // window — see the declaration above.
+    reconnectCount,
+    connectionEvents,
     connect,
     disconnect,
     subscribe,
