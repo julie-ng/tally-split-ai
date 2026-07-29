@@ -30,7 +30,7 @@ await Promise.all([
 
 // Get reactive refs from store (preserves reactivity without creating new computed)
 // eslint-disable-next-line no-unused-vars
-const { uploads, loading: pending, error } = storeToRefs(uploadsStore)
+const { allUploads: uploads, loading: pending, error } = storeToRefs(uploadsStore)
 const { uploads: queueUploads } = storeToRefs(uploadQueueStore)
 
 // Queue rows whose blob upload to Azure hasn't finished yet — render them

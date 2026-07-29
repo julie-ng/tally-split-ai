@@ -10,7 +10,7 @@ export const useUploadsStore = defineStore('uploads', () => {
 
   // -------- STATE --------
 
-  const uploads = ref([])
+  const uploadsById = ref({}) // Map: { [id]: uploadObject }
   const polygons = ref({}) // Map: { [id]: { page, polygons } }
   // Cache for OCR/Azure Document Intelligence results, keyed by upload id.
   // Only populated for succeeded analyses (failed/in-progress results bypass
@@ -26,9 +26,25 @@ export const useUploadsStore = defineStore('uploads', () => {
 
   // -------- GETTERS --------
 
-  const totalUploads = computed(() => uploads.value.length)
+  /**
+   * All uploads as an array, newest first. The store keys by id (every access is
+   * by id); this is the list projection for table/page consumers.
+   *
+   * Sorted by uploadedAt desc so a newly-ingested row lands at the top, matching
+   * what the old array's unshift did. Rows without uploadedAt (in-flight) sort
+   * first — they're the most recent by definition.
+   */
+  const allUploads = computed(() =>
+    Object.values(uploadsById.value).sort((a, b) => {
+      if (!a.uploadedAt) return -1
+      if (!b.uploadedAt) return 1
+      return b.uploadedAt.localeCompare(a.uploadedAt)
+    }),
+  )
 
-  const getUploadById = computed(() => id => uploads.value.find(u => u.id === id))
+  const totalUploads = computed(() => allUploads.value.length)
+
+  const getUploadById = computed(() => id => uploadsById.value[id])
 
   const getPolygonsById = computed(() => id => polygons.value[id] ?? null)
 
@@ -44,7 +60,12 @@ export const useUploadsStore = defineStore('uploads', () => {
 
     try {
       const data = await requestFetch('/api/uploads')
-      uploads.value = data
+      // Replace wholesale — the backend is the source of truth for the full list.
+      const next = {}
+      for (const upload of data) {
+        next[upload.id] = upload
+      }
+      uploadsById.value = next
       _log(`[UploadsStore] ✅ fetched ${data.length} uploads`)
     }
     catch (err) {
@@ -71,7 +92,7 @@ export const useUploadsStore = defineStore('uploads', () => {
    * @returns {Promise<Object|null>}
    */
   async function fetchUploadById (id) {
-    const existing = uploads.value.find(u => u.id === id)
+    const existing = uploadsById.value[id]
     if (existing?.userId) {
       _log(`[UploadsStore] ✅ cache hit (full): ${id}`)
       return existing
@@ -80,7 +101,7 @@ export const useUploadsStore = defineStore('uploads', () => {
     if (inflightUploadFetches.has(id)) {
       _log(`[UploadsStore] ⏳ awaiting in-flight fetch: ${id}`)
       await inflightUploadFetches.get(id)
-      return uploads.value.find(u => u.id === id) ?? null
+      return uploadsById.value[id] ?? null
     }
 
     const promise = refreshUploadById(id).finally(() => {
@@ -88,24 +109,25 @@ export const useUploadsStore = defineStore('uploads', () => {
     })
     inflightUploadFetches.set(id, promise)
     await promise
-    return uploads.value.find(u => u.id === id) ?? null
+    return uploadsById.value[id] ?? null
   }
 
   /**
    * Re-fetch a single upload and patch it into local state.
    * Adds the upload if it doesn't exist yet (e.g. created after initial fetch).
+   *
+   * MERGES rather than replacing. The detail endpoint's projection differs from
+   * the list's, so overwriting the whole object drops any field the list carries
+   * and this doesn't — that's how the Receipt Date column blanked on preview-open.
+   * Merging makes the two projections independent instead of requiring the detail
+   * one to superset the list one.
+   *
    * @param {string} id
    */
   async function refreshUploadById (id) {
     try {
       const data = await requestFetch(`/api/uploads/${id}`)
-      const index = uploads.value.findIndex(u => u.id === id)
-      if (index !== -1) {
-        uploads.value.splice(index, 1, data)
-      }
-      else {
-        uploads.value.unshift(data)
-      }
+      uploadsById.value[id] = { ...uploadsById.value[id], ...data }
       _log(`[UploadsStore] ✅ refreshed upload: ${id}`)
     }
     catch (err) {
@@ -148,19 +170,15 @@ export const useUploadsStore = defineStore('uploads', () => {
       return
     }
 
+    const existing = uploadsById.value[uploadId]
+
     // Ensure our uploadId (not payload id) is mapped to id
     // eslint-disable-next-line no-unused-vars
     const { id: _messageId, uploadId: _uploadId, ...fields } = payload
 
-    const index = uploads.value.findIndex(u => u.id === uploadId)
-    if (index !== -1) {
-      uploads.value.splice(index, 1, { ...uploads.value[index], ...fields, id: uploadId })
-      console.log(`📡 [Broadcast] ✅ merged into upload ${uploadId}`)
-    }
-    else {
-      uploads.value.unshift({ ...fields, id: uploadId })
-      console.log(`📡 [Broadcast] ✅ ADDED NEW upload ${uploadId}`)
-    }
+    uploadsById.value[uploadId] = { ...(existing ?? {}), ...fields, id: uploadId }
+
+    console.log(`📡 [Broadcast] ✅ ${existing ? 'merged into' : 'ADDED NEW'} upload ${uploadId}`)
   }
 
   /**
@@ -193,11 +211,7 @@ export const useUploadsStore = defineStore('uploads', () => {
         method: 'DELETE',
       })
 
-      // Remove from local state (mutate in place to preserve array reference)
-      const index = uploads.value.findIndex(u => u.id === id)
-      if (index !== -1) {
-        uploads.value.splice(index, 1)
-      }
+      delete uploadsById.value[id]
       _log(`[UploadsStore] ✅ deleted upload: ${id}`)
       return true
     }
@@ -225,13 +239,8 @@ export const useUploadsStore = defineStore('uploads', () => {
         body: { ids },
       })
 
-      // Evict deleted rows from local state (mutate in place to preserve the
-      // array reference).
-      const deleted = new Set(result.deletedIds ?? [])
-      for (let i = uploads.value.length - 1; i >= 0; i--) {
-        if (deleted.has(uploads.value[i].id)) {
-          uploads.value.splice(i, 1)
-        }
+      for (const deletedId of result.deletedIds ?? []) {
+        delete uploadsById.value[deletedId]
       }
 
       _log(`[UploadsStore] ✅ batch deleted ${result.deletedCount} upload(s)`)
@@ -351,12 +360,13 @@ export const useUploadsStore = defineStore('uploads', () => {
 
   return {
     // State
-    uploads,
+    uploadsById,
     loading,
     error,
     debug,
 
     // Getters
+    allUploads,
     totalUploads,
     getUploadById,
     getPolygonsById,
