@@ -3,6 +3,7 @@ import { UPLOAD_QUEUE_STATUS } from '#shared/enums/upload-queue-status.js'
 import { useUploadsStore } from '~/stores/uploads.store'
 import { useUploadQueueStore } from '~/stores/upload-queue.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
+import { useReceiptsStore } from '~/stores/receipts.store'
 
 useHead({
   title: 'Uploads',
@@ -11,6 +12,7 @@ useHead({
 const uploadsStore = useUploadsStore()
 const uploadQueueStore = useUploadQueueStore()
 const workflowStore = useWorkflowStore()
+const receiptsStore = useReceiptsStore()
 uploadsStore.debug = true
 workflowStore.debug = true
 
@@ -22,10 +24,13 @@ workflowStore.debug = true
 // fetching, so the fetched statuses already reflect reality. Best-effort.
 await workflowStore.reconcile()
 
-// Fetch uploads and workflows on mount
+// Bulk-fetch each store ONCE here; cells then read by id (never N per-row fetches).
+// Receipts are needed because the table's title/date columns resolve them from the
+// receipts store — the upload row carries only receiptId.
 await Promise.all([
   uploadsStore.fetchUploads(),
   workflowStore.fetchAll(),
+  receiptsStore.fetchReceipts(),
 ])
 
 // Get reactive refs from store (preserves reactivity without creating new computed)
@@ -46,15 +51,15 @@ const inFlightQueueRows = computed(() =>
       size: q.size,
       uploadedAt: null,
       status: q.status,
-      receipt: null,
     })),
 )
 
 const mergedUploads = computed(() => {
   const merged = new Map()
 
-  // DB rows are the base — they provide canonical fields like size,
-  // uploadedAt, receipt link.
+  // DB rows are the base — they provide canonical fields like size, uploadedAt,
+  // and the receiptId link. Receipt CONTENT (title/date) is read by the table
+  // cells from the receipts store — see the bulk-fetch above.
   for (const dbRow of uploads.value) {
     merged.set(dbRow.id, dbRow)
   }

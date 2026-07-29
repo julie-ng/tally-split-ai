@@ -78,9 +78,10 @@ export function useUploadRowActions () {
       [
         { label: 'Actions', type: 'label' },
         {
+          // Only the id is needed to link — no receipt relation on the row.
           label: 'View Receipt',
-          disabled: !upload.receipt,
-          onSelect: () => upload.receipt && navigateTo(`/receipts/${upload.receipt.id}`),
+          disabled: !upload.receiptId,
+          onSelect: () => upload.receiptId && navigateTo(`/receipts/${upload.receiptId}`),
         },
       ],
       [

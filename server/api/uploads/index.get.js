@@ -22,15 +22,11 @@ export default defineEventHandler(async (event) => {
       createdAt: true,
       uploadedAt: true,
       analyzedAt: true,
-    },
-    with: {
-      receipt: {
-        columns: {
-          id: true,
-          title: true,
-          date: true,
-        },
-      },
+      // The FK only — the table resolves receipt title/date from the receipts
+      // store by this id. No `with: { receipt }` join: a broadcast can't produce
+      // one (row triggers don't join), so embedding it here would make fetched
+      // and pushed rows disagree — live-created uploads rendered blank forever.
+      receiptId: true,
     },
   })
 

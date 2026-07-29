@@ -3,6 +3,7 @@ import { h, resolveComponent } from 'vue'
 import { getPaginationRowModel } from '@tanstack/vue-table'
 import { UCheckbox } from '#components'
 import { UPLOAD_STATUS } from '#shared/enums/upload-status.js'
+import { useReceiptsStore } from '~/stores/receipts.store'
 
 const props = defineProps({
   data: {
@@ -53,6 +54,14 @@ const rowSelection = defineModel('rowSelection', {
 
 const route = useRoute()
 const table = useTemplateRef('table')
+
+// Receipt title/date are read from the RECEIPTS store by id, not from an embedded
+// relation on the upload row. /api/uploads can join it, but a broadcast can't (a
+// row trigger has no join), so a live-created upload would show blanks forever.
+// Reading by id makes the fetched and pushed paths agree. The page bulk-loads the
+// store once; this only reads.
+const receiptsStore = useReceiptsStore()
+const receiptFor = id => (id ? receiptsStore.getReceiptById(id) : null)
 
 // A DB-backed upload row is deletable; in-flight queue rows (queued/in-progress/
 // failed/interrupted) have no DB record yet, so their checkbox is disabled and
@@ -110,7 +119,7 @@ const columns = [
   },
   {
     id: 'receiptDate',
-    accessorFn: row => row.receipt?.date ?? null,
+    accessorFn: row => receiptFor(row.receiptId)?.date ?? null,
     header: sortableHeader('Receipt Date'),
     sortUndefined: 'last',
     meta: { class: { th: 'w-[110px]', td: 'w-[110px] text-right' } },
@@ -231,29 +240,27 @@ function onSelect (event, row) {
           <UploadTile
             :id="row.original.id"
             :status="row.original.status"
-            :receipt="row.original.receipt"
+            :receipt="receiptFor(row.original.receiptId)"
           />
         </template>
 
         <template #originalFilename-cell="{ row }">
-          <!-- Two lines: expense title (receipt.title) on top, original filename
-               below in smaller dimmed text. When there's no title yet (in-flight/
-               failed), the filename becomes the primary line so the row is still
-               identifiable.
+          <!-- Two lines: receipt title on top, original filename below in smaller
+               dimmed text. When there's no title yet (in-flight/failed), the
+               filename becomes the primary line so the row is still identifiable.
 
                create-expense copies receipt.title → expense.title at creation,
                so they START equal — but BOTH are independently editable and can
-               DRIFT. We surface receipt.title only because it's already on this
-               row's join and no expense is joined. TODO (design-direction
-               cleanup): the UI should read expense.title from a backend API that
-               presents it as such. Architectural — touches many components. -->
+               DRIFT. expense.title is the display title (decided 2026-07-28), but
+               no expense is reachable from this row — only receiptId. Surfacing
+               receipt.title stays a stand-in until the expense is joinable here. -->
           <div
             class="min-w-0"
             :class="previewId ? 'max-w-[220px] md:max-w-[260px] xl:max-w-[340px]' : ''"
           >
-            <template v-if="row.original.receipt?.title">
-              <p :title="row.original.receipt.title" class="truncate text-toned font-medium">
-                {{ row.original.receipt.title }}
+            <template v-if="receiptFor(row.original.receiptId)?.title">
+              <p :title="receiptFor(row.original.receiptId).title" class="truncate text-toned font-medium">
+                {{ receiptFor(row.original.receiptId).title }}
               </p>
               <p :title="row.original.originalFilename" class="truncate text-xs text-dimmed mt-0.5">
                 {{ row.original.originalFilename }}
@@ -268,11 +275,11 @@ function onSelect (event, row) {
         <template #receiptDate-cell="{ row }">
           <!-- Full date incl. year (tooltip dropped — nothing left to reveal). -->
           <time
-            v-if="row.original.receipt?.date"
-            :datetime="row.original.receipt.date"
+            v-if="receiptFor(row.original.receiptId)?.date"
+            :datetime="receiptFor(row.original.receiptId).date"
             class="tabular-nums text-xs"
           >
-            {{ dateUtils.formatISODate(row.original.receipt.date) }}
+            {{ dateUtils.formatISODate(receiptFor(row.original.receiptId).date) }}
           </time>
           <span v-else class="text-dimmed text-xs">—</span>
         </template>

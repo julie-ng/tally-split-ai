@@ -55,7 +55,7 @@ export function useUploadPreview (uploads) {
     }
 
     const upload = uploadsStore.getUploadById(id)
-    const receiptId = upload?.receiptId ?? upload?.receipt?.id ?? null
+    const receiptId = upload?.receiptId ?? null
     if (!receiptId) return
 
     const receipt = await receiptsStore.fetchReceiptById(receiptId)
@@ -93,9 +93,7 @@ export function useUploadPreview (uploads) {
 
   // Receipt id for the reactive receipt/expense getters (the fetches run in
   // loadPreviewDetails above; this is just id derivation).
-  const previewReceiptId = computed(() =>
-    previewUpload.value?.receipt?.id ?? previewUpload.value?.receiptId ?? null,
-  )
+  const previewReceiptId = computed(() => previewUpload.value?.receiptId ?? null)
 
   const previewReceipt = computed(() =>
     previewReceiptId.value ? receiptsStore.getReceiptById(previewReceiptId.value) : null,

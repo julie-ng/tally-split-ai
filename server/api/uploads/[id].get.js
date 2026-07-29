@@ -17,24 +17,15 @@ export default defineEventHandler(async (event) => {
   if (!includes.includes('ocrJson')) columns.ocrJson = false
   if (!includes.includes('annotationsJson')) columns.annotationsJson = false
 
-  // Query for the specific upload with relations.
-  // Receipt projection MUST match the list endpoint (/api/uploads/index.get.js:
-  // { id, title, date }) — refreshUploadById replaces the list entry with this
-  // one, so any field the list carries but this omits gets wiped from the merged
-  // row. (That's how the Receipt Date column flashed then blanked: date was on
-  // the list row but missing here.) Keep the two in sync. Components needing
-  // fuller receipt fields still fetch via the receipts store.
+  // No `receipt` join — the row carries receiptId and consumers resolve the
+  // receipt from the receipts store. Embedding it made fetched rows differ in
+  // SHAPE from broadcast rows (a row trigger can't join), and forced this
+  // projection to superset the list endpoint's or refreshUploadById would wipe
+  // fields the list had (the Receipt Date column flashing then blanking).
   const upload = await db.query.uploads.findFirst({
     where: eq(schema.uploads.id, id),
     columns: Object.keys(columns).length > 0 ? columns : undefined,
     with: {
-      receipt: {
-        columns: {
-          id: true,
-          title: true,
-          date: true,
-        },
-      },
       workflowRuns: true,
     },
   })
