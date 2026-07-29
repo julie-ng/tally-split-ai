@@ -174,17 +174,21 @@ export const useRealtimeStore = defineStore('realtime', () => {
    * joined. Returns a no-op unsubscribe if the client isn't configured, so callers
    * never need a null check.
    *
-   * Listens for '*' rather than a named event: our triggers pass TG_OP, so the
-   * event is INSERT / UPDATE / DELETE. Ingests upsert by id and don't care which
-   * (a row can arrive as an INSERT the client never saw — see §4.6.1), so routing
-   * on it would only add a branch that every caller writes identically.
+   * Listens for '*' rather than a named event. Most triggers pass TG_OP, so the
+   * event is INSERT / UPDATE — ingests upsert by id and don't care which (a row can
+   * arrive as an INSERT the client never saw, §4.6.1).
+   *
+   * A table MAY have several triggers with different payload shapes (§4.3.1 tier 2 —
+   * e.g. uploads broadcasts scalars on any write, plus `annotations_json` only on
+   * `UPDATE OF`). Those pass a custom event name, so the handler gets it as the 2nd
+   * arg and routes on it. Handlers that only ever see one shape can ignore it.
    *
    * @param {string} topic - `household:<householdId>:<resource>`. MUST match the
    *   topic the Postgres trigger passes to realtime.send(), and MUST be prefixed
    *   `household:<householdId>:` or the RLS policy (migration 0022) refuses the join.
-   * @param {(payload: object) => void} handler - Receives the trigger's payload —
-   *   the object built by realtime.send(), NOT a row image. It is partial by
-   *   design, so handlers must merge, never replace.
+   * @param {(payload: object, event: string) => void} handler - Receives the
+   *   trigger's payload (NOT a row image; partial by design, so merge never
+   *   replace) and the event name — TG_OP, or a custom one for a scoped trigger.
    * @returns {() => void} unsubscribe
    */
   function subscribe (topic, handler) {
@@ -200,7 +204,7 @@ export const useRealtimeStore = defineStore('realtime', () => {
 
     const broadcastChannel = supabase
       .channel(topic, { config: { private: true } })
-      .on('broadcast', { event: '*' }, message => handler(message.payload))
+      .on('broadcast', { event: '*' }, message => handler(message.payload, message.event))
       .subscribe((status) => {
         // Deliberately does NOT touch isConnected — that tracks the
         // workflow_runs channel, which drives the UI's live indicator. A content
