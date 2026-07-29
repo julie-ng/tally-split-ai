@@ -448,15 +448,24 @@ export const useExpensesStore = defineStore('expenses', () => {
    * @param {Object} payload - camelCase payload built by the Postgres trigger
    */
   function ingestExpense (payload) {
+    // TEMPORARY (Phase 1 verification): unconditional, NOT _log()/debug-gated.
+    // The old runStatusSignature watch still re-fetches on every step transition,
+    // so a row updating in the UI proves nothing about Broadcast — only these
+    // lines do. Remove (or demote to _log) once Phase 3 deletes that watch.
+    console.log('📡 [Broadcast] expenses payload:', payload)
+
     const id = payload?.expenseId
-    if (!id) return
+    if (!id) {
+      console.warn('📡 [Broadcast] ⚠️ no expenseId in payload — trigger/store key mismatch')
+      return
+    }
 
     // An in-flight save is the source of truth for this row: the user is editing
     // it right now, and _persistExpense already holds the optimistic value plus a
     // reconcile GET. Our own write echoes back as a broadcast, so ingesting it
     // would clobber later keystrokes with an earlier server state.
     if (saving.value[id]) {
-      _log(`[ExpensesStore] ⏭ ignoring broadcast for ${id} — save in flight`)
+      console.log(`📡 [Broadcast] ⏭ skipped ${id} — save in flight (expected for your own edit)`)
       return
     }
 
@@ -478,7 +487,7 @@ export const useExpensesStore = defineStore('expenses', () => {
       receiptToExpense.value[payload.receiptId] = id
     }
 
-    _log(`[ExpensesStore] 📡 ingested expense ${id}`, existing ? '(merged)' : '(new)')
+    console.log(`📡 [Broadcast] ✅ ${existing ? 'merged into' : 'ADDED NEW'} expense ${id}`)
   }
 
   /**

@@ -209,7 +209,14 @@ export const useRealtimeStore = defineStore('realtime', () => {
         // CHANNEL_ERROR here most likely means the RLS policy refused the join
         // (bad topic prefix, or the user's household_id didn't resolve) — the
         // SDK reports authorization failure the same way as a transport error.
-        if (status === 'CHANNEL_ERROR') {
+        //
+        // TEMPORARY (Phase 1 verification): the SUBSCRIBED line separates "joined
+        // but nothing published" (look at the Postgres trigger) from "never
+        // joined" (look at 0022's policy). Drop it once Broadcast is trusted.
+        if (status === 'SUBSCRIBED') {
+          console.log(`📡 [Broadcast] joined "${topic}"`)
+        }
+        else if (status === 'CHANNEL_ERROR') {
           console.error(`[RealtimeStore] channel error on "${topic}" — check the realtime.messages policy and topic prefix`)
         }
       })
