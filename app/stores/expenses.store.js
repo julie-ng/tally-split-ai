@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { expenseRequestSchema, expenseUpdateSchema } from '#shared/utils/zod-schemas/expense.schema.js'
 import { toBerlinISODate } from '#shared/utils/expense-date.utils.js'
+import { useRealtimeStore } from '~/stores/realtime.store'
 
 /**
  * Store for managing expenses with lazy loading and optimistic updates
@@ -429,6 +430,77 @@ export const useExpensesStore = defineStore('expenses', () => {
     }
   }
 
+  // -------- REALTIME (Broadcast) --------
+
+  /**
+   * Ingest a broadcast payload from the `expenses` topic (migration 0023).
+   *
+   * MERGE, never replace — but not because the payload is sparse. It's a complete
+   * scalar snapshot (every key sent, NULLs included), so it IS authoritative for
+   * the fields it carries and a `null` legitimately clears a value. Merge protects
+   * the `receipt` RELATION, which the payload has no join to produce: replacing
+   * would strip it off every expense the pipeline touched. Relations stay
+   * absent-means-unknown, scalars are snapshot-means-truth (analysis doc §4.6.1).
+   *
+   * INSERT and UPDATE are handled identically — an expense the client has never
+   * seen (pipeline step 4) is upserted, not dropped.
+   *
+   * @param {Object} payload - camelCase payload built by the Postgres trigger
+   */
+  function ingestExpense (payload) {
+    const id = payload?.expenseId
+    if (!id) return
+
+    // An in-flight save is the source of truth for this row: the user is editing
+    // it right now, and _persistExpense already holds the optimistic value plus a
+    // reconcile GET. Our own write echoes back as a broadcast, so ingesting it
+    // would clobber later keystrokes with an earlier server state.
+    if (saving.value[id]) {
+      _log(`[ExpensesStore] ⏭ ignoring broadcast for ${id} — save in flight`)
+      return
+    }
+
+    const existing = expenses.value[id]
+
+    // `expenseId` is the payload's identifier for the row; the store keys on `id`.
+    // Strip it rather than storing both, so an ingested row is shaped like a
+    // fetched one and nothing downstream has to know where it came from.
+    // eslint-disable-next-line no-unused-vars
+    const { expenseId, ...fields } = payload
+
+    expenses.value[id] = existing
+      ? { ...existing, ...fields }
+      : { id, ...fields }
+
+    // Keep the receiptId index in step. A standalone expense has no receiptId,
+    // hence the guard — never index undefined.
+    if (payload.receiptId) {
+      receiptToExpense.value[payload.receiptId] = id
+    }
+
+    _log(`[ExpensesStore] 📡 ingested expense ${id}`, existing ? '(merged)' : '(new)')
+  }
+
+  /**
+   * Subscribe this store to its own broadcast topic.
+   *
+   * Called from the default layout (stores are lazy — one that no page has touched
+   * would miss the INSERT that creates its first row). The arrow points
+   * expenses → realtime, never the reverse: realtime.store knows nothing about
+   * expenses. See the analysis doc §4.4.
+   *
+   * @param {string} householdId
+   * @returns {() => void} unsubscribe
+   */
+  function subscribeToExpenses (householdId) {
+    if (!householdId) return () => {}
+
+    return useRealtimeStore().subscribe(
+      `household:${householdId}:expenses`,
+      ingestExpense,
+    )
+  }
+
   /**
    * Smart update function - routes to appropriate business logic based on which properties changed
    * @param {number} id - Expense ID
@@ -741,5 +813,9 @@ export const useExpensesStore = defineStore('expenses', () => {
     markNeedsReview,
     markReviewed,
     batchDelete,
+
+    // Realtime
+    ingestExpense,
+    subscribeToExpenses,
   }
 })
