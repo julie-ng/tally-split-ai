@@ -48,6 +48,15 @@ export const useUploadsStore = defineStore('uploads', () => {
 
   const getPolygonsById = computed(() => id => polygons.value[id] ?? null)
 
+  /**
+   * Annotations (gpt-4o output) for an upload, or null if not yet known.
+   *
+   * Reactive, so a broadcast arriving after step 2 reaches an open panel with no
+   * fetch. `null` means "not known yet" — a caller that needs it on cold load
+   * still calls fetchAnnotationsById().
+   */
+  const getAnnotationsById = computed(() => id => annotationsCache.value.get(id) ?? null)
+
   // -------- ACTIONS --------
 
   /**
@@ -370,6 +379,7 @@ export const useUploadsStore = defineStore('uploads', () => {
     totalUploads,
     getUploadById,
     getPolygonsById,
+    getAnnotationsById,
 
     // Actions
     fetchUploads,

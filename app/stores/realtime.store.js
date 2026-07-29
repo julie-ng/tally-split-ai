@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { createClient } from '@supabase/supabase-js'
 import { useUploadQueueStore } from '~/stores/upload-queue.store'
-import { useUploadsStore } from '~/stores/uploads.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
 
 /**
@@ -330,16 +329,13 @@ export const useRealtimeStore = defineStore('realtime', () => {
     const workflowStore = useWorkflowStore()
     workflowStore.ingestRun(row)
 
-    // 3. Pull the upload row in ONLY if it isn't already loaded. A workflow run
-    //    updates workflow_runs many times per upload (once per step transition);
-    //    the upload row itself doesn't change during a run, and its live status
-    //    comes from the workflow store above. So fetch at most once — when we
-    //    first see a run for an upload not yet in the table — instead of on every
-    //    event (which was ~14 redundant refetches per upload).
-    const uploadsStore = useUploadsStore()
-    if (!uploadsStore.getUploadById(uploadId)) {
-      uploadsStore.refreshUploadById(uploadId)
-    }
+    // NOTE: a "fetch the upload row at most once" special case used to live here
+    // — hand-tuned down from ~14 redundant refetches per run, because a run-status
+    // event carries no information about WHAT changed.
+    //
+    // Deleted 2026-07-29 (realtime Phase 3): `uploads` broadcasts its own INSERT
+    // (mig 0025), so a row this client has never seen arrives as data. No inference
+    // from run status, and nothing to hand-tune.
   }
 
   /**

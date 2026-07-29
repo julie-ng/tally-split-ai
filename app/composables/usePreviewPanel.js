@@ -1,8 +1,8 @@
 /**
  * Generic driver for a `?preview=<id>&tab=<tab>`-synced side/tab preview panel —
  * the shared plumbing behind the expenses and uploads list-detail panels. Owns
- * the URL sync (resource + tab), open-state, esc-to-close, and the warm-on-id
- * watch. The caller supplies WHAT to warm (its own stores), the default tab, and
+ * the URL sync (resource + tab), open-state, esc-to-close, and the load-on-id
+ * watch. The caller supplies WHAT to load (its own stores), the default tab, and
  * the valid tab values; it keeps its own resource getters.
  *
  * Deliberately RESOURCE-AGNOSTIC: the selected id is exposed as `resourceId`
@@ -18,7 +18,7 @@
  *   computed off the id, which would re-trigger on every row swap.
  * - `?tab=<tab>` is the source of truth for WHICH facet. Addressable +
  *   refresh-stable + deep-linkable. A tab-only change leaves `resourceId`
- *   value-identical, so the warm watch does NOT re-fire. Unknown/missing `tab`
+ *   value-identical, so the load watch does NOT re-fire. Unknown/missing `tab`
  *   falls back to `defaultTab`. Uses router.replace (no history spam) for both.
  *
  * Call from PAGE setup (the page owns the router; this packages the canonical
@@ -29,8 +29,8 @@
  *   invalid; the tab a newly-opened/switched resource lands on.
  * @param {string[]} [options.tabs] - valid tab values. `?tab` outside this set is
  *   ignored (falls back to defaultTab). Omit to accept any `?tab` value.
- * @param {(id: string) => (void | Promise<void>)} [options.warm] - caller's warm
- *   callback, run on resource-id change (and immediately on cold-load). Warm the
+ * @param {(id: string) => (void | Promise<void>)} [options.onLoad] - caller's
+ *   callback, run on resource-id change (and immediately on cold-load). Load the
  *   caller's stores here. If it throws, the preview auto-closes (a stale/deleted
  *   ?preview id shouldn't leave a broken open panel).
  * @returns {{
@@ -42,7 +42,7 @@
  * }}
  */
 export function usePreviewPanel (options = {}) {
-  const { defaultTab = 'overview', tabs, warm } = options
+  const { defaultTab = 'overview', tabs, onLoad } = options
 
   const route = useRoute()
   const router = useRouter()
@@ -55,7 +55,7 @@ export function usePreviewPanel (options = {}) {
   // Tab is URL-backed (?tab=) — addressable, refresh-stable, deep-linkable.
   // Read: the query value if it's a known tab, else the default. Write: replace
   // ?tab (keeping ?preview). Because resourceId reads ?preview (not ?tab), a
-  // tab write is value-identical for resourceId → the warm watch never re-fires.
+  // tab write is value-identical for resourceId → the load watch never re-fires.
   const activeTab = computed({
     get () {
       const tab = route.query.tab
@@ -80,9 +80,9 @@ export function usePreviewPanel (options = {}) {
     return !!tab && (!tabs || tabs.includes(tab))
   }
 
-  // Run the caller's warm whenever the selected resource id changes.
+  // Run the caller's onLoad whenever the selected resource id changes.
   // immediate: on a cold hard-load the URL already carries ?preview=<id>, so
-  // resourceId is born set and never "changes" — without immediate the warm
+  // resourceId is born set and never "changes" — without immediate onLoad
   // never runs. Matches the immediate id-watches in the tab leaves.
   watch(resourceId, async (id) => {
     if (!id) {
@@ -100,16 +100,16 @@ export function usePreviewPanel (options = {}) {
         },
       })
     }
-    if (!warm) {
+    if (!onLoad) {
       return
     }
     try {
-      await warm(id)
+      await onLoad(id)
     }
     catch (err) {
       // The ?preview id points at something that no longer exists (deleted, or
       // a stale/hand-edited URL). Close instead of leaving a broken panel.
-      console.warn(`[usePreviewPanel] warm failed for ${id}, closing preview:`, err)
+      console.warn(`[usePreviewPanel] onLoad failed for ${id}, closing preview:`, err)
       isPreviewOpen.value = false
     }
   }, { immediate: true })
