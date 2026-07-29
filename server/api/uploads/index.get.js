@@ -12,7 +12,6 @@ export default defineEventHandler(async (event) => {
       id: true,
       title: true,
       status: true,
-      analysisStatus: true,
       originalFilename: true,
       blobName: true,
       blobUrl: true,

@@ -2,7 +2,6 @@ import { runs } from '@trigger.dev/sdk/v3'
 import { and, eq, inArray, isNotNull, lt } from 'drizzle-orm'
 import { WORKFLOW_RUN_STATUS } from '#shared/enums/workflow-run-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
-import { UPLOAD_ANALYSIS_STATUS } from '#shared/enums/upload-analysis-status.js'
 import { mapTriggerStatusToWorkflowStatus } from '#shared/utils/workflow/trigger-status-map.utils.js'
 
 /**
@@ -83,11 +82,6 @@ export default defineEventHandler(async (event) => {
         errors: { ...(run.errors ?? {}), [WORKFLOW_STEP.ORCHESTRATOR]: message },
       })
       .where(eq(schema.workflowRuns.id, run.id))
-
-    await db
-      .update(schema.uploads)
-      .set({ analysisStatus: UPLOAD_ANALYSIS_STATUS.FAILED })
-      .where(eq(schema.uploads.id, run.uploadId))
 
     log.info({ workflowRunId: run.id, triggerRunId: run.triggerRunId, status: mapped }, 'Reconcile: stuck run finalized')
     reconciledCount++

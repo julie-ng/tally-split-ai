@@ -2,7 +2,6 @@ import { task, logger } from '@trigger.dev/sdk/v3'
 import { WORKFLOW_RUN_STATUS } from '#shared/enums/workflow-run-status.js'
 import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-step-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
-import { UPLOAD_ANALYSIS_STATUS } from '#shared/enums/upload-analysis-status.js'
 import { analyzeOcr } from './analyze-ocr.js'
 import { analyzeAnnotations } from './analyze-annotations.js'
 import { normalizeReceipt } from './normalize-receipt.js'
@@ -214,7 +213,6 @@ export const receiptWorkflow = task({
       await updateWorkflowStatus(authHeaders, {
         status: WORKFLOW_RUN_STATUS.FAILED,
         completedAt: new Date().toISOString(),
-        analysisStatus: UPLOAD_ANALYSIS_STATUS.COMPLETED,
         errors: { [WORKFLOW_STEP.ORCHESTRATOR]: err.message },
       })
 
@@ -227,7 +225,6 @@ export const receiptWorkflow = task({
     await updateWorkflowStatus(authHeaders, {
       status: finalStatus,
       completedAt: new Date().toISOString(),
-      analysisStatus: UPLOAD_ANALYSIS_STATUS.COMPLETED,
     })
 
     logger.log(`Receipt workflow ${finalStatus} for ${uploadId}`, { receiptId, expenseId })

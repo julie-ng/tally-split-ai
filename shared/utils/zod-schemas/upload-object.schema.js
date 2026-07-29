@@ -14,7 +14,6 @@ export const uploadObject = z.object({
   contentType: z.string(),
   size: z.number(),
 
-  analysisStatus: z.string(), // pending, queued, processing, completed, failed
   ocrText: z.string().nullable().optional(),
   ocrJson: z.record(z.string(), z.any()).nullable().optional(),
   annotationsJson: z.record(z.string(), z.any()).nullable().optional(),

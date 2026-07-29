@@ -1,7 +1,6 @@
 import { pgTable, text, integer, bigint, serial, real, boolean, timestamp, jsonb, uuid, uniqueIndex } from 'drizzle-orm/pg-core'
 import { relations, sql } from 'drizzle-orm'
 import { PAID_BY_MATCHES } from '#shared/enums/paid-by-match.js'
-import { UPLOAD_ANALYSIS_STATUSES } from '#shared/enums/upload-analysis-status.js'
 import { UPLOAD_STATUSES } from '#shared/enums/upload-status.js'
 import { WORKFLOW_RUN_STATUSES } from '#shared/enums/workflow-run-status.js'
 import { WORKFLOW_STEP_STATUSES } from '#shared/enums/workflow-step-status.js'
@@ -80,9 +79,12 @@ export const uploads = pgTable('uploads', {
   contentType: text('content_type'),
   size: integer('size'),
 
-  // Analysis status (updated by workflow orchestrator)
-  analysisStatus: text('analysis_status', { enum: UPLOAD_ANALYSIS_STATUSES }).default('pending'),
-  analyzedAt: timestamp('analyzed_at'), // set when full workflow completes
+  // When the pipeline finished analyzing this upload. Stamped by status.put.js on
+  // a terminal run status. The coarse `analysis_status` rollup that used to sit
+  // here was dropped (mig 0027) — nothing read it, and it could disagree with
+  // workflow_runs. Run/step status is the source of truth for WHAT happened;
+  // this records WHEN, which workflow_runs doesn't carry per-upload.
+  analyzedAt: timestamp('analyzed_at'),
 
   // OCR results (Azure Document Intelligence)
   ocrText: text('ocr_text'), // plain text OCR output

@@ -54,8 +54,14 @@ Moves over time. Has a start state, transitions, and usually terminal states.
 | `workflow-run-status.js` | one orchestration run, as a whole | ✅ DB |
 | `workflow-step-status.js` | one step within a run | ✅ DB |
 | `upload-status.js` | the persisted blob row | ✅ DB |
-| `upload-analysis-status.js` | rollup of the run status onto the upload | ✅ DB |
 | `upload-queue-status.js` | the browser's transfer job | ❌ Browser-only |
+
+> [!NOTE]
+> `upload-analysis-status.js` used to sit here — a rollup of the run status onto
+> `uploads.analysis_status`. **Both were deleted (mig 0027).** Nothing read the
+> column, and a rollup that duplicates state can disagree with its source: a run
+> could be `expired` while the upload said `failed`. Run/step status is the source
+> of truth for *what* happened; `uploads.analyzed_at` still records *when*.
 
 - A run is an **aggregate** over steps.
 - A `partial` run means some steps failed (not skipped), e.g. annotations or payer assignment. But receipt and expense were created, so the pipeline continues.

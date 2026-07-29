@@ -3,7 +3,6 @@ import { eq, and, inArray } from 'drizzle-orm'
 import { workflowRunInsertSchema } from '#shared/utils/zod-schemas/workflow-run.schema.js'
 import { WORKFLOW_RUN_STATUS } from '#shared/enums/workflow-run-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
-import { UPLOAD_ANALYSIS_STATUS } from '#shared/enums/upload-analysis-status.js'
 import { UPLOAD_STATUS } from '#shared/enums/upload-status.js'
 import { getTaskActions } from '#shared/config/task-permissions.js'
 import { deriveInitials } from '#shared/utils/initials.utils.js'
@@ -92,12 +91,6 @@ export default defineEventHandler(async (event) => {
     .values(insertData)
     .returning()
 
-  // Update upload status
-  await db
-    .update(schema.uploads)
-    .set({ analysisStatus: UPLOAD_ANALYSIS_STATUS.QUEUED })
-    .where(eq(schema.uploads.id, uploadId))
-
   // Generate action-scoped HMAC token for the orchestrator
   const callbackToken = workflowTokenUtils.generateCallbackToken({
     runUuid: workflowRun.uuid,
@@ -146,11 +139,6 @@ export default defineEventHandler(async (event) => {
         errors: { [WORKFLOW_STEP.ORCHESTRATOR]: `Failed to enqueue workflow: ${err.message}` },
       })
       .where(eq(schema.workflowRuns.id, workflowRun.id))
-
-    await db
-      .update(schema.uploads)
-      .set({ analysisStatus: UPLOAD_ANALYSIS_STATUS.PENDING })
-      .where(eq(schema.uploads.id, uploadId))
 
     throw createError({ statusCode: 502, message: 'Failed to start analysis workflow' })
   }

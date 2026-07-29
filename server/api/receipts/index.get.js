@@ -11,7 +11,6 @@ export default defineEventHandler(async (event) => {
       uploads: {
         columns: {
           id: true,
-          analysisStatus: true,
           originalFilename: true,
         },
       },

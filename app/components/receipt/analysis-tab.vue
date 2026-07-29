@@ -203,7 +203,6 @@ const upload = computed(() => props.receipt.uploads?.[0])
                   OCR Analysis <AddedByIcon source="ocr" />
                 </p>
               </template>
-              <ui-label-content label="Status" :content="upload?.analysisStatus" />
               <ui-label-content v-if="upload?.analyzedAt" label="Analyzed At" :content="timestampUtils.toShortDate(upload.analyzedAt)" />
               <ui-label-content v-if="upload?.ocrText" label="OCR Result">
                 <ClientOnly>

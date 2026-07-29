@@ -1,8 +1,7 @@
 import { z } from 'zod'
 import { eq } from 'drizzle-orm'
-import { WORKFLOW_RUN_STATUSES } from '#shared/enums/workflow-run-status.js'
+import { WORKFLOW_RUN_STATUS, WORKFLOW_RUN_STATUSES } from '#shared/enums/workflow-run-status.js'
 import { WORKFLOW_STEP_STATUSES, WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-step-status.js'
-import { UPLOAD_ANALYSIS_STATUS, UPLOAD_ANALYSIS_STATUSES } from '#shared/enums/upload-analysis-status.js'
 import { WORKFLOW_STEP_KEYS } from '#shared/enums/workflow-step.js'
 
 const TERMINAL_STEP_STATUSES = new Set([
@@ -42,9 +41,6 @@ const statusUpdateSchema = z.object({
   adjustExpenseStatus: z.enum(WORKFLOW_STEP_STATUSES).optional(),
   normalizeStatus: z.enum(WORKFLOW_STEP_STATUSES).optional(),
 
-  // Upload analysis status (orchestrator sets this on completion)
-  analysisStatus: z.enum(UPLOAD_ANALYSIS_STATUSES).optional(),
-
   // Per-step errors to merge into the workflow_runs.errors jsonb column.
   // Shape: { [stepKey]: errorMessage }. Keys: WORKFLOW_STEP values
   // (e.g. ocr, annotations, adjustSplit, _orchestrator).
@@ -79,7 +75,13 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const { analysisStatus, ...workflowUpdates } = result.data
+  const workflowUpdates = result.data
+
+  // A terminal run status means the pipeline is done with this upload — that's
+  // what stamps analyzedAt below. Previously the orchestrator sent an explicit
+  // analysisStatus alongside; that rollup column is gone, so derive it.
+  const isAnalyzed = workflowUpdates.status === WORKFLOW_RUN_STATUS.COMPLETED
+    || workflowUpdates.status === WORKFLOW_RUN_STATUS.PARTIAL
 
   const workflowRun = event.context.workflowRun
 
@@ -126,18 +128,17 @@ export default defineEventHandler(async (event) => {
     log.info({ runUuid, ...runUpdates }, 'Workflow run status updated')
   }
 
-  // Update upload analysis status if provided
-  if (analysisStatus) {
-    const uploadUpdates = { analysisStatus }
-    if (analysisStatus === UPLOAD_ANALYSIS_STATUS.COMPLETED) {
-      uploadUpdates.analyzedAt = new Date()
-    }
+  // Stamp when the pipeline finished analyzing this upload. The coarse
+  // `analysisStatus` rollup it used to accompany was dropped (nothing read it —
+  // run/step status is the source of truth); `analyzedAt` stays because it
+  // records WHEN, which workflow_runs doesn't carry per-upload.
+  if (isAnalyzed) {
     await db
       .update(schema.uploads)
-      .set(uploadUpdates)
+      .set({ analyzedAt: new Date() })
       .where(eq(schema.uploads.id, workflowRun.uploadId))
 
-    log.info({ runUuid, uploadId: workflowRun.uploadId, analysisStatus }, 'Upload analysis status updated')
+    log.info({ runUuid, uploadId: workflowRun.uploadId }, 'Upload analyzedAt stamped')
   }
 
   return { success: true }

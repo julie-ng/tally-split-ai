@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   const upload = await db.query.uploads.findFirst({
     where: eq(schema.uploads.id, id),
-    columns: { ocrJson: true, analysisStatus: true, analyzedAt: true, blobUrl: true },
+    columns: { ocrJson: true, analyzedAt: true, blobUrl: true },
   })
 
   if (!upload) {
@@ -78,7 +78,6 @@ export default defineEventHandler(async (event) => {
     success: true,
     data: {
       uploadId: id,
-      analysisStatus: upload.analysisStatus,
       analyzedAt: upload.analyzedAt,
       blobUrl: upload.blobUrl,
       page: {
