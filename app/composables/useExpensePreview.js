@@ -36,7 +36,7 @@ export function useExpensePreview () {
   } = usePreviewPanel({
     defaultTab: 'overview',
     tabs: ['overview', 'receipt', 'history'],
-    onLoad: async (id) => {
+    ensureLoaded: async (id) => {
       const expense = await expensesStore.fetchExpense(id)
       if (expense?.receiptId) {
         receiptsStore.fetchReceiptById(expense.receiptId)
@@ -52,7 +52,7 @@ export function useExpensePreview () {
   // If the previewed expense disappears from the store while the panel is open
   // (e.g. it was just deleted), close the preview so ?preview doesn't dangle and
   // re-trigger a 404 fetch. Only acts when an id is set but its expense is gone —
-  // not during the brief load window (usePreviewPanel's onLoad handles cold-load).
+  // not during the brief load window (usePreviewPanel's ensureLoaded handles it).
   watch(previewExpense, (expense) => {
     if (isPreviewOpen.value && previewExpenseId.value && !expense) {
       isPreviewOpen.value = false

@@ -10,7 +10,7 @@ const expensesStore = useExpensesStore()
 const uploadId = computed(() => props.receipt.uploads?.[0]?.id)
 
 // The linked expense isn't reachable from the receipt UI otherwise. The sibling
-// <receipt-expense> already warms the receiptId → expenseId mapping into the
+// <receipt-expense> already loads the receiptId → expenseId mapping into the
 // store, so we just read it here. Deep-links the expenses preview panel.
 const expenseId = computed(() => expensesStore.getExpenseIdByReceiptId(props.receipt.id))
 

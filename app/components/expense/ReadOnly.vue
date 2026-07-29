@@ -4,7 +4,7 @@ import { useHouseholdStore } from '~/stores/household.store'
 import { useReceiptsStore } from '~/stores/receipts.store'
 
 // Read-only text rendering of an expense (the Overview tab's view mode). Pure
-// presentation: reads warm store getters by id, emits `edit` for the host to
+// presentation: reads loaded store getters by id, emits `edit` for the host to
 // switch into the form. No fetching, no mutation.
 const props = defineProps({
   expenseId: {
@@ -21,14 +21,14 @@ const receiptsStore = useReceiptsStore()
 
 const expense = computed(() => expensesStore.getExpenseById(props.expenseId))
 
-// Merchant info lives on the RECEIPT (receipts store owns it). The preview warms
+// Merchant info lives on the RECEIPT (receipts store owns it). The preview loads
 // the receipt on open (useExpensePreview); until it lands, show a skeleton.
 const receiptId = computed(() => expense.value?.receiptId)
 const receipt = computed(() => receiptId.value
   ? receiptsStore.getReceiptById(receiptId.value)
   : null,
 )
-// Receipt linked but not yet in the store → still warming → skeleton.
+// Receipt linked but not yet in the store → still loading → skeleton.
 const receiptPending = computed(() => !!receiptId.value && !receipt.value)
 
 const userOne = computed(() => householdStore.userOne)
@@ -57,10 +57,10 @@ function amount (value) {
 <template>
   <div class="space-y-5">
     <!-- Merchant (when the expense came from a receipt). Data comes from the
-         receipts store, warmed on preview open; skeleton while it loads. -->
+         receipts store, loaded on preview open; skeleton while it loads. -->
     <template v-if="receiptId">
       <div>
-        <!-- Still warming -->
+        <!-- Still loading -->
         <div v-if="receiptPending" class="space-y-2">
           <USkeleton class="h-4 w-2/3" />
           <USkeleton class="h-4 w-1/2" />

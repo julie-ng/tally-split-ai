@@ -10,7 +10,7 @@ import { toBerlinLongDate, toBerlinTime } from '#shared/utils/expense-date.utils
 //
 // Behaviour (open-state, URL sync of ?preview=<id> + ?tab=<tab>, esc) lives in
 // useExpensePreview(); this owns only layout + tabs. Leaf content is keyed by
-// expenseId and read from the store (warm) — no fetching here.
+// expenseId and read from the store — no fetching here.
 const open = defineModel('open', {
   type: Boolean,
   default: false,

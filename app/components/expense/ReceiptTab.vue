@@ -4,7 +4,7 @@ import { useReceiptsStore } from '~/stores/receipts.store'
 
 // Receipt tab of the expense preview. Shows the source receipt's key fields plus
 // its upload image. Ownership:
-//   - receipts store owns the receipt + its uploads (warmed on preview open)
+//   - receipts store owns the receipt + its uploads (loaded on preview open)
 //   - blob-image fetches the SAS read-URL itself, lazily — so the image only
 //     loads when this tab is actually rendered (UTabs mounts active slot only).
 // No polygons here on purpose: the polygon overlay needs the line-items table,
@@ -27,7 +27,7 @@ const receipt = computed(() => receiptId.value
   : null,
 )
 
-// Receipt warming is kicked off by useExpensePreview on open; still pending if
+// The receipt load is kicked off by useExpensePreview on open; still pending if
 // it's linked but not yet in the store.
 const receiptPending = computed(() => !!receiptId.value && !receipt.value)
 
@@ -55,7 +55,7 @@ function amount (value) {
       No receipt attached to this expense.
     </div>
 
-    <!-- Receipt still warming -->
+    <!-- Receipt still loading -->
     <div v-else-if="receiptPending" class="space-y-3">
       <USkeleton class="h-5 w-1/2" />
       <USkeleton class="h-4 w-2/3" />

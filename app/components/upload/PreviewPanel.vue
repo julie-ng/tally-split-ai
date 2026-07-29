@@ -8,9 +8,9 @@
 // ISOLATED collapse context (two sidebars sharing a group's sidebarCollapsed ref
 // clobber each other). unit="rem" matches the app group's resize math.
 //
-// Behaviour (open-state, ?preview/?tab URL sync, esc, warm) lives in
+// Behaviour (open-state, ?preview/?tab URL sync, esc, load) lives in
 // useUploadPreview(); this owns only layout + tabs. Data (timeline steps, the
-// previewed upload, warming flag) arrives as props — no fetching here.
+// previewed upload, loading flag) arrives as props — no fetching here.
 const open = defineModel('open', {
   type: Boolean,
   default: false,
@@ -59,8 +59,8 @@ const props = defineProps({
     type: [String, null],
     default: null,
   },
-  // True while the cross-store warm is in flight — drives the tab skeletons.
-  warming: {
+  // True while the cross-store load is in flight — drives the tab skeletons.
+  loading: {
     type: Boolean,
     default: false,
   },
@@ -78,12 +78,12 @@ const props = defineProps({
     default: false,
   },
   // The linked receipt id, for the Normalize footer link + header id row (null
-  // until the pipeline creates the receipt / warm resolves it).
+  // until the pipeline creates the receipt / load resolves it).
   receiptId: {
     type: [String, null],
     default: null,
   },
-  // The created expense id, for the Create Expense footer link (null until warm).
+  // The created expense id, for the Create Expense footer link (null until loaded).
   expenseId: {
     type: [String, null],
     default: null,
@@ -179,8 +179,8 @@ const expenseHref = computed(() =>
           }"
         >
           <template #workflow>
-            <!-- Skeleton while the cross-store warm is in flight. -->
-            <div v-if="warming" class="p-4 space-y-3">
+            <!-- Skeleton while the cross-store load is in flight. -->
+            <div v-if="loading" class="p-4 space-y-3">
               <USkeleton v-for="n in 6" :key="n" class="h-12 w-full" />
             </div>
             <UploadWorkflowTimeline
@@ -196,7 +196,7 @@ const expenseHref = computed(() =>
               @retry="$emit('retry')"
             >
               <!-- Create Expense step footer: link to the created expense.
-                   Enabled once the expense is warmed; disabled while null
+                   Enabled once the expense is loaded; disabled while null
                    (standalone/not-yet-created). -->
               <template #footer-createExpense>
                 <UButton
@@ -239,7 +239,7 @@ const expenseHref = computed(() =>
               </template>
 
               <!-- Normalize step footer: link to the receipt this step wrote
-                   date/title into. Enabled once the receipt is warmed. -->
+                   date/title into. Enabled once the receipt is loaded. -->
               <template #footer-normalize>
                 <UButton
                   label="View receipt"
@@ -269,8 +269,8 @@ const expenseHref = computed(() =>
           </template>
 
           <template #image>
-            <!-- Skeleton while warming; a few bars + an image-shaped block. -->
-            <div v-if="warming" class="p-4 space-y-3">
+            <!-- Skeleton while loading; a few bars + an image-shaped block. -->
+            <div v-if="loading" class="p-4 space-y-3">
               <USkeleton class="h-5 w-1/2" />
               <USkeleton class="h-4 w-2/3" />
               <USkeleton class="h-4 w-1/3" />

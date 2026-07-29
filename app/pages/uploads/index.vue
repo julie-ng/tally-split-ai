@@ -103,8 +103,8 @@ const {
 } = useUploadBatchActions({ onMutated: () => workflowStore.fetchAll() })
 
 // -------- Preview panel --------
-// All the panel's plumbing + data (?preview/?tab URL sync, cross-store warm,
-// timeline steps, warming flag) lives in useUploadPreview. The page passes the
+// All the panel's plumbing + data (?preview/?tab URL sync, cross-store load,
+// timeline steps, loading flag) lives in useUploadPreview. The page passes the
 // merged list so previewUpload resolves instantly, then wires openPreview to the
 // table + these values as props to <UploadPreviewPanel>.
 // closePreview isn't destructured — the panel closes via v-model:open, which
@@ -115,7 +115,7 @@ const {
   activeTab,
   openPreview,
   previewUpload,
-  isPreviewWarming,
+  isPreviewLoading,
   timelineSteps,
   timelineRunStartedAt,
   timelineRunCompletedAt,
@@ -194,7 +194,7 @@ const {
       :run-completed-at="timelineRunCompletedAt"
       :run-uuid="timelineRunUuid"
       :run-status="timelineRunStatus"
-      :warming="isPreviewWarming"
+      :loading="isPreviewLoading"
       :can-retry="canRetry"
       :is-retry-expired="isRetryExpired"
       :is-retrying="isRetrying"

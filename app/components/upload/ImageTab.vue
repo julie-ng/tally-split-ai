@@ -1,7 +1,7 @@
 <script setup>
 // The "Image" tab of the upload preview panel: the receipt image + OCR/analysis
 // details, re-fit from the old wide (grid-cols-5) slideover into this narrow
-// resizable column. Leaf keyed by `id` — reads store getters, warms its own
+// resizable column. Leaf keyed by `id` — reads store getters, loads its own
 // lazy/relational data (upload record + polygons) on id-change.
 //
 // Layout: details FIRST (collapsible property groups), the receipt image LAST.
@@ -24,7 +24,7 @@ const polygonData = computed(() => uploadsStore.getPolygonsById(props.id))
 const hasPolygons = computed(() => polygonData.value?.polygons?.length > 0)
 
 // Warm on id-change (immediate covers cold-load where id is born-set). Both are
-// cache-aware — a no-op when already fetched (e.g. the 2b warm hit annotations).
+// cache-aware — a no-op when already fetched (e.g. the 2b load hit annotations).
 watch(
   () => props.id,
   (id) => {

@@ -1,14 +1,14 @@
 <script setup>
 // Detail-view timeline for ONE upload's workflow run. Props-driven leaf: it
 // renders the `steps` it's handed and owns no data of its own (the page/preview
-// owner warms the store and maps it to this shape). Singular name = one upload;
+// owner loads the store and maps it to this shape). Singular name = one upload;
 // the plural row-cell summary lives in uploads/TableWorkflowBubbles.vue.
 //
 // Owns only RUN-LEVEL concerns: the run-start header, the single live `now`
 // ticker (one interval, shared by every processing step), and which steps are
 // expanded. Per-step visuals live in UploadWorkflowTimelineStep; the expanded
 // body pattern lives in UploadWorkflowTimelineStepContent. Dumb leaf — the page/
-// preview owner warms the stores and maps everything to the `steps` shape.
+// preview owner loads the stores and maps everything to the `steps` shape.
 import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-step-status.js'
 
 const props = defineProps({

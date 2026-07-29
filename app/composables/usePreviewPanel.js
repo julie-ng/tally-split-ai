@@ -29,10 +29,11 @@
  *   invalid; the tab a newly-opened/switched resource lands on.
  * @param {string[]} [options.tabs] - valid tab values. `?tab` outside this set is
  *   ignored (falls back to defaultTab). Omit to accept any `?tab` value.
- * @param {(id: string) => (void | Promise<void>)} [options.onLoad] - caller's
- *   callback, run on resource-id change (and immediately on cold-load). Load the
- *   caller's stores here. If it throws, the preview auto-closes (a stale/deleted
- *   ?preview id shouldn't leave a broken open panel).
+ * @param {(id: string) => (void | Promise<void>)} [options.ensureLoaded] -
+ *   caller's callback, run on resource-id change (and immediately on cold-load).
+ *   Contract is "make sure this id's data is present", so implementations are free
+ *   to skip what's already cached. If it throws, the preview auto-closes (a
+ *   stale/deleted ?preview id shouldn't leave a broken open panel).
  * @returns {{
  *   resourceId: import('vue').ComputedRef<string|null>,
  *   isPreviewOpen: import('vue').Ref<boolean>,
@@ -42,7 +43,7 @@
  * }}
  */
 export function usePreviewPanel (options = {}) {
-  const { defaultTab = 'overview', tabs, onLoad } = options
+  const { defaultTab = 'overview', tabs, ensureLoaded } = options
 
   const route = useRoute()
   const router = useRouter()
@@ -80,10 +81,10 @@ export function usePreviewPanel (options = {}) {
     return !!tab && (!tabs || tabs.includes(tab))
   }
 
-  // Run the caller's onLoad whenever the selected resource id changes.
+  // Run the caller's ensureLoaded whenever the selected resource id changes.
   // immediate: on a cold hard-load the URL already carries ?preview=<id>, so
-  // resourceId is born set and never "changes" — without immediate onLoad
-  // never runs. Matches the immediate id-watches in the tab leaves.
+  // resourceId is born set and never "changes" — without immediate it never runs.
+  // Matches the immediate id-watches in the tab leaves.
   watch(resourceId, async (id) => {
     if (!id) {
       return
@@ -100,16 +101,16 @@ export function usePreviewPanel (options = {}) {
         },
       })
     }
-    if (!onLoad) {
+    if (!ensureLoaded) {
       return
     }
     try {
-      await onLoad(id)
+      await ensureLoaded(id)
     }
     catch (err) {
       // The ?preview id points at something that no longer exists (deleted, or
       // a stale/hand-edited URL). Close instead of leaving a broken panel.
-      console.warn(`[usePreviewPanel] onLoad failed for ${id}, closing preview:`, err)
+      console.warn(`[usePreviewPanel] ensureLoaded failed for ${id}, closing preview:`, err)
       isPreviewOpen.value = false
     }
   }, { immediate: true })

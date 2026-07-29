@@ -25,7 +25,7 @@ import { useExpensesStore } from '~/stores/expenses.store'
  *   openPreview: (event: Event, row: { original: { id: string } }) => void,
  *   closePreview: () => void,
  *   previewUpload: import('vue').ComputedRef<object|null>,
- *   isPreviewWarming: import('vue').ComputedRef<boolean>,
+ *   isPreviewLoading: import('vue').ComputedRef<boolean>,
  *   timelineSteps: import('vue').ComputedRef<Array>,
  *   timelineRunStartedAt: import('vue').ComputedRef<string|null>,
  *   timelineRunCompletedAt: import('vue').ComputedRef<string|null>,
@@ -74,7 +74,7 @@ export function useUploadPreview (uploads) {
   } = usePreviewPanel({
     defaultTab: 'workflow',
     tabs: ['workflow', 'image'],
-    onLoad: loadPreviewDetails,
+    ensureLoaded: loadPreviewDetails,
   })
 
   // The upload's annotations (gpt-4o), read by the timeline's handwritten step.
@@ -107,7 +107,7 @@ export function useUploadPreview (uploads) {
   // True while the cross-store load is in flight: the upload links a receipt but
   // it isn't in the store yet. Drives the tab skeletons. A standalone upload (no
   // receiptId) is NOT loading — nothing to fetch, renders at once.
-  const isPreviewWarming = computed(() => !!previewReceiptId.value && !previewReceipt.value)
+  const isPreviewLoading = computed(() => !!previewReceiptId.value && !previewReceipt.value)
 
   const previewExpenseId = computed(() => previewExpense.value?.id ?? null)
 
@@ -131,7 +131,7 @@ export function useUploadPreview (uploads) {
     })),
   ]
 
-  // Detail rows + summary for a given step, from the warmed stores. Returns
+  // Detail rows + summary for a given step, from the loaded stores. Returns
   // { details?, summary? } — a step with no data returns {} and renders
   // collapsed (the component's isExpandable guards on details/summary presence).
   function stepContent (stepKey) {
@@ -278,7 +278,7 @@ export function useUploadPreview (uploads) {
     openPreview,
     closePreview,
     previewUpload,
-    isPreviewWarming,
+    isPreviewLoading,
     timelineSteps,
     timelineRunStartedAt,
     timelineRunCompletedAt,

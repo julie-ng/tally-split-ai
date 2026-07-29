@@ -44,7 +44,7 @@ const {
 } = useExpensesTableControls(expenses)
 
 // Preview panel: open-state, URL sync (?preview=<id> + ?tab=<tab>),
-// esc-to-close, active tab, and warm-on-id (expense + receipt) all live in the
+// esc-to-close, active tab, and load-on-id (expense + receipt) all live in the
 // composable. Both the selected expense and the active tab are URL-backed, so
 // the preview is deep-linkable and refresh-stable.
 const {
