@@ -1,10 +1,17 @@
 <script setup>
 import { useExpensesStore } from '~/stores/expenses.store'
 import { useReceiptsStore } from '~/stores/receipts.store'
+import { useUploadsStore } from '~/stores/uploads.store'
 
 // Receipt tab of the expense preview. Shows the source receipt's key fields plus
 // its upload image. Ownership:
-//   - receipts store owns the receipt + its uploads (loaded on preview open)
+//   - receipts store owns the receipt (loaded on preview open)
+//   - UPLOADS store owns the upload; this component resolves it by
+//     `receipt.uploadId`. Deliberately NOT read off the receipt: /api/receipts
+//     (list) and /api/receipts/[id] project differently, and both write the same
+//     store cache — so a receipt cached from the list has no `upload` and
+//     fetchReceiptById's TTL check then returns that partial row. Owning the
+//     lookup here removes the detail-must-superset-list coupling.
 //   - blob-image fetches the SAS read-URL itself, lazily — so the image only
 //     loads when this tab is actually rendered (UTabs mounts active slot only).
 // No polygons here on purpose: the polygon overlay needs the line-items table,
@@ -18,6 +25,7 @@ const props = defineProps({
 
 const expensesStore = useExpensesStore()
 const receiptsStore = useReceiptsStore()
+const uploadsStore = useUploadsStore()
 
 const expense = computed(() => expensesStore.getExpenseById(props.expenseId))
 const receiptId = computed(() => expense.value?.receiptId)
@@ -31,9 +39,22 @@ const receipt = computed(() => receiptId.value
 // it's linked but not yet in the store.
 const receiptPending = computed(() => !!receiptId.value && !receipt.value)
 
-// First upload's blob is the receipt image.
-const upload = computed(() => receipt.value?.upload)
+const uploadId = computed(() => receipt.value?.uploadId)
+const upload = computed(() => uploadId.value
+  ? uploadsStore.getUploadById(uploadId.value)
+  : null,
+)
 const blobName = computed(() => upload.value?.blobName)
+
+// This leaf is REUSED as rows swap (the panel stays mounted), and uploadId also
+// arrives late — the receipt fetch resolves after mount. So watch the id rather
+// than fetching in setup. fetchUploadById is cache-aware and de-dupes in-flight
+// requests, so repeat calls are cheap.
+watch(uploadId, (id) => {
+  if (id) {
+    uploadsStore.fetchUploadById(id)
+  }
+}, { immediate: true })
 
 const altText = computed(() => {
   const r = receipt.value

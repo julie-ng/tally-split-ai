@@ -20,6 +20,9 @@ watchEffect(async () => {
   if (!uploadId.value) return
   pending.value = true
   error.value = null
+  // The upload ROW (analyzedAt, ocrText) and the analysis SUMMARY are separate
+  // fetches into separate caches — fetchAnalysisById only writes analysisCache.
+  uploadsStore.fetchUploadById(uploadId.value)
   try {
     analysisData.value = await uploadsStore.fetchAnalysisById(uploadId.value)
   }
@@ -76,8 +79,14 @@ const totals = computed(() => {
   ]
 })
 
-// Get analysis metadata from upload
-const upload = computed(() => props.receipt.upload)
+// Analysis metadata comes from the UPLOADS store, resolved by id — not read off
+// the receipt. /api/receipts (list) and /api/receipts/[id] project differently
+// into the same store cache, so a receipt cached from the list carries no
+// `upload` and the TTL check then serves that partial row.
+const upload = computed(() => uploadId.value
+  ? uploadsStore.getUploadById(uploadId.value)
+  : null,
+)
 </script>
 
 <template>

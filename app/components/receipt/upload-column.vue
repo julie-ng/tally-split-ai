@@ -9,8 +9,17 @@ const props = defineProps({
 })
 
 const uploadsStore = useUploadsStore()
-uploadsStore.refreshUploadById(props.id)
-uploadsStore.fetchPolygons(props.id)
+
+// Keyed off the id via an immediate watch, not a bare setup call: a setup-time
+// fetch runs ONCE for the first id, so a later swap would silently never
+// re-fetch. See rules/vue-component-conventions.md — the reused-leaf trap.
+watch(() => props.id, (id) => {
+  if (!id) {
+    return
+  }
+  uploadsStore.refreshUploadById(id)
+  uploadsStore.fetchPolygons(id)
+}, { immediate: true })
 
 const upload = computed(() => uploadsStore.getUploadById(props.id))
 const polygonData = computed(() => uploadsStore.getPolygonsById(props.id))
