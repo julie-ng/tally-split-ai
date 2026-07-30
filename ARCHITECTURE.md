@@ -41,32 +41,78 @@ _Diagram - "Supavisor" Connection Pooler (Source: Supabase)_
 - **Chunk Component**: might be empty UI, but tracks block upload progress
 - **Pinia Store**: used to share data across Nuxt components and pages
 
-```mermaid
-sequenceDiagram
-    actor User
-    participant Frontend
-    participant Nuxt Server
-    participant Pinia
-    User->>Frontend: Drop files
-    Frontend->>+Nuxt Server: New file upload request
-    Nuxt Server-->>Nuxt Server: Generate upload SAS URL
-    Nuxt Server-->>-Frontend: Return file name and Azure SAS URL
-    create participant Chunks Component(s)    
-    Frontend->>Chunks Component(s): Split file into chunks
-    Frontend->>+Pinia: Store file metadata, incl. chunk IDs
-    Chunks Component(s)->>Chunks Component(s): Upload chunk to Azure SAS URL
-    destroy Chunks Component(s)
-    Chunks Component(s)->>Pinia: [@emit] upload status
-    Pinia-->>-Frontend: Listen to chunks
-    Note over Frontend, Pinia: After all chunks uploaded
-    Frontend->>Frontend: Commit Azure Blob Block List
-    Frontend->>+Pinia: Update file status to 'uploaded'
-    User->>+Frontend: Show image
-    Frontend->>+Nuxt Server: New file read URL
-    Nuxt Server-->>Nuxt Server: Generate read-only SAS URL
-    Nuxt Server-->>-Frontend: Return read-only file URL
-    Frontend-->>-User: Preview Image
+### Owners and dumb leaves
+
+Components are split by **role**, not preference. The role decides who fetches.
+
+| | **Owner** (container) | **Leaf** (presentational) |
+|:--|:--|:--|
+| Owns | the data's lifecycle, URL/selection state | nothing — renders what it's given |
+| Use for | route-level pages, widgets rendered once | components swapped or repeated by id |
+| Fetch | `useAsyncData` in setup | none — the owner warms the store |
+
+**Fetch at the level that owns the data's lifecycle; render at the leaves.**
+
+The guiding constraint is the **remount flash**, not separation of concerns:
+
+- A leaf that self-fetches on id-change empties itself between `idA` and `idB`.
+- Its root `v-if="data"` goes falsy → the subtree unmounts and remounts → visible blink on every swap.
+- The flash is about **identity**, not staleness, so reactivity cannot fix it.
+
+> [!IMPORTANT]
+> - A leaf rendering a **skeleton** instead of `v-if`-ing itself away never unmounts, so it never flashes.
+> - This means "owner fetches" is a consequence of how our leaves are written, **not** a law. Skeleton-based leaves may self-fetch.
+> - Whichever is chosen, a leaf's root must never be conditional.
+
+**The reused-leaf trap.** A leaf inside a reused container (e.g. a tabbed panel where rows swap without remounting) keeps its instance while `props.id` changes:
+
+- Store-getter `computed`s are safe — they re-evaluate automatically.
+- A bare setup-time fetch runs **once**, for the first id only. Later swaps silently never re-fetch.
+- When a reused leaf must self-fetch, key it off the id: `watch(() => props.id, fn, { immediate: true })`. `immediate` also covers cold load, where the id is born-set and never "changes".
+
+### Reactivity in stores
+
+Stores expose **getter factories**, not snapshots:
+
+```js
+const getExpenseById = computed(() => id => expenses.value[id])
 ```
+
+- A leaf reading `store.getExpenseById(props.id)` inside its own `computed` re-renders on any change to that row — whether from a fetch, a local mutation, or a realtime push.
+- Aliasing a store's ComputedRef to a local const breaks this (see [`rules/user-store.md`](.claude/rules/user-store.md)). Reference the store in templates and computeds.
+- Stores never import each other. The page or composable composes across domains by warming each store by id.
+
+**Forms are the deliberate exception.** A form copies store data into a local `ref` and then diverges from it — that copy is what makes cancel possible, and also what makes the form stop tracking the store. Reactivity reaches every read surface for free; it cannot reach an already-seeded form.
+
+### Where validation lives
+
+- Zod schemas in `shared/utils/zod-schemas/` are the single source of truth, used by both frontend and backend.
+- **Stores** validate before sending to the backend.
+- **Components** only surface and display errors — they do not validate or type-check.
+
+This split exists to avoid duplicate validation logic that is hard to debug.
+
+## Realtime Updates
+
+Postgres triggers build a payload and publish to a per-resource topic; the browser subscribes read-only.
+
+- One transport for all four tables — `expenses`, `receipts`, `uploads`, `workflow_runs`
+- `realtime.store` imports **zero** stores. Domain stores register their own `ingest*` handler with it
+- The browser **never** queries Postgres. All reads and writes go through the Nuxt API
+- Authorization is the **topic join**, evaluated once by an RLS policy on `realtime.messages` — so the trigger's topic string is the entire boundary
+
+### Previous iterations
+
+- **Server-Sent Events** — abandoned: needs a long-lived connection, but Vercel functions are capped at minutes, so the stream died and reconnected instead of holding a durable channel
+- **`postgres_changes` with RLS** — fine for `workflow_runs`, but it always sends the **whole row** and can't subscribe to a column subset. Too heavy for domains carrying composite `jsonb` (`uploads.ocr_json` runs to 100s of KB)
+
+> [!IMPORTANT]
+> Payloads are **snapshots, not diffs** — every listed scalar arrives at its current value, and `null` means "null in the DB right now".
+> - A column missing from the payload never pushes, so the UI silently renders a stale value
+> - Relations are never in a payload, so ingests **merge**, never replace
+> - Endpoints return `receiptId`, not an embedded `receipt` — fetched and pushed rows must have the same shape
+
+**Continue reading: [`docs/REALTIME.md`](docs/REALTIME.md)** — security design, JWT minting, policies, payload tiers and migrations.
 
 ## Cloud Architecture
 
@@ -124,25 +170,11 @@ sequenceDiagram
     Frontend-->>-User: Show image preview
 ```
 
-## Realtime Updates
-
-Workflow status updates stream from server → browser via Server-Sent Events (`GET /api/realtime/stream`), backed by an in-memory EventEmitter bus. The connection is authenticated by the user session.
-
-### Known limitation: SSE on Vercel
-
-SSE is a long-lived connection, which is a known mismatch with Vercel's serverless function model — function invocations are time-capped, so the stream gets killed and the client reconnects at intervals rather than holding one durable channel. It works, but the platform isn't shaped for this transport.
-
-### Why we haven't migrated
-
-The natural fix is Supabase Realtime (Postgres-change websockets). Doing it properly requires Row-Level Security policies on every table the browser subscribes to — otherwise the websocket becomes a back-door around the API's `requireAuthorization` checks.
-
-That's significant, multi-phase work: designing RLS policies that match the household-isolation model, migrating the realtime client, and verifying behavioural parity with the current SSE flow. Intentionally **not prioritized for this POC**. Decision to revisit mid-to-late June 2026.
-
 ## Handling LLM Rate Limits
 
 LLM calls route through the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) via the AI SDK. Rate-limit (429) backoff is delegated to the SDK's built-in retry, and the Gateway smooths per-provider TPM limits and can fail over between providers. Trigger.dev's task-level retry (`maxAttempts: 3` in `trigger.config.js`) still wraps each task as an outer safety net.
 
-When retries are exhausted, the failure surfaces in the UI: the workflow run's `errors` JSON column gains an entry under the relevant step key (`adjustExpense`, `annotations`, etc.), an SSE event fires, and the failed-step indicator in the upload table shows the underlying error.
+When retries are exhausted, the failure surfaces in the UI: the workflow run's `errors` JSON column gains an entry under the relevant step key (`adjustExpense`, `annotations`, etc.), the `workflow_runs` trigger broadcasts the change, and the failed-step indicator in the upload table shows the underlying error.
 
 ### Prior art: the Azure TPM problem (learnings)
 
