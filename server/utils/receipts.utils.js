@@ -1,5 +1,5 @@
-import { receiptWithUploadId } from './receipts/with-upload-id.js'
+import { withUploadId } from './receipts/with-upload-id.js'
 
 export const receiptsUtils = {
-  withUploadId: receiptWithUploadId,
+  withUploadId,
 }

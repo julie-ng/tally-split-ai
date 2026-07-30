@@ -1,49 +1,49 @@
 import { describe, it, expect } from 'vitest'
-import { receiptWithUploadId } from './with-upload-id.js'
+import { PgDialect } from 'drizzle-orm/pg-core'
+import { drizzle } from 'drizzle-orm/postgres-js'
+import * as schema from '#server/db/schema'
+import { withUploadId } from './with-upload-id.js'
 
-const receipt = () => ({
-  id: 'rec_1',
-  title: 'Rewe',
-  upload: { id: 'upl_1', originalFilename: 'scan.jpg' },
-})
+// `schema` is a Nuxt auto-import in app code; provide it as a global here.
+globalThis.schema = schema
 
-describe('receiptWithUploadId', () => {
-  it('should flatten upload to a scalar uploadId', () => {
-    expect(receiptWithUploadId(receipt())).toEqual({
-      id: 'rec_1',
-      title: 'Rewe',
-      uploadId: 'upl_1',
-    })
+function generatedSql () {
+  const db = drizzle.mock({ schema })
+  const query = db.query.receipts.findMany({ extras: withUploadId })
+  return new PgDialect().sqlToQuery(query.getSQL()).sql
+}
+
+function generatedSqlFindFirst () {
+  const db = drizzle.mock({ schema })
+  const query = db.query.receipts.findFirst({ extras: withUploadId })
+  return new PgDialect().sqlToQuery(query.getSQL()).sql
+}
+
+describe('withUploadId (extras fragment)', () => {
+  it('should select uploadId as a scalar column', () => {
+    expect(generatedSql()).toMatch(/as "upload_id"/)
   })
 
-  it('should drop the embedded upload by default', () => {
-    expect(receiptWithUploadId(receipt())).not.toHaveProperty('upload')
+  it('should read from uploads, not receipts', () => {
+    expect(generatedSql()).toMatch(/from "uploads"/)
   })
 
-  it('should keep the embedded upload when asked', () => {
-    const result = receiptWithUploadId(receipt(), { keepUpload: true })
-    expect(result.upload).toEqual({ id: 'upl_1', originalFilename: 'scan.jpg' })
-    expect(result.uploadId).toBe('upl_1')
+  // REGRESSION GUARD — this shipped broken twice. BOTH sides of the correlation
+  // must be qualified: a bare "id" resolves against the INNERMOST scope (the
+  // subquery's own uploads), giving u.receipt_id = u.id — never true, so every
+  // uploadId came back null with no error. The UI then showed "missing upload"
+  // for every receipt.
+  it('should qualify both sides of the correlation', () => {
+    expect(generatedSql()).toMatch(/u\.receipt_id = "receipts"\.id/)
   })
 
-  // Pre-OCR: the upload exists but has no receiptId yet, so from the receipt's
-  // side there is no upload at all.
-  it('should return null uploadId when the relation is absent', () => {
-    expect(receiptWithUploadId({ id: 'rec_1' }).uploadId).toBeNull()
+  it('should never correlate against a bare id', () => {
+    expect(generatedSql()).not.toMatch(/receipt_id = "id"/)
   })
 
-  it('should return null uploadId when the relation is null', () => {
-    expect(receiptWithUploadId({ id: 'rec_1', upload: null }).uploadId).toBeNull()
-  })
-
-  it('should keep a null upload when keepUpload is set', () => {
-    const result = receiptWithUploadId({ id: 'rec_1', upload: null }, { keepUpload: true })
-    expect(result.upload).toBeNull()
-    expect(result.uploadId).toBeNull()
-  })
-
-  it('should pass through null and undefined receipts', () => {
-    expect(receiptWithUploadId(null)).toBeNull()
-    expect(receiptWithUploadId(undefined)).toBeUndefined()
+  // findFirst and findMany must agree — the by-id endpoint uses findFirst, and
+  // the outer alias has to match there too.
+  it('should qualify the correlation in findFirst as well', () => {
+    expect(generatedSqlFindFirst()).toMatch(/u\.receipt_id = "receipts"\.id/)
   })
 })

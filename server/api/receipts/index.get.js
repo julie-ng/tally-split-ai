@@ -9,16 +9,8 @@ export default defineEventHandler(async (event) => {
 
   const receipts = await db.query.receipts.findMany({
     where: eq(schema.receipts.householdId, householdId),
-    // Joined ONLY to derive the scalar `uploadId` below — the upload row itself
-    // is not returned. Consumers resolve the upload from the uploads store by id.
-    with: {
-      upload: {
-        columns: {
-          id: true,
-        },
-      },
-    },
+    extras: receiptsUtils.withUploadId,
   })
 
-  return receipts.map(receipt => receiptsUtils.withUploadId(receipt))
+  return receipts
 })

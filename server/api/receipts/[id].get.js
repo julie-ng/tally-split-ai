@@ -11,14 +11,7 @@ export default defineEventHandler(async (event) => {
 
   const receipt = await db.query.receipts.findFirst({
     where: eq(schema.receipts.id, receiptId),
-    with: {
-      upload: {
-        columns: {
-          ocrJson: false,
-          annotationsJson: false,
-        },
-      },
-    },
+    extras: receiptsUtils.withUploadId,
   })
 
   if (!receipt) {
@@ -28,9 +21,5 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // TRANSITIONAL: returns BOTH `uploadId` and the embedded `upload`.
-  // Remove `keepUpload` — and the `columns` filter above — once the
-  // design-direction UI lands: the receipt tab's leaves will resolve the upload
-  // from the uploads store by id instead of reading it off the receipt.
-  return receiptsUtils.withUploadId(receipt, { keepUpload: true })
+  return receipt
 })
