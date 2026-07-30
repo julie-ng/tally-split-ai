@@ -47,9 +47,15 @@ describe('_derivePermission', () => {
     expect(_derivePermission('DELETE')).toBe('delete')
   })
 
-  it('should return null for unrecognized methods', () => {
+  // Not an oversight — batch PATCH endpoints are human-only, and returning null
+  // (→ 403) is the enforcement. Do not "fix" this by adding PATCH to the map.
+  it('should return null for PATCH — deliberately unmapped', () => {
     expect(_derivePermission('PATCH')).toBeNull()
+  })
+
+  it('should return null for unrecognized methods', () => {
     expect(_derivePermission('OPTIONS')).toBeNull()
+    expect(_derivePermission('HEAD')).toBeNull()
     expect(_derivePermission('')).toBeNull()
   })
 })

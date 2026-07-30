@@ -4,6 +4,7 @@ export default defineEventHandler(async (event) => {
   const log = useLogger('receipt')
   const db = useDB()
   await guards.requireAuthentication(event)
+  guards.requireTaskPermission(event)
   guards.requireIdParam(event)
 
   const receiptId = getRouterParam(event, 'id')

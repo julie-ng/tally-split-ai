@@ -68,6 +68,14 @@ export function _deriveResource (path) {
 
 /**
  * Derive the permission type from an HTTP method.
+ *
+ * IMPORTANT
+ * - PATCH is deliberately unmapped → returns null → guard 403s. Our only PATCH
+ *   endpoints are batch mutations, which are human-only by design.
+ * - `write` covers POST+PUT, so a task with `expense:write` would also satisfy a
+ *   batch PATCH. The vocabulary can't say "writes yes, batch writes no".
+ * - Pair with requireHumanPrincipal() on the endpoint to state that locally.
+ *
  * @param {string} method - HTTP method (e.g. 'GET', 'POST')
  * @returns {string|null} Permission name or null if unrecognized
  */

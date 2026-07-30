@@ -33,6 +33,7 @@ export default defineEventHandler(async (event) => {
   const log = useLogger('upload')
   const db = useDB()
   await guards.requireAuthentication(event)
+  guards.requireTaskPermission(event)
   guards.requireIdParam(event)
 
   const id = getRouterParam(event, 'id')

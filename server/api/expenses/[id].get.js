@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm'
 export default defineEventHandler(async (event) => {
   const db = useDB()
   await guards.requireAuthentication(event)
+  guards.requireTaskPermission(event)
   guards.requireIdParam(event)
 
   const expenseId = getRouterParam(event, 'id')

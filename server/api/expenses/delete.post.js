@@ -18,6 +18,7 @@ export default defineEventHandler(async (event) => {
   const log = useLogger('expense')
   const db = useDB()
   await guards.requireAuthentication(event)
+  guards.requireHumanPrincipal(event)
   const householdId = event.context.householdId
 
   const result = await readValidatedBody(event, body => batchDeleteSchema.safeParse(body))

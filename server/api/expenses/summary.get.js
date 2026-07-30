@@ -5,6 +5,8 @@ import { toBerlinISODate } from '#shared/utils/expense-date.utils.js'
 export default defineEventHandler(async (event) => {
   const db = useDB()
   await guards.requireAuthentication(event)
+  // No requireTaskPermission: tasks have no session and thus no householdId, so
+  // they cannot reach household-scoped collection endpoints.
   const householdId = event.context.householdId
 
   // Get optional year/month filter from query params

@@ -13,6 +13,7 @@ export default defineEventHandler(async (event) => {
   const log = useLogger('expense')
   const db = useDB()
   await guards.requireAuthentication(event)
+  guards.requireTaskPermission(event)
   guards.requireIdParam(event)
 
   const expenseId = getRouterParam(event, 'id')
