@@ -96,8 +96,8 @@ provide('highlightedLabel', highlightedLabel)
       </div>
       <div id="side-col" class="mt-12">
         <receipt-upload-column
-          v-if="props.receipt.uploads?.length > 0"
-          :id="props.receipt.uploads[0]?.id"
+          v-if="props.receipt.uploadId"
+          :id="props.receipt.uploadId"
         />
       </div>
     </div><!-- /.grid -->

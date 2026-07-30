@@ -8,7 +8,7 @@ const props = defineProps({
 const uploadsStore = useUploadsStore()
 
 // Get upload id for fetching analysis
-const uploadId = computed(() => props.receipt.uploads?.[0]?.id)
+const uploadId = computed(() => props.receipt.uploadId)
 
 // Fetch analysis data via store (cache-aware). The store returns the envelope
 // `data` field directly (or null on error).
@@ -77,7 +77,7 @@ const totals = computed(() => {
 })
 
 // Get analysis metadata from upload
-const upload = computed(() => props.receipt.uploads?.[0])
+const upload = computed(() => props.receipt.upload)
 </script>
 
 <template>

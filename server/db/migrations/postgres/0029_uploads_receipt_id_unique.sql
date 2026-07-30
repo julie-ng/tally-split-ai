@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "uploads_receipt_id_unique" ON "uploads" USING btree ("receipt_id") WHERE "uploads"."receipt_id" IS NOT NULL;

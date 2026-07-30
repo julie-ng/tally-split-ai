@@ -7,7 +7,7 @@ const props = defineProps({
 
 const expensesStore = useExpensesStore()
 
-const uploadId = computed(() => props.receipt.uploads?.[0]?.id)
+const uploadId = computed(() => props.receipt.uploadId)
 
 // The linked expense isn't reachable from the receipt UI otherwise. The sibling
 // <receipt-expense> already loads the receiptId → expenseId mapping into the

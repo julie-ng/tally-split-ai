@@ -32,7 +32,7 @@ const receipt = computed(() => receiptId.value
 const receiptPending = computed(() => !!receiptId.value && !receipt.value)
 
 // First upload's blob is the receipt image.
-const upload = computed(() => receipt.value?.uploads?.[0])
+const upload = computed(() => receipt.value?.upload)
 const blobName = computed(() => upload.value?.blobName)
 
 const altText = computed(() => {

@@ -19,7 +19,8 @@ const original = { ...props.receipt }
 const formData = ref({ ...props.receipt })
 
 // This form is only for receipt
-delete formData.value.uploads
+delete formData.value.upload
+delete formData.value.uploadId
 
 const handleSubmit = () => {
   // Only include fields that actually changed

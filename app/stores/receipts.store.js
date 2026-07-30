@@ -327,9 +327,9 @@ export const useReceiptsStore = defineStore('receipts', () => {
    * Ingest a broadcast payload from the `receipts` topic (migration 0024).
    *
    * MERGE, never replace. The payload is a complete scalar snapshot — authoritative
-   * for the fields it carries — but it has no `uploads` relation, which both
-   * /api/receipts endpoints join. Replacing would leave components reading
-   * `receipt.uploads[0].blobName` with undefined.
+   * for the fields it carries — but it carries neither `uploadId` (derived from
+   * the joined upload) nor the transitional `upload` object that
+   * /api/receipts/[id] still embeds. Replacing would blank both.
    *
    * ⚠️ Sets fetchedAt. This store is TTL-cached (5 min); without it a pushed value
    * would be treated as stale and immediately re-fetched, turning a push into a

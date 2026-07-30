@@ -4,14 +4,12 @@ import { eq, and, inArray } from 'drizzle-orm'
  * Fully delete a set of uploads for a household, cascading through their
  * receipts when appropriate.
  *
- * A receipt can have MORE than one upload. So per doomed receipt we compare how
- * many of its uploads are being deleted against its total upload count:
- *   • ALL of them → delete the *receipt* and let the FK cascade
+ * A receipt has exactly ONE upload (enforced by the `uploads_receipt_id_unique`
+ * partial index), so deleting an upload always takes its receipt with it:
+ *   • has a receiptId → delete the *receipt* and let the FK cascade
  *     (uploads/expenses/receiptHistory → receipts, onDelete: cascade) remove the
- *     upload rows, the expense, and history in one statement.
- *   • only SOME → delete just those upload rows directly and keep the receipt
- *     (its remaining uploads + expense stay intact).
- * Uploads with no receiptId (in the pre-OCR window) are deleted directly.
+ *     upload row, the expense, and history in one statement.
+ *   • no receiptId (the pre-OCR window) → delete the upload row directly.
  *
  * Azure blobs live outside Postgres, so the cascade can't touch them. BEFORE
  * deleting, we read every doomed upload's blob names and mint short-lived
@@ -72,38 +70,16 @@ export async function deleteManyUploads (db, { householdId, ids }) {
       }).sasUrl,
     )
 
-    // Group doomed uploads by receiptId to decide receipt-cascade vs row-delete.
-    const doomedByReceipt = new Map()
-    const noReceiptUploadIds = []
+    // 1:1 — an upload WITH a receipt is removed by the receipt cascade; one
+    // without (the pre-OCR window) has its row deleted directly.
+    const receiptIdsToDelete = []
+    const uploadIdsToDelete = []
     for (const u of owned) {
       if (u.receiptId) {
-        const list = doomedByReceipt.get(u.receiptId) ?? []
-        list.push(u.id)
-        doomedByReceipt.set(u.receiptId, list)
+        receiptIdsToDelete.push(u.receiptId)
       }
       else {
-        noReceiptUploadIds.push(u.id)
-      }
-    }
-
-    const receiptIdsToDelete = []
-    const uploadIdsToDelete = [...noReceiptUploadIds]
-
-    for (const [receiptId, doomedUploadIds] of doomedByReceipt) {
-      // Total uploads still attached to this receipt.
-      const siblings = await tx
-        .select({ id: schema.uploads.id })
-        .from(schema.uploads)
-        .where(eq(schema.uploads.receiptId, receiptId))
-
-      if (doomedUploadIds.length >= siblings.length) {
-        // Every upload of this receipt is being deleted → drop the receipt and
-        // let the cascade take its uploads/expense/history.
-        receiptIdsToDelete.push(receiptId)
-      }
-      else {
-        // Only some — delete just those upload rows, keep the receipt.
-        uploadIdsToDelete.push(...doomedUploadIds)
+        uploadIdsToDelete.push(u.id)
       }
     }
 

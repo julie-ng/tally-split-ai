@@ -259,7 +259,7 @@ const paginationInfo = computed(() => {
                   {{ row.original.title || '—' }}
                 </NuxtLink>
                 <UBadge
-                  v-if="!row.original.uploads || row.original.uploads.length === 0"
+                  v-if="!row.original.uploadId"
                   icon="i-lucide-triangle-alert"
                   color="warning"
                   variant="outline"

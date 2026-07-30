@@ -103,7 +103,14 @@ export const uploads = pgTable('uploads', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   uploadedAt: timestamp('uploaded_at', { withTimezone: true }),
-})
+}, table => [
+  // A receipt has exactly one upload (permanent invariant). Modelled as 1:many
+  // originally; never used that way. Partial index so the pre-OCR window —
+  // where receiptId is still null — is exempt.
+  uniqueIndex('uploads_receipt_id_unique')
+    .on(table.receiptId)
+    .where(sql`${table.receiptId} IS NOT NULL`),
+])
 
 /**
  * Expenses table - tracks expense splitting between two household members
@@ -331,8 +338,10 @@ export const usersRelations = relations(users, ({ one }) => ({
 }))
 
 // Receipt has many uploads, belongs to one household and one user (uploader)
-export const receiptsRelations = relations(receipts, ({ one, many }) => ({
-  uploads: many(uploads),
+export const receiptsRelations = relations(receipts, ({ one }) => ({
+  // No fields/references: the FK lives on uploads.receiptId, so this side is
+  // declared bare. Returns a single object or null — NOT an array.
+  upload: one(uploads),
   household: one(households, {
     fields: [receipts.householdId],
     references: [households.id],
