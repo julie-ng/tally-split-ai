@@ -684,13 +684,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "analysis_status": {
-          "name": "analysis_status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'pending'"
-        },
         "analyzed_at": {
           "name": "analyzed_at",
           "type": "timestamp",
