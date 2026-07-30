@@ -175,11 +175,15 @@ npx trigger dev                                     # Start Trigger.dev worker (
 Detailed coding conventions and workflow guides live in `.claude/`:
 
 - **Rules** (always loaded, some path-scoped): `.claude/rules/`
-  - `code-style.md` — ESLint, file naming, utility placement
+  - `code-style.md` — ESLint, file naming, utility placement, comment/markdown style
+  - `agent-communication.md` — how to communicate in chat (questions, corrections, summaries)
   - `zod-validation.md` — validation patterns with code examples
   - `vue-component-conventions.md` — naming, `defineModel`, validation responsibility
   - `server-api-patterns.md` — handler template, error handling
   - `nuxt-best-practices.md` — `callOnce`, `createError`, `<ClientOnly>`
+  - `enums.md` — status enums in `shared/enums/`; never hardcode status strings
+  - `user-store.md` — don't alias `useUserStore` ComputedRefs (breaks reactivity)
+  - `database-timestamps.md` — (scoped to `server/db/**`) instants → `timestamptz`
 
 - **Skills** (on-demand via `/skill-name`): `.claude/skills/`
   - `/database-operations` — schema changes, migrations, seed scripts
