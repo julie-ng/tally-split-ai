@@ -29,6 +29,12 @@ export const useHistoryStore = defineStore('history', () => {
   const expenseHistory = ref({}) // Map: { [expenseId]: changeArray }
   const receiptHistory = ref({}) // Map: { [receiptId]: changeArray }
 
+  // Latest change per expense — { [expenseId]: { source, createdAt } }. Feeds the
+  // "Updated" column, so it's fetched in BATCHES for a list rather than per id.
+  // Separate from expenseHistory: that holds full entries for one expense, this
+  // holds one summary row for many.
+  const expenseUpdates = ref({})
+
   // Tracks in-flight fetches so concurrent callers (tab + LLMAnalysis mounting
   // together) share one request instead of racing two.
   const inFlight = new Map()
@@ -42,6 +48,12 @@ export const useHistoryStore = defineStore('history', () => {
   const getExpenseHistory = computed(() => id => expenseHistory.value[id])
 
   const getReceiptHistory = computed(() => id => receiptHistory.value[id])
+
+  /**
+   * Latest change for an expense, or null if it has none (or isn't fetched yet).
+   * @returns {{ source: string, createdAt: string }|null}
+   */
+  const getExpenseUpdate = computed(() => id => expenseUpdates.value[id] ?? null)
 
   /**
    * The merged timeline: receipt + expense entries, each tagged with the entity
@@ -160,9 +172,50 @@ export const useHistoryStore = defineStore('history', () => {
     return _fetchHistory('receipt', id, force)
   }
 
+  /**
+   * Fetch the latest change for a batch of expenses and merge into the map.
+   *
+   * MERGES rather than replaces, so paging through a list accumulates instead of
+   * dropping what the previous page loaded.
+   *
+   * IMPORTANT
+   * - No cache-hit short-circuit, unlike the per-entity fetches. This is a
+   *   "latest" value: it changes whenever the expense is edited, so an already-
+   *   present id still has to be re-read. Callers control frequency.
+   * - Ids with no history are absent from the response. They're written as null
+   *   so the UI can tell "fetched, never changed" from "not fetched yet".
+   *
+   * @param {string[]} ids
+   * @returns {Promise<Object>} the merged map
+   */
+  async function fetchExpenseUpdates (ids) {
+    const unique = [...new Set(ids)].filter(Boolean)
+    if (unique.length === 0) {
+      return expenseUpdates.value
+    }
+
+    try {
+      const { data } = await requestFetch('/api/history/expenses/updates', {
+        query: { ids: unique.join(',') },
+      })
+      const next = { ...expenseUpdates.value }
+      for (const id of unique) {
+        next[id] = data[id] ?? null
+      }
+      expenseUpdates.value = next
+      _log(`[HistoryStore] ✅ fetched updates for ${unique.length} expense(s)`)
+    }
+    catch (err) {
+      console.error('[HistoryStore] ❌ failed to fetch expense updates:', err)
+    }
+
+    return expenseUpdates.value
+  }
+
   function reset () {
     expenseHistory.value = {}
     receiptHistory.value = {}
+    expenseUpdates.value = {}
     inFlight.clear()
   }
 
@@ -196,6 +249,13 @@ export const useHistoryStore = defineStore('history', () => {
       return
     }
 
+    // The "Updated" column tracks the LATEST change, so any signal for a row the
+    // table already loaded invalidates it. Same already-in-cache guard: an id we
+    // never fetched isn't on screen.
+    if (entityType === 'expense' && expenseUpdates.value[entityId] !== undefined) {
+      fetchExpenseUpdates([entityId])
+    }
+
     const target = entityType === 'expense' ? expenseHistory : receiptHistory
     if (target.value[entityId] === undefined) {
       return
@@ -226,17 +286,20 @@ export const useHistoryStore = defineStore('history', () => {
     debug,
     expenseHistory,
     receiptHistory,
+    expenseUpdates,
 
     // Getters
     getExpenseHistory,
     getReceiptHistory,
     getMergedHistory,
     getLlmChange,
+    getExpenseUpdate,
 
     // Actions
     configure,
     fetchExpenseHistory,
     fetchReceiptHistory,
+    fetchExpenseUpdates,
     reset,
 
     // Realtime

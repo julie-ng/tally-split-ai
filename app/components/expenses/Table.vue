@@ -109,6 +109,16 @@ const columns = computed(() => [
     header: 'Settled',
     meta: { class: { th: 'w-[124px] text-right', td: 'w-[124px] text-right' } },
   },
+  {
+    id: 'updated',
+    // `lastChange` is merged onto the row by useExpensesTableControls, not
+    // returned by /api/expenses. Sorting needs the raw timestamp, so the
+    // accessor returns that rather than the object.
+    accessorFn: row => row.lastChange?.createdAt ?? null,
+    header: 'Updated',
+    sortUndefined: 'last',
+    meta: { class: { th: 'w-[150px]', td: 'w-[150px]' } },
+  },
 ])
 
 const tableStyles = {
@@ -132,6 +142,13 @@ usePreviewRowJump({
   data: () => props.data,
   sorting: () => props.sorting,
   tableApi: () => table.value?.tableApi,
+})
+
+// Resolves 'user:<id>' / 'task:<name>' to { isBot, label, avatar } for the
+// Updated column's avatar. A computed (not a plain memo) so it re-derives if a
+// member's name or avatar changes mid-session.
+const changeSource = computed(() => (lastChange) => {
+  return describeChangeSource(lastChange?.source ?? null, householdStore)
 })
 
 function onSelect (event, row) {
@@ -244,6 +261,32 @@ function onSelect (event, row) {
               size="xs"
             />
           </UTooltip>
+        </template>
+
+        <!-- Last updated: who + when -->
+        <template #updated-cell="{ row }">
+          <div v-if="row.original.lastChange" class="flex items-center gap-2">
+            <UTooltip :text="changeSource(row.original.lastChange).label" :delay-duration="0">
+              <UAvatar
+                v-if="changeSource(row.original.lastChange).isBot"
+                icon="i-lucide-bot"
+                size="3xs"
+                class="bg-primary/10 text-primary shrink-0"
+                :ui="{ icon: 'size-3' }"
+              />
+              <UAvatar
+                v-else
+                :src="changeSource(row.original.lastChange).avatar"
+                :alt="changeSource(row.original.lastChange).label"
+                size="3xs"
+                class="shrink-0"
+              />
+            </UTooltip>
+            <time :datetime="row.original.lastChange.createdAt" class="text-sm text-toned">
+              {{ timestampUtils.toRelative(row.original.lastChange.createdAt) }}
+            </time>
+          </div>
+          <span v-else class="text-dimmed">—</span>
         </template>
 
         <!-- Settled status -->

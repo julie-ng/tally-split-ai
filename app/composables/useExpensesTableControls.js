@@ -1,4 +1,5 @@
 import { useHouseholdStore } from '~/stores/household.store'
+import { useHistoryStore } from '~/stores/history.store'
 
 /**
  * View-state composable for the expenses list page: filter + sort dropdowns
@@ -70,7 +71,7 @@ export function useExpensesTableControls (expensesRef) {
     ],
   ])
 
-  const filteredExpenses = computed(() => {
+  const _filteredExpenses = computed(() => {
     let result = expensesRef.value
 
     if (settledFilter.value === 'settled') {
@@ -90,6 +91,32 @@ export function useExpensesTableControls (expensesRef) {
     return result
   })
 
+  // -------- Last-updated ("Updated" column) --------
+  // Who last changed each expense and when. Lives in the history store, not on
+  // the expense row — `/api/expenses` deliberately doesn't carry it (a list
+  // endpoint shouldn't ship another domain's fields). Composed here instead, so
+  // both expenses pages get the column without knowing history exists.
+  const historyStore = useHistoryStore()
+
+  // Fetch for the FILTERED set, not the visible page: TanStack sorts the whole
+  // dataset before paginating, so a page-sized fetch would leave most rows
+  // without a sort key. The filtered month is the natural unit and the UI
+  // already knows it.
+  watch(_filteredExpenses, (expenses) => {
+    if (expenses.length > 0) {
+      historyStore.fetchExpenseUpdates(expenses.map(e => e.id))
+    }
+  }, { immediate: true })
+
+  // Merged onto the row so TanStack can sort on it like any other field —
+  // a sort key it can't read from the row is a key it can't sort by.
+  const filteredExpenses = computed(() =>
+    _filteredExpenses.value.map(expense => ({
+      ...expense,
+      lastChange: historyStore.getExpenseUpdate(expense.id),
+    })),
+  )
+
   // -------- Sort dropdown --------
   // Add new entries to extend the dropdown.
   const sortOptions = computed(() => [
@@ -97,6 +124,7 @@ export function useExpensesTableControls (expensesRef) {
     { value: 'splitAmount', label: 'Expense Amount' },
     { value: 'userOneShare', label: `${user1Name.value}'s Share` },
     { value: 'userTwoShare', label: `${user2Name.value}'s Share` },
+    { value: 'updated', label: 'Last Updated' },
   ])
   const sortBy = ref('date')
   const sortOrder = ref('desc') // 'desc' | 'asc'
