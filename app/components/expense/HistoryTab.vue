@@ -51,16 +51,17 @@ const entries = computed(() => {
 
 // undefined until both fetches resolve; [] once loaded + genuinely empty.
 const pending = computed(() => entries.value === undefined)
-
-function displayValue (val) {
-  return val === null || val === undefined ? 'null' : val
-}
 </script>
 
 <template>
-  <div class="py-4">
+  <div class="px-4 py-6">
+    <h1 class="mb-6 text-md font-bold text-default">
+      Change History
+    </h1>
+
     <!-- Loading -->
-    <div v-if="pending" class="space-y-4">
+    <!-- Indented past the rail so the cards don't shift sideways once loaded. -->
+    <div v-if="pending" class="space-y-4 pl-9">
       <USkeleton class="h-24 w-full rounded-lg" />
       <USkeleton class="h-24 w-full rounded-lg" />
     </div>
@@ -70,62 +71,78 @@ function displayValue (val) {
       No changes recorded.
     </div>
 
-    <!-- Timeline -->
-    <div v-else class="space-y-4">
+    <!-- Timeline. Mirrors the workflow timeline's rail (UploadWorkflowTimeline),
+         with the change's AVATAR standing in for that one's status dot. -->
+    <ol v-else class="relative">
       <!-- Change ids are only unique WITHIN an entity type, so the two merged
            streams can collide on id alone. -->
-      <div
-        v-for="entry in entries"
+      <li
+        v-for="(entry, i) in entries"
         :key="`${entry.entityType}-${entry.id}`"
-        class="border border-default rounded-lg p-4"
+        class="relative flex gap-3 pb-4 last:pb-0"
       >
-        <!-- Header: which entity changed, who/what changed it, and when -->
-        <div class="flex items-center gap-2 mb-3">
-          <UBadge
-            :label="entry.entityType"
-            :color="entry.entityType === 'receipt' ? 'primary' : 'info'"
-            variant="subtle"
-            size="xs"
-          />
-          <UAvatar
-            v-if="entry.src.isBot"
-            icon="i-lucide-bot"
-            size="2xs"
-            class="bg-primary/10 text-primary shrink-0"
-            :ui="{ icon: 'size-4' }"
-          />
-          <UAvatar
-            v-else
-            :src="entry.src.avatar"
-            :alt="entry.src.label"
-            size="2xs"
-            class="shrink-0"
-          />
-          <span
-            class="text-xs"
-            :class="entry.src.isBot ? 'text-muted font-mono' : 'text-default'"
-          >
-            {{ entry.src.label }}
-          </span>
-          <span class="text-xs text-dimmed ml-auto">
-            {{ timestampUtils.toShortDatetime(entry.createdAt) }}
-          </span>
-        </div>
+        <!-- Connector (this avatar → next). left-[11px] centres it under a
+             size-6 avatar; hidden on the last entry. -->
+        <span
+          v-if="i !== entries.length - 1"
+          class="absolute left-[11px] top-9 -bottom-0 w-px bg-neutral-300 dark:bg-neutral-600"
+          aria-hidden="true"
+        />
 
-        <!-- Field changes -->
-        <div class="space-y-1">
-          <div
-            v-for="f in entry.fields"
-            :key="f.field"
-            class="text-sm flex items-baseline gap-2"
-          >
-            <span class="font-mono text-xs text-muted w-32 shrink-0">{{ f.field }}</span>
-            <span class="text-dimmed">{{ displayValue(f.oldValue) }}</span>
-            <span class="text-dimmed">&rarr;</span>
-            <span>{{ displayValue(f.newValue) }}</span>
+        <!-- Who made the change, sitting ON the rail. mt-3 aligns it with the
+             header text, which sits below the card's top padding. -->
+        <!-- size-6 (24px) — a touch larger than the workflow timeline's size-5
+             status dot, since a face needs more room to read than a glyph. The
+             connector's left offset is paired to this. Set via the class, not
+             the `size` prop: the utility has to win, and two would fight. -->
+        <UAvatar
+          v-if="entry.src.isBot"
+          icon="i-lucide-bot"
+          class="relative z-10 mt-2.5 size-6 shrink-0 bg-elevated text-dimmed ring ring-default"
+          :ui="{ icon: 'size-3.5' }"
+        />
+        <UAvatar
+          v-else
+          :src="entry.src.avatar"
+          :alt="entry.src.label"
+          class="relative z-10 mt-2.5 size-6 shrink-0 ring ring-default"
+        />
+
+        <UiCollapsibleCard
+          class="flex-1 min-w-0"
+          padding="sm"
+          default-open
+        >
+          <template #header>
+            <!-- Same weight for both principals — a task is an author here, not
+                 metadata. Mono is kept for tasks so `task:adjust-expense` reads
+                 as an identifier rather than a name. -->
+            <span
+              class="text-xs font-medium truncate"
+              :class="entry.src.isBot ? 'font-mono' : ''"
+            >
+              {{ entry.src.label }}
+            </span>
+          </template>
+
+          <template #actions>
+            <time :datetime="entry.createdAt" class="text-xs text-dimmed">
+              {{ timestampUtils.toRelative(entry.createdAt) }}
+            </time>
+            <UBadge
+              :label="entry.entityType"
+              :color="entry.entityType === 'receipt' ? 'primary' : 'info'"
+              variant="subtle"
+              size="sm"
+            />
+          </template>
+
+          <!-- Field changes -->
+          <div class="px-1">
+            <ExpenseHistoryFields :fields="entry.fields" />
           </div>
-        </div>
-      </div>
-    </div>
+        </UiCollapsibleCard>
+      </li>
+    </ol>
   </div>
 </template>
