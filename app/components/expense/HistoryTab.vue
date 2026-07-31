@@ -1,14 +1,19 @@
 <script setup>
 import { useExpensesStore } from '~/stores/expenses.store'
+import { useHistoryStore } from '~/stores/history.store'
 import { useHouseholdStore } from '~/stores/household.store'
 
-// History tab of the expense preview. Store-driven, EXPENSE changes only (split
-// edits, settle, paid-by). Receipt-side change history lives on the receipt
-// detail page. Works for standalone expenses (no receipt) too.
+// History tab of the expense preview. One merged timeline of BOTH the expense's
+// changes (split edits, settle, paid-by) and its receipt's (OCR corrections,
+// normalization) — the user thinks of them as one thing. Standalone expenses
+// have no receipt and simply merge to their own entries.
+//
+// The receiptId comes off the expense the panel already warmed, so this stays an
+// automatic chain rather than a second source of truth for the id.
 //
 // Reused-leaf rule: this is mounted once and reused as the preview swaps rows,
-// so the fetch keys off the id in an immediate watch (a setup-only fetch would
-// load just the first expense). See the preview-panel leaf gotcha.
+// so both fetches key off the ids in an immediate watch (a setup-only fetch
+// would load just the first expense). See the preview-panel leaf gotcha.
 const props = defineProps({
   expenseId: {
     type: String,
@@ -17,39 +22,34 @@ const props = defineProps({
 })
 
 const expensesStore = useExpensesStore()
+const historyStore = useHistoryStore()
 const householdStore = useHouseholdStore()
 
-watch(() => props.expenseId, (id) => {
-  if (id) {
-    expensesStore.fetchExpenseHistory(id)
+const receiptId = computed(() => expensesStore.getExpenseById(props.expenseId)?.receiptId ?? null)
+
+// Watches the PAIR: receiptId resolves a tick after expenseId on a cold load
+// (the expense has to arrive first), so watching only expenseId would miss it.
+watch([() => props.expenseId, receiptId], ([expenseId, currentReceiptId]) => {
+  if (expenseId) {
+    historyStore.fetchExpenseHistory(expenseId)
+  }
+  if (currentReceiptId) {
+    historyStore.fetchReceiptHistory(currentReceiptId)
   }
 }, { immediate: true })
 
-// `source` is 'user:<userId>' or 'task:<taskName>'. Resolve humans to their
-// avatar + full name; bots/tasks to a bot icon + the task label. Done in a
-// computed (not a template call) so each entry carries its resolved `source`.
-function describeSource (source) {
-  if (source?.startsWith('user:')) {
-    const userId = source.slice(5)
-    return {
-      isBot: false,
-      label: householdStore.getMemberName(userId),
-      avatar: householdStore.getMemberAvatarUrl(userId),
-    }
-  }
-  // task:<name> (or anything non-user) → bot
-  return { isBot: true, label: source, avatar: null }
-}
-
 const entries = computed(() => {
-  const list = expensesStore.history[props.expenseId]
-  if (!list) {
-    return list // undefined (loading) passes through
+  const merged = historyStore.getMergedHistory(props.expenseId, receiptId.value)
+  if (!merged) {
+    return merged // undefined (loading) passes through
   }
-  return list.map(entry => ({ ...entry, src: describeSource(entry.source) }))
+  return merged.map(entry => ({
+    ...entry,
+    src: describeChangeSource(entry.source, householdStore),
+  }))
 })
 
-// `history[id]` is undefined until the fetch resolves; [] once loaded + empty.
+// undefined until both fetches resolve; [] once loaded + genuinely empty.
 const pending = computed(() => entries.value === undefined)
 
 function displayValue (val) {
@@ -72,13 +72,21 @@ function displayValue (val) {
 
     <!-- Timeline -->
     <div v-else class="space-y-4">
+      <!-- Change ids are only unique WITHIN an entity type, so the two merged
+           streams can collide on id alone. -->
       <div
         v-for="entry in entries"
-        :key="entry.id"
+        :key="`${entry.entityType}-${entry.id}`"
         class="border border-default rounded-lg p-4"
       >
-        <!-- Header: who/what made the change + when -->
+        <!-- Header: which entity changed, who/what changed it, and when -->
         <div class="flex items-center gap-2 mb-3">
+          <UBadge
+            :label="entry.entityType"
+            :color="entry.entityType === 'receipt' ? 'primary' : 'info'"
+            variant="subtle"
+            size="xs"
+          />
           <UAvatar
             v-if="entry.src.isBot"
             icon="i-lucide-bot"

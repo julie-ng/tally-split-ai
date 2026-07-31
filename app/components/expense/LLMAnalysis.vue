@@ -1,5 +1,5 @@
 <script setup>
-import { useExpensesStore } from '~/stores/expenses.store'
+import { useHistoryStore } from '~/stores/history.store'
 
 const props = defineProps({
   expenseId: {
@@ -8,19 +8,19 @@ const props = defineProps({
   },
 })
 
-const expensesStore = useExpensesStore()
+const historyStore = useHistoryStore()
 
 // Fetch history whenever the previewed expense changes — this leaf is mounted
 // once and reused as the preview panel swaps rows (the prop changes without a
 // remount), so a one-shot setup fetch only ever loaded the FIRST expense.
 watch(() => props.expenseId, (id) => {
   if (id) {
-    expensesStore.fetchExpenseHistory(id)
+    historyStore.fetchExpenseHistory(id)
   }
 }, { immediate: true })
 
-const llmChange = computed(() => expensesStore.getLlmChange(props.expenseId))
-const historyLoaded = computed(() => !!expensesStore.history[props.expenseId])
+const llmChange = computed(() => historyStore.getLlmChange(props.expenseId))
+const historyLoaded = computed(() => !!historyStore.getExpenseHistory(props.expenseId))
 </script>
 
 <template>

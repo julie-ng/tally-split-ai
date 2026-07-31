@@ -15,7 +15,6 @@ export const useExpensesStore = defineStore('expenses', () => {
   const debug = ref(false) // Debug logging flag
   const expenses = ref({}) // Map: { [expenseId]: expenseObject }
   const receiptToExpense = ref({}) // Map: { [receiptId]: expenseId }
-  const history = ref({}) // Map: { [expenseId]: changeArray }
   const summary = ref(null) // Last-fetched summary { userOneShare, userTwoShare, netBalance, ... }
   const loading = ref({}) // Map: { [expenseId]: boolean }
   const saving = ref({}) // Map: { [expenseId]: boolean }
@@ -102,15 +101,6 @@ export const useExpensesStore = defineStore('expenses', () => {
     const expense = _getExpense(id)
     if (!expense) return false
     return !!expense.paidByUserId
-  })
-
-  /**
-   * Get the most recent LLM-generated change for a expense (has confidence/reasoning)
-   */
-  const getLlmChange = computed(() => (id) => {
-    const changes = history.value[id]
-    if (!changes) return null
-    return changes.find(c => c.source?.startsWith('task:') && c.confidence !== null) ?? null
   })
 
   // -------- INTERNAL HELPERS --------
@@ -342,30 +332,6 @@ export const useExpensesStore = defineStore('expenses', () => {
     }
     finally {
       loading.value[`receipt:${receiptId}`] = false
-    }
-  }
-
-  /**
-   * Fetch change history for a expense (lazy loads if not in state)
-   * @param {number} id - Expense ID
-   * @returns {Promise<Array>} Array of change objects
-   */
-  async function fetchExpenseHistory (id) {
-    _log(`[ExpensesStore] fetchExpenseHistory(${id})`)
-    if (history.value[id]) {
-      return history.value[id]
-    }
-
-    try {
-      const { data } = await requestFetch(`/api/history/expenses/${id}`)
-      history.value[id] = data
-      _log(`[ExpensesStore] fetched history for expense: ${id}`)
-      return data
-    }
-    catch (err) {
-      console.error(`[ExpensesStore] ❌ failed to fetch expense history ${id}:`, err)
-      history.value[id] = []
-      return []
     }
   }
 
@@ -786,7 +752,6 @@ export const useExpensesStore = defineStore('expenses', () => {
     debug,
     expenses,
     receiptToExpense,
-    history,
     summary,
     loading,
     saving,
@@ -803,7 +768,6 @@ export const useExpensesStore = defineStore('expenses', () => {
     getExpensesByMonth,
     doesExpenseAddUp,
     canSettleExpense,
-    getLlmChange,
 
     // Actions
     configure,
@@ -812,7 +776,6 @@ export const useExpensesStore = defineStore('expenses', () => {
     fetchSummary,
     fetchExpense,
     fetchExpenseByReceiptId,
-    fetchExpenseHistory,
     updateExpense,
     clearExpenseError,
     markSettled,
