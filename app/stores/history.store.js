@@ -160,7 +160,7 @@ export const useHistoryStore = defineStore('history', () => {
     return _fetchHistory('receipt', id, force)
   }
 
-  function clearAllCaches () {
+  function reset () {
     expenseHistory.value = {}
     receiptHistory.value = {}
     inFlight.clear()
@@ -237,7 +237,7 @@ export const useHistoryStore = defineStore('history', () => {
     configure,
     fetchExpenseHistory,
     fetchReceiptHistory,
-    clearAllCaches,
+    reset,
 
     // Realtime
     ingestHistory,

@@ -331,6 +331,22 @@ export const useUploadsStore = defineStore('uploads', () => {
   }
 
   /**
+   * Drop all session-scoped state. Called on logout — `debug` is a dev setting,
+   * not user data, so it stays.
+   *
+   * Wider than clearAnalysisCache(), which only drops OCR results: this also
+   * takes the uploads themselves, their polygons and the annotations.
+   */
+  function reset () {
+    uploadsById.value = {}
+    polygons.value = {}
+    analysisCache.value.clear()
+    annotationsCache.value.clear()
+    loading.value = false
+    error.value = null
+  }
+
+  /**
    * Cache-aware fetch for an upload's annotations (gpt-4o handwriting analysis).
    * Returns the slimmed annotations payload: { model, usage, annotations, notes }.
    * @param {string} id
@@ -389,6 +405,7 @@ export const useUploadsStore = defineStore('uploads', () => {
     fetchAnnotationsById,
     clearAnalysisCache,
     clearAnalysisCacheById,
+    reset,
     refreshUploadById,
     deleteUpload,
     batchDelete,

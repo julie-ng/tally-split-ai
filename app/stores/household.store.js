@@ -151,6 +151,16 @@ export const useHouseholdStore = defineStore('household', () => {
     return result.household
   }
 
+  /**
+   * Drop all session-scoped state. Called on logout — this store holds member
+   * names, avatars and LLM consent, so it must not survive a session change.
+   */
+  function reset () {
+    household.value = null
+    loading.value = false
+    error.value = null
+  }
+
   return {
     household,
     loading,
@@ -177,5 +187,6 @@ export const useHouseholdStore = defineStore('household', () => {
     refresh,
     addMember,
     update,
+    reset,
   }
 })

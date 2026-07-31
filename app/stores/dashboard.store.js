@@ -37,11 +37,23 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   }
 
+  /**
+   * Drop all session-scoped state. Not called on logout — the external
+   * navigation discards Pinia — but every store exposes one, since setup stores
+   * get no built-in $reset().
+   */
+  function reset () {
+    metrics.value = null
+    loading.value = false
+    error.value = null
+  }
+
   return {
     metrics,
     loading,
     error,
     fetchMetrics,
     confidenceTotal,
+    reset,
   }
 })

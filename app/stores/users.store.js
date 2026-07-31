@@ -31,10 +31,22 @@ export const useUsersStore = defineStore('users', () => {
     }
   }
 
+  /**
+   * Drop all session-scoped state. Not called on logout — the external
+   * navigation discards Pinia — but every store exposes one, since setup stores
+   * get no built-in $reset().
+   */
+  function reset () {
+    user.value = null
+    loading.value = false
+    error.value = null
+  }
+
   return {
     user,
     loading,
     error,
     fetch,
+    reset,
   }
 })

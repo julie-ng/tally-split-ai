@@ -513,6 +513,19 @@ export const useExpensesStore = defineStore('expenses', () => {
    * Clear error for a specific expense
    * @param {number} id - Expense ID
    */
+  /**
+   * Drop all session-scoped state. Called on logout — `debug` is a dev setting,
+   * not user data, so it stays.
+   */
+  function reset () {
+    expenses.value = {}
+    receiptToExpense.value = {}
+    summary.value = null
+    loading.value = {}
+    saving.value = {}
+    errors.value = {}
+  }
+
   function clearExpenseError (id) {
     delete errors.value[id]
   }
@@ -778,6 +791,7 @@ export const useExpensesStore = defineStore('expenses', () => {
     fetchExpenseByReceiptId,
     updateExpense,
     clearExpenseError,
+    reset,
     markSettled,
     markUnsettled,
     markNeedsReview,

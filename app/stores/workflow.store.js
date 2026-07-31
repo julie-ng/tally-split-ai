@@ -257,6 +257,15 @@ export const useWorkflowStore = defineStore('workflow', () => {
   }
 
   /**
+   * Drop all session-scoped state. Called on logout — `debug` is a dev setting,
+   * not user data, so it stays.
+   */
+  function reset () {
+    runs.value = {}
+    loading.value = false
+  }
+
+  /**
    * @private
    */
   function _log (...args) {
@@ -289,5 +298,6 @@ export const useWorkflowStore = defineStore('workflow', () => {
     ingestRun,
     subscribeToWorkflowRuns,
     removeById,
+    reset,
   }
 })

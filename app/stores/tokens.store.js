@@ -72,7 +72,12 @@ export const useTokensStore = defineStore('tokens', () => {
     return promise
   }
 
-  function clear () {
+  /**
+   * Drop all session-scoped state. Not called on logout — the external
+   * navigation discards Pinia — but every store exposes one, since setup stores
+   * get no built-in $reset().
+   */
+  function reset () {
     const size = cache.value.size
     cache.value.clear()
     inflight.clear()
@@ -88,6 +93,6 @@ export const useTokensStore = defineStore('tokens', () => {
   return {
     debug,
     getReadUrl,
-    clear,
+    reset,
   }
 })

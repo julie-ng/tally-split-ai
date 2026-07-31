@@ -389,7 +389,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
   /**
    * Clear all caches (useful for logout or major state changes)
    */
-  function clearAllCaches () {
+  function reset () {
     receiptsById.value = {}
     loading.value = {}
     saving.value = {}
@@ -422,7 +422,7 @@ export const useReceiptsStore = defineStore('receipts', () => {
     clearReceiptError,
     invalidateReceipt,
     evictReceipt,
-    clearAllCaches,
+    reset,
 
     // Realtime
     ingestReceipt,

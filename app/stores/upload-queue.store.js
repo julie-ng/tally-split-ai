@@ -456,9 +456,29 @@ export const useUploadQueueStore = defineStore('upload-queue', () => {
     }
   }
 
+  /**
+   * Drop all session-scoped state. Called on logout.
+   *
+   * IMPORTANT
+   * - This queue is backed by localStorage, so it outlives the tab — leaving it
+   *   would expose the previous user's filenames to whoever logs in next, even
+   *   after a browser restart. `removeAll()` writes through to storage.
+   * - The timer must be stopped BEFORE the queue is emptied. It fires
+   *   processQueue() on an interval, which would otherwise keep running against
+   *   a logged-out session.
+   * - `claimedIds` is module-scope, not store state, so it survives store
+   *   disposal and has to be cleared by hand.
+   */
+  function reset () {
+    stopAutoUpload()
+    removeAll()
+    claimedIds.clear()
+  }
+
   return {
     addFiles,
     add,
+    reset,
     markInterrupted,
     autoUploadFromQueue,
     availableSlots,
