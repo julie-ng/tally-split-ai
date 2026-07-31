@@ -29,7 +29,8 @@ defineProps({
 </script>
 
 <template>
-  <div class="border-t border-default px-3 py-3 space-y-2">
+  <!-- No border/padding here: the wrapping <UiCollapsibleCard> owns both. -->
+  <div class="space-y-2">
     <!-- 1. description -->
     <p
       v-if="description"

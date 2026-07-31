@@ -118,45 +118,37 @@ const isProcessing = computed(() => props.step.status === WORKFLOW_STEP_STATUS.P
       />
     </span>
 
-    <!-- Box -->
-    <div
-      class="flex-1 min-w-0 rounded-lg border border-default bg-default"
+    <!-- Box. Fully CONTROLLED: the timeline owns the expanded set, so bind
+         :open + @update:open rather than the card's uncontrolled default. -->
+    <UiCollapsibleCard
+      class="flex-1 min-w-0"
       :class="[
         timelineStep.dashed ? 'border-dashed' : '',
         timelineStep.dim ? 'opacity-60' : '',
       ]"
+      :collapsible="isExpandable"
+      padding="sm"
+      :open="expanded"
+      @update:open="$emit('toggle', step.key)"
     >
-      <!-- Header (clickable when expandable) -->
-      <button
-        type="button"
-        class="w-full px-3 py-3 text-left"
-        :class="isExpandable ? 'cursor-pointer' : 'cursor-default'"
-        @click="isExpandable && $emit('toggle', step.key)"
-      >
-        <div class="flex items-center gap-2 min-w-0">
-          <p class="text-sm font-medium text-default max-w-[70%] truncate mb-0.5">
-            {{ step.label }}
-          </p>
-          <!-- Status label (subtle) + trailing time. Completed → static duration;
-               Processing → live elapsed; else → placeholder. -->
-          <UiStatusLabel
-            type="subtle"
-            :status="step.status"
-            class="ml-auto shrink-0"
-          />
-          <UiDuration :value="isCompleted ? duration : isProcessing ? elapsed : null" />
-          <UIcon
-            v-if="isExpandable"
-            name="i-lucide-chevron-down"
-            class="size-4 shrink-0 text-highlighted transition-transform"
-            :class="expanded ? 'rotate-180' : ''"
-          />
-        </div>
-      </button>
+      <template #header>
+        <p class="text-sm font-medium text-default max-w-[70%] truncate mb-0.5">
+          {{ step.label }}
+        </p>
+      </template>
+
+      <!-- Status label (subtle) + trailing time. Completed → static duration;
+           Processing → live elapsed; else → placeholder. -->
+      <template #actions>
+        <UiStatusLabel
+          type="subtle"
+          :status="step.status"
+        />
+        <UiDuration :value="isCompleted ? duration : isProcessing ? elapsed : null" />
+      </template>
 
       <!-- Expanded detail -->
       <UploadWorkflowTimelineStepContent
-        v-if="isExpandable && expanded"
         :description="step.description"
         :summary="step.summary"
         :rows="step.details"
@@ -170,6 +162,6 @@ const isProcessing = computed(() => props.step.status === WORKFLOW_STEP_STATUS.P
           <slot name="footer" />
         </template>
       </UploadWorkflowTimelineStepContent>
-    </div>
+    </UiCollapsibleCard>
   </li>
 </template>
