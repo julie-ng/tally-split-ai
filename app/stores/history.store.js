@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { useRealtimeStore } from '~/stores/realtime.store'
 
 /**
  * Change history for receipts and expenses — the client side of `/api/history/*`.
@@ -165,6 +166,61 @@ export const useHistoryStore = defineStore('history', () => {
     inFlight.clear()
   }
 
+  // -------- REALTIME (Broadcast) --------
+
+  /**
+   * Ingest a broadcast signal from the `history` topic (migration 0030).
+   *
+   * Unlike the other content stores, this payload is a SIGNAL, not a snapshot — a
+   * history entry is a join+regroup, not a row, so the trigger can't send one
+   * without duplicating `/api/history/*`'s shape in plpgsql. We re-fetch instead.
+   *
+   * IMPORTANT
+   * - Only refreshes an entity ALREADY in the cache. An unfetched entity has
+   *   nothing to go stale, and the next fetch is a cache miss that reads fresh —
+   *   so skipping costs nothing. Without this, every receipt the OCR pipeline
+   *   analyzes would trigger a GET on every connected client for history nobody
+   *   has opened.
+   *
+   * @param {Object} payload - built by the Postgres trigger
+   * @param {'expense'|'receipt'} payload.entityType
+   * @param {string} payload.entityId
+   */
+  function ingestHistory (payload) {
+    // TEMPORARY (verification): unconditional, matching the other stores' logs.
+    console.log('📡 [Broadcast] history payload:', payload)
+
+    const { entityType, entityId } = payload ?? {}
+    if (!entityType || !entityId) {
+      console.warn('📡 [Broadcast] ⚠️ history payload missing entityType/entityId')
+      return
+    }
+
+    const target = entityType === 'expense' ? expenseHistory : receiptHistory
+    if (target.value[entityId] === undefined) {
+      return
+    }
+
+    const refetch = entityType === 'expense' ? fetchExpenseHistory : fetchReceiptHistory
+    refetch(entityId, true)
+  }
+
+  /**
+   * Subscribe this store to its own broadcast topic. Called from the default
+   * layout — stores are lazy, and one no page has touched would miss the signal.
+   *
+   * @param {string} householdId
+   * @returns {() => void} unsubscribe
+   */
+  function subscribeToHistory (householdId) {
+    if (!householdId) return () => {}
+
+    return useRealtimeStore().subscribe(
+      `household:${householdId}:history`,
+      ingestHistory,
+    )
+  }
+
   return {
     // State
     debug,
@@ -182,5 +238,9 @@ export const useHistoryStore = defineStore('history', () => {
     fetchExpenseHistory,
     fetchReceiptHistory,
     clearAllCaches,
+
+    // Realtime
+    ingestHistory,
+    subscribeToHistory,
   }
 })

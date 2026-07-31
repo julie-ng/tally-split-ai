@@ -5,6 +5,7 @@ import { useExpensesStore } from '~/stores/expenses.store'
 import { useReceiptsStore } from '~/stores/receipts.store'
 import { useUploadsStore } from '~/stores/uploads.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
+import { useHistoryStore } from '~/stores/history.store'
 
 const householdStore = useHouseholdStore()
 const realtimeStore = useRealtimeStore()
@@ -12,6 +13,7 @@ const expensesStore = useExpensesStore()
 const receiptsStore = useReceiptsStore()
 const uploadsStore = useUploadsStore()
 const workflowStore = useWorkflowStore()
+const historyStore = useHistoryStore()
 const { loggedIn } = useUserSession()
 
 // Fetch household once per navigation. Hydrates on the server so child
@@ -42,6 +44,7 @@ onMounted(async () => {
   receiptsStore.subscribeToReceipts(householdStore.id)
   uploadsStore.subscribeToUploads(householdStore.id)
   workflowStore.subscribeToWorkflowRuns(householdStore.id)
+  historyStore.subscribeToHistory(householdStore.id)
 })
 </script>
 

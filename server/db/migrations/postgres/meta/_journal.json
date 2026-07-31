@@ -211,6 +211,13 @@
       "when": 1785403487412,
       "tag": "0029_uploads_receipt_id_unique",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1785483149255,
+      "tag": "0030_history_broadcast_trigger",
+      "breakpoints": true
     }
   ]
 }
