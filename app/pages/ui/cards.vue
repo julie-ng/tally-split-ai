@@ -109,6 +109,34 @@ const openCard = ref('first')
         </div>
       </section>
 
+      <!-- ── Padding ──────────────────────────────────────────────────────── -->
+      <section class="mb-12">
+        <h2 class="text-sm font-semibold text-highlighted mb-1">
+          Padding
+        </h2>
+        <p class="text-xs text-muted mb-4 max-w-2xl">
+          <code class="font-mono">md</code> (default) or
+          <code class="font-mono">sm</code> for a dense list — e.g. the workflow
+          timeline steps. Header and body scale together; the header keeps its
+          vertical padding either way, since it's a single row.
+        </p>
+
+        <div class="space-y-3 max-w-2xl">
+          <UiCollapsibleCard title="padding=&quot;md&quot; (default)" default-open>
+            <div class="text-sm text-muted">
+              <code class="font-mono">px-4 py-4</code> body,
+              <code class="font-mono">px-4 py-3</code> header.
+            </div>
+          </UiCollapsibleCard>
+
+          <UiCollapsibleCard title="padding=&quot;sm&quot;" padding="sm" default-open>
+            <div class="text-sm text-muted">
+              <code class="font-mono">px-3 py-3</code> for both.
+            </div>
+          </UiCollapsibleCard>
+        </div>
+      </section>
+
       <!-- ── Controlled / accordion ───────────────────────────────────────── -->
       <section class="mb-12">
         <h2 class="text-sm font-semibold text-highlighted mb-1">

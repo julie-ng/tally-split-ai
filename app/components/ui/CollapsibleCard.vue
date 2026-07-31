@@ -11,7 +11,15 @@
 // one card may be open).
 //
 // No footer slot on purpose — nothing needs one yet. Add it when something does.
-defineProps({
+
+// Header and body share a scale so they stay visually aligned. Every class is a
+// COMPLETE literal — Tailwind purges anything it can't see as a whole string.
+const PADDING = {
+  sm: { header: 'px-3 py-3', body: 'px-3 py-3' },
+  md: { header: 'px-4 py-3', body: 'px-4 py-4' },
+}
+
+const props = defineProps({
   // Fallback for the #header slot.
   title: {
     type: String,
@@ -28,6 +36,14 @@ defineProps({
     type: Boolean,
     default: true,
   },
+  // Density. 'sm' suits a dense list (e.g. workflow timeline steps).
+  // Keys listed literally, not derived from PADDING — defineProps is hoisted at
+  // compile time and cannot reference locals.
+  padding: {
+    type: String,
+    default: 'md',
+    validator: v => ['sm', 'md'].includes(v),
+  },
 })
 
 // `undefined` (not false) when the parent doesn't bind it, which is what lets
@@ -36,6 +52,8 @@ const open = defineModel('open', {
   type: Boolean,
   default: undefined,
 })
+
+const padding = computed(() => PADDING[props.padding] ?? PADDING.md)
 </script>
 
 <template>
@@ -52,8 +70,8 @@ const open = defineModel('open', {
         <component
           :is="collapsible ? 'button' : 'div'"
           :type="collapsible ? 'button' : undefined"
-          class="w-full px-4 py-3 text-left"
-          :class="collapsible ? 'cursor-pointer' : ''"
+          class="w-full text-left"
+          :class="[padding.header, collapsible ? 'cursor-pointer' : '']"
         >
           <div class="flex items-center gap-2 min-w-0">
             <slot name="header">
@@ -84,7 +102,7 @@ const open = defineModel('open', {
            - The card owns body padding, like UCard, so callers pass bare content
              and every card is spaced identically. -->
       <template #content>
-        <div class="border-t border-default px-4 py-4">
+        <div class="border-t border-default" :class="padding.body">
           <slot />
         </div>
       </template>
