@@ -43,35 +43,32 @@ export function toUtcInstant (calendarDate, time = null) {
 }
 
 /**
- * Build a UTC instant from a receipt's separate text date + time fields, for
- * the create-expense task copying a receipt date onto the expense.
+ * Build a UTC instant from a receipt's text date, for the create-expense task
+ * copying a receipt date onto the expense.
  *
- * receipt.date is OCR-extracted text ("2025-11-07"); receipt.time is text
- * ("17:45:00") or null. Both are untrusted — if the date doesn't parse as a
- * valid YYYY-MM-DD, returns null (don't propagate OCR garbage into a validated
- * timestamptz). A missing/invalid time falls back to midnight (the same
- * sentinel as manual entry).
+ * receipt.date is OCR-extracted text ("2025-11-07") and untrusted — if it
+ * doesn't parse as a valid YYYY-MM-DD, returns null (don't propagate OCR
+ * garbage into a validated timestamptz).
+ *
+ * IMPORTANT
+ * - **An expense has a DATE, not a time.** `receipt.time` is deliberately NOT
+ *   copied: a receipt is tied to a document and must be exactly right, an
+ *   expense is a ledger entry where time of day is meaningless.
+ * - Always Berlin midnight. All-midnight is the *signal* that we don't track
+ *   time here — a "real" time would imply a precision we don't have and would
+ *   drift. Do not reintroduce a time argument.
  *
  * @param {string|null} dateStr - ISO date "YYYY-MM-DD"
- * @param {string|null} [timeStr] - ISO time "HH:MM:SS" or "HH:MM"
- * @returns {string|null} UTC ISO instant, or null if the date is unusable
+ * @returns {string|null} UTC ISO instant at Berlin midnight, or null if unusable
  */
-export function fromReceiptDateTime (dateStr, timeStr = null) {
+export function fromReceiptDate (dateStr) {
   const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr ?? '')
   if (!dateMatch) {
     return null
   }
   const [, y, m, d] = dateMatch
-  const calendarDate = new CalendarDate(Number(y), Number(m), Number(d))
 
-  let time = null
-  const timeMatch = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(timeStr ?? '')
-  if (timeMatch) {
-    const [, hh, mm, ss] = timeMatch
-    time = new Time(Number(hh), Number(mm), ss ? Number(ss) : 0)
-  }
-
-  return toUtcInstant(calendarDate, time)
+  return toUtcInstant(new CalendarDate(Number(y), Number(m), Number(d)))
 }
 
 /**

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { CalendarDate, Time } from '@internationalized/date'
-import { toUtcInstant, fromReceiptDateTime, toBerlinISODate, toBerlinDisplayDate } from './expense-date.utils.js'
+import { toUtcInstant, fromReceiptDate, toBerlinISODate, toBerlinDisplayDate } from './expense-date.utils.js'
 
 describe('toUtcInstant', () => {
   it('interprets midnight in WINTER (UTC+1) — shifts to previous day 23:00Z', () => {
@@ -35,33 +35,28 @@ describe('toUtcInstant', () => {
   })
 })
 
-describe('fromReceiptDateTime', () => {
-  it('combines receipt date + time (Berlin) into a UTC instant', () => {
-    // 2025-07-05 17:45 Berlin (UTC+2) → 15:45Z
-    expect(fromReceiptDateTime('2025-07-05', '17:45:00'))
-      .toBe('2025-07-05T15:45:00.000Z')
+describe('fromReceiptDate', () => {
+  it('returns Berlin midnight for a summer date (UTC+2)', () => {
+    expect(fromReceiptDate('2025-07-05')).toBe('2025-07-04T22:00:00.000Z')
   })
 
-  it('falls back to midnight when the receipt has no time', () => {
-    expect(fromReceiptDateTime('2025-07-05', null))
-      .toBe('2025-07-04T22:00:00.000Z') // Berlin midnight summer
+  it('returns Berlin midnight for a winter date (UTC+1)', () => {
+    expect(fromReceiptDate('2025-01-05')).toBe('2025-01-04T23:00:00.000Z')
   })
 
-  it('accepts HH:MM time without seconds', () => {
-    expect(fromReceiptDateTime('2025-01-05', '08:30'))
-      .toBe('2025-01-05T07:30:00.000Z') // winter UTC+1
+  // DELIBERATE: an expense has a DATE, not a time. receipt.time must never be
+  // copied onto the expense — all-midnight is the signal that we don't track
+  // time here. Asserted so the time argument can't quietly come back.
+  it('ignores any extra argument — receipt time is never copied', () => {
+    expect(fromReceiptDate('2025-07-05', '17:45:00'))
+      .toBe(fromReceiptDate('2025-07-05'))
   })
 
   it('returns null for an unusable / non-ISO date (no OCR garbage propagated)', () => {
-    expect(fromReceiptDateTime('07.11.2025', null)).toBeNull() // German format, not ISO
-    expect(fromReceiptDateTime('not a date', null)).toBeNull()
-    expect(fromReceiptDateTime(null, '12:00')).toBeNull()
-    expect(fromReceiptDateTime('', null)).toBeNull()
-  })
-
-  it('ignores a garbage time but keeps the valid date (→ midnight)', () => {
-    expect(fromReceiptDateTime('2025-01-05', 'nonsense'))
-      .toBe('2025-01-04T23:00:00.000Z')
+    expect(fromReceiptDate('07.11.2025')).toBeNull() // German format, not ISO
+    expect(fromReceiptDate('not a date')).toBeNull()
+    expect(fromReceiptDate(null)).toBeNull()
+    expect(fromReceiptDate('')).toBeNull()
   })
 })
 
