@@ -63,14 +63,14 @@ const altText = computed(() => {
   }
   return r.merchantName ? `${r.merchantName} receipt` : 'Receipt image'
 })
-
-function amount (value) {
-  return receiptUtils.formatAmount(value)
-}
 </script>
 
 <template>
-  <div class="py-4">
+  <div class="px-4 py-6">
+    <h1 class="mb-6 text-md font-bold text-default">
+      Receipt Details
+    </h1>
+
     <!-- No receipt linked to this expense -->
     <div v-if="!receiptId" class="text-sm text-muted py-6 text-center">
       No receipt attached to this expense.
@@ -86,69 +86,7 @@ function amount (value) {
 
     <!-- Receipt loaded -->
     <div v-else-if="receipt" class="space-y-5">
-      <!-- Title -->
-      <div class="flex items-center justify-between gap-2">
-        <h3 class="font-semibold truncate">
-          {{ receipt.title || 'Receipt' }}
-        </h3>
-      </div>
-
-      <!-- Merchant -->
-      <receipt-merchant-info
-        v-if="receipt.merchantName"
-        :name="receipt.merchantName"
-        :address="receipt.merchantAddress"
-        :relaxed-line-height="true"
-      />
-      <p v-else class="text-sm text-dimmed">
-        No merchant info detected.
-      </p>
-
-      <USeparator />
-
-      <!-- Date / time -->
-      <dl class="space-y-2 text-sm">
-        <div class="flex justify-between">
-          <dt class="text-muted">
-            Date
-          </dt>
-          <dd>{{ receipt.date || '—' }}</dd>
-        </div>
-        <div class="flex justify-between">
-          <dt class="text-muted">
-            Time
-          </dt>
-          <dd>{{ receipt.time || '—' }}</dd>
-        </div>
-      </dl>
-
-      <USeparator />
-
-      <!-- Totals -->
-      <dl class="space-y-2 text-sm">
-        <div class="flex justify-between">
-          <dt class="text-muted">
-            Subtotal
-          </dt>
-          <dd>{{ amount(receipt.subtotal) }}</dd>
-        </div>
-        <div class="flex justify-between">
-          <dt class="text-muted">
-            Tax
-          </dt>
-          <dd>{{ amount(receipt.tax) }}</dd>
-        </div>
-        <div class="flex justify-between">
-          <dt class="text-muted">
-            Tip
-          </dt>
-          <dd>{{ amount(receipt.tip) }}</dd>
-        </div>
-        <div class="flex justify-between font-medium">
-          <dt>Total</dt>
-          <dd>{{ amount(receipt.total) }}</dd>
-        </div>
-      </dl>
+      <ReceiptOverviewCard :receipt-id="receiptId" />
 
       <USeparator />
 
