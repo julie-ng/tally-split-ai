@@ -24,7 +24,21 @@ describe('timestampUtils', () => {
       expect(formatted).toContain('Dec')
       expect(formatted).toContain('2025')
       expect(formatted).toContain('11:39')
-      expect(formatted).toMatch(/AM|PM/)
+    })
+
+    it('should use 24-hour time, not AM/PM', () => {
+      const formatted = timestampUtils.toShortDatetime('2025-12-07T18:05:00+01:00')
+
+      expect(formatted).toContain('18:05')
+      expect(formatted).not.toMatch(/AM|PM/)
+    })
+
+    // en-US renders midnight as "24:00" under hour12: false unless hourCycle is
+    // pinned; assert the boundary so a locale/Node change can't reintroduce it.
+    it('should render midnight as 00:xx', () => {
+      const formatted = timestampUtils.toShortDatetime('2025-12-07T00:15:00+01:00')
+
+      expect(formatted).toContain('00:15')
     })
 
     it('should return "-" for null timestamp', () => {

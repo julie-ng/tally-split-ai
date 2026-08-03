@@ -1,19 +1,17 @@
 <script setup>
 import { useExpensesStore } from '~/stores/expenses.store'
 import { useReceiptsStore } from '~/stores/receipts.store'
-import { useUploadsStore } from '~/stores/uploads.store'
 
-// Receipt tab of the expense preview. Shows the source receipt's key fields plus
-// its upload image. Ownership:
-//   - receipts store owns the receipt (loaded on preview open)
-//   - UPLOADS store owns the upload; this component resolves it by
-//     `receipt.uploadId`. Deliberately NOT read off the receipt: /api/receipts
-//     (list) and /api/receipts/[id] project differently, and both write the same
-//     store cache — so a receipt cached from the list has no `upload` and
-//     fetchReceiptById's TTL check then returns that partial row. Owning the
-//     lookup here removes the detail-must-superset-list coupling.
-//   - blob-image fetches the SAS read-URL itself, lazily — so the image only
-//     loads when this tab is actually rendered (UTabs mounts active slot only).
+// Receipt tab of the expense preview. Composes the cards; each one self-fetches
+// from the id it is given, so this component only resolves ids:
+//   expenseId (prop) → expense.receiptId → receipt.uploadId
+//
+// The receipt is read here ONLY to reach uploadId and to gate the loading state.
+// Everything upload-shaped — blob name, size, analyzed-at, the image — belongs to
+// BlobOverviewCard, which owns the uploads-store lookup. That split matters:
+// /api/receipts (list) and /api/receipts/[id] project differently into the same
+// store cache, so a list-cached receipt carries no `upload` sub-object.
+//
 // No polygons here on purpose: the polygon overlay needs the line-items table,
 // which belongs on the full receipt detail page, not this compact preview.
 const props = defineProps({
@@ -25,7 +23,6 @@ const props = defineProps({
 
 const expensesStore = useExpensesStore()
 const receiptsStore = useReceiptsStore()
-const uploadsStore = useUploadsStore()
 
 const expense = computed(() => expensesStore.getExpenseById(props.expenseId))
 const receiptId = computed(() => expense.value?.receiptId)
@@ -39,38 +36,13 @@ const receipt = computed(() => receiptId.value
 // it's linked but not yet in the store.
 const receiptPending = computed(() => !!receiptId.value && !receipt.value)
 
+// Only to route the id into BlobOverviewCard, which owns the upload fetch and
+// everything rendered from it.
 const uploadId = computed(() => receipt.value?.uploadId)
-const upload = computed(() => uploadId.value
-  ? uploadsStore.getUploadById(uploadId.value)
-  : null,
-)
-const blobName = computed(() => upload.value?.blobName)
-
-// This leaf is REUSED as rows swap (the panel stays mounted), and uploadId also
-// arrives late — the receipt fetch resolves after mount. So watch the id rather
-// than fetching in setup. fetchUploadById is cache-aware and de-dupes in-flight
-// requests, so repeat calls are cheap.
-watch(uploadId, (id) => {
-  if (id) {
-    uploadsStore.fetchUploadById(id)
-  }
-}, { immediate: true })
-
-const altText = computed(() => {
-  const r = receipt.value
-  if (!r) {
-    return 'Receipt image'
-  }
-  return r.merchantName ? `${r.merchantName} receipt` : 'Receipt image'
-})
 </script>
 
 <template>
   <div class="px-4 py-6">
-    <h1 class="mb-6 text-md font-bold text-default">
-      Receipt Details
-    </h1>
-
     <!-- No receipt linked to this expense -->
     <div v-if="!receiptId" class="text-sm text-muted py-6 text-center">
       No receipt attached to this expense.
@@ -86,43 +58,23 @@ const altText = computed(() => {
 
     <!-- Receipt loaded -->
     <div v-else-if="receipt" class="space-y-5">
+      <div>
+        <h1 class="flex items-baseline justify-between gap-3 text-sm font-bold text-default">
+          {{ receipt.merchantName || 'Receipt' }}
+        </h1>
+
+        <p v-if="receipt.merchantAddress" class="mt-1 text-muted font-normal text-sm">
+          {{ receipt.merchantAddress }}
+        </p>
+      </div>
+
       <ReceiptOverviewCard :receipt-id="receiptId" />
 
-      <USeparator />
-
-      <!-- Link to full detail page -->
-      <div>
-        <UButton
-          :to="`/receipts/${receiptId}`"
-          trailing-icon="i-lucide-receipt-euro"
-          color="neutral"
-          variant="outline"
-        >
-          Receipt Details
-        </UButton>
-      </div>
-
-      <!-- Image preview (last) — blob-image lazily fetches its own SAS URL -->
-      <div>
-        <p class="text-sm text-muted mb-2 text-center">
-          Preview
-        </p>
-        <UAlert
-          v-if="!blobName"
-          color="warning"
-          variant="subtle"
-          icon="i-lucide-image-off"
-          title="No receipt image"
-          description="This receipt has no uploaded image to display."
-        />
-        <NuxtLink
-          v-else
-          :to="`/receipts/${receiptId}`"
-          class="block w-3/4 mx-auto rounded-lg overflow-hidden ring-1 ring-default hover:ring-primary transition"
-        >
-          <BlobImage :blob-name="blobName" :alt="altText" />
-        </NuxtLink>
-      </div>
+      <template v-if="uploadId">
+        <BlobOverviewCard :upload-id="uploadId" />
+        <ReceiptLineItemsCard :upload-id="uploadId" />
+        <BlobOcrTextCard :upload-id="uploadId" />
+      </template>
     </div>
   </div>
 </template>

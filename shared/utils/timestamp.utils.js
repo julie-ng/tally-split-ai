@@ -1,12 +1,21 @@
+// 24-hour, matching how the rest of the app renders times (and the app's
+// German/EUR framing).
+//
+// IMPORTANT
+// - `hour12: false` is explicit, not implied by the locale — en-US defaults to
+//   12-hour, so removing it silently reverts every call site to AM/PM.
+// - `hourCycle: 'h23'` pins midnight to `00:15`. Under `hour12: false` alone,
+//   en-US is free to use the h24 cycle and render it `24:15`.
 function toShortDatetime (timestamp) {
   if (!timestamp) return '-'
   return new Date(timestamp).toLocaleDateString('en-US', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
-    hour: 'numeric',
+    hour: '2-digit',
     minute: '2-digit',
-    hour12: true,
+    hour12: false,
+    hourCycle: 'h23',
   })
 }
 

@@ -1,8 +1,8 @@
 <script setup>
 import { useReceiptsStore } from '~/stores/receipts.store'
 
-// Receipt overview inside the expense preview's Receipt tab: merchant name in
-// the header, transaction date and totals in the body.
+// Receipt overview inside the expense preview's Receipt tab: the receipt's id
+// and its money rows. Merchant name and date live in the tab heading, not here.
 //
 // Self-fetching by id. The receipts store is the single owner of receipt data
 // and realtime keeps it current, so a caller only needs to know the id — it
@@ -60,37 +60,40 @@ const totals = computed(() => receiptUtils.extractTotalsAsArray(receipt.value))
   >
     <template #header>
       <span class="text-sm font-medium">
-        {{ receipt.merchantName || 'Receipt' }}
+        Receipt
       </span>
     </template>
-    <template #actions>
-      <span class="text-sm text-dimmed pr-1">
+    <UiDefinitionList class="text-sm text-muted">
+      <UiDefinitionTerm
+        label="ID"
+        label-class="text-dimmed"
+        value-class="font-mono text-dimmed"
+      >
+        {{ receipt.id }}
+      </UiDefinitionTerm>
+
+      <!-- <UiDefinitionTerm label="Date">
         {{ dateUtils.formatISODate(receipt.date) }}
         <span v-if="receipt.time">, {{ dateUtils.timeWithoutSeconds(receipt.time) }}</span>
-      </span>
-    </template>
-    <dl class="space-y-2 text-sm">
+      </UiDefinitionTerm>
+
+      <USeparator class="my-3" /> -->
+
       <template
         v-for="total in totals"
         :key="total.key"
       >
+        <!-- The grand total earns emphasis and a rule above it. -->
         <USeparator v-if="total.isTotal" />
 
-        <div
-          class="flex justify-between"
-          :class="total.isTotal ? 'gap-3 font-medium' : 'gap-1'"
+        <UiDefinitionTerm
+          :label="total.key"
+          :label-class="total.isTotal ? 'font-medium text-default' : ''"
+          :value-class="total.isTotal ? 'font-medium text-default tabular-nums' : 'tabular-nums'"
         >
-          <dt :class="total.isTotal ? '' : 'text-muted'">
-            {{ total.key }}
-          </dt>
-          <dd
-            class="text-right tabular-nums"
-            :class="total.isTotal ? '' : 'text-muted'"
-          >
-            {{ receiptUtils.formatAmount(total.value) }}
-          </dd>
-        </div>
+          {{ receiptUtils.formatAmount(total.value) }}
+        </UiDefinitionTerm>
       </template>
-    </dl>
+    </UiDefinitionList>
   </UiCollapsibleCard>
 </template>

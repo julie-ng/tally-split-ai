@@ -1,9 +1,13 @@
 /**
- * Removes the username prefix from a blob path
- * e.g. "userId123/receipt.jpg" -> "receipt.jpg"
+ * Reduces a blob path to its filename — the last `/`-delimited segment.
+ * e.g. "userId123/uploadId456/receipt.jpg" -> "receipt.jpg"
  *
- * @param {string} blobName - The full blob path including username prefix
- * @returns {string} The filename without the username prefix
+ * Takes the LAST segment rather than stripping one prefix, so it stays correct
+ * against the current `{userId}/{uploadId}/{filename}` layout (see
+ * buildBlobPath) as well as the single-prefix paths it was written for.
+ *
+ * @param {string} blobName - The full blob path
+ * @returns {string} The filename alone
  */
 function removeUsernamePrefixFromBlobname (blobName) {
   return blobName.split('/').pop()

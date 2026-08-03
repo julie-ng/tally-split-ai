@@ -1,13 +1,25 @@
 <script setup>
+// Line items from Azure Document Intelligence, as a real <table> — the data is
+// genuinely tabular and needs a shared column grid across rows.
+//
+// Cross-highlighting: hovering a cell publishes its Azure field label (e.g.
+// `Items[2].Description`) to a `highlightedLabel` ref, which the polygon overlay
+// on the receipt image reads to light up the matching box, and vice versa. The
+// inject FALLS BACK to a local ref, so this table also renders standalone in
+// surfaces that have no image overlay (e.g. the expense preview's Receipt tab).
 defineProps({
-  items: Array, // validate before this
+  items: {
+    type: Array,
+    required: true,
+  },
   hasQuantity: {
     type: Boolean,
-    default: false,  // show column or not?
+    default: false,
   },
   subtotal: {
     type: Number,
     required: false,
+    default: undefined,
   },
   tableClass: {
     type: String,
@@ -21,6 +33,14 @@ const itemLabel = (index, key) => `Items[${index}].${key}`
 
 const isCellHighlighted = (index, key) =>
   highlightedLabel.value === itemLabel(index, key)
+
+function highlight (index, key) {
+  highlightedLabel.value = itemLabel(index, key)
+}
+
+function clearHighlight () {
+  highlightedLabel.value = null
+}
 </script>
 
 <template>
@@ -40,7 +60,7 @@ const isCellHighlighted = (index, key) =>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item, id in items" :key="id">
+        <tr v-for="(item, index) in items" :key="index">
           <td
             v-if="hasQuantity"
             class="pr-2 py-2 pl-0 border-b border-default text-center transition-colors duration-150 cursor-default"
@@ -48,18 +68,18 @@ const isCellHighlighted = (index, key) =>
             <!-- Quantity: doesn't always exist -->
             <div
               v-if="item.quantity"
-              :class="{ 'bg-blue-50': isCellHighlighted(id, 'Quantity') }"
-              @mouseenter="highlightedLabel = itemLabel(id, 'Quantity')"
-              @mouseleave="highlightedLabel = null"
+              :class="{ 'bg-primary/10': isCellHighlighted(index, 'Quantity') }"
+              @mouseenter="highlight(index, 'Quantity')"
+              @mouseleave="clearHighlight"
             >
               {{ item.quantity.value }}
             </div>
           </td>
           <td
             class="py-2 border-b border-default text-left transition-colors duration-150 cursor-default"
-            :class="{ 'bg-blue-50': isCellHighlighted(id, 'Description') }"
-            @mouseenter="highlightedLabel = itemLabel(id, 'Description')"
-            @mouseleave="highlightedLabel = null"
+            :class="{ 'bg-primary/10': isCellHighlighted(index, 'Description') }"
+            @mouseenter="highlight(index, 'Description')"
+            @mouseleave="clearHighlight"
           >
             {{ item.description.value }}
           </td>
@@ -67,9 +87,9 @@ const isCellHighlighted = (index, key) =>
             <!-- Total Price: doesn't always exist -->
             <div
               v-if="item.totalPrice"
-              :class="{ 'bg-blue-50': isCellHighlighted(id, 'TotalPrice') }"
-              @mouseenter="highlightedLabel = itemLabel(id, 'TotalPrice')"
-              @mouseleave="highlightedLabel = null"
+              :class="{ 'bg-primary/10': isCellHighlighted(index, 'TotalPrice') }"
+              @mouseenter="highlight(index, 'TotalPrice')"
+              @mouseleave="clearHighlight"
             >
               {{ receiptUtils.formatCurrency(item.totalPrice.value) }}
             </div>
