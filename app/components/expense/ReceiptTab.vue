@@ -12,8 +12,10 @@ import { useReceiptsStore } from '~/stores/receipts.store'
 // /api/receipts (list) and /api/receipts/[id] project differently into the same
 // store cache, so a list-cached receipt carries no `upload` sub-object.
 //
-// No polygons here on purpose: the polygon overlay needs the line-items table,
-// which belongs on the full receipt detail page, not this compact preview.
+// Line items, OCR text and the polygon overlay are NOT here: cross-highlighting
+// needs the table and the image side by side, which this single narrow column
+// can't give them. They live in BlobLineItemsModal, opened by clicking the image
+// in BlobOverviewCard.
 const props = defineProps({
   expenseId: {
     type: String,
@@ -70,11 +72,9 @@ const uploadId = computed(() => receipt.value?.uploadId)
 
       <ReceiptOverviewCard :receipt-id="receiptId" />
 
-      <template v-if="uploadId">
-        <BlobOverviewCard :upload-id="uploadId" />
-        <ReceiptLineItemsCard :upload-id="uploadId" />
-        <BlobOcrTextCard :upload-id="uploadId" />
-      </template>
+      <!-- Line items and OCR text live in the modal this card's image opens —
+           both need width the panel doesn't have. -->
+      <BlobOverviewCard v-if="uploadId" :upload-id="uploadId" />
     </div>
   </div>
 </template>

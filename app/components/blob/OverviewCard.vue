@@ -28,6 +28,8 @@ watch(() => props.uploadId, (id) => {
 }, { immediate: true })
 
 const upload = computed(() => uploadsStore.getUploadById(props.uploadId))
+
+const modalOpen = ref(false)
 </script>
 
 <template>
@@ -84,12 +86,25 @@ const upload = computed(() => uploadsStore.getUploadById(props.uploadId))
         title="No receipt image"
         description="This receipt has no uploaded image to display."
       />
-      <div
+      <button
         v-else
-        class="overflow-hidden rounded-lg ring-1 ring-default"
+        type="button"
+        class="block w-full overflow-hidden rounded-lg ring-1 ring-default transition hover:ring-primary cursor-zoom-in"
+        :aria-label="`Open ${upload.originalFilename} with line items`"
+        @click="modalOpen = true"
       >
         <BlobImage :blob-name="upload.blobName" :alt="upload.originalFilename" />
-      </div>
+      </button>
     </div>
+
+    <!-- Line items and the polygon overlay side by side. Rendered only once
+         opened: its polygon fetch is wasted work for a reader who never opens
+         it, and this card sits in a panel that swaps rows constantly. -->
+    <BlobLineItemsModal
+      v-if="modalOpen"
+      v-model:open="modalOpen"
+      :upload-id="uploadId"
+      :alt="upload.originalFilename"
+    />
   </UiCollapsibleCard>
 </template>
