@@ -130,7 +130,6 @@ const {
   isRetryExpired,
   isRetrying,
   retry,
-  previewReceiptId,
   previewExpenseId,
 } = useUploadPreview(mergedUploads)
 </script>
@@ -203,7 +202,6 @@ const {
       :can-retry="canRetry"
       :is-retry-expired="isRetryExpired"
       :is-retrying="isRetrying"
-      :receipt-id="previewReceiptId"
       :expense-id="previewExpenseId"
       @retry="retry"
     />

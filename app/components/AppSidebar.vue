@@ -76,12 +76,6 @@ function getLinks (collapsed) {
         active: isActive('/households'),
       },
       {
-        label: 'Receipts',
-        icon: 'i-lucide-receipt-euro',
-        to: '/receipts',
-        active: isActive('/receipts'),
-      },
-      {
         label: 'Expenses',
         icon: 'i-lucide-coins',
         to: '/expenses',

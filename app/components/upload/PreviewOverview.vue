@@ -32,16 +32,5 @@ const upload = computed(() => uploadsStore.getUploadById(props.id))
         {{ upload.blobUrl }}
       </BlobSasLink>
     </UiLabelContent>
-
-    <!-- Button -->
-    <UButton
-      v-if="upload.receiptId"
-      :to="`/receipts/${upload.receiptId}`"
-      color="primary"
-      size="sm"
-      icon="i-lucide-receipt-euro"
-    >
-      View Receipt
-    </UButton>
   </div>
 </template>

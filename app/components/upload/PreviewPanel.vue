@@ -77,12 +77,6 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  // The linked receipt id, for the Normalize footer link + header id row (null
-  // until the pipeline creates the receipt / load resolves it).
-  receiptId: {
-    type: [String, null],
-    default: null,
-  },
   // The created expense id, for the Create Expense footer link (null until loaded).
   expenseId: {
     type: [String, null],
@@ -94,10 +88,6 @@ const tabs = [
   { label: 'Workflow', value: 'workflow', slot: 'workflow' },
   { label: 'Image', value: 'image', slot: 'image' },
 ]
-
-const receiptHref = computed(() =>
-  props.receiptId ? `/receipts/${props.receiptId}` : undefined,
-)
 
 const expenseHref = computed(() =>
   props.expenseId ? `/expenses?preview=${props.expenseId}` : undefined,
@@ -211,8 +201,8 @@ const expenseHref = computed(() =>
               </template>
 
               <!-- OCR step footer: raw JSON links (open externally). The
-                   /api/analysis/summary endpoint is intentionally NOT linked here
-                   (still used by the receipt analysis tab). -->
+                   /api/analysis/summary endpoint is intentionally NOT linked
+                   here — it backs ReceiptLineItemsCard / BlobLineItemsModal. -->
               <template v-if="uploadId" #footer-ocr>
                 <div class="flex flex-wrap gap-2">
                   <UButton
@@ -236,20 +226,6 @@ const expenseHref = computed(() =>
                     external
                   />
                 </div>
-              </template>
-
-              <!-- Normalize step footer: link to the receipt this step wrote
-                   date/title into. Enabled once the receipt is loaded. -->
-              <template #footer-normalize>
-                <UButton
-                  label="View receipt"
-                  icon="i-lucide-receipt-euro"
-                  size="xs"
-                  color="neutral"
-                  variant="subtle"
-                  :to="receiptHref"
-                  :disabled="!receiptId"
-                />
               </template>
 
               <!-- Handwritten step footer: annotations JSON (open externally). -->

@@ -5,6 +5,12 @@
 // `/uploads/[id]` have no page to render. They previously 404'd; this rewrites
 // them onto the list route with the panel open.
 //
+// `/receipts/*` is deliberately NOT here. Those pages were deleted once the
+// expense preview's Receipt tab covered them, and they simply 404 — the panel is
+// keyed by EXPENSE id while those URLs carry a RECEIPT id, so redirecting would
+// need a fetch per navigation to resolve one to the other. Not worth it for old
+// bookmarks in a single-user app.
+//
 // IMPORTANT
 // - The `tab` values must stay in sync with each preview composable's
 //   `defaultTab` (`useExpensePreview` → overview, `useUploadPreview` → workflow).

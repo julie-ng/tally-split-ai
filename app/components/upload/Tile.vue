@@ -14,16 +14,21 @@
 //   2. expired    → clock-alert / warning     (no worker ran it — yellow, matches
 //                    the status badge; retryable, not a true failure)
 //   3. error      → file-exclamation / error  (run failed / partial)
-//   4. has receipt→ receipt-euro / neutral    (links to the receipt)
+//   4. has receipt→ receipt-euro / neutral    (CLICKS THROUGH to the expense)
 //   5. otherwise  → receipt-text / neutral    (done, no receipt — e.g. standalone)
 //
-// NOTE: the receipt LINK target (receipt.id) is NOT live — it rides on the
-// merged list row, which only refreshes on manual refetch / preview-open (the
-// detail-liveness gap). The ICON STATE is live via the workflow store; the link
-// simply activates once the row's receipt lands.
+// State 4 is the only interactive one, and it resolves its destination on CLICK
+// rather than rendering an href — the row carries a receipt id but the panel is
+// keyed by expense id.
+//
+// NOTE: `props.receipt` is NOT live — it rides on the merged list row, which
+// only refreshes on manual refetch / preview-open (the detail-liveness gap). The
+// ICON STATE is live via the workflow store; state 4 simply appears once the
+// row's receipt lands.
 import { UPLOAD_STATUS } from '#shared/enums/upload-status.js'
 import { WORKFLOW_RUN_STATUS } from '#shared/enums/workflow-run-status.js'
 import { WORKFLOW_RUN_STATUS_UI_CONFIG } from '#shared/enums/workflow-status-ui.config.js'
+import { useExpensesStore } from '~/stores/expenses.store'
 import { useWorkflowStore } from '~/stores/workflow.store'
 
 const props = defineProps({
@@ -78,21 +83,61 @@ const tile = computed(() => {
   if (hasError.value) {
     return { icon: 'i-lucide-file-exclamation-point', color: WORKFLOW_RUN_STATUS_UI_CONFIG[WORKFLOW_RUN_STATUS.FAILED].color, to: null }
   }
+  // Clickable, but WITHOUT a `to`: the destination is the expense panel, and the
+  // row carries only a RECEIPT id. Resolving one to the other needs a fetch, so
+  // it happens on click (see openExpense) rather than being rendered as an href
+  // for every row in the table.
   if (props.receipt) {
-    return { icon: 'i-lucide-receipt-euro', color: 'neutral', to: `/receipts/${props.receipt.id}` }
+    return { icon: 'i-lucide-receipt-euro', color: 'neutral', to: null, opensExpense: true }
   }
   return { icon: 'i-lucide-receipt-text', color: 'neutral', to: null }
 })
+
+// Receipt → expense on demand. `fetchExpenseByReceiptId` is cache-aware, so this
+// costs one request the first time and nothing on repeat clicks.
+//
+// Navigates to the expense preview's RECEIPT tab: the user clicked a receipt
+// icon, so that's the facet they asked for.
+async function openExpense () {
+  if (!tile.value.opensExpense) {
+    return
+  }
+
+  const expense = await useExpensesStore()
+    .fetchExpenseByReceiptId(props.receipt.id)
+    .catch(() => null)
+
+  if (!expense) {
+    return
+  }
+
+  await navigateTo({
+    path: '/expenses',
+    query: { preview: expense.id, tab: 'receipt' },
+  })
+}
 </script>
 
 <template>
-  <UButton
-    :to="tile.to || undefined"
-    :icon="tile.icon"
-    :color="tile.color"
-    variant="soft"
-    class="size-9 shrink-0 rounded-lg justify-center"
-    :class="tile.to ? 'text-dimmed hover:text-default' : ''"
-    @click.stop
-  />
+  <!-- Tooltip only on the interactive state. There's no href to reveal on hover
+       (the destination is resolved on click), so the tooltip is the only cue
+       that this tile does anything.
+       @click.stop so the tile doesn't also trigger the row's select handler,
+       which would open the upload preview behind the navigation. -->
+  <UTooltip
+    :text="tile.opensExpense ? 'Go to Expense' : undefined"
+    :disabled="!tile.opensExpense"
+    :delay-duration="0"
+    arrow
+  >
+    <UButton
+      :to="tile.to || undefined"
+      :icon="tile.icon"
+      :color="tile.color"
+      variant="soft"
+      class="size-9 shrink-0 rounded-lg justify-center"
+      :class="tile.opensExpense ? 'text-dimmed hover:text-default cursor-pointer' : ''"
+      @click.stop="openExpense"
+    />
+  </UTooltip>
 </template>
