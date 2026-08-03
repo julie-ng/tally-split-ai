@@ -2,8 +2,8 @@
 import { useExpensesStore } from '~/stores/expenses.store'
 import { useHouseholdStore } from '~/stores/household.store'
 
-// Overview tab = thin mode-switcher: skeleton → edit form → read view.
-// Presentation lives in the leaves (ExpenseReadOnly / ExpenseEditForm).
+// Overview tab = thin mode-switcher: skeleton → edit form → quick-edit view.
+// Presentation lives in the leaves (ExpenseQuickEdit / ExpenseEditForm).
 const props = defineProps({
   expenseId: {
     type: String,
