@@ -57,12 +57,18 @@ watch(() => props.expenseId, () => {
         @cancel="isEditing = false"
       />
 
-      <!-- Read mode -->
-      <ExpenseReadOnly
-        v-else
-        :expense-id="expenseId"
-        @edit="isEditing = true"
-      />
+      <!-- Default mode: splits are editable in place (debounced auto-save).
+           The Edit button switches to the full form for title/date/notes. -->
+      <template v-else>
+        <ExpenseQuickEdit
+          :expense-id="expenseId"
+          @edit="isEditing = true"
+        />
+
+        <USeparator class="my-6" />
+
+        <ExpenseLLMAnalysis :expense-id="expenseId" />
+      </template>
     </div>
   </ClientOnly>
 </template>
