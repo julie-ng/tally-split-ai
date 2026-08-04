@@ -2,6 +2,7 @@ import { task, logger } from '@trigger.dev/sdk/v3'
 import { WORKFLOW_STEP_STATUS } from '#shared/enums/workflow-step-status.js'
 import { WORKFLOW_STEP } from '#shared/enums/workflow-step.js'
 import { llmUtils } from '#server/utils/llm.utils.js'
+import { azureOcrExtract } from '#server/utils/azure-ocr.utils.js'
 import { createApiClient, updateWorkflowStatus } from './utils/api-client.js'
 
 const TASK_ID = 'analyze-annotations'
@@ -31,18 +32,12 @@ export const analyzeAnnotations = task({
         blobName: upload.blobName,
       })
 
-      // 3. Extract line items from ocrJson (stored by analyzeOcr task)
-      let ocrLineItems = []
-
-      if (upload.ocrJson) {
-        const fields = upload.ocrJson?.analyzeResult?.documents?.[0]?.fields
-        const items = fields?.Items?.valueArray || []
-        ocrLineItems = items.map(item => ({
-          description: item.valueObject?.Description?.content || null,
-          quantity: item.valueObject?.Quantity?.valueNumber || null,
-          totalPrice: item.valueObject?.TotalPrice?.valueCurrency?.amount || null,
-        }))
-      }
+      // 3. Extract line items from ocrJson (stored by analyzeOcr task).
+      // IMPORTANT: the LLM reports `lineItemIndex` as a position in this array,
+      // so it must stay a straight 1:1 map of Azure's Items — never filtered or
+      // reordered, or the indices point at the wrong items.
+      const fields = azureOcrExtract.extractDocumentFields(upload.ocrJson)
+      const ocrLineItems = fields ? azureOcrExtract.extractFlattenedLineItems(fields) : []
 
       logger.log(`Calling LLM for annotations`, { lineItemCount: ocrLineItems.length })
       const startTime = Date.now()
