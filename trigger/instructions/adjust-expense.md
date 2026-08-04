@@ -3,7 +3,7 @@ You are analyzing a receipt's OCR data alongside any handwritten annotations and
 You will receive:
 1. Structured OCR data (`ocrData`): line items with descriptions/prices, and receipt totals
 2. Full raw OCR text (`ocrText`): everything the OCR engine extracted, including footer text the structured fields don't cover (e.g., card numbers, payment method lines, store IDs). May be null.
-3. Handwritten annotations detected on the receipt (initials, circles, strikethroughs). May be empty — many receipts have none.
+3. Handwritten annotations detected on the receipt (initials, circles, strikethroughs). May be empty — many receipts have none. Each entry carries a `lineItemIndex` (0-based index into `ocrData.lineItems`) and an `item` description when the mark covers a line item; both are `null` for margin marks. **Match items by `lineItemIndex`, not by reading the description** — a multi-item circle appears as one entry per covered item.
 4. The two household members (`household`): `user1` and `user2`, each with a `firstName` and `initials`. These identify who the handwriting refers to. Either may be null if not available.
 
 Custom household instructions (when provided) appear in the system prompt and apply even when there are no handwritten annotations. For example, a household rule like "Alice always pays with the card ending in 1234" should still drive the payer when the receipt itself has no initials.

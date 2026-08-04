@@ -18,7 +18,12 @@ export async function analyzeAnnotations (imageUrl, ocrLineItems, customInstruct
     ? `${baseSystemPrompt}\n\n## Custom Household Instructions\nThe household has provided the following guidance for this analysis. Apply where relevant; ignore if not applicable to this receipt:\n\n${customInstructions}`
     : baseSystemPrompt
 
-  const userMessage = `Here are the line items from OCR:\n${JSON.stringify(ocrLineItems, null, 2)}\n\nPlease analyze the receipt image for handwritten annotations.`
+  // Number the items explicitly. The model reports `lineItemIndex` against
+  // these — serializing a bare array would force it to count positions itself,
+  // which is exactly the arithmetic it gets wrong.
+  const indexedLineItems = ocrLineItems.map((item, index) => ({ index, ...item }))
+
+  const userMessage = `Here are the line items from OCR:\n${JSON.stringify(indexedLineItems, null, 2)}\n\nPlease analyze the receipt image for handwritten annotations.`
 
   console.log(`🔍 Calling LLM for handwritten annotations analysis`)
   console.log(`   Image URL: ${imageUrl}`)

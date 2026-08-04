@@ -15,19 +15,27 @@ Look for and identify ALL instances of:
 3. Struck-through items
 4. Any other handwritten marks or annotations
 
+## Binding marks to line items
+
+The line items you receive are numbered — each entry has an explicit `index`. When a mark covers a line item, report **that item's `index`** as `lineItemIndex`, and copy its description verbatim into `item`.
+
+- Use the `index` value given to you. Do not count positions yourself.
+- `item` must match the OCR description exactly — it is a cross-check on the index, so do not paraphrase, translate, or tidy it.
+- For marks not tied to any line item (margin initials, a circle around the total), set **both** `lineItemIndex` and `item` to `null`, and describe where it is in `location`.
+
 Return JSON in this format:
 {
   "annotations": [
-    { "item": "Caesar Salad", "type": "initials", "value": "JN", "location": "next to item" },
-    { "item": null, "type": "initials", "value": "JN", "location": "top right corner" },
-    { "item": "Pizza", "type": "circle" },
-    { "item": "Dessert", "type": "strikethrough" }
+    { "lineItemIndex": 0, "item": "Caesar Salad", "type": "initials", "value": "JN", "location": "next to item" },
+    { "lineItemIndex": null, "item": null, "type": "initials", "value": "JN", "location": "top right corner" },
+    { "lineItemIndex": 2, "item": "Pizza", "type": "circle", "value": null, "location": "circled" },
+    { "lineItemIndex": 3, "item": "Dessert", "type": "strikethrough", "value": null, "location": "struck through" }
   ],
   "notes": "Any additional observations about the handwriting"
 }
 
 Important:
 - Do NOT skip any handwritten marks. Report every single one.
-- If initials appear in the margins with no specific item, set "item" to null and describe the location.
-- If a circle or mark spans multiple items, create a separate annotation for each item it covers.
+- **If a circle or strikethrough spans multiple items, emit a SEPARATE annotation for EACH item it covers** — one entry per item, each with its own `lineItemIndex`. Never collapse a multi-item circle into a single entry.
+- Every key must be present on every entry; use `null` where a value does not apply.
 - If there are no handwritten annotations, return { "annotations": [], "notes": "No handwriting detected" }.

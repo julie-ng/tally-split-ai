@@ -11,15 +11,23 @@ import { z } from 'zod'
  * `JSON.parse`.
  */
 
-// analyze-annotations.js — vision call. The model returns a free-ish list of
-// detected handwriting marks plus notes. Kept permissive (annotation entries
-// vary) but structured enough to enforce the array + notes envelope.
+// analyze-annotations.js — vision call. One entry per handwritten mark, bound
+// to the OCR line item it covers.
+//
+// IMPORTANT — this schema and `trigger/instructions/analyze-annotations.md` are
+// ONE artifact. `generateObject` enforces the schema at the provider, so the
+// schema silently wins any disagreement: the model can't return a field that
+// isn't here, it just improvises the content into a field that is. Change the
+// two together, and keep the `.describe()` text in sync with the prompt — the
+// descriptions are the only field-level spec the model sees.
 export const annotationsSchema = z.object({
   annotations: z.array(
     z.object({
+      lineItemIndex: z.number().int().nullable().describe('0-based index into the provided OCR line items; null for marks not tied to a line item (e.g. margin initials, a mark on the total)'),
+      item: z.string().nullable().describe('description of the line item this mark covers, copied verbatim from the OCR line items; null when lineItemIndex is null'),
       type: z.string().nullable().describe('e.g. initials, circle, strikethrough'),
       value: z.string().nullable().describe('the handwritten content, if any'),
-      target: z.string().nullable().describe('what the mark applies to (line item, total, margin)'),
+      location: z.string().nullable().describe('where the mark appears (e.g. "next to item", "top right corner")'),
     }),
   ),
   notes: z.string().nullable(),
