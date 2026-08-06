@@ -47,3 +47,6 @@ plans/
 JOURNAL.md
 NOTES.md
 notes/
+
+# Evals data set, which containers semi-personal info, not relevant for open-source
+evals/dataset/
