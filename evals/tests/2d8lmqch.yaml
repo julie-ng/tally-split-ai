@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+- description: '2d8lmqch — one struck-through item (REWE receipt)'
+  vars:
+    caseDir: 2d8lmqch
+  assert:
+    - type: javascript
+      value: file://assertions/annotations-match-expected.mjs

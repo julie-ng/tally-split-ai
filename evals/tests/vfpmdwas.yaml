@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+- description: 'vfpmdwas — three circled items (EDEKA receipt)'
+  vars:
+    caseDir: vfpmdwas
+  assert:
+    - type: javascript
+      value: file://assertions/annotations-match-expected.mjs

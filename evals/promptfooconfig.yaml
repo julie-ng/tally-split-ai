@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+description: 'Tally Split AI Evals — analyze-annotations (handwritten mark detection)'
+
+providers:
+  - id: file://providers/analyze-annotations-provider.mjs
+    label: analyze-annotations
+
+# Custom provider builds the real request itself (via analyzeAnnotations()),
+# so this prompt's text is unused — promptfoo just needs one to iterate over.
+prompts:
+  - 'unused'
+
+tests:
+  - file://tests/vfpmdwas.yaml
+  - file://tests/2d8lmqch.yaml
