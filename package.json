@@ -70,6 +70,7 @@
     "@trigger.dev/build": "^4.4.5",
     "drizzle-kit": "^0.31.8",
     "eslint": "^9.39.2",
+    "promptfoo": "^0.122.0",
     "sass-embedded": "^1.99.0",
     "trigger.dev": "^4.4.5",
     "vitest": "^4.0.15",
@@ -82,7 +83,10 @@
     "engine.io": "^6.6.9",
     "cookie": "^0.7.0",
     "esbuild": "^0.28.1",
-    "@opentelemetry/core": "^2.9.0"
+    "@opentelemetry/core": "^2.9.0",
+    "rolldown": "^1.2.1",
+    "sharp": "^0.35.0",
+    "adm-zip": "^0.6.0"
   },
   "allowScripts": {
     "@depot/cli@0.0.1-cli.2.101.60": true,
