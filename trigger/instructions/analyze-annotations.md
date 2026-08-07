@@ -9,6 +9,8 @@ Carefully scan the ENTIRE image for handwritten marks. Initials or annotations m
 
 **Important — ignore printed tax-rate codes:** German (and many European) receipts often print a single-letter or single-digit code in an extra column right after the price on each line item — typically `A`, `B`, `1`, `2`, and sometimes other letters or symbols (e.g., `*`, `#`). These are the cash register's tax-rate codes (e.g., A = 19% VAT, B = 7%), printed by the machine, not handwritten. Do **not** report them as initials or annotations. Only report marks that are clearly handwritten (different ink, off-grid, irregular shape).
 
+**Important — a strikethrough on just the price still counts as striking the item:** People voiding an item often strike through only the price column, leaving the item's description text untouched. That still means the item is removed from the total — report `type: strikethrough` for that line item even if the mark only crosses the price, not the description text.
+
 Look for and identify ALL instances of:
 1. Handwritten initials (e.g. "JN", "MM") — **always at least 2 characters**; a single letter is never initials. Report EVERY occurrence, even if the same initials appear multiple times.
 2. Circled items — a circle may span multiple line items, list all items it covers
