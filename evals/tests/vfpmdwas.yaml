@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
 - description: 'vfpmdwas — three circled items (EDEKA receipt)'
   vars:
     caseDir: vfpmdwas
