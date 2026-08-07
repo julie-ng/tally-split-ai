@@ -3,6 +3,7 @@
   "private": true,
   "author": "Julie Ng",
   "description": "POC for analyzing receipt scans with handwritten expense splitting",
+  "type": "module",
   "scripts": {
     "test": "vitest run",
     "test:unit": "vitest run --exclude 'tests/**'",
