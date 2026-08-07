@@ -30,7 +30,32 @@ function buildBlobPath (userId, uploadId, filename) {
   return `${userId}/${uploadId}/${filename}`
 }
 
+/**
+ * Strip the SAS token (query string) from an Azure blob URL so it's safe to
+ * log — the token grants time-limited access, so leaking it into logs (e.g.
+ * a public CI run) extends its exposure window even though it expires.
+ * Non-Azure/unparseable strings are returned unchanged.
+ *
+ * @param {string} url - Blob URL, with or without a `?sv=...&sig=...` SAS token
+ * @returns {string} The URL with its query string removed
+ */
+function stripSasToken (url) {
+  if (!url || typeof url !== 'string') {
+    return url
+  }
+
+  try {
+    const parsed = new URL(url)
+    parsed.search = ''
+    return parsed.toString()
+  }
+  catch {
+    return url
+  }
+}
+
 export const azureUtils = {
   removeUsernamePrefixFromBlobname,
   buildBlobPath,
+  stripSasToken,
 }

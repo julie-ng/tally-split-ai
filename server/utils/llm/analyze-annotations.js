@@ -2,6 +2,7 @@ import { llmGenerate } from './llm-generate.js'
 import { loadInstructions } from './load-instructions.js'
 import { annotationsSchema } from './schemas.js'
 import { getGatewayModels } from './get-llm-config.js'
+import { azureUtils } from '#shared/utils/azure.utils.js'
 
 /**
  * Analyze a receipt image for handwritten annotations. Uses the annotations
@@ -25,10 +26,16 @@ export async function analyzeAnnotations (imageUrl, ocrLineItems, customInstruct
 
   const userMessage = `Here are the line items from OCR:\n${JSON.stringify(indexedLineItems, null, 2)}\n\nPlease analyze the receipt image for handwritten annotations.`
 
-  console.log(`🔍 Calling LLM for handwritten annotations analysis`)
-  console.log(`   Image URL: ${imageUrl}`)
-
   const { annotationsModel } = getGatewayModels()
+
+  console.log(JSON.stringify({
+    message: 'Handwritten annotations analysis',
+    model: annotationsModel,
+    image: imageUrl.startsWith('http')
+      ? azureUtils.stripSasToken(imageUrl)
+      : '[base64 image data]',
+  }))
+
 
   const result = await llmGenerate({
     model: annotationsModel,

@@ -39,3 +39,28 @@ describe('azureUtils.buildBlobPath', () => {
     expect(result).toBe('user-abc/upload-123/receipt.jpg')
   })
 })
+
+describe('azureUtils.stripSasToken', () => {
+  it('should remove SAS query params from a blob URL', () => {
+    const result = azureUtils.stripSasToken('https://tallysplitdev.blob.core.windows.net/receipts/foo/bar.jpg?sv=2026-06-06&sig=abc123')
+    expect(result).toBe('https://tallysplitdev.blob.core.windows.net/receipts/foo/bar.jpg')
+    expect(result).not.toContain('sig=')
+    expect(result).not.toContain('sv=')
+  })
+
+  it('should leave a URL with no query string unchanged', () => {
+    const result = azureUtils.stripSasToken('https://tallysplitdev.blob.core.windows.net/receipts/foo/bar.jpg')
+    expect(result).toBe('https://tallysplitdev.blob.core.windows.net/receipts/foo/bar.jpg')
+  })
+
+  it('should return non-URL strings unchanged', () => {
+    const result = azureUtils.stripSasToken('/9j/4AAQSkZJRgABAQEAYABgAAD')
+    expect(result).toBe('/9j/4AAQSkZJRgABAQEAYABgAAD')
+  })
+
+  it('should return empty/invalid input unchanged', () => {
+    expect(azureUtils.stripSasToken('')).toBe('')
+    expect(azureUtils.stripSasToken(null)).toBe(null)
+    expect(azureUtils.stripSasToken(undefined)).toBe(undefined)
+  })
+})
