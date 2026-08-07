@@ -1,6 +1,6 @@
 - description: 'qngwubea — five struck-through items plus margin initials (REWE receipt)'
   vars:
-    caseDir: qngwubea
+    caseDir: qngwubea-initials-inconsistent-strikethroughs
   # Will always run 3x, each counted separately. Not good for our, this fails 1 in 6.
   # options:
   #   repeat: 3

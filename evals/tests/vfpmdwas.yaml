@@ -1,6 +1,6 @@
 - description: 'vfpmdwas — three circled items (EDEKA receipt)'
   vars:
-    caseDir: vfpmdwas
+    caseDir: vfpmdwas-two-circles-of-three-items-last4cc
   assert:
     - type: javascript
       value: file://assertions/annotations-match-expected.mjs

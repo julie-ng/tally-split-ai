@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { analyzeAnnotations } from '../../server/utils/llm/analyze-annotations.js'
 import { azureOcrExtract } from '../../server/utils/azure-ocr.utils.js'
 import { generateBlobSasToken } from '../../server/utils/azure-storage/generate-blob-sas-token.js'
+import { shortIdFromCaseDir } from '../utils/case-dir.utils.mjs'
 
 const EVALS_DIR = dirname(dirname(fileURLToPath(import.meta.url)))
 
@@ -27,10 +28,11 @@ class AnalyzeAnnotationsProvider {
 
   async callApi (prompt, context) {
     const { caseDir } = context.vars
+    const shortId = shortIdFromCaseDir(caseDir)
 
     const datasetDir = resolve(EVALS_DIR, 'dataset', caseDir)
-    const ocrData = JSON.parse(readFileSync(resolve(datasetDir, `${caseDir}.input.ocr.json`), 'utf8'))
-    const { sasUrl } = generateBlobSasToken(`${caseDir}/${caseDir}.jpg`, { permissions: 'read', expiresInMinutes: 1 })
+    const ocrData = JSON.parse(readFileSync(resolve(datasetDir, `${shortId}.input.ocr.json`), 'utf8'))
+    const { sasUrl } = generateBlobSasToken(`${caseDir}/${shortId}.jpg`, { permissions: 'read', expiresInMinutes: 1 })
 
     const fields = azureOcrExtract.extractDocumentFields(ocrData.ocrJson)
     const ocrLineItems = fields ? azureOcrExtract.extractFlattenedLineItems(fields) : []

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { shortIdFromCaseDir } from '../utils/case-dir.utils.mjs'
 
 const EVALS_DIR = dirname(dirname(fileURLToPath(import.meta.url)))
 
@@ -11,7 +12,8 @@ const EVALS_DIR = dirname(dirname(fileURLToPath(import.meta.url)))
  */
 export default function annotationsMatchExpected (output, { vars }) {
   const { caseDir } = vars
-  const expectedPath = resolve(EVALS_DIR, 'dataset', caseDir, `${caseDir}.expected.json`)
+  const shortId = shortIdFromCaseDir(caseDir)
+  const expectedPath = resolve(EVALS_DIR, 'dataset', caseDir, `${shortId}.expected.json`)
   const { expected } = JSON.parse(readFileSync(expectedPath, 'utf8'))
 
   const actual = output.annotations ?? []

@@ -1,6 +1,6 @@
 - description: 'x4kb2vqb — two initials in margins, no line-item marks (Pepenero receipt)'
   vars:
-    caseDir: x4kb2vqb
+    caseDir: x4kb2vqb-initials-question-mark
   assert:
     - type: javascript
       value: file://assertions/annotations-match-expected.mjs

@@ -1,6 +1,6 @@
 - description: 'pggm4knx — single margin initials mark (REWE receipt)'
   vars:
-    caseDir: pggm4knx
+    caseDir: pggm4knx-initials-sloppy-question-mark
   assert:
     - type: javascript
       value: file://assertions/annotations-match-expected.mjs

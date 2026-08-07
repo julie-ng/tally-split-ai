@@ -1,6 +1,6 @@
 - description: 'zyfnpw5n — single margin initials mark (Allresto Flughafen receipt)'
   vars:
-    caseDir: zyfnpw5n
+    caseDir: zyfnpw5n-initials-nolast4cc
   assert:
     - type: javascript
       value: file://assertions/annotations-match-expected.mjs
