@@ -36,7 +36,6 @@ export async function analyzeAnnotations (imageUrl, ocrLineItems, customInstruct
       : '[base64 image data]',
   }))
 
-
   const result = await llmGenerate({
     model: annotationsModel,
     system: systemPrompt,
