@@ -30,7 +30,7 @@ class AnalyzeAnnotationsProvider {
     const { caseDir } = context.vars
     const shortId = shortIdFromCaseDir(caseDir)
 
-    const datasetDir = resolve(EVALS_DIR, 'dataset', caseDir)
+    const datasetDir = resolve(EVALS_DIR, 'datasets', caseDir)
     const ocrData = JSON.parse(readFileSync(resolve(datasetDir, `${shortId}.input.ocr.json`), 'utf8'))
     const { sasUrl } = generateBlobSasToken(`${caseDir}/${shortId}.jpg`, { permissions: 'read', expiresInMinutes: 1 })
 
