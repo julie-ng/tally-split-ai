@@ -13,3 +13,11 @@ prompts:
 tests:
   - file://tests/vfpmdwas.yaml
   - file://tests/2d8lmqch.yaml
+  - file://tests/x4kb2vqb.yaml
+  # pggm4knx: excluded — ambiguous handwriting ("MJ?" vs "MR?") has no verifiable
+  # ground truth for strict match. Belongs in a future fuzzy-match/low-confidence
+  # tier testing graceful degradation, not this strict-match suite.
+  # - file://tests/pggm4knx.yaml
+  - file://tests/qngwubea.yaml
+  - file://tests/zyfnpw5n.yaml
+  - file://tests/p4f2uvta.yaml

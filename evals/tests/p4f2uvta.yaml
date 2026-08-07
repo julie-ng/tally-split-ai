@@ -1,0 +1,6 @@
+- description: 'p4f2uvta — two initials marks near Bedienung/Tisch (restaurant receipt)'
+  vars:
+    caseDir: p4f2uvta
+  assert:
+    - type: javascript
+      value: file://assertions/annotations-match-expected.mjs
