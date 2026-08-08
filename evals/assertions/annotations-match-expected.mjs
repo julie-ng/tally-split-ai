@@ -13,7 +13,7 @@ const EVALS_DIR = dirname(dirname(fileURLToPath(import.meta.url)))
 export default function annotationsMatchExpected (output, { vars }) {
   const { caseDir } = vars
   const shortId = shortIdFromCaseDir(caseDir)
-  const expectedPath = resolve(EVALS_DIR, 'datasets', caseDir, `${shortId}.expected.json`)
+  const expectedPath = resolve(EVALS_DIR, 'datasets', caseDir, `${shortId}.annotations.expected.json`)
   const { expected } = JSON.parse(readFileSync(expectedPath, 'utf8'))
 
   const actual = output.annotations ?? []

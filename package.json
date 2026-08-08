@@ -21,7 +21,7 @@
     "db:studio": "drizzle-kit studio",
     "db:init-household": "tsx server/db/seeds/seed-first-household.js",
     "trigger:dev": "trigger dev",
-    "eval": "AZURE_STORAGE_CONTAINER_NAME=evals/datasets promptfoo eval --config evals/promptfooconfig.yaml"
+    "eval:annotations": "AZURE_STORAGE_CONTAINER_NAME=evals/datasets promptfoo eval --config evals/annotations.promptfooconfig.yaml",
   },
   "imports": {
     "#shared/*": "./shared/*",
