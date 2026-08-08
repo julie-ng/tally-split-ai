@@ -1,0 +1,6 @@
+- description: 'vfpmdwas — adjusted total = sum of three circled items (EDEKA receipt)'
+  vars:
+    caseDir: vfpmdwas-two-circles-of-three-items-last4cc
+  assert:
+    - type: javascript
+      value: file://assertions/adjusted-totals-match-expected.mjs

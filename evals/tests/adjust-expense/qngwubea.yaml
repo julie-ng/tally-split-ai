@@ -1,0 +1,6 @@
+- description: 'qngwubea — adjusted total = original minus six struck-through items'
+  vars:
+    caseDir: qngwubea-initials-inconsistent-strikethroughs
+  assert:
+    - type: javascript
+      value: file://assertions/adjusted-totals-match-expected.mjs

@@ -40,6 +40,8 @@ The adjusted total is the single amount to be split. Compute it with annotation 
 
 If no annotations affect the total, the adjusted total equals the original total.
 
+**When several items are struck through, work item by item — do not estimate.** For each strikethrough annotation, look up its `lineItemIndex` in `ocrData.lineItems` and note that item's price. After collecting every struck item's price, sum them, then subtract the sum from the original total. Double-check that you have one price per strikethrough annotation before subtracting — a missed lookup silently understates the amount removed.
+
 ### 3. Determine who paid
 
 **Initials are always at least 2 characters.** A single letter (e.g., `"A"`, `"B"`) is never initials — treat single-character `value`s as noise, not as a payer signal. (This refers to marks ON THE RECEIPT — not the `household` member roster, where a single-letter `initials` is a valid identifier.)

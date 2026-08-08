@@ -1,0 +1,6 @@
+- description: '2d8lmqch — adjusted total = original minus one struck-through item'
+  vars:
+    caseDir: 2d8lmqch-one-full-strikethrough
+  assert:
+    - type: javascript
+      value: file://assertions/adjusted-totals-match-expected.mjs

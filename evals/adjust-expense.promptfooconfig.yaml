@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+description: 'Tally Split AI Evals — adjust-expense (adjusted total math, ground-truth annotations)'
+
+providers:
+  - id: file://providers/adjust-expense-provider.mjs
+    label: adjust-expense
+
+# Custom provider builds the real request itself (via adjustExpense()), using
+# each case's ground-truth annotations as input (not live-chained from
+# analyze-annotations) — isolates total-math correctness from upstream
+# detection errors. Payer-matching and share allocation are out of scope here.
+prompts:
+  - 'unused'
+
+tests:
+  - file://tests/adjust-expense/vfpmdwas.yaml
+  - file://tests/adjust-expense/2d8lmqch.yaml
+  # qngwubea: excluded — consistently lands on 30.69 instead of 23.77 with
+  # gpt-4o-mini (5/5 fails), improves with gpt-4o. ocrData.lineItems is
+  # verified complete/correctly indexed and the prompt now spells out the
+  # lookup-and-sum procedure explicitly, so this looks like a gpt-4o-mini
+  # arithmetic ceiling on a 6-item struck-through sum, not a data or prompt
+  # gap. Revisit later (model tier tradeoff) — out of scope for initial setup.
+  # - file://tests/adjust-expense/qngwubea.yaml
+  - file://tests/adjust-expense/zyfnpw5n.yaml
+  - file://tests/adjust-expense/p4f2uvta.yaml

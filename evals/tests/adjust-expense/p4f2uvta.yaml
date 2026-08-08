@@ -1,0 +1,6 @@
+- description: 'p4f2uvta — two sets of initials, no line-item marks → adjusted total = original total'
+  vars:
+    caseDir: p4f2uvta-initials-with-handwritten-total
+  assert:
+    - type: javascript
+      value: file://assertions/adjusted-totals-match-expected.mjs

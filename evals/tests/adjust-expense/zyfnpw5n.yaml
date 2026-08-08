@@ -1,0 +1,6 @@
+- description: 'zyfnpw5n — initials only, no line-item marks → adjusted total = original total'
+  vars:
+    caseDir: zyfnpw5n-initials-nolast4cc
+  assert:
+    - type: javascript
+      value: file://assertions/adjusted-totals-match-expected.mjs
