@@ -1,0 +1,6 @@
+- description: 'pggm4knx — sloppy "MJ?" matches neither member cleanly → no payer signal'
+  vars:
+    caseDir: pggm4knx-initials-sloppy-question-mark
+  assert:
+    - type: javascript
+      value: file://assertions/payer-matches-expected.mjs

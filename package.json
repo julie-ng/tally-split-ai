@@ -22,7 +22,8 @@
     "db:init-household": "tsx server/db/seeds/seed-first-household.js",
     "trigger:dev": "trigger dev",
     "eval:annotations": "AZURE_STORAGE_CONTAINER_NAME=evals/datasets promptfoo eval --config evals/annotations.promptfooconfig.yaml",
-    "eval:adjust-expense": "AZURE_STORAGE_CONTAINER_NAME=evals/datasets promptfoo eval --config evals/adjust-expense.promptfooconfig.yaml"
+    "eval:adjust-expense": "AZURE_STORAGE_CONTAINER_NAME=evals/datasets promptfoo eval --config evals/adjust-expense.promptfooconfig.yaml",
+    "eval:payer": "AZURE_STORAGE_CONTAINER_NAME=evals/datasets promptfoo eval --config evals/payer.promptfooconfig.yaml"
   },
   "imports": {
     "#shared/*": "./shared/*",

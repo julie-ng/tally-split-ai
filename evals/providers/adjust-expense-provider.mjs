@@ -7,6 +7,12 @@ import { shortIdFromCaseDir } from '../utils/case-dir.utils.mjs'
 
 const EVALS_DIR = dirname(dirname(fileURLToPath(import.meta.url)))
 
+// Fixed fake household (gitignored — real first names) reused across every
+// case so payer-matching has a stable, consistent set of initials/names to
+// match handwriting against. See evals/household.json.
+const household = JSON.parse(readFileSync(resolve(EVALS_DIR, 'household.json'), 'utf8'))
+const householdMembers = [household.user1, household.user2]
+
 /**
  * Custom promptfoo provider for the adjust-expense LLM step.
  *
@@ -16,8 +22,8 @@ const EVALS_DIR = dirname(dirname(fileURLToPath(import.meta.url)))
  * are used as input rather than live-chaining `analyzeAnnotations()` output —
  * isolates total-math correctness from upstream annotation-detection errors.
  *
- * householdMembers is left empty — payer-matching and share allocation are
- * out of scope for this eval; only originalTotal/adjustedTotal are asserted.
+ * householdMembers is passed so paidBy/payerConfidence are meaningful to
+ * assert on. Share allocation (asymmetric splits) is still out of scope.
  */
 class AdjustExpenseProvider {
   id () {
@@ -38,6 +44,7 @@ class AdjustExpenseProvider {
       ocrData,
       ocrText: ocrFixture.ocrText,
       annotations,
+      householdMembers,
     })
 
     return {

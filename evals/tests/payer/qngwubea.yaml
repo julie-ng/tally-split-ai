@@ -1,0 +1,6 @@
+- description: 'qngwubea — initials "JN" match user1 (Julie)'
+  vars:
+    caseDir: qngwubea-initials-inconsistent-strikethroughs
+  assert:
+    - type: javascript
+      value: file://assertions/payer-matches-expected.mjs

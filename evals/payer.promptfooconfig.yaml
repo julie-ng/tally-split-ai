@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+description: 'Tally Split AI Evals — adjust-expense payer matching (initials/name → household slot)'
+
+providers:
+  - id: file://providers/adjust-expense-provider.mjs
+    label: adjust-expense
+
+# Same provider as adjust-expense.promptfooconfig.yaml — asserts paidBy
+# instead of originalTotal/adjustedTotal. householdMembers comes from
+# evals/household.json (gitignored fixed fake household). Card-digit
+# matching is out of scope — that logic lives in free-text customInstructions,
+# not structured enough to assert against yet.
+prompts:
+  - 'unused'
+
+tests:
+  - file://tests/payer/qngwubea.yaml
+  - file://tests/payer/zyfnpw5n.yaml
+  - file://tests/payer/p4f2uvta.yaml
+  - file://tests/payer/x4kb2vqb.yaml
+  - file://tests/payer/pggm4knx.yaml
+  - file://tests/payer/2d8lmqch.yaml
+  - file://tests/payer/vfpmdwas.yaml

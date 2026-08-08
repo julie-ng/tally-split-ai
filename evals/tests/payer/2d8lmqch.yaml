@@ -1,0 +1,6 @@
+- description: '2d8lmqch — no initials annotations → no payer signal'
+  vars:
+    caseDir: 2d8lmqch-one-full-strikethrough
+  assert:
+    - type: javascript
+      value: file://assertions/payer-matches-expected.mjs

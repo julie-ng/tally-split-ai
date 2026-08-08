@@ -1,0 +1,6 @@
+- description: 'zyfnpw5n — initials "JN" match user1 (Julie)'
+  vars:
+    caseDir: zyfnpw5n-initials-nolast4cc
+  assert:
+    - type: javascript
+      value: file://assertions/payer-matches-expected.mjs

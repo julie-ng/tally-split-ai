@@ -1,0 +1,6 @@
+- description: 'vfpmdwas — circles indicate item ownership, not payer → no payer signal'
+  vars:
+    caseDir: vfpmdwas-two-circles-of-three-items-last4cc
+  assert:
+    - type: javascript
+      value: file://assertions/payer-matches-expected.mjs

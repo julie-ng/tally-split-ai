@@ -1,0 +1,6 @@
+- description: 'x4kb2vqb — initials "MM" match user2 (Matthew); second mark "?" is noise'
+  vars:
+    caseDir: x4kb2vqb-initials-question-mark
+  assert:
+    - type: javascript
+      value: file://assertions/payer-matches-expected.mjs

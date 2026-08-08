@@ -1,0 +1,6 @@
+- description: 'p4f2uvta — initials "MM" match user2 (Matthew); second mark "M5" is noise'
+  vars:
+    caseDir: p4f2uvta-initials-with-handwritten-total
+  assert:
+    - type: javascript
+      value: file://assertions/payer-matches-expected.mjs
