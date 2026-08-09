@@ -42,12 +42,9 @@ plans/
 .vscode/
 .claude/worktrees/
 .trigger
+.Trash*
 
 # Personal notes (not for commit)
 JOURNAL.md
 NOTES.md
 notes/
-
-# Evals data set, which containers semi-personal info, not relevant for open-source
-evals/datasets/
-evals/household.json

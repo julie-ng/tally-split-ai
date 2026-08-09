@@ -1,0 +1,9 @@
+# Evals data set, which contains semi-personal info,
+# not relevant for open-source
+household.json
+datasets/*
+
+# Allow-list specific Terraform files
+!datasets/*.tf
+!datasets/datasets.auto.tfvars
+!datasets/.terraform.lock.hcl
