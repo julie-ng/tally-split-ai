@@ -4,6 +4,9 @@
   "author": "Julie Ng",
   "description": "POC for analyzing receipt scans with handwritten expense splitting",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "test": "vitest run",
     "test:unit": "vitest run --exclude 'tests/**'",
