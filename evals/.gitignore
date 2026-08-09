@@ -3,6 +3,8 @@
 household.json
 datasets/*
 
+!README.md
+
 # Allow-list specific Terraform files
 !datasets/*.tf
 !datasets/datasets.auto.tfvars
