@@ -32,4 +32,21 @@ describe('calculateHalfAmount', () => {
   it('handles larger amounts', () => {
     expect(calculateHalfAmount(123.46)).toBe(61.73)
   })
+
+  it('halves 2.30 without dropping an extra cent to float error', () => {
+    // 2.30 / 2 * 100 === 114.99999999999999 pre-fix -> floored to 1.14 (wrong)
+    expect(calculateHalfAmount(2.30)).toBe(1.15)
+  })
+
+  it('halves 0.58 without dropping an extra cent to float error', () => {
+    expect(calculateHalfAmount(0.58)).toBe(0.29)
+  })
+
+  it('halves 1.14 without dropping an extra cent to float error', () => {
+    expect(calculateHalfAmount(1.14)).toBe(0.57)
+  })
+
+  it('halves 4.02 without dropping an extra cent to float error', () => {
+    expect(calculateHalfAmount(4.02)).toBe(2.01)
+  })
 })
